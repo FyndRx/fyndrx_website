@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import TextInput from '@/components/TextInput.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -11,14 +12,65 @@ const form = ref({
   firstName: '',
   lastName: '',
   email: '',
+  phoneNumber: '',
   password: '',
   confirmPassword: '',
   acceptTerms: false,
 });
 
+const validationErrors = ref({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  password: '',
+  confirmPassword: '',
+  terms: '',
+});
+
 const handleSubmit = async () => {
+  // Reset validation errors
+  validationErrors.value = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    confirmPassword: '',
+    terms: '',
+  };
+
+  // Validate form
+  if (!form.value.firstName) {
+    validationErrors.value.firstName = 'First name is required';
+    return;
+  }
+  if (!form.value.lastName) {
+    validationErrors.value.lastName = 'Last name is required';
+    return;
+  }
+  if (!form.value.email) {
+    validationErrors.value.email = 'Email is required';
+    return;
+  }
+  if (!form.value.phoneNumber) {
+    validationErrors.value.phoneNumber = 'Phone number is required';
+    return;
+  }
+  if (!form.value.password) {
+    validationErrors.value.password = 'Password is required';
+    return;
+  }
+  if (form.value.password.length < 8) {
+    validationErrors.value.password = 'Password must be at least 8 characters long';
+    return;
+  }
   if (form.value.password !== form.value.confirmPassword) {
-    console.error('Passwords do not match');
+    validationErrors.value.confirmPassword = 'Passwords do not match';
+    return;
+  }
+  if (!form.value.acceptTerms) {
+    validationErrors.value.terms = 'You must accept the terms and conditions';
     return;
   }
 
@@ -28,149 +80,197 @@ const handleSubmit = async () => {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       email: form.value.email,
+      phoneNumber: form.value.phoneNumber,
       password: form.value.password,
+      role: 'patient', // Default role for new registrations
     });
-    router.push('/dashboard');
+    // Redirect to OTP verification page with email
+    router.push({
+      path: '/verify-otp',
+      query: { email: form.value.email }
+    });
   } catch (error) {
     console.error('Registration failed:', error);
+    validationErrors.value.email = 'Registration failed. Please try again.';
   } finally {
     loading.value = false;
+  }
+};
+
+const handleEmailValidation = (isValid: boolean) => {
+  if (!isValid && form.value.email) {
+    validationErrors.value.email = 'Please enter a valid email address';
+  } else {
+    validationErrors.value.email = '';
+  }
+};
+
+const handlePhoneValidation = (isValid: boolean) => {
+  if (!isValid && form.value.phoneNumber) {
+    validationErrors.value.phoneNumber = 'Please enter a valid phone number';
+  } else {
+    validationErrors.value.phoneNumber = '';
   }
 };
 </script>
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+    <div class="max-w-xl w-full space-y-8">
+      <!-- Logo -->
+      <div class="text-center">
+        <img 
+          src="/src/assets/logo/logo_blue_orange.png" 
+          alt="FyndRx Logo" 
+          class="mx-auto h-12 w-auto dark:hidden"
+        />
+        <img 
+          src="/src/assets/logo/logo_white_orange.png" 
+          alt="FyndRx Logo" 
+          class="mx-auto h-12 w-auto hidden dark:block"
+        />
+        <h2 class="mt-6 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Create your account
         </h2>
-        <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Or
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Already have an account?
           <router-link
             to="/login"
-            class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+            class="font-medium text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]"
           >
-            sign in to your account
+            Sign in
           </router-link>
         </p>
       </div>
-      <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
-        <div class="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label for="firstName" class="sr-only">First Name</label>
-            <input
-              id="firstName"
+
+      <!-- Registration Form -->
+      <div class="mt-8 bg-white dark:bg-gray-800 py-6 sm:py-8 px-4 sm:px-6 lg:px-12 shadow-xl rounded-2xl">
+        <form class="space-y-6" @submit.prevent="handleSubmit">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <TextInput
               v-model="form.firstName"
-              name="firstName"
               type="text"
+              label="First Name"
+              placeholder="Enter your first name"
+              required
               autocomplete="given-name"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-              placeholder="First Name"
+              :error="validationErrors.firstName"
             />
-          </div>
-          <div>
-            <label for="lastName" class="sr-only">Last Name</label>
-            <input
-              id="lastName"
+
+            <TextInput
               v-model="form.lastName"
-              name="lastName"
               type="text"
+              label="Last Name"
+              placeholder="Enter your last name"
+              required
               autocomplete="family-name"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-              placeholder="Last Name"
+              :error="validationErrors.lastName"
             />
           </div>
-          <div>
-            <label for="email" class="sr-only">Email address</label>
-            <input
-              id="email"
-              v-model="form.email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-              placeholder="Email address"
-            />
-          </div>
-          <div>
-            <label for="password" class="sr-only">Password</label>
-            <input
-              id="password"
-              v-model="form.password"
-              name="password"
-              type="password"
-              autocomplete="new-password"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-              placeholder="Password"
-            />
-          </div>
-          <div>
-            <label for="confirm-password" class="sr-only">Confirm Password</label>
-            <input
-              id="confirm-password"
-              v-model="form.confirmPassword"
-              name="confirm-password"
-              type="password"
-              autocomplete="new-password"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700"
-              placeholder="Confirm Password"
-            />
-          </div>
-        </div>
 
-        <div class="flex items-center">
-          <input
-            id="terms"
-            v-model="form.acceptTerms"
-            name="terms"
-            type="checkbox"
+          <TextInput
+            v-model="form.email"
+            type="email"
+            label="Email Address"
+            placeholder="Enter your email address"
             required
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
+            autocomplete="email"
+            :error="validationErrors.email"
+            @validation="handleEmailValidation"
           />
-          <label for="terms" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-            I agree to the
-            <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-              Terms of Service
-            </a>
-            and
-            <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-              Privacy Policy
-            </a>
-          </label>
-        </div>
 
-        <div>
-          <button
-            type="submit"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            :disabled="loading"
-          >
-            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+          <TextInput
+            v-model="form.phoneNumber"
+            type="tel"
+            label="Phone Number"
+            placeholder="Enter your phone number"
+            required
+            autocomplete="tel"
+            acceptPhone
+            :error="validationErrors.phoneNumber"
+            @validation="handlePhoneValidation"
+          />
+
+          <TextInput
+            v-model="form.password"
+            type="password"
+            label="Password"
+            placeholder="Enter your password"
+            required
+            autocomplete="new-password"
+            :error="validationErrors.password"
+          />
+
+          <TextInput
+            v-model="form.confirmPassword"
+            type="password"
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            required
+            autocomplete="new-password"
+            :error="validationErrors.confirmPassword"
+          />
+
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="terms"
+                v-model="form.acceptTerms"
+                name="terms"
+                type="checkbox"
+                required
+                class="h-4 w-4 text-[#246BFD] focus:ring-[#246BFD] border-gray-300 dark:border-gray-600 rounded"
+              />
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="terms" class="font-medium text-gray-900 dark:text-gray-300">
+                I agree to the
+                <a href="#" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]">
+                  Terms of Service
+                </a>
+                and
+                <a href="#" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]">
+                  Privacy Policy
+                </a>
+              </label>
+              <p v-if="validationErrors.terms" class="mt-1 text-red-600 dark:text-red-400">
+                {{ validationErrors.terms }}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300"
+              :disabled="loading"
+            >
               <svg
-                class="h-5 w-5 text-primary-500 group-hover:text-primary-400"
+                v-if="loading"
+                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
+                fill="none"
+                viewBox="0 0 24 24"
               >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
                 <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
-                  clip-rule="evenodd"
-                />
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
-            </span>
-            {{ loading ? 'Creating account...' : 'Create account' }}
-          </button>
-        </div>
-      </form>
+              {{ loading ? 'Creating account...' : 'Create account' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template> 

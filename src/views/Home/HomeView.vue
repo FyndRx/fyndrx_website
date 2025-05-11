@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 // Import only the landing page content sections (not Header or Footer)
 import Hero from '../../components/landing/Hero.vue';
+import Medications from '../../components/landing/Medications.vue';
 import PharmacyList from '../../components/landing/PharmacyList.vue';
 import CouponCarousel from '../../components/landing/CouponCarousel.vue';
 import HowItWorks from '../../components/landing/HowItWorks.vue';
@@ -23,6 +24,15 @@ onMounted(() => {
     <section class="relative overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10"></div>
       <Hero />
+    </section>
+
+    <!-- Medications Section -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
+      <Medications />
     </section>
 
     <!-- Pharmacy List -->

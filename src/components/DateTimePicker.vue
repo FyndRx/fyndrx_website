@@ -22,7 +22,13 @@ const emit = defineEmits<{
 
 const isOpen = ref(false);
 const selectedDate = ref<Date | null>(null);
-const selectedTime = ref<string>('');
+const selectedHour = ref<string>('12');
+const selectedMinute = ref<string>('00');
+const selectedPeriod = ref<'AM' | 'PM'>('AM');
+
+// Generate arrays for hours and minutes
+const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
 // Computed
 const displayValue = computed(() => {
@@ -35,9 +41,16 @@ const displayValue = computed(() => {
     case 'date':
       return date.toLocaleDateString();
     case 'time':
-      return date.toLocaleTimeString();
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     default:
-      return date.toLocaleString();
+      return date.toLocaleString([], { 
+        year: 'numeric', 
+        month: 'numeric', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true 
+      });
   }
 });
 
@@ -53,19 +66,18 @@ const selectDate = (date: Date) => {
   updateValue();
 };
 
-const selectTime = (time: string) => {
-  selectedTime.value = time;
-  updateValue();
-};
-
 const updateValue = () => {
   if (!selectedDate.value) return;
 
   const date = selectedDate.value;
-  const [hours, minutes] = selectedTime.value.split(':').map(Number);
+  const hour = parseInt(selectedHour.value);
+  const minute = parseInt(selectedMinute.value);
   
-  date.setHours(hours || 0);
-  date.setMinutes(minutes || 0);
+  // Convert to 24-hour format
+  const hour24 = selectedPeriod.value === 'PM' ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
+  
+  date.setHours(hour24);
+  date.setMinutes(minute);
   
   emit('update:modelValue', date.toISOString());
   emit('change', date.toISOString());
@@ -77,7 +89,14 @@ watch(() => props.modelValue, (newValue) => {
     const date = new Date(newValue);
     if (!isNaN(date.getTime())) {
       selectedDate.value = date;
-      selectedTime.value = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Convert to 12-hour format
+      let hour = date.getHours();
+      selectedPeriod.value = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12 || 12;
+      
+      selectedHour.value = hour.toString().padStart(2, '0');
+      selectedMinute.value = date.getMinutes().toString().padStart(2, '0');
     }
   }
 }, { immediate: true });
@@ -183,24 +202,36 @@ onUnmounted(() => {
         <!-- Time Picker -->
         <div v-if="format !== 'date'" class="p-4 border-t border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-center space-x-4">
-            <div class="flex items-center">
-              <input
-                type="number"
-                v-model="selectedTime"
-                class="w-16 px-2 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50"
-                min="0"
-                max="23"
+            <div class="flex items-center space-x-2">
+              <!-- Hours Dropdown -->
+              <select
+                v-model="selectedHour"
                 @change="updateValue"
-              />
-              <span class="mx-2">:</span>
-              <input
-                type="number"
-                v-model="selectedTime"
-                class="w-16 px-2 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50"
-                min="0"
-                max="59"
+                class="w-20 px-2 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50 appearance-none cursor-pointer"
+              >
+                <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
+              </select>
+
+              <span class="text-gray-600 dark:text-gray-300">:</span>
+
+              <!-- Minutes Dropdown -->
+              <select
+                v-model="selectedMinute"
                 @change="updateValue"
-              />
+                class="w-20 px-2 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50 appearance-none cursor-pointer"
+              >
+                <option v-for="minute in minutes" :key="minute" :value="minute">{{ minute }}</option>
+              </select>
+
+              <!-- AM/PM Dropdown -->
+              <select
+                v-model="selectedPeriod"
+                @change="updateValue"
+                class="w-20 px-2 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50 appearance-none cursor-pointer"
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
             </div>
           </div>
         </div>

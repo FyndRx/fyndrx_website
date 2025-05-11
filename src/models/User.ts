@@ -1,44 +1,19 @@
-export interface User {
-  id: string;
+export type User = {
+  id: number;
+  firstname: string | null;
+  lastname: string | null;
+  fullname: string | null;
+  username: string | null;
+  dob: string | null;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: "patient" | "provider" | "admin";
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface UserCredentials {
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-  role?: "patient" | "provider" | "admin";
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: "patient" | "provider" | "admin";
-  phoneNumber?: string;
-  address?: string;
-  dateOfBirth?: Date;
-  gender?: "male" | "female" | "other";
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
-export interface UserResponse {
-  user: User;
-}
-
-export interface ProfileResponse {
-  profile: UserProfile;
-}
+  pharmacy_id: null;
+  pharmacy_branch_id: null;
+  phone_number: string;
+  status: null;
+  member_id: string;
+  address: null;
+  image: null;
+  profile_picture: string | null;
+  profile_picture_full: string | null;
+  saved_money: number;
+};

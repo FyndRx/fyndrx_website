@@ -129,3 +129,5 @@ const handleSubmit = async (e: Event) => {
   }
 }
 </style> 
+
+<!-- Newsletter subscription and unsubscribe /api/newsletter/subscribe and /api/newsletter/unsubscribe respectively, the body takes 'email'. I need you to help me implement this -->

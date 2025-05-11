@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import UserAvatar from '@/components/UserAvatar.vue';
+import { useAuthStore } from '@/store/auth';
+
+const authStore = useAuthStore();
+const isAuthenticated = authStore.isAuthenticated;
 
 const { registerElement } = useScrollAnimation();
 const isScrolled = ref(false);
@@ -49,9 +54,9 @@ export default {
         <!-- Desktop Navigation -->
         <div class="hidden md:flex items-center space-x-8">
           <router-link 
-            v-for="link in ['Home', 'Blog', 'About', 'Contact']" 
+            v-for="link in ['Home', 'Blog', 'About', 'Contact', 'Upload Prescription']" 
             :key="link"
-            :to="'/' + link.toLowerCase()"
+            :to="link === 'Home' ? '/' : '/' + link.toLowerCase().replace(' ', '-')"
             class="text-gray-700 hover:text-[#246BFD] font-medium transition-all duration-300 relative group"
             :class="{'dark:text-white': !isScrolled}"
           >
@@ -73,7 +78,8 @@ export default {
           </div>
 
           <!-- Auth Buttons -->
-          <router-link 
+          <template v-if="!isAuthenticated">
+            <router-link 
             to="/login" 
             class="px-6 py-2.5 rounded-full bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg hover:shadow-[#246BFD]/20"
           >
@@ -83,8 +89,12 @@ export default {
             to="/register" 
             class="px-6 py-2.5 rounded-full bg-[#FE9615] text-white font-semibold hover:bg-[#ffb547] transition-all duration-300 hover:shadow-lg hover:shadow-[#FE9615]/20"
           >
-            Register
-          </router-link>
+              Register
+            </router-link>
+          </template>
+          <template v-else>
+            <UserAvatar />
+          </template>
         </div>
 
         <!-- Mobile Menu Button -->
@@ -122,9 +132,9 @@ export default {
         class="md:hidden py-4 space-y-4 transition-all duration-300"
       >
         <router-link 
-          v-for="link in ['Home', 'Blog', 'About', 'Contact']" 
+          v-for="link in ['Home', 'Blog', 'About', 'Contact', 'Upload Prescription']" 
           :key="link"
-          :to="'/' + link.toLowerCase()"
+          :to="link === 'Home' ? '/' : '/' + link.toLowerCase().replace(' ', '-')"
           class="block text-gray-700 hover:text-[#246BFD] font-medium transition-colors"
         >
           {{ link }}
@@ -140,7 +150,8 @@ export default {
           </a>
         </div>
 
-        <div class="flex space-x-2">
+        <template v-if="!isAuthenticated">
+          <div class="flex space-x-2">
           <router-link 
             to="/login" 
             class="block w-full px-4 py-2 text-center rounded-full bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-colors"
@@ -152,15 +163,24 @@ export default {
             class="block w-full px-4 py-2 text-center rounded-full bg-[#FE9615] text-white font-semibold hover:bg-[#ffb547] transition-colors"
           >
             Register
-          </router-link>
-        </div>
+            </router-link>
+          </div>
+        </template>
+        <template v-else>
+          <UserAvatar />
+        </template>
       </div>
     </nav>
   </header>
 </template>
 
 <style scoped>
-.router-link-active {
+/* .router-link-active {
   @apply text-[#246BFD];
-}
+} */
+
+/* Override the active state for auth buttons */
+/* .router-link-active[to="/login"] {
+  @apply text-white;
+} */
 </style> 

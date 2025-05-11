@@ -131,7 +131,9 @@ const pharmacies = ref([
                 </div>
               </div>
               <button class="w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors">
-                View Deals
+                <router-link :to="'/pharmacy/' + pharmacy.id" class="block">
+                  View Details
+                </router-link>
               </button>
             </div>
           </div>
@@ -140,9 +142,12 @@ const pharmacies = ref([
 
       <!-- View All Button -->
       <div class="text-center mt-12 scroll-animate slide-up delay-500">
-        <button class="px-8 py-4 rounded-full bg-white dark:bg-gray-800 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300">
+        <router-link 
+          to="/pharmacies"
+          class="inline-block px-8 py-4 rounded-full bg-white dark:bg-gray-800 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+        >
           View All Pharmacies
-        </button>
+        </router-link>
       </div>
     </div>
   </section>

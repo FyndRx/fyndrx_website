@@ -3,33 +3,34 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
-import Checkbox from '@/components/Checkbox.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const loading = ref(false);
+const successMessage = ref('');
 const form = ref({
-  email: '',
+  login: '',
   password: '',
   rememberMe: false,
 });
 
 const validationErrors = ref({
-  email: '',
+  login: '',
   password: '',
 });
 
 const handleSubmit = async () => {
-  // Reset validation errors
+  // Reset validation errors and success message
   validationErrors.value = {
-    email: '',
+    login: '',
     password: '',
   };
+  successMessage.value = '';
 
   // Validate form
-  if (!form.value.email) {
-    validationErrors.value.email = 'Email or phone number is required';
+  if (!form.value.login) {
+    validationErrors.value.login = 'Email or phone number is required';
     return;
   }
   if (!form.value.password) {
@@ -40,23 +41,35 @@ const handleSubmit = async () => {
   try {
     loading.value = true;
     await authStore.login({
-      email: form.value.email,
+      login: form.value.login,
       password: form.value.password,
     });
-    router.push('/dashboard');
+    successMessage.value = 'Login successful! Redirecting...';
+    // Wait for the auth store to update and verify authentication
+    await authStore.checkAuth();
+    // Small delay to show success message
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    router.push({ name: 'home' });
   } catch (error) {
-    console.error('Login failed:', error);
-    validationErrors.value.email = 'Invalid email/phone or password';
+    if (error instanceof Error) {
+      if (error.message.includes('Network error')) {
+        validationErrors.value.login = 'Network error. Please check your internet connection.';
+      } else {
+        validationErrors.value.login = error.message || 'Invalid email/phone or password';
+      }
+    } else {
+      validationErrors.value.login = 'An unexpected error occurred. Please try again.';
+    }
   } finally {
     loading.value = false;
   }
 };
 
-const handleEmailValidation = (isValid: boolean) => {
-  if (!isValid && form.value.email) {
-    validationErrors.value.email = 'Please enter a valid email or Ghana phone number';
+const handleLoginValidation = (isValid: boolean) => {
+  if (!isValid && form.value.login) {
+    validationErrors.value.login = 'Please enter a valid email or Ghana phone number';
   } else {
-    validationErrors.value.email = '';
+    validationErrors.value.login = '';
   }
 };
 </script>
@@ -90,19 +103,35 @@ const handleEmailValidation = (isValid: boolean) => {
         </p>
       </div>
 
+      <!-- Success Message -->
+      <div v-if="successMessage" class="rounded-md bg-green-50 dark:bg-green-900 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-green-800 dark:text-green-200">
+              {{ successMessage }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Login Form -->
       <div class="mt-8 bg-white dark:bg-gray-800 py-8 px-4 shadow-xl rounded-2xl sm:px-10">
         <form class="space-y-6" @submit.prevent="handleSubmit">
           <TextInput
-            v-model="form.email"
-            type="email"
+            v-model="form.login"
+            type="text"
             label="Email or Phone Number"
             placeholder="Enter your email or phone number"
             required
             autocomplete="email"
             acceptPhone
-            :error="validationErrors.email"
-            @validation="handleEmailValidation"
+            :error="validationErrors.login"
+            @validation="handleLoginValidation"
           />
 
           <TextInput
@@ -131,12 +160,12 @@ const handleEmailValidation = (isValid: boolean) => {
             </div>
 
             <div class="text-sm">
-              <a
-                href="#"
+              <router-link
+                to="/forgot-password"
                 class="font-medium text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]"
               >
                 Forgot your password?
-              </a>
+              </router-link>
             </div>
           </div>
 

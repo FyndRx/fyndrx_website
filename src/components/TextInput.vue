@@ -6,12 +6,13 @@ import {
   PhoneIcon, 
   PencilIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
   modelValue: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
   label?: string;
   placeholder?: string;
   helper?: string;
@@ -59,6 +60,8 @@ const getInputIcon = computed(() => {
       return LockClosedIcon;
     case 'tel':
       return PhoneIcon;
+    case 'search':
+      return MagnifyingGlassIcon;
     default:
       return PencilIcon;
   }
