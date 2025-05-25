@@ -85,21 +85,21 @@ export default {
     <!-- Decorative elements -->
     <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#246BFD] via-[#FE9615] to-[#246BFD]"></div>
     
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-8">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-7">
         <!-- Brand Section -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="space-y-6 lg:col-span-2">
           <router-link to="/" class="inline-flex items-center group">
             <img 
               src="/src/assets/logo/logo_white_orange.png" 
               alt="FyndRx Logo" 
-              class="w-full h-20 mr-3 group-hover:rotate-12 transition-transform duration-300"
+              class="w-full h-20 mr-3 transition-transform duration-300 group-hover:rotate-12"
             />
             <!-- <span class="text-3xl font-extrabold text-white">
               Fynd<span class="text-[#FE9615]">Rx</span>
             </span> -->
           </router-link>
-          <p class="text-gray-400 leading-relaxed">
+          <p class="leading-relaxed text-gray-400">
             Your trusted partner in accessible and affordable healthcare.
           </p>
           <div class="flex space-x-4">
@@ -110,7 +110,7 @@ export default {
               class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#FE9615] transition-all duration-300 group"
             >
               <svg 
-                class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" 
+                class="w-5 h-5 text-gray-400 transition-colors group-hover:text-white" 
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -122,7 +122,7 @@ export default {
 
         <!-- Quick Links -->
         <div class="lg:col-span-1">
-          <h4 class="text-lg font-semibold mb-6 relative inline-block">
+          <h4 class="relative inline-block mb-6 text-lg font-semibold">
             Quick Links
             <span class="absolute bottom-0 left-0 w-full h-0.5 bg-[#FE9615] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
           </h4>
@@ -130,7 +130,7 @@ export default {
             <li v-for="link in quickLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="text-gray-400 hover:text-white transition-colors duration-300 relative group"
+                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
               >
                 {{ link.name }}
                 <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
@@ -141,12 +141,12 @@ export default {
 
         <!-- Support -->
         <div class="lg:col-span-1">
-          <h4 class="text-lg font-semibold mb-6">Support</h4>
+          <h4 class="mb-6 text-lg font-semibold">Support</h4>
           <ul class="space-y-3">
             <li v-for="link in supportLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="text-gray-400 hover:text-white transition-colors duration-300 relative group"
+                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
               >
                 {{ link.name }}
                 <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
@@ -157,12 +157,12 @@ export default {
 
         <!-- Information -->
         <div class="lg:col-span-1">
-          <h4 class="text-lg font-semibold mb-6">Information</h4>
+          <h4 class="mb-6 text-lg font-semibold">Information</h4>
           <ul class="space-y-3">
             <li v-for="link in informationLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="text-gray-400 hover:text-white transition-colors duration-300 relative group"
+                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
               >
                 {{ link.name }}
                 <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
@@ -173,10 +173,10 @@ export default {
 
         <!-- Contact Info -->
         <div class="lg:col-span-2">
-          <h4 class="text-lg font-semibold mb-6">Contact Us</h4>
+          <h4 class="mb-6 text-lg font-semibold">Contact Us</h4>
           <ul class="space-y-3 text-gray-400">
             <li class="flex items-start">
-              <svg class="w-5 h-5 text-[#FE9615] mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-[#FE9615] mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
@@ -199,12 +199,12 @@ export default {
 
         <!-- App Store Badges -->
         <div class="lg:col-span-2">
-          <h4 class="text-lg font-semibold mb-6">Download Our App</h4>
+          <h4 class="mb-6 text-lg font-semibold">Download Our App</h4>
           <div class="flex space-x-4">
-            <a href="#" class="hover:opacity-90 transition-opacity">
+            <a href="#" class="transition-opacity hover:opacity-90">
               <img src="/src/assets/appstore_banner.svg" alt="Download on the App Store" class="w-full h-10" />
             </a>
-            <a href="#" class="hover:opacity-90 transition-opacity">
+            <a href="#" class="transition-opacity hover:opacity-90">
               <img src="/src/assets/playstore_banner.svg" alt="GET IT ON Google Play" class="w-full h-10" />
             </a>
           </div>
@@ -212,7 +212,7 @@ export default {
       </div>
 
       <!-- Copyright -->
-      <div class="mt-12 pt-8 border-t border-gray-800 text-center">
+      <div class="pt-8 mt-12 text-center border-t border-gray-800">
         <p class="text-gray-400">
           &copy; {{ currentYear }} FyndRX. All rights reserved.
         </p>

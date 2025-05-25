@@ -1,41 +1,41 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
-import Header from '@/components/landing/Header.vue';
-import Footer from '@/components/landing/Footer.vue';
+// import { ref, computed } from 'vue';
+// import { useRouter } from 'vue-router';
+// import { useAuthStore } from '@/store/auth';
+import Header from '@/views/Home/landing/Header.vue';
+import Footer from '@/views/Home/landing/Footer.vue';
 
-const router = useRouter();
-const authStore = useAuthStore();
+// const router = useRouter();
+// const authStore = useAuthStore();
 
-const navigationItems = [
-  { name: 'Home', path: '/' },
-  { name: 'About', path: '/about' },
-  { name: 'Services', path: '/services' },
-  { name: 'Contact', path: '/contact' }
-];
+// const navigationItems = [
+//   { name: 'Home', path: '/' },
+//   { name: 'About', path: '/about' },
+//   { name: 'Services', path: '/services' },
+//   { name: 'Contact', path: '/contact' }
+// ];
 
-const showMobileMenu = ref(false);
-const showUserMenu = ref(false);
-const isAuthenticated = computed(() => authStore.isAuthenticated);
-const user = computed(() => authStore.user);
+// const showMobileMenu = ref(false);
+// const showUserMenu = ref(false);
+// const isAuthenticated = computed(() => authStore.isAuthenticated);
+// const user = computed(() => authStore.user);
 
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value;
-};
+// const toggleMobileMenu = () => {
+//   showMobileMenu.value = !showMobileMenu.value;
+// };
 
-const toggleUserMenu = () => {
-  showUserMenu.value = !showUserMenu.value;
-};
+// const toggleUserMenu = () => {
+//   showUserMenu.value = !showUserMenu.value;
+// };
 
-const handleLogout = async () => {
-  try {
-    await authStore.logout();
-    router.push('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
+// const handleLogout = async () => {
+//   try {
+//     await authStore.logout();
+//     router.push('/login');
+//   } catch (error) {
+//     console.error('Logout failed:', error);
+//   }
+// };
 </script>
 
 <script lang="ts">
@@ -45,7 +45,7 @@ export default {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="flex flex-col min-h-screen">
     <Header />
     <main class="flex-grow">
       <slot></slot>

@@ -53,8 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await authService.login(credentials);
-      
+      const response = await authService.login(credentials);      
       if (!response.access_token) {
         throw new Error('Invalid response from server');
       }

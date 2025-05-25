@@ -162,6 +162,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/medication/:id',
+      name: 'MedicationDetail',
+      component: () => import('@/views/MedicationDetail.vue'),
+      meta: {
+        title: 'Medication Details'
+      }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound/NotFoundView.vue'),

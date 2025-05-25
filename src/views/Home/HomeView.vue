@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 // Import only the landing page content sections (not Header or Footer)
-import Hero from '../../components/landing/Hero.vue';
-import Medications from '../../components/landing/Medications.vue';
-import PharmacyList from '../../components/landing/PharmacyList.vue';
-import CouponCarousel from '../../components/landing/CouponCarousel.vue';
-import HowItWorks from '../../components/landing/HowItWorks.vue';
-import PopularCoupons from '../../components/landing/PopularCoupons.vue';
-import BlogPosts from '../../components/landing/BlogPosts.vue';
-import NewsletterSignup from '../../components/landing/NewsletterSignup.vue';
+import Hero from '@/views/Home/landing/Hero.vue';
+import Medications from '@/views/Home/landing/Medications.vue';
+import PharmacyList from '@/views/Home/landing/PharmacyList.vue';
+import CouponCarousel from '@/views/Home/landing/CouponCarousel.vue';
+import HowItWorks from '@/views/Home/landing/HowItWorks.vue';
+import PopularCoupons from '@/views/Home/landing/PopularCoupons.vue';
+import BlogPosts from '@/views/Home/landing/BlogPosts.vue';
+import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
 
 const isVisible = ref(false);
 
@@ -76,7 +76,7 @@ onMounted(() => {
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
-      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
+      <!-- <div class="absolute inset-0 bg-[#246BFD]/5"></div> -->
       <BlogPosts />
     </section>
 

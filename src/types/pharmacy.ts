@@ -1,9 +1,15 @@
 export interface Pharmacy {
-  id: number;
+  id: string | number;
   name: string;
   address: string;
   rating: number;
-  reviews: Review[];
+  reviews: Array<{
+    id: string | number;
+    rating: number;
+    comment: string;
+    user: string;
+    date: string;
+  }>;
   image: string;
   isOpen: boolean;
   distance: string;
@@ -13,7 +19,10 @@ export interface Pharmacy {
   email: string;
   website: string;
   description: string;
-  location: Location;
+  location: {
+    lat: number;
+    lng: number;
+  };
   medications: Medication[];
 }
 
@@ -53,5 +62,5 @@ export interface PharmacyFilters {
   searchQuery: string;
   selectedServices: string[];
   sortBy: 'distance' | 'rating' | 'name';
-  isOpenNow?: boolean;
+  isOpenNow: boolean;
 }

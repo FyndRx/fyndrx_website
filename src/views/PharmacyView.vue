@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, defineAsyncComponent } from 'vue';
+import { useRoute } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { pharmacyService } from '@/services/pharmacyService';
-import type { Pharmacy, Review } from '@/types/pharmacy';
+import type { Pharmacy } from '@/types/pharmacy';
+import LazyImage from '@/components/LazyImage.vue';
 
 // Import components
 const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
 const DateTimePicker = defineAsyncComponent(() => import('@/components/DateTimePicker.vue'));
 
 const route = useRoute();
-const router = useRouter();
 const { registerElement } = useScrollAnimation();
 
 const pharmacy = ref<Pharmacy | null>(null);
@@ -73,7 +73,7 @@ const handlePrescriptionUpload = async () => {
   prescriptionError.value = null;
 
   try {
-    await pharmacyService.uploadPrescription(pharmacy.value.id, prescriptionFile.value);
+    await pharmacyService.uploadPrescription(Number(pharmacy.value?.id), prescriptionFile.value);
     // Show success message
     prescriptionFile.value = null;
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -97,7 +97,7 @@ const handlePickupSchedule = async () => {
     const formattedDate = date.toISOString().split('T')[0];
     const formattedTime = date.toTimeString().split(' ')[0];
 
-    await pharmacyService.schedulePickup(pharmacy.value.id, formattedDate, formattedTime);
+    await pharmacyService.schedulePickup(Number(pharmacy.value?.id), formattedDate, formattedTime);
     // Show success message
     pickupDateTime.value = '';
   } catch (err) {
@@ -112,7 +112,7 @@ const handleReviewSubmit = async () => {
   if (!pharmacy.value || !newReview.value.comment) return;
 
   try {
-    await pharmacyService.addReview(pharmacy.value.id, newReview.value);
+    await pharmacyService.addReview(Number(pharmacy.value?.id), newReview.value);
     // Refresh pharmacy data to show new review
     await loadPharmacy();
     // Reset form
@@ -137,7 +137,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen pt-12 bg-gray-50 dark:bg-gray-900">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
@@ -145,7 +145,7 @@ onMounted(() => {
 
     <!-- Error State -->
     <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen">
-      <p class="text-red-600 dark:text-red-400 mb-4">{{ error }}</p>
+      <p class="mb-4 text-red-600 dark:text-red-400">{{ error }}</p>
       <button 
         @click="loadPharmacy"
         class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
@@ -155,17 +155,23 @@ onMounted(() => {
     </div>
 
     <!-- Pharmacy Content -->
-    <div v-else-if="pharmacy" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div v-else-if="pharmacy" class="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <!-- Hero Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg mb-8 scroll-animate slide-up">
+      <div class="mb-8 overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
         <div class="relative h-64">
           <div class="absolute inset-0 bg-gradient-to-br from-[#246BFD]/20 to-[#FE9615]/20 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10"></div>
-          <div class="absolute inset-0 flex items-center justify-center">
+          <LazyImage
+            :src="pharmacy.image"
+            :alt="pharmacy.name"
+            aspectRatio="landscape"
+            className="w-full h-full object-cover"
+          />
+          <!-- <div class="absolute inset-0 flex items-center justify-center">
             <p class="text-gray-400 dark:text-gray-500">Pharmacy Image</p>
-          </div>
+          </div> -->
           <div class="absolute top-4 right-4">
             <span
-              class="px-3 py-1 rounded-full text-sm font-medium"
+              class="px-3 py-1 text-sm font-medium rounded-full"
               :class="pharmacy.isOpen ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
             >
               {{ pharmacy.isOpen ? 'Open' : 'Closed' }}
@@ -174,14 +180,14 @@ onMounted(() => {
         </div>
 
         <div class="p-6">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div class="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 class="text-3xl font-medium text-gray-900 dark:text-white mb-2">
+              <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">
                 {{ pharmacy.name }}
               </h1>
               <p class="text-gray-600 dark:text-gray-300">{{ pharmacy.address }}</p>
             </div>
-            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+            <div class="flex items-center mt-4 space-x-4 md:mt-0">
               <div class="flex items-center">
                 <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
@@ -226,18 +232,18 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="flex flex-col lg:flex-row gap-8">
+      <div class="flex flex-col gap-8 lg:flex-row">
         <!-- Main Content -->
         <div class="flex-1">
           <!-- Tabs -->
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-8">
+          <div class="mb-8 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
             <div class="border-b border-gray-200 dark:border-gray-700">
               <nav class="flex -mb-px">
                 <button
                   v-for="tab in ['overview', 'services', 'reviews', 'medications']"
                   :key="tab"
                   @click="activeTab = tab"
-                  class="px-6 py-4 text-sm font-medium border-b-2 transition-colors"
+                  class="px-6 py-4 text-sm font-medium transition-colors border-b-2"
                   :class="[
                     activeTab === tab
                       ? 'border-[#246BFD] text-[#246BFD]'
@@ -254,12 +260,12 @@ onMounted(() => {
               <!-- Overview Tab -->
               <div v-if="activeTab === 'overview'" class="space-y-6">
                 <div>
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">About</h3>
+                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">About</h3>
                   <p class="text-gray-600 dark:text-gray-300">{{ pharmacy.description }}</p>
                 </div>
 
                 <div>
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Working Hours</h3>
+                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">Working Hours</h3>
                   <div class="space-y-2">
                     <div
                       v-for="(hours, day) in pharmacy.workingHours"
@@ -273,7 +279,7 @@ onMounted(() => {
                 </div>
 
                 <div>
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Contact Information</h3>
+                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">Contact Information</h3>
                   <div class="space-y-2">
                     <p class="text-gray-600 dark:text-gray-300">
                       <span class="font-medium">Phone:</span> {{ pharmacy.phone }}
@@ -297,13 +303,13 @@ onMounted(() => {
 
               <!-- Services Tab -->
               <div v-if="activeTab === 'services'" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div
                     v-for="service in pharmacy.services"
                     :key="service"
-                    class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700"
                   >
-                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">{{ service }}</h4>
+                    <h4 class="mb-1 font-medium text-gray-900 dark:text-white">{{ service }}</h4>
                   </div>
                 </div>
               </div>
@@ -311,11 +317,11 @@ onMounted(() => {
               <!-- Reviews Tab -->
               <div v-if="activeTab === 'reviews'" class="space-y-6">
                 <!-- Review Form -->
-                <div v-if="showReviewForm" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Write a Review</h3>
+                <div v-if="showReviewForm" class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Write a Review</h3>
                   <div class="space-y-4">
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                         Rating
                       </label>
                       <div class="flex items-center">
@@ -331,7 +337,7 @@ onMounted(() => {
                       </div>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                         Your Review
                       </label>
                       <textarea
@@ -344,7 +350,7 @@ onMounted(() => {
                     <div class="flex justify-end space-x-3">
                       <button
                         @click="showReviewForm = false"
-                        class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        class="px-4 py-2 text-gray-600 rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
                       >
                         Cancel
                       </button>
@@ -363,12 +369,12 @@ onMounted(() => {
                   <div
                     v-for="review in pharmacy.reviews"
                     :key="review.id"
-                    class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6"
+                    class="p-6 rounded-lg bg-gray-50 dark:bg-gray-700"
                   >
                     <div class="flex items-center justify-between mb-4">
                       <div class="flex items-center">
-                        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                          <span class="text-gray-600 dark:text-gray-300 font-medium">
+                        <div class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full dark:bg-gray-600">
+                          <span class="font-medium text-gray-600 dark:text-gray-300">
                             {{ review.user.charAt(0) }}
                           </span>
                         </div>
@@ -380,7 +386,7 @@ onMounted(() => {
                         </div>
                       </div>
                       <div class="flex items-center">
-                        <span class="text-yellow-400 mr-1">★</span>
+                        <span class="mr-1 text-yellow-400">★</span>
                         <span class="text-gray-600 dark:text-gray-300">{{ review.rating }}</span>
                       </div>
                     </div>
@@ -392,16 +398,16 @@ onMounted(() => {
               <!-- Medications Tab -->
               <div v-if="activeTab === 'medications'" class="space-y-6">
                 <!-- Prescription Upload -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Upload Prescription</h3>
+                <div class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Upload Prescription</h3>
                   <div class="space-y-4">
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                         Prescription File
                       </label>
                       <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-600 border-dashed rounded-lg hover:border-[#246BFD] dark:hover:border-[#246BFD] transition-colors">
                         <div class="space-y-1 text-center">
-                          <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <svg class="w-12 h-12 mx-auto text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                           </svg>
                           <div class="flex text-sm text-gray-600 dark:text-gray-400">
@@ -434,7 +440,7 @@ onMounted(() => {
                       class="w-full px-4 py-2 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <span v-if="isUploading" class="flex items-center justify-center">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -446,8 +452,8 @@ onMounted(() => {
                 </div>
 
                 <!-- Pickup Schedule -->
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
-                  <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Schedule Pickup</h3>
+                <div class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Schedule Pickup</h3>
                   <div class="space-y-4">
                     <DateTimePicker
                       v-model="pickupDateTime"
@@ -464,7 +470,7 @@ onMounted(() => {
                       class="w-full px-4 py-2 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <span v-if="isScheduling" class="flex items-center justify-center">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -476,19 +482,19 @@ onMounted(() => {
                 </div>
 
                 <!-- Medications List -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div
                     v-for="medication in pharmacy.medications"
                     :key="medication.id"
-                    class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                    class="p-6 transition-shadow rounded-lg bg-gray-50 dark:bg-gray-700 hover:shadow-lg"
                   >
                     <div class="flex items-start justify-between mb-4">
                       <div>
-                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">{{ medication.name }}</h4>
+                        <h4 class="mb-1 font-medium text-gray-900 dark:text-white">{{ medication.name }}</h4>
                         <p class="text-sm text-gray-600 dark:text-gray-300">{{ medication.description }}</p>
                       </div>
                       <span
-                        class="px-3 py-1 rounded-full text-sm font-medium"
+                        class="px-3 py-1 text-sm font-medium rounded-full"
                         :class="medication.inStock ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
                       >
                         {{ medication.inStock ? 'In Stock' : 'Out of Stock' }}
@@ -513,12 +519,12 @@ onMounted(() => {
         </div>
 
         <!-- Right Column -->
-        <div class="lg:w-96 flex-shrink-0">
+        <div class="flex-shrink-0 lg:w-96">
           <!-- Location Card -->
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-8 scroll-animate slide-up delay-200">
+          <div class="mb-8 delay-200 bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
             <div class="p-6">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Location</h3>
-              <div class="h-64 rounded-lg overflow-hidden mb-4">
+              <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Location</h3>
+              <div class="h-64 mb-4 overflow-hidden rounded-lg">
                 <PharmacyMap
                   :location="pharmacy.location"
                   :pharmacy-name="pharmacy.name"
@@ -529,9 +535,9 @@ onMounted(() => {
           </div>
 
           <!-- Quick Actions -->
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg scroll-animate slide-up delay-300">
+          <div class="delay-300 bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
             <div class="p-6">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+              <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h3>
               <div class="space-y-3">
                 <button
                   @click="showReviewForm = true"

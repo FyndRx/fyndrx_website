@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -46,23 +47,31 @@ export default {
   <div class="relative">
     <button
       @click="isOpen = !isOpen"
-      class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+      class="flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full bg-primary hover:bg-primary/90"
     >
       <span v-if="!user?.profile_picture" class="text-sm font-medium">
         {{ userInitials }}
       </span>
-      <img
+      <LazyImage
+        v-if="user?.profile_picture"
+        :src="user?.profile_picture_full || user?.profile_picture || ''"
+        :alt="`${user?.firstname} ${user?.lastname}`"
+        :placeholder="userInitials"
+        :aspectRatio="'square'"
+        class="object-cover w-full h-full rounded-full"
+      />
+      <!-- <img
         v-else
         :src= "user.profile_picture_full || user.profile_picture"
         :alt="`${user.firstname} ${user.lastname}`"
-        class="w-full h-full rounded-full object-cover"
-      />
+        class="object-cover w-full h-full rounded-full"
+      /> -->
     </button>
 
     <!-- Dropdown Menu -->
     <div
       v-if="isOpen"
-      class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+      class="absolute right-0 z-50 w-48 mt-2 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5"
     >
       <div class="py-1" role="menu" aria-orientation="vertical">
         <router-link
@@ -71,7 +80,7 @@ export default {
           role="menuitem"
           @click="isOpen = false"
         >
-          <i class="fas fa-tachometer-alt mr-2"></i>
+          <i class="mr-2 fas fa-tachometer-alt"></i>
           Dashboard
         </router-link>
 
@@ -81,7 +90,7 @@ export default {
           role="menuitem"
           @click="isOpen = false"
         >
-          <i class="fas fa-user mr-2"></i>
+          <i class="mr-2 fas fa-user"></i>
           Profile
         </router-link>
 
@@ -91,7 +100,7 @@ export default {
           role="menuitem"
           @click="isOpen = false"
         >
-          <i class="fas fa-calendar-alt mr-2"></i>
+          <i class="mr-2 fas fa-calendar-alt"></i>
           Appointments
         </router-link>
 
@@ -101,7 +110,7 @@ export default {
           role="menuitem"
           @click="isOpen = false"
         >
-          <i class="fas fa-prescription mr-2"></i>
+          <i class="mr-2 fas fa-prescription"></i>
           Prescriptions
         </router-link>
 
@@ -112,7 +121,7 @@ export default {
           class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
           role="menuitem"
         >
-          <i class="fas fa-sign-out-alt mr-2"></i>
+          <i class="mr-2 fas fa-sign-out-alt"></i>
           Logout
         </button>
       </div>

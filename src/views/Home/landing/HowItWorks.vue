@@ -42,10 +42,10 @@ const steps = ref([
 
 <template>
   <section class="py-20 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <!-- Section Header -->
-      <div class="text-center mb-16 scroll-animate slide-up">
-        <h2 class="text-4xl font-medium text-gray-900 dark:text-white mb-4">
+      <div class="mb-16 text-center scroll-animate slide-up">
+        <h2 class="mb-4 text-4xl font-medium text-gray-900 dark:text-white">
           How It <span class="text-[#246BFD]">Works</span>
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-300">
@@ -54,14 +54,14 @@ const steps = ref([
       </div>
 
       <!-- Steps Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
         <div
           v-for="(step, index) in steps"
           :key="step.id"
           class="scroll-animate slide-up"
           :class="`delay-${(index + 1) * 100}`"
         >
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover-lift">
+          <div class="flex flex-col items-center p-8 bg-white shadow-lg dark:bg-gray-800 rounded-2xl hover-lift">
             <!-- Step Number -->
             <div class="w-12 h-12 rounded-full bg-[#246BFD]/10 flex items-center justify-center mb-6">
               <span class="text-2xl font-medium text-[#246BFD]">{{ step.id }}</span>
@@ -75,10 +75,10 @@ const steps = ref([
             </div>
 
             <!-- Step Content -->
-            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-3">
+            <h3 class="mb-3 text-xl font-medium text-center text-gray-900 dark:text-white">
               {{ step.title }}
             </h3>
-            <p class="text-gray-600 dark:text-gray-300">
+            <p class="text-center text-gray-600 dark:text-gray-300">
               {{ step.description }}
             </p>
           </div>
@@ -86,7 +86,7 @@ const steps = ref([
       </div>
 
       <!-- CTA Button -->
-      <div class="text-center mt-16 scroll-animate slide-up delay-500">
+      <div class="mt-16 text-center delay-500 scroll-animate slide-up">
         <button class="px-8 py-4 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors">
           Get Started
         </button>

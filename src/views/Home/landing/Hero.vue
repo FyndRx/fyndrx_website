@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import LazyImage from '@/components/LazyImage.vue';
 
 const { registerElement } = useScrollAnimation();
 const isVisible = ref(false);
@@ -70,15 +71,15 @@ onMounted(() => {
 
         <!-- Right Column -->
         <div class="relative scroll-animate slide-in-right delay-300">
-          <!-- Placeholder for hero image -->
+          <!-- Hero Image with LazyImage -->
           <div class="relative w-full h-[500px] rounded-2xl overflow-hidden hover:shadow-2xl hover-scale">
             <div class="absolute inset-0 bg-gradient-to-br from-[#246BFD]/20 to-[#FE9615]/20"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <!-- <p class="text-gray-400 text-lg font-light">Hero Image Placeholder</p> -->
-              <img src="/src/assets/images/hero-image.png"
+            <LazyImage
+              src="/src/assets/images/hero-image.png"
               alt="Hero Image"
-              class="w-full h-full object-cover" />
-            </div>
+              aspectRatio="landscape"
+              className="w-full h-full"
+            />
           </div>
           
           <!-- Floating Elements -->
