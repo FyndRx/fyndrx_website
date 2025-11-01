@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { handleApiError, isAuthError, isNetworkError } from '@/utils/errorHandler';
 import serverConfig from '@/config/server';
 

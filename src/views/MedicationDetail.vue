@@ -2,9 +2,11 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import LazyImage from '@/components/LazyImage.vue';
 import Dropdown from '@/components/Dropdown.vue';
+import BlogCard from '@/components/BlogCard.vue';
+
+// Import heavy dependencies
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import BlogCard from '@/components/BlogCard.vue';
 
 interface Pharmacy {
   id: number;
@@ -40,6 +42,10 @@ interface Blog {
   title: string;
   summary: string;
   url: string;
+  date?: string;
+  author?: string;
+  category?: string;
+  image?: string;
 }
 
 const medication = ref<Medication | null>(null);

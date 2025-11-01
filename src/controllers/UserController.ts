@@ -1,6 +1,5 @@
 import { apiService } from "@/services/api/apiService";
 import type {
-  User,
   UserCredentials,
   UserProfile,
   AuthResponse,

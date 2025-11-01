@@ -3,6 +3,10 @@ import { ref, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import UserAvatar from '@/components/UserAvatar.vue';
 import { useAuthStore } from '@/store/auth';
+import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
+import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
+import appStoreBanner from '@/assets/appstore_banner.svg';
+import playStoreBanner from '@/assets/playstore_banner.svg';
 
 const authStore = useAuthStore();
 const isAuthenticated = authStore.isAuthenticated;
@@ -35,24 +39,24 @@ export default {
       'bg-transparent': !isScrolled,
     }"
   >
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
         <!-- Logo -->
         <router-link to="/" class="flex items-center group">
           <img 
-            :src="'/src/assets/logo/logo_blue_orange.png'" 
+            :src="logoBlueOrange" 
             alt="FyndRx Logo" 
-            class="w-full h-10 mr-3 group-hover:rotate-12 transition-transform duration-300 dark:hidden"
+            class="w-full h-10 mr-3 transition-transform duration-300 group-hover:rotate-12 dark:hidden"
           />
           <img 
-            :src="isScrolled ? '/src/assets/logo/logo_blue_orange.png' : '/src/assets/logo/logo_white_orange.png'" 
+            :src="isScrolled ? logoBlueOrange : logoWhiteOrange" 
             alt="FyndRx Logo" 
-            class="w-full h-10 mr-3 group-hover:rotate-12 transition-transform duration-300 hidden dark:block"
+            class="hidden w-full h-10 mr-3 transition-transform duration-300 group-hover:rotate-12 dark:block"
           />
         </router-link>
 
         <!-- Desktop Navigation -->
-        <div class="hidden md:flex items-center space-x-8">
+        <div class="items-center hidden space-x-8 md:flex">
           <router-link 
             v-for="link in ['Home', 'Blog', 'About', 'Contact', 'Upload Prescription']" 
             :key="link"
@@ -66,14 +70,14 @@ export default {
         </div>
 
         <!-- App Store Badges and Auth Buttons -->
-        <div class="hidden md:flex items-center space-x-4">
+        <div class="items-center hidden space-x-4 md:flex">
           <!-- App Store Badges -->
-          <div class="flex items-center space-x-2 mr-4">
-            <a href="#" class="w-32 h-10 hover:opacity-90 transition-opacity">
-              <img src="/src/assets/appstore_banner.svg" alt="Download on the App Store" class="w-full h-full" />
+          <div class="flex items-center mr-4 space-x-2">
+            <a href="#" class="w-32 h-10 transition-opacity hover:opacity-90">
+              <img :src="appStoreBanner" alt="Download on the App Store" class="w-full h-full" />
             </a>
-            <a href="#" class="w-32 h-10 hover:opacity-90 transition-opacity">
-              <img src="/src/assets/playstore_banner.svg" alt="GET IT ON Google Play" class="w-full h-full" />
+            <a href="https://play.google.com/store/apps/details?id=com.aby.fyndrx" class="w-32 h-10 transition-opacity hover:opacity-90">
+              <img :src="playStoreBanner" alt="GET IT ON Google Play" class="w-full h-full" />
             </a>
           </div>
 
@@ -100,7 +104,7 @@ export default {
         <!-- Mobile Menu Button -->
         <button 
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          class="p-2 transition-colors rounded-lg md:hidden hover:bg-gray-100"
         >
           <svg 
             :class="{'w-6 h-6 text-gray-700': isScrolled, 'w-6 h-6 text-white': !isScrolled}" 
@@ -129,7 +133,7 @@ export default {
       <!-- Mobile Menu -->
       <div 
         v-if="isMobileMenuOpen"
-        class="md:hidden py-4 space-y-4 transition-all duration-300"
+        class="py-4 space-y-4 transition-all duration-300 md:hidden"
       >
         <router-link 
           v-for="link in ['Home', 'Blog', 'About', 'Contact', 'Upload Prescription']" 
@@ -141,12 +145,12 @@ export default {
         </router-link>
         
         <!-- Mobile App Store Badges -->
-        <div class="flex space-x-2 py-4 justify-center">
-          <a href="#" class=" h-12 hover:opacity-90 transition-opacity">
-            <img src="/src/assets/appstore_banner.svg" alt="Download on the App Store" class="h-12" />
+        <div class="flex justify-center py-4 space-x-2">
+          <a href="#" class="h-12 transition-opacity hover:opacity-90">
+            <img :src="appStoreBanner" alt="Download on the App Store" class="h-12" />
           </a>
-          <a href="#" class=" h-12 hover:opacity-90 transition-opacity">
-            <img src="/src/assets/playstore_banner.svg" alt="GET IT ON Google Play" class="h-12" />
+          <a href="#" class="h-12 transition-opacity hover:opacity-90">
+            <img :src="playStoreBanner" alt="GET IT ON Google Play" class="h-12" />
           </a>
         </div>
 

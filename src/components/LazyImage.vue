@@ -18,7 +18,7 @@ const imageError = ref(false);
 const imageRef = ref<HTMLImageElement | null>(null);
 
 const placeholderSrc = computed(() => {
-  return `/src/assets/placeholder/${props.aspectRatio}.png`;
+  return new URL(`../assets/placeholder/${props.aspectRatio}.png`, import.meta.url).href;
 });
 
 const handleImageLoad = () => {
@@ -70,7 +70,7 @@ export default {
       v-if="!imageLoaded"
       :src="placeholderSrc"
       :alt="alt"
-      class="w-full h-full object-cover"
+      class="object-cover w-full h-full"
     />
     
     <!-- Actual Image -->
@@ -78,7 +78,7 @@ export default {
       ref="imageRef"
       :src="imageError ? placeholderSrc : src"
       :alt="alt"
-      class="w-full h-full object-cover transition-opacity duration-300"
+      class="object-cover w-full h-full transition-opacity duration-300"
       :class="{ 'opacity-0': !imageLoaded, 'opacity-100': imageLoaded }"
       @load="handleImageLoad"
       @error="handleImageError"

@@ -1,27 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import { formatDate } from '@/utils/date'
 import type { BlogPost, Comment } from '@/types/blog'
-import { HeartIcon } from '@heroicons/vue/24/outline'
 import TwitterIcon from '@/components/icons/TwitterIcon.vue'
 import FacebookIcon from '@/components/icons/FacebookIcon.vue'
 import LinkedInIcon from '@/components/icons/LinkedInIcon.vue'
 
-const route = useRoute()
 const isLoading = ref(true)
 const post = ref<BlogPost | null>(null)
 const comments = ref<Comment[]>([])
 const newComment = ref('')
 const newReply = ref('')
 const activeReplyId = ref<number | null>(null)
-
-const socialPlatforms = [
-  { name: 'twitter', icon: 'TwitterIcon' },
-  { name: 'facebook', icon: 'FacebookIcon' },
-  { name: 'linkedin', icon: 'LinkedInIcon' }
-]
-
 const relatedPosts = ref<BlogPost[]>([])
 
 const submitComment = () => {

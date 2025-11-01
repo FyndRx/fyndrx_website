@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
+import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
+import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -76,16 +78,16 @@ const handleLoginValidation = (isValid: boolean) => {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+    <div class="max-w-xl w-full space-y-8">
       <!-- Logo -->
       <div class="text-center">
         <img 
-          src="/src/assets/logo/logo_blue_orange.png" 
+          :src="logoBlueOrange" 
           alt="FyndRx Logo" 
           class="mx-auto h-12 w-auto dark:hidden"
         />
         <img 
-          src="/src/assets/logo/logo_white_orange.png" 
+          :src="logoWhiteOrange" 
           alt="FyndRx Logo" 
           class="mx-auto h-12 w-auto hidden dark:block"
         />

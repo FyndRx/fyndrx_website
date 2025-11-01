@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import TextInput from '@/components/TextInput.vue';
+import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
+import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const router = useRouter();
-const route = useRoute();
 const loading = ref(false);
 const form = ref({
   password: '',
@@ -58,19 +59,19 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+  <div class="flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 dark:bg-gray-900 sm:px-6 lg:px-8">
+    <div class="w-full max-w-xl space-y-8">
       <!-- Logo -->
       <div class="text-center">
         <img 
-          src="/src/assets/logo/logo_blue_orange.png" 
+          :src="logoBlueOrange" 
           alt="FyndRx Logo" 
-          class="mx-auto h-12 w-auto dark:hidden"
+          class="w-auto h-12 mx-auto dark:hidden"
         />
         <img 
-          src="/src/assets/logo/logo_white_orange.png" 
+          :src="logoWhiteOrange" 
           alt="FyndRx Logo" 
-          class="mx-auto h-12 w-auto hidden dark:block"
+          class="hidden w-auto h-12 mx-auto dark:block"
         />
         <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
           Reset your password
@@ -81,7 +82,7 @@ const handleSubmit = async () => {
       </div>
 
       <!-- Reset Password Form -->
-      <div class="mt-8 bg-white dark:bg-gray-800 py-8 px-4 shadow-xl rounded-2xl sm:px-10">
+      <div class="px-4 py-8 mt-8 bg-white shadow-xl dark:bg-gray-800 rounded-2xl sm:px-10">
         <form class="space-y-6" @submit.prevent="handleSubmit">
           <TextInput
             v-model="form.password"
@@ -103,10 +104,10 @@ const handleSubmit = async () => {
             :error="validationErrors.confirmPassword"
           />
 
-          <div v-if="successMessage" class="rounded-md bg-green-50 dark:bg-green-900 p-4">
+          <div v-if="successMessage" class="p-4 rounded-md bg-green-50 dark:bg-green-900">
             <div class="flex">
               <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="w-5 h-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
               </div>
@@ -126,7 +127,7 @@ const handleSubmit = async () => {
             >
               <svg
                 v-if="loading"
-                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                class="w-5 h-5 mr-3 -ml-1 text-white animate-spin"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"

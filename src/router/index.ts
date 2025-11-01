@@ -1,11 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/Home/HomeView.vue';
-import OTPVerificationView from '@/views/Auth/OTPVerificationView.vue';
 import { useAuthStore } from '@/store/auth';
-import BlogView from '@/views/BlogView.vue';
-import BlogPostView from '@/views/BlogPostView.vue';
-import PharmaciesView from '@/views/PharmaciesView.vue';
-import PharmacyView from '@/views/PharmacyView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: () => import('../views/Home/HomeView.vue'),
       meta: {
         title: 'Home | FyndRX',
       },
@@ -116,7 +110,7 @@ const router = createRouter({
     {
       path: '/verify-otp',
       name: 'verify-otp',
-      component: OTPVerificationView,
+      component: () => import('../views/Auth/OTPVerificationView.vue'),
       meta: {
         requiresAuth: false,
         layout: 'auth',
@@ -125,7 +119,7 @@ const router = createRouter({
     {
       path: '/blog',
       name: 'blog',
-      component: BlogView,
+      component: () => import('../views/BlogView.vue'),
       meta: {
         title: 'Blog | FyndRX',
         description:
@@ -135,7 +129,7 @@ const router = createRouter({
     {
       path: '/blog/:slug',
       name: 'blog-post',
-      component: BlogPostView,
+      component: () => import('../views/BlogPostView.vue'),
       meta: {
         title: 'Blog Post | FyndRX',
         description:
@@ -145,7 +139,7 @@ const router = createRouter({
     {
       path: '/pharmacies',
       name: 'pharmacies',
-      component: PharmaciesView,
+      component: () => import('../views/PharmaciesView.vue'),
       meta: {
         title: 'Pharmacies | FyndRX',
         description: 'Find trusted pharmacies near you with our comprehensive directory.',
@@ -154,7 +148,7 @@ const router = createRouter({
     {
       path: '/pharmacy/:id',
       name: 'pharmacy',
-      component: PharmacyView,
+      component: () => import('../views/PharmacyView.vue'),
       meta: {
         title: 'Pharmacy Details | FyndRX',
         description:
@@ -170,6 +164,51 @@ const router = createRouter({
       }
     },
     {
+      path: '/help',
+      name: 'help',
+      component: () => import('@/views/Support/HelpCenter.vue'),
+      meta: {
+        title: 'Help Center | FyndRX',
+        description: 'Get help and support for your FyndRX experience. Find answers to frequently asked questions and contact our support team.'
+      }
+    },
+    {
+      path: '/feedback',
+      name: 'feedback',
+      component: () => import('@/views/Support/Feedback.vue'),
+      meta: {
+        title: 'Feedback | FyndRX',
+        description: 'Share your feedback with us. Help us improve FyndRX by sharing your thoughts and suggestions.'
+      }
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('@/views/Legal/TermsOfService.vue'),
+      meta: {
+        title: 'Terms of Service',
+        description: 'Terms and conditions for using FyndRx services'
+      }
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('@/views/Legal/PrivacyPolicy.vue'),
+      meta: {
+        title: 'Privacy Policy',
+        description: 'Privacy policy and data protection information'
+      }
+    },
+    {
+      path: '/letterhead',
+      name: 'letterhead',
+      component: () => import('@/views/Legal/Letterhead.vue'),
+      meta: {
+        title: 'Official Letterhead | FyndRX',
+        description: 'Download our official letterhead for business correspondence'
+      }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound/NotFoundView.vue'),
@@ -181,7 +220,7 @@ const router = createRouter({
 });
 
 // Navigation guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _, next) => {
   // Update page title
   document.title = (to.meta.title as string) || 'FyndRX';
 

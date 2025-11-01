@@ -17,3 +17,27 @@ export type User = {
   profile_picture_full: string | null;
   saved_money: number;
 };
+
+export type UserCredentials = {
+  email: string;
+  password: string;
+};
+
+export type UserProfile = {
+  firstname?: string;
+  lastname?: string;
+  username?: string;
+  dob?: string;
+  phone_number?: string;
+  address?: string;
+  profile_picture?: string;
+};
+
+export type AuthResponse = {
+  token: string;
+  user: User;
+};
+
+export type ProfileResponse = {
+  profile: UserProfile;
+};

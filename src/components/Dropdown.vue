@@ -23,8 +23,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string | string[] | number | number[]): void;
-  (e: 'change', value: string | string[] | number | number[]): void;
+  (e: 'update:modelValue', value: string | number | (string | number)[]): void;
+  (e: 'change', value: string | number | (string | number)[]): void;
 }>();
 
 const isOpen = ref(false);
@@ -113,15 +113,22 @@ onUnmounted(() => {
 });
 </script>
 
+<script lang="ts">
+export default {
+  name: 'Dropdown'
+};
+</script>
+
+
 <template>
   <div class="w-full dropdown-container">
     <!-- Label -->
     <label 
       v-if="label" 
-      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+      class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
     >
       {{ label }}
-      <span v-if="required" class="text-red-500 ml-1">*</span>
+      <span v-if="required" class="ml-1 text-red-500">*</span>
     </label>
 
     <!-- Dropdown Button -->
@@ -141,7 +148,7 @@ onUnmounted(() => {
     >
       <button
         type="button"
-        class="w-full flex items-center justify-between px-5 py-3 bg-white dark:bg-gray-800 border rounded-full"
+        class="flex items-center justify-between w-full px-5 py-3 bg-white border rounded-full dark:bg-gray-800"
         :disabled="disabled"
         @click="toggleDropdown"
       >
@@ -156,7 +163,7 @@ onUnmounted(() => {
             <i class="fas fa-times"></i>
           </button>
           <i 
-            class="fas fa-chevron-down transition-transform duration-200"
+            class="transition-transform duration-200 fas fa-chevron-down"
             :class="{ 'transform rotate-180': isOpen }"
           ></i>
         </div>
@@ -165,10 +172,10 @@ onUnmounted(() => {
       <!-- Dropdown Menu -->
       <div
         v-if="isOpen"
-        class="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 max-h-60 overflow-auto"
+        class="absolute z-50 w-full mt-2 overflow-auto bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-2xl dark:border-gray-700 max-h-60"
       >
         <!-- Search Input -->
-        <div v-if="searchable" class="p-2 sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div v-if="searchable" class="sticky top-0 p-2 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
           <input
             type="text"
             v-model="searchQuery"
@@ -183,7 +190,7 @@ onUnmounted(() => {
           <div
             v-for="option in filteredOptions"
             :key="option.value"
-            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            class="px-4 py-2 transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
             :class="{
               'opacity-50 cursor-not-allowed': option.disabled,
               'bg-[#246BFD]/10 text-[#246BFD]': 

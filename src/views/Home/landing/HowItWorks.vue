@@ -40,6 +40,12 @@ const steps = ref([
 ]);
 </script>
 
+<script lang="ts">
+  export default {
+    name: 'HowItWorks',
+  }
+</script>
+
 <template>
   <section class="py-20 bg-gray-50 dark:bg-gray-900">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">

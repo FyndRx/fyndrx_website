@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
+import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
+import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -120,12 +122,12 @@ const handlePhoneValidation = (isValid: boolean) => {
       <!-- Logo -->
       <div class="text-center">
         <img 
-          src="/src/assets/logo/logo_blue_orange.png" 
+          :src="logoBlueOrange" 
           alt="FyndRx Logo" 
           class="mx-auto h-12 w-auto dark:hidden"
         />
         <img 
-          src="/src/assets/logo/logo_white_orange.png" 
+          :src="logoWhiteOrange" 
           alt="FyndRx Logo" 
           class="mx-auto h-12 w-auto hidden dark:block"
         />

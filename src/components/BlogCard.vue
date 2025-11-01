@@ -11,6 +11,16 @@ const props = defineProps<{
   image: string;
   url?: string;
 }>();
+
+defineOptions({
+  name: 'BlogCard'
+});
+</script>
+
+<script lang="ts">
+  export default {
+    name: 'BlogCard',
+  }
 </script>
 
 <template>

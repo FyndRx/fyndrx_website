@@ -13,8 +13,11 @@
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
     "@types/cropperjs": "^1.1.5",
+    "@types/file-saver": "^2.0.7",
     "axios": "^1.6.7",
     "cropperjs": "^2.0.0",
+    "docx": "^9.5.0",
+    "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "pinia": "^2.1.7",
@@ -38,8 +41,10 @@
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.4.1",
+    "terser": "^5.39.2",
     "typescript": "~5.3.3",
     "vite": "^5.0.12",
+    "vite-plugin-compression": "^0.5.1",
     "vue-tsc": "^1.8.27"
   }
 }

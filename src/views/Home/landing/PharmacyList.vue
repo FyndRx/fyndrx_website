@@ -25,12 +25,12 @@ const scrollRight = () => {
     });
   }
 };
+</script>
 
-// interface Props {
-//   pharmacies: Pharmacy[];
-// }
-
-// defineProps<Props>();
+<script lang="ts">
+  export default {
+    name: 'PharmacyList',
+  }
 </script>
 
 <template>

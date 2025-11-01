@@ -4,7 +4,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { authService } from '@/services/auth.service';
 import { handleApiError, isNetworkError } from '@/utils/errorHandler';
-import TextInput from '@/components/TextInput.vue';
 
 const router = useRouter();
 const route = useRoute();

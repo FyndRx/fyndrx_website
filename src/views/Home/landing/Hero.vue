@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import LazyImage from '@/components/LazyImage.vue';
+import heroImage from '@/assets/images/hero-image.png';
 
 const { registerElement } = useScrollAnimation();
 const isVisible = ref(false);
@@ -14,6 +15,12 @@ onMounted(() => {
 });
 </script>
 
+<script lang="ts">
+  export default {
+    name: 'Hero',
+  }
+</script>
+
 <template>
   <div class="relative min-h-[90vh] flex items-center">
     <!-- Background Elements -->
@@ -23,19 +30,19 @@ onMounted(() => {
     </div>
 
     <!-- Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <div class="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="grid items-center grid-cols-1 gap-12 lg:grid-cols-2">
         <!-- Left Column -->
-        <div class="space-y-8 mt-20 md:mt-0">
-          <h1 class="text-5xl md:text-6xl font-medium text-gray-900 dark:text-white leading-tight scroll-animate slide-in-left">
+        <div class="mt-20 space-y-8 md:mt-0">
+          <h1 class="text-5xl font-medium leading-tight text-gray-900 md:text-6xl dark:text-white scroll-animate slide-in-left">
             Find the Best 
             <span class="text-[#246BFD]">Pharmacy</span> 
             Deals Near You
           </h1>
-          <p class="text-xl font-light text-gray-600 dark:text-gray-300 scroll-animate slide-in-left delay-200">
+          <p class="text-xl font-light text-gray-600 delay-200 dark:text-gray-300 scroll-animate slide-in-left">
             Save money on your prescriptions with FyndRx. Compare prices, find coupons, and get the best deals from pharmacies in your area.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 scroll-animate slide-in-left delay-300">
+          <div class="flex flex-col gap-4 delay-300 sm:flex-row scroll-animate slide-in-left">
             <button class="px-8 py-4 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg hover:shadow-[#246BFD]/20 hover-lift">
               Find Pharmacies
             </button>
@@ -43,7 +50,7 @@ onMounted(() => {
               Learn More
             </button>
           </div>
-          <div class="flex items-center space-x-8 pt-8 scroll-animate slide-in-left delay-400">
+          <div class="flex items-center pt-8 space-x-8 scroll-animate slide-in-left delay-400">
             <div class="flex items-center space-x-2 hover-scale">
               <div class="w-12 h-12 rounded-full bg-[#FE9615]/10 flex items-center justify-center">
                 <svg class="w-6 h-6 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +59,7 @@ onMounted(() => {
               </div>
               <div>
                 <p class="text-2xl font-medium text-gray-900 dark:text-white">100+</p>
-                <p class="text-gray-600 dark:text-gray-300 font-light">Pharmacies</p>
+                <p class="font-light text-gray-600 dark:text-gray-300">Pharmacies</p>
               </div>
             </div>
             <div class="flex items-center space-x-2 hover-scale">
@@ -63,19 +70,19 @@ onMounted(() => {
               </div>
               <div>
                 <p class="text-2xl font-medium text-gray-900 dark:text-white">50%</p>
-                <p class="text-gray-600 dark:text-gray-300 font-light">Average Savings</p>
+                <p class="font-light text-gray-600 dark:text-gray-300">Average Savings</p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Right Column -->
-        <div class="relative scroll-animate slide-in-right delay-300">
+        <div class="relative delay-300 scroll-animate slide-in-right">
           <!-- Hero Image with LazyImage -->
           <div class="relative w-full h-[500px] rounded-2xl overflow-hidden hover:shadow-2xl hover-scale">
             <div class="absolute inset-0 bg-gradient-to-br from-[#246BFD]/20 to-[#FE9615]/20"></div>
             <LazyImage
-              src="/src/assets/images/hero-image.png"
+              :src="heroImage"
               alt="Hero Image"
               aspectRatio="landscape"
               className="w-full h-full"

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-// Import only the landing page content sections (not Header or Footer)
 import Hero from '@/views/Home/landing/Hero.vue';
 import Medications from '@/views/Home/landing/Medications.vue';
 import PharmacyList from '@/views/Home/landing/PharmacyList.vue';
