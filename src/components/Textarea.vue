@@ -1,3 +1,20 @@
+<script setup lang="ts">
+defineProps<{
+  id?: string;
+  label?: string;
+  modelValue: string;
+  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
+  helper?: string;
+  rows?: number;
+}>();
+
+defineEmits<{
+  (e: 'update:modelValue', value: string): void;
+}>();
+</script>
+
 <template>
   <div class="relative">
     <label
@@ -25,21 +42,4 @@
     <p v-if="error" class="mt-1 text-sm text-red-500">{{ error }}</p>
     <p v-if="helper" class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ helper }}</p>
   </div>
-</template>
-
-<script setup lang="ts">
-defineProps<{
-  id?: string;
-  label?: string;
-  modelValue: string;
-  placeholder?: string;
-  disabled?: boolean;
-  error?: string;
-  helper?: string;
-  rows?: number;
-}>();
-
-defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>();
-</script> 
+</template> 

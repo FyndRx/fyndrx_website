@@ -7,18 +7,20 @@ import {
   PencilIcon,
   EyeIcon,
   EyeSlashIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  CalendarIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
-  modelValue: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+  modelValue?: string;
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date' | 'textarea' | 'datetime-local';
   label?: string;
   placeholder?: string;
   helper?: string;
   error?: string;
   disabled?: boolean;
   required?: boolean;
+  rows?: number;
   size?: 'small' | 'medium' | 'large';
   variant?: 'default' | 'outlined';
   icon?: string;
@@ -36,7 +38,8 @@ const showPassword = ref(false);
 const isPhoneNumber = ref(false);
 
 const inputClasses = computed(() => [
-  'w-full rounded-full font-medium transition-all duration-300',
+  props.type === 'textarea' ? 'rounded-2xl' : 'rounded-full',
+  'w-full font-medium transition-all duration-300',
   'focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50',
   props.size === 'small' ? 'text-sm px-4 py-2' : 
   props.size === 'large' ? 'text-lg px-6 py-4' : 
@@ -62,6 +65,9 @@ const getInputIcon = computed(() => {
       return PhoneIcon;
     case 'search':
       return MagnifyingGlassIcon;
+    case 'date':
+    case 'datetime-local':
+      return CalendarIcon;
     default:
       return PencilIcon;
   }
@@ -141,7 +147,8 @@ export default {
     <div class="relative group">
       <!-- Left Icon -->
       <div 
-        class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors duration-300"
+        class="absolute left-0 pl-4 flex pointer-events-none transition-colors duration-300"
+        :class="type === 'textarea' ? 'top-4 items-start' : 'inset-y-0 items-center'"
       >
         <component 
           :is="getInputIcon" 
@@ -149,14 +156,19 @@ export default {
         />
       </div>
 
-      <!-- Input -->
-      <input
-        :type="type === 'password' ? (showPassword ? 'text' : 'password') : type || 'text'"
+      <!-- Input or Textarea -->
+      <component
+        :is="type === 'textarea' ? 'textarea' : 'input'"
+        :type="type !== 'textarea' ? (type === 'password' ? (showPassword ? 'text' : 'password') : type || 'text') : undefined"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
-        :class="inputClasses"
+        :rows="rows"
+        :class="[
+          ...inputClasses,
+          type === 'textarea' ? 'py-3 min-h-[100px] resize-y' : ''
+        ]"
         @input="handleInput"
         @focus="emit('focus')"
         @blur="emit('blur')"
