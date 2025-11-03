@@ -1,32 +1,23 @@
 <script setup lang="ts">
 // HMR Trigger Final
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
-import { medicationService } from '@/services/medicationService';
-import { pharmacyService } from '@/services/pharmacyService';
-import { reviewService } from '@/services/reviewService';
-import { recentlyViewedService } from '@/services/recentlyViewedService';
-import { blogService } from '@/services/blogService';
-import { formatDate } from '@/utils/date';
-import type { Medication } from '@/models/Medication';
-import type { Review, ReviewStats } from '@/models/Review';
-import type { BlogPost } from '@/types/blog';
-import LazyImage from '@/components/LazyImage.vue';
-import Dropdown from '@/components/Dropdown.vue';
-import RatingStars from '@/components/RatingStars.vue';
-import ReviewCard from '@/components/ReviewCard.vue';
-import AddReviewModal from '@/components/AddReviewModal.vue';
-import FavoriteButton from '@/components/FavoriteButton.vue';
+import { PharmacyPrice, pharmacyService } from '@/services/pharmacyService';
+import type { MedicationPricingHierarchy } from '@/services/pharmacyService'; // Import new type
 import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
 import Pagination from '@/components/Pagination.vue';
+import { recentlyViewedService } from '@/services/recentlyViewedService';
+
+import type { Medication } from '@/models/Medication';
+import LazyImage from '@/components/LazyImage.vue';
+import Dropdown from '@/components/Dropdown.vue';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const notification = useNotification();
-const router = useRouter();
 const route = useRoute();
 
 interface Pharmacy {
@@ -40,10 +31,18 @@ interface Pharmacy {
   rating?: number;
   // Additional fields for cart operations
   priceId?: number;
+
   pharmacyBranchId?: number;
   formId?: number;
   strengthId?: number;
   uomId?: number;
+  
+  // Medication Details
+  drug_name?: string;
+  brand_name?: string;
+  form_name?: string;
+  strength?: string;
+  uom?: string;
   // For filtering
   pharmacy?: {
     name: string;
@@ -59,14 +58,11 @@ interface Pharmacy {
 const medication = ref<Medication | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const pharmacies = ref<Pharmacy[]>([]);
+const pharmacies = ref<(Pharmacy & { isPreferredBrand?: boolean })[]>([]);
+const allPrices = ref<PharmacyPrice[]>([]); // Master list of all prices
+const hierarchy = ref<MedicationPricingHierarchy['hierarchy'] | null>(null); // New Hierarchy State
 const loadingPharmacies = ref(false);
-const reviews = ref<Review[]>([]);
-const reviewStats = ref<ReviewStats | null>(null); // Kept from original
-const reviewsLoading = ref(false);
-const showAddReviewModal = ref(false); // Kept from original
-const relatedBlogs = ref<BlogPost[]>([]);
-const blogsLoading = ref(false);
+
 
 // Pharmacy Filtering State
 const pharmacySearch = ref('');
@@ -78,13 +74,100 @@ const itemsPerPage = ref(9);
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
 
 const selectedBrand = ref<number | null>(null);
+const selectedVariant = ref<string>(''); // Combined Form + Strength
 const selectedForm = ref<string | number>('');
 const selectedStrength = ref<string | number>('');
 const selectedUom = ref<string | number>('');
+
 const customQuantities = ref<Map<number, number>>(new Map());
 
 const filteredPharmacies = computed(() => {
-  let result = [...pharmacies.value];
+  // 0. Base Filter: Start with the master list and filter by Brand & Variant locally
+  // This replaces the old 'pharmacies' ref which was populated by API calls
+  
+  // A. Filter by Brand
+  let pricesToProcess = allPrices.value;
+  if (selectedBrand.value) {
+      pricesToProcess = pricesToProcess.filter(p => p.drug_brand_id === selectedBrand.value);
+  }
+  
+  // B. Filter by Variant (Form/Strength/UOM)
+  // Only apply if a specific variant is selected
+  // The selectedVariant string contains "formId_strengthId_uomId"
+  if (selectedVariant.value) {
+      const parts = selectedVariant.value.split('_');
+      // We can strict filter because selectedVariant MUST exist in the hierarchy which is derived from prices
+      const fId = Number(parts[0]);
+      const sId = Number(parts[1]);
+      const uId = Number(parts[2]);
+      
+      pricesToProcess = pricesToProcess.filter(p => {
+          // Use flexible matching for form_id as per service logic
+          const pFormId = p.drug_brand_form_id || (p as any).form_id;
+          const pStrengthId = p.dosage_id || p.strength_id; // Check both legacy/new fields
+          const pUomId = p.strength_uom_id || p.uom_id;
+          
+          return pFormId === fId && pStrengthId === sId && pUomId === uId;
+      });
+  }
+
+  // C. Deduplicate Pharamcies (same logic as before: prioritize brand, lowest price)
+  const pharmacyMap = new Map<number, any>();
+  const preferredBrandId = selectedBrand.value;
+
+  pricesToProcess.forEach(price => {
+      const pharmacyId = price.pharmacy_id;
+      const existing = pharmacyMap.get(pharmacyId);
+      
+      const isPreferred = preferredBrandId && price.drug_brand_id === preferredBrandId;
+      const existingIsPreferred = existing && preferredBrandId && existing.drug_brand_id === preferredBrandId;
+      
+      if (!existing) {
+        pharmacyMap.set(pharmacyId, price);
+      } else if (isPreferred && !existingIsPreferred) {
+        pharmacyMap.set(pharmacyId, price);
+      } else if (isPreferred === existingIsPreferred) {
+         if (price.price < existing.price) {
+           pharmacyMap.set(pharmacyId, price);
+         }
+      }
+  });
+
+  // Convert to View Models
+  let result = Array.from(pharmacyMap.values()).map(price => ({
+      id: price.pharmacy_id,
+      name: price.pharmacy_name || price.pharmacy?.name || 'Unknown Pharmacy',
+      logo: price.pharmacy_logo || price.pharmacy?.logo || '',
+      price: price.price,
+      discountPrice: price.discount_price,
+      inStock: price.in_stock ?? false,
+      distance: price.distance || price.pharmacy?.distance,
+      rating: price.rating || price.pharmacy?.rating,
+      priceId: price.id,
+      pharmacyBranchId: price.pharmacy_branch_id,
+      formId: price.drug_brand_form_id,
+      strengthId: price.dosage_id,
+      uomId: price.strength_uom_id,
+      
+      // Map medication details
+      drug_name: price.drug_name,
+      brand_name: price.brand_name,
+      form_name: price.form_name,
+      strength: price.strength,
+      uom: price.uom,
+
+      isPreferredBrand: preferredBrandId ? price.drug_brand_id === preferredBrandId : false,
+      
+      // Pass the pharmacy object for filtering
+      pharmacy: price.pharmacy || {
+        name: price.pharmacy_name || '',
+        logo: price.pharmacy_logo || '',
+        rating: price.rating,
+        is_open: true // Default to true if unknown
+      },
+      pharmacy_name: price.pharmacy_name
+  }));
+
 
   // 1. Search
   if (pharmacySearch.value) {
@@ -114,13 +197,18 @@ const filteredPharmacies = computed(() => {
         return b.price - a.price;
       case 'rating_desc':
         return (b.rating || 0) - (a.rating || 0);
-      case 'distance_asc':
+      case 'distance_asc': {
         // Sort by numeric distance if available (from location search), otherwise string parsing
         const distA = (a as any).distanceValue ?? parseFloat(a.distance || '0');
         const distB = (b as any).distanceValue ?? parseFloat(b.distance || '0');
         return distA - distB;
+      }
       default:
-        return 0;
+        // Default sort: Preferred Brand first, then Price Ascending
+        if (a.isPreferredBrand !== b.isPreferredBrand) {
+          return a.isPreferredBrand ? -1 : 1;
+        }
+        return a.price - b.price;
     }
   });
 
@@ -206,125 +294,137 @@ const handleLocationSearch = () => {
   );
 };
 
-const formOptions = computed(() => {
-  if (!medication.value) return [];
-  return medication.value.forms.map(form => ({
-    label: form.form_name,
-    value: form.id
-  }));
-});
-
-const strengthOptions = computed(() => {
-  if (!selectedForm.value || !medication.value) return [];
-  const form = medication.value.forms.find(f => f.id === Number(selectedForm.value));
-  return form?.strengths.map(strength => ({
-    label: strength.strength,
-    value: strength.id
-  })) || [];
-});
-
-const uomOptions = computed(() => {
-  if (!selectedStrength.value || !medication.value) return [];
-  const form = medication.value.forms.find(f => f.id === Number(selectedForm.value));
-  const strength = form?.strengths.find(s => s.id === Number(selectedStrength.value));
-  return strength?.uoms.map(uom => ({
-    label: uom.uom,
-    value: uom.id
-  })) || [];
-});
-
-
-
-const updatePharmacyPrices = async () => {
-  if (!medication.value) return;
+const variantOptions = computed(() => {
+  if (!hierarchy.value || !selectedBrand.value) return [];
   
-  loadingPharmacies.value = true;
-  try {
-    const filters = {
-      drug_brand_form_id: selectedForm.value ? Number(selectedForm.value) : undefined,
-      dosage_id: selectedStrength.value ? Number(selectedStrength.value) : undefined,
-      strength_uom_id: selectedUom.value ? Number(selectedUom.value) : undefined
-    };
-    
-    const prices = await pharmacyService.getPricesByDrug(medication.value.id, filters);
-    
-    // Deduplicate pharmacies - keep the one with the lowest price
-    const pharmacyMap = new Map<number, any>();
-    
-    prices.forEach(price => {
-      const pharmacyId = price.pharmacy_id;
-      const existing = pharmacyMap.get(pharmacyId);
-      
-      if (!existing || price.price < existing.price) {
-        pharmacyMap.set(pharmacyId, price);
-      }
-    });
+  const brandNode = hierarchy.value.brands.find(b => b.id === selectedBrand.value);
+  if (!brandNode) return [];
 
-    pharmacies.value = Array.from(pharmacyMap.values()).map(price => ({
-      id: price.pharmacy_id,
-      name: price.pharmacy_name || price.pharmacy?.name || 'Unknown Pharmacy',
-      logo: price.pharmacy_logo || price.pharmacy?.logo || '',
-      price: price.price,
-      discountPrice: price.discount_price,
-      inStock: price.in_stock ?? false,
-      distance: price.distance || price.pharmacy?.distance,
-      rating: price.rating || price.pharmacy?.rating,
-      priceId: price.id,
-      pharmacyBranchId: price.pharmacy_branch_id,
-      formId: price.drug_brand_form_id,
-      strengthId: price.dosage_id,
-      uomId: price.strength_uom_id,
-      // Pass the pharmacy object for filtering
-      pharmacy: price.pharmacy || {
-        name: price.pharmacy_name || 'Unknown Pharmacy',
-        logo: price.pharmacy_logo || '',
-        distance: price.distance,
-        rating: price.rating,
-        is_open: price.pharmacy?.is_open
-      },
-      pharmacy_name: price.pharmacy_name
-    }));
+  const options: { label: string; value: string }[] = [];
+  
+  brandNode.forms.forEach(form => {
+    form.variants.forEach(variant => {
+      options.push({
+        label: variant.label,
+        value: variant.value
+      });
+    });
+  });
+  
+  return options;
+});
+
+
+const loadMedicationData = async (medicationId: number) => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    const data = await pharmacyService.getMedicationDetailsWithPrices(medicationId);
+    
+    medication.value = data.medication;
+    allPrices.value = data.pricing;
+    hierarchy.value = data.hierarchy;
+    
+    // Initial State Setup
+    if (data.hierarchy.brands.length > 0) {
+      // 1. Deteimine Brand to Select
+      let brandToSelect = data.hierarchy.brands[0].id; // Default to first
+      const queryBrandId = route.query.brand ? Number(route.query.brand) : null;
+
+      // If query brand exists and is valid in hierarchy, use it
+      if (queryBrandId && data.hierarchy.brands.find(b => b.id === queryBrandId)) {
+        brandToSelect = queryBrandId;
+      }
+      
+      selectedBrand.value = brandToSelect;
+      
+      // 2. Determine Variant to Select
+      const brandNode = data.hierarchy.brands.find(b => b.id === brandToSelect);
+      if (brandNode && brandNode.forms.length > 0) {
+        
+        // Strategy A: Construct Variant from Query Params (e.g. ?form=1&strength=2&uom=3)
+        const qForm = route.query.form;
+        const qStrength = route.query.strength;
+        const qUom = route.query.uom;
+        
+        let variantToSelect = '';
+
+        if (qForm && qStrength && qUom) {
+             // Construct the variant key: formId_strengthId_uomId
+             // Note: In filteredPharmacies logic, we split by '_'. 
+             // We need to ensure this matches the `value` property in variantOptions.
+             // Usually variant.value is "formId_strengthId_uomId"
+             const candidate = `${qForm}_${qStrength}_${qUom}`;
+             
+             // Check if this specific variant exists for the selected brand
+             const exists = brandNode.forms.some(f => 
+                 f.variants.some(v => v.value === candidate)
+             );
+             
+             if (exists) {
+                 variantToSelect = candidate;
+             }
+        }
+
+        // Strategy B: Fallback to first available variant if query is missing or invalid
+        if (!variantToSelect && brandNode.forms.length > 0 && brandNode.forms[0].variants.length > 0) {
+           // We might want to be smarter here? 
+           // If we have a queryBrandId but no variant, maybe we should pick the *most popular*?
+           // For now, first available is safe.
+           variantToSelect = brandNode.forms[0].variants[0].value;
+        }
+
+        if (variantToSelect) {
+            selectedVariant.value = variantToSelect;
+        }
+      }
+    }
+    
+    if (medication.value && authStore.isAuthenticated) {
+        await recentlyViewedService.addToRecentlyViewed(medication.value.id);
+    }
+
+    
   } catch (err) {
-    console.error('Error loading pharmacy prices:', err);
-    pharmacies.value = [];
+    console.error('Error loading medication data:', err);
+    error.value = 'Failed to load medication details';
+    notification.error('Error', 'Failed to load medication details');
   } finally {
-    loadingPharmacies.value = false;
+    loading.value = false;
   }
 };
 
-watch(selectedForm, async (newFormId) => {
-  if (newFormId && medication.value) {
-    const form = medication.value.forms.find((f: any) => f.id === Number(newFormId));
-    if (form?.strengths && form.strengths.length) {
-      selectedStrength.value = form.strengths[0].id;
-      if (form.strengths[0].uoms && form.strengths[0].uoms.length) {
-        selectedUom.value = form.strengths[0].uoms[0].id;
-      }
-    }
-    await updatePharmacyPrices();
-  }
-});
 
-watch(selectedStrength, async (newStrengthId) => {
-  if (newStrengthId && medication.value) {
-    const form = medication.value.forms.find((f: any) => f.id === Number(selectedForm.value));
-    const strength = form?.strengths.find((s: any) => s.id === Number(newStrengthId));
-    if (strength?.uoms && strength.uoms.length) {
-      selectedUom.value = strength.uoms[0].id;
-    }
-    await updatePharmacyPrices();
-  }
-});
+// Watchers
 
-watch(selectedUom, async () => {
-  if (selectedUom.value && selectedForm.value && selectedStrength.value) {
-    await updatePharmacyPrices();
+// Watch for Variant changes to update Form, Strength, and UOM
+watch(selectedVariant, (newVal) => {
+  if (newVal) {
+    const parts = newVal.split('_');
+    const formId = Number(parts[0]);
+    const strengthId = Number(parts[1]);
+    const uomId = Number(parts[2]);
+    
+    selectedForm.value = formId;
+    selectedStrength.value = strengthId;
+    selectedUom.value = uomId;
   }
 });
 
 
 const handleBrandSelect = (brandId: number) => {
   selectedBrand.value = brandId;
+  
+  // Auto-select first variant for the new brand
+  if (hierarchy.value) {
+    const brandNode = hierarchy.value.brands.find(b => b.id === brandId);
+    if (brandNode && brandNode.forms.length > 0 && brandNode.forms[0].variants.length > 0) {
+      selectedVariant.value = brandNode.forms[0].variants[0].value;
+    } else {
+        selectedVariant.value = ''; // Reset if no options
+    }
+  }
 };
 
 
@@ -336,33 +436,20 @@ const setCustomQuantity = (pharmacyId: number, quantity: number) => {
   customQuantities.value.set(pharmacyId, quantity);
 };
 
-const getQuantityOptions = computed(() => {
-  if (!medication.value) return [];
-  const quantities = medication.value.predefinedQuantities || [1, 5, 10, 30];
-  return quantities.map(qty => ({
-    label: `${qty} ${qty === 1 ? 'unit' : 'units'}`,
-    value: qty
-  }));
-});
+
 
 const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
   if (!medication.value) return;
   
-  if (!selectedForm.value || !selectedStrength.value || !selectedUom.value) {
+  // Validation: Ensure the pharmacy object has the necessary details
+  // Since our filtering logic guarantees these are set for filtered items, this is a safety check.
+  if (!pharmacy.formId || !pharmacy.strengthId || !pharmacy.uomId) {
     notification.warning(
-      'Selection Required',
-      'Please select form, strength, and unit of measure before adding to cart.'
+      'Cart Error',
+      'Missing product details. Please try refreshing the page.'
     );
     return;
   }
-
-  const form = medication.value.forms.find(f => f.id === Number(selectedForm.value));
-  const strength = form?.strengths.find(s => s.id === Number(selectedStrength.value));
-  const uom = strength?.uoms.find(u => u.id === Number(selectedUom.value));
-
-  if (!form || !strength || !uom) return;
-
-  // const brand = medication.value.brands.find(b => b.id === selectedBrand.value); // Removed selectedBrand
 
   // Use pharmacy_branch_id from the price response if available
   const pharmacyBranchId = pharmacy.pharmacyBranchId || pharmacy.id;
@@ -373,14 +460,13 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     pharmacyId: pharmacy.id,
     pharmacyName: pharmacy.name,
     pharmacyLogo: pharmacy.logo,
-    // brandId: brand?.id, // Removed selectedBrand
-    // brandName: brand?.name, // Removed selectedBrand
-    formId: form.id,
-    formName: form.form_name,
-    strengthId: strength.id,
-    strength: strength.strength,
-    uomId: uom.id,
-    uom: uom.uom,
+
+    formId: pharmacy.formId,
+    formName: pharmacy.form_name || '',
+    strengthId: pharmacy.strengthId,
+    strength: pharmacy.strength || '',
+    uomId: pharmacy.uomId,
+    uom: pharmacy.uom || '',
     quantity: quantity,
     price: pharmacy.price,
     discountPrice: pharmacy.discountPrice,
@@ -388,7 +474,8 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     inStock: pharmacy.inStock,
     requiresPrescription: medication.value.requiresPrescription,
     // Store pharmacy_branch_id for API calls
-    pharmacyBranchId: pharmacyBranchId
+    pharmacyBranchId: pharmacyBranchId,
+    pharmacyDrugPriceId: pharmacy.priceId // Added for API compatibility
   });
 
   notification.success(
@@ -397,157 +484,23 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
   );
 };
 
-const loadReviews = async () => {
-  if (!medication.value) return;
-  
-  reviewsLoading.value = true;
-  try {
-    reviews.value = await reviewService.getReviewsByTarget('medication', medication.value.id);
-    reviewStats.value = await reviewService.getReviewStats('medication', medication.value.id);
-  } catch (err) {
-    console.error('Error loading reviews:', err);
-  } finally {
-    reviewsLoading.value = false;
-  }
-};
 
-const handleAddReview = async (reviewData: { rating: number; title: string; comment: string }) => {
-  if (!medication.value) return;
-  
-  try {
-    await reviewService.addReview({
-      reviewable_type: 'medication',
-      reviewable_id: medication.value.id,
-      rating: reviewData.rating,
-      title: reviewData.title,
-      comment: reviewData.comment,
-    });
-    
-    await loadReviews();
-    showAddReviewModal.value = false;
-    notification.success('Review Submitted', 'Thank you for your feedback!');
-  } catch (error) {
-    notification.error('Submission Failed', 'Failed to submit review. Please try again.');
-  }
-};
-
-const handleReviewHelpful = async (reviewId: string | number) => {
-  try {
-    await reviewService.markHelpful(reviewId, true);
-    const review = reviews.value.find(r => r.id === reviewId);
-    if (review) (review as any).helpful = ((review as any).helpful || 0) + 1;
-  } catch (error) {
-    notification.error('Action Failed', 'Failed to mark review as helpful.');
-  }
-};
-
-const handleReviewNotHelpful = async (reviewId: string | number) => {
-  try {
-    await reviewService.markHelpful(reviewId, false);
-    const review = reviews.value.find(r => r.id === reviewId);
-    if (review) (review as any).notHelpful = ((review as any).notHelpful || 0) + 1;
-  } catch (error) {
-    notification.error('Action Failed', 'Failed to mark review.');
-  }
-};
-
-const loadRelatedBlogs = async () => {
-  if (!medication.value) return;
-  
-  blogsLoading.value = true;
-  try {
-    const searchTerms = [
-      medication.value.category,
-      medication.value.drug_name.split(' ')[0],
-      medication.value.requiresPrescription ? 'prescription' : 'medication'
-    ];
-    
-    const allPosts = blogService.getAllPosts();
-    const relevant = allPosts.filter(post => {
-      const postText = `${post.title} ${post.excerpt} ${post.tags?.join(' ')} ${post.category}`.toLowerCase();
-      return searchTerms.some((term: string | string[]) => Array.isArray(term) ? term.some(t => postText.includes(t.toLowerCase())) : postText.includes(term.toLowerCase()));
-    }).slice(0, 3);
-    
-    if (relevant.length === 0) {
-      const { posts } = await blogService.getPosts(1, 3);
-      relatedBlogs.value = posts;
-    } else {
-      relatedBlogs.value = relevant;
-    }
-  } catch (error) {
-    console.error('Error loading related blogs:', error);
-  } finally {
-    blogsLoading.value = false;
-  }
-};
-
-const viewBlogPost = (slug: string) => {
-  router.push({ name: 'blog-post', params: { slug } });
-};
-
-const loadMedicationDetails = async (medicationId: number) => {
-  loading.value = true;
-  try {
-    medication.value = await medicationService.getMedicationById(medicationId);
-    
-    if (medication.value) {
-      if (authStore.isAuthenticated) {
-        await recentlyViewedService.addToRecentlyViewed(medication.value.id);
-      }
-      
-      if (medication.value.brands && medication.value.brands.length) {
-        selectedBrand.value = (medication.value.brands[0] as any).id;
-      }
-      
-      if (medication.value.forms && medication.value.forms.length) {
-        selectedForm.value = (medication.value.forms[0] as any).id;
-        const firstStrength = (medication.value.forms[0] as any).strengths?.[0];
-        if (firstStrength) {
-          selectedStrength.value = firstStrength.id;
-          if (firstStrength.uoms && firstStrength.uoms.length) {
-            selectedUom.value = firstStrength.uoms[0].id;
-          }
-        }
-      }
-      
-      await updatePharmacyPrices();
-      await loadReviews();
-      // await loadRelatedBlogs(); // Temporarily disabled as it causes infinite loading
-    }
-  } catch (err) {
-    console.error('Error loading medication:', err);
-    notification.error('Error', 'Failed to load medication details');
-  } finally {
-    loading.value = false;
-  }
-};
-// ...
-/*
-        <!-- Reviews Section -->
-        <div class="mt-12">
-          <!-- ... content commented out ... -->
-        </div>
-
-        <!-- Related Blogs Section -->
-        <div class="mt-12">
-          <!-- ... content commented out ... -->
-        </div>
-*/
 
 onMounted(async () => {
   const medicationId = route.params.id ? parseInt(route.params.id as string) : 1;
   console.log('MedicationDetail mounted, id:', medicationId);
-  await loadMedicationDetails(medicationId);
+  await loadMedicationData(medicationId);
 });
 
 // Watch for route changes to reload medication when navigating between different medications
-watch(() => route.params.id, async (newId) => {
-  if (newId) {
-    const medicationId = parseInt(newId as string);
-    console.log('Route changed, loading medication:', medicationId);
-    await loadMedicationDetails(medicationId);
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      await loadMedicationData(parseInt(newId as string));
+    }
   }
-});
+);
 </script>
 
 <template>
@@ -630,37 +583,16 @@ watch(() => route.params.id, async (newId) => {
                   
                   <!-- Horizontal Form Fields -->
                   <div class="flex flex-wrap gap-4">
-                    <!-- Form Selection -->
-                    <div class="flex-1 min-w-[200px]">
+                    <!-- Variant Selection (Merged Form + Strength + UOM) -->
+                    <div class="flex-1 min-w-[300px]">
                       <Dropdown
-                        v-model="selectedForm"
-                        :options="formOptions"
-                        label="Form"
-                        placeholder="Select Form"
+                        v-model="selectedVariant"
+                        :options="variantOptions"
+                        label="Select Option"
+                        placeholder="Select Option"
                         required
                         searchable
-                      />
-                    </div>
-                    <!-- Strength Selection -->
-                    <div class="flex-1 min-w-[200px]">
-                      <Dropdown
-                        v-model="selectedStrength"
-                        :options="strengthOptions"
-                        label="Strength"
-                        placeholder="Select Strength"
-                        required
-                        searchable
-                      />
-                    </div>
-                    <!-- UOM Selection -->
-                    <div class="flex-1 min-w-[200px]">
-                      <Dropdown
-                        v-model="selectedUom"
-                        :options="uomOptions"
-                        label="Unit of Measure"
-                        placeholder="Select UOM"
-                        required
-                        searchable
+                        class="w-full"
                       />
                     </div>
                   </div>
@@ -692,12 +624,12 @@ watch(() => route.params.id, async (newId) => {
                 @use-location="handleLocationSearch"
               />
 
-              <div v-if="selectedForm && selectedStrength" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+              <div v-if="selectedVariant" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
                 <p class="text-sm text-blue-800 dark:text-blue-300">
                   <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                   </svg>
-                  Prices shown are for your selected form and strength. Change your selection above to see different options and prices.
+                  Prices shown are for your selected option. Change your selection above to see different options and prices.
                 </p>
               </div>
             </div>
@@ -707,7 +639,7 @@ watch(() => route.params.id, async (newId) => {
               <p class="mt-4 text-gray-600 dark:text-gray-300">Loading pharmacy prices...</p>
             </div>
 
-            <div v-else-if="filteredPharmacies.length === 0" class="py-12 text-center">
+            <div v-else-if="paginatedPharmacies.length === 0" class="py-12 text-center">
               <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
               </svg>
@@ -744,9 +676,24 @@ watch(() => route.params.id, async (newId) => {
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                         </svg>
                       </div>
-                      <div>
-                        <h3 class="font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-[#246BFD] transition-colors">{{ pharmacy.name }}</h3>
-                        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-medium text-gray-900 dark:text-white truncate">
+                      {{ pharmacy.name }}
+                    </h3>
+
+                  </div>
+                  <!-- Medication Details (Brand, Strength, Form) -->
+                  <div class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+                    <p class="font-medium text-gray-900 dark:text-white">
+                      {{ pharmacy.brand_name || pharmacy.drug_name }}
+                    </p>
+                    <p>
+                   {{ pharmacy.strength }} {{ pharmacy.uom }} • {{ pharmacy.form_name }}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <span 
                             class="flex items-center gap-1 font-medium"
                             :class="pharmacy.pharmacy?.is_open ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
@@ -767,6 +714,12 @@ watch(() => route.params.id, async (newId) => {
                             </svg>
                             {{ pharmacy.rating }}
                           </span>
+                          <span 
+                            v-if="pharmacy.isPreferredBrand" 
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#246BFD]/10 text-[#246BFD] ml-auto"
+                          >
+                            Preferred Brand
+                          </span>
                         </div>
                       </div>
                     </router-link>
@@ -777,10 +730,10 @@ watch(() => route.params.id, async (newId) => {
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price per unit</p>
                     <div class="flex items-baseline gap-2">
                       <span class="text-2xl font-bold text-[#246BFD]">
-                        GH₵ {{ (pharmacy.price || 0).toFixed(2) }}
+                        GH₵ {{ (pharmacy.discountPrice || pharmacy.price || 0).toFixed(2) }}
                       </span>
-                      <span v-if="pharmacy.discountPrice" class="text-sm text-gray-400 line-through">
-                        GH₵ {{ (pharmacy.discountPrice || 0).toFixed(2) }}
+                      <span v-if="pharmacy.discountPrice && pharmacy.discountPrice < pharmacy.price" class="text-sm text-gray-400 line-through">
+                        GH₵ {{ (pharmacy.price || 0).toFixed(2) }}
                       </span>
                     </div>
                   </div>
@@ -850,241 +803,9 @@ watch(() => route.params.id, async (newId) => {
         </div>
 
 
-        <!-- Reviews Section -->
-        <div class="mt-12">
-          <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-            <div v-if="reviewsLoading" class="py-12 text-center">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-              <p class="mt-4 text-gray-600 dark:text-gray-300">Loading reviews...</p>
-            </div>
 
-            <div v-else>
-              <div class="flex items-center justify-between mb-6">
-                <div>
-                  <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Customer Reviews</h2>
-                  <p v-if="reviewStats" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {{ reviewStats.totalReviews }} review{{ reviewStats.totalReviews !== 1 ? 's' : '' }}
-                  </p>
-                </div>
-                <button
-                  @click="showAddReviewModal = true"
-                  class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all flex items-center gap-2"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  Write a Review
-                </button>
-              </div>
-
-              <div v-if="reviewStats && reviewStats.totalReviews > 0" class="p-6 mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div class="flex items-center gap-3 mb-2">
-                      <span class="text-5xl font-bold text-gray-900 dark:text-white">
-                        {{ reviewStats.averageRating.toFixed(1) }}
-                      </span>
-                      <div>
-                        <RatingStars :rating="reviewStats.averageRating" size="lg" />
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Based on {{ reviewStats.totalReviews }} review{{ reviewStats.totalReviews !== 1 ? 's' : '' }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="flex-1 max-w-md space-y-2">
-                    <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-2">
-                      <span class="text-sm text-gray-600 dark:text-gray-400 w-3">{{ rating }}</span>
-                      <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                      </svg>
-                      <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          class="h-full bg-yellow-400"
-                          :style="{ width: `${((reviewStats.ratingDistribution as any)[rating] / reviewStats.totalReviews) * 100}%` }"
-                        ></div>
-                      </div>
-                      <span class="text-sm text-gray-600 dark:text-gray-400 w-8 text-right">
-                        {{ (reviewStats.ratingDistribution as any)[rating] }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="reviews.length > 0" class="space-y-4">
-                <ReviewCard
-                  v-for="review in reviews"
-                  :key="review.id"
-                  :review="review"
-                  @helpful="handleReviewHelpful"
-                  @not-helpful="handleReviewNotHelpful"
-                />
-              </div>
-
-              <div v-else class="py-12 text-center">
-                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No reviews yet</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-4">Be the first to review this medication!</p>
-                <button
-                  @click="showAddReviewModal = true"
-                  class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all"
-                >
-                  Write the First Review
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Related Blogs Section -->
-        <div class="mt-12">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-[#246BFD]/10 rounded-lg">
-                <svg class="w-6 h-6 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
-              </div>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                Related Articles
-              </h2>
-            </div>
-            <router-link
-              to="/blog"
-              class="text-sm font-medium text-[#246BFD] hover:text-[#5089FF] transition-colors"
-            >
-              View All Articles →
-            </router-link>
-          </div>
-
-          <!-- Loading State -->
-          <div v-if="blogsLoading" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div v-for="i in 3" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden animate-pulse">
-              <div class="h-48 bg-gray-200 dark:bg-gray-700"></div>
-              <div class="p-6 space-y-3">
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Blog Posts -->
-          <div v-else-if="relatedBlogs.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <article
-              v-for="blog in relatedBlogs"
-              :key="blog.id"
-              @click="viewBlogPost(blog.slug)"
-              class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group hover:-translate-y-2"
-            >
-              <div class="relative h-48 overflow-hidden">
-                <LazyImage
-                  :src="blog.coverImage"
-                  :alt="blog.title"
-                  aspectRatio="landscape"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div class="absolute top-3 left-3">
-                  <span class="inline-block px-3 py-1 rounded-full bg-[#246BFD] text-white text-xs font-semibold">
-                    {{ blog.category }}
-                  </span>
-                </div>
-                <div class="absolute top-3 right-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                  </svg>
-                  <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ blog.likes }}</span>
-                </div>
-              </div>
-              
-              <div class="p-6">
-                <div class="flex items-center gap-3 mb-3 text-sm text-gray-500 dark:text-gray-400">
-                  <div class="flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span>{{ formatDate(blog.date) }}</span>
-                  </div>
-                  <span>•</span>
-                  <div class="flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>{{ blog.readTime }} min read</span>
-                  </div>
-                </div>
-
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-[#246BFD] transition-colors">
-                  {{ blog.title }}
-                </h3>
-                
-                <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                  {{ blog.excerpt }}
-                </p>
-
-                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div class="flex items-center gap-2">
-                    <img 
-                      :src="blog.author.avatar" 
-                      :alt="blog.author.name" 
-                      class="w-8 h-8 rounded-full object-cover"
-                    />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ blog.author.name }}
-                    </span>
-                  </div>
-                  
-                  <span class="text-[#246BFD] font-medium text-sm flex items-center gap-1 group-hover:text-[#5089FF]">
-                    Read Article
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                  </span>
-                </div>
-
-                <!-- Tags -->
-                <div v-if="blog.tags && blog.tags.length > 0" class="flex flex-wrap gap-2 mt-4">
-                  <span
-                    v-for="tag in blog.tags.slice(0, 3)"
-                    :key="tag"
-                    class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"
-                  >
-                    #{{ tag }}
-                  </span>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <!-- Empty State -->
-          <div v-else class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-            </svg>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">No related articles found</p>
-            <router-link
-              to="/blog"
-              class="inline-block px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
-            >
-              Browse All Articles
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <AddReviewModal
-      :show="showAddReviewModal"
-      :target-type="'medication'"
-      :target-id="medication ? String(medication.id) : ''"
-      :target-name="medication ? medication.drug_name : ''"
-      @close="showAddReviewModal = false"
-      @submit="handleAddReview"
-    />
+  </div>
+  </div>
   </div>
 </template>
 
