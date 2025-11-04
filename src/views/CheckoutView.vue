@@ -53,12 +53,7 @@ const syncCartWithAPI = async () => {
     const cartItems = cartStore.items;
     if (cartItems.length > 0) {
       const syncItems = cartItems.map(item => ({
-        drug_id: item.medicationId,
-        drug_brand_id: item.brandId || 0,
-        drug_brand_form_id: item.formId,
-        dosage_id: item.strengthId,
-        strength_uom_id: item.uomId,
-        pharmacy_branch_id: item.pharmacyBranchId || item.pharmacyId,
+        pharmacy_drug_price_id: item.pharmacyDrugPriceId,
         quantity: item.quantity
       }));
       await cartService.syncCart(syncItems);
@@ -77,7 +72,13 @@ onMounted(async () => {
     await syncCartWithAPI();
     
     // Get updated cart from API
-    const apiCart = await cartService.getCart();
+    try {
+      const apiCart = await cartService.getCart();
+      cartStore.items = apiCart.items;
+    } catch (e) {
+      console.error('Failed to sync with server cart:', e);
+      // Fallback to local cart data
+    }
     
     // Group items by pharmacy for display
     pharmaciesCheckout.value = cartStore.groupedByPharmacy.filter(group => 
