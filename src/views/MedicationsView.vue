@@ -154,7 +154,52 @@ const sortOptions = [
 ];
 
 const filteredMedications = computed(() => {
-  return [...allMedications.value];
+  let meds = [...allMedications.value];
+  
+  // 1. Category Filter
+  if (selectedCategory.value !== 'all') {
+    meds = meds.filter(med => {
+      if (Array.isArray(med.category)) {
+        return med.category.includes(selectedCategory.value);
+      }
+      return med.category === selectedCategory.value;
+    });
+  }
+  
+  // 2. Form Filter
+  if (selectedForm.value !== 'all') {
+    meds = meds.filter(med => 
+      med.forms && med.forms.some((form: any) => form.form_name === selectedForm.value)
+    );
+  }
+  
+  // 3. Brand Filter
+  if (selectedBrand.value !== 'all') {
+    meds = meds.filter(med => 
+      med.brands && med.brands.some((brand: any) => brand.name === selectedBrand.value)
+    );
+  }
+  
+  // 4. Prescription Filter
+  if (requiresPrescription.value !== 'all') {
+    const required = requiresPrescription.value === 'yes';
+    meds = meds.filter(med => med.requiresPrescription === required);
+  }
+  
+  // 5. Sorting
+  if (sortBy.value === 'name') {
+    meds.sort((a, b) => a.drug_name.localeCompare(b.drug_name));
+  } else if (sortBy.value === 'name-desc') {
+    meds.sort((a, b) => b.drug_name.localeCompare(a.drug_name));
+  } else if (sortBy.value === 'category') {
+    meds.sort((a, b) => {
+      const catA = Array.isArray(a.category) ? a.category[0] : a.category;
+      const catB = Array.isArray(b.category) ? b.category[0] : b.category;
+      return (catA || '').localeCompare(catB || '');
+    });
+  }
+  
+  return meds;
 });
 
 const isCategoryActive = (category: string): boolean => {
@@ -198,6 +243,12 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd, pullDistance, isRefre
 
 onMounted(async () => {
   const querySearch = route.query.search as string;
+  const queryCategory = route.query.category as string;
+
+  if (queryCategory) {
+    medicationsStore.selectedCategory = queryCategory;
+  }
+
   await medicationsStore.initializeMedications(querySearch);
 });
 </script>
