@@ -171,10 +171,10 @@ export default {
       <!-- Section Header -->
       <div class="mb-16 text-center scroll-animate slide-up">
         <h2 class="mb-4 text-4xl font-medium text-gray-900 dark:text-white">
-          Find Your <span class="text-[#246BFD]">Medications</span>
+          Browse <span class="text-[#246BFD]">Medications</span>
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-300">
-          Search and compare prices for your medications
+          Search for medications by name, brand, or condition and compare prices across verified pharmacies
         </p>
       </div>
 
@@ -245,6 +245,7 @@ export default {
 </template>
 
 <style scoped>
+
 .scroll-animate {
   opacity: 0;
   transform: translateY(20px);

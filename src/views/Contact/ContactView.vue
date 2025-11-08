@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineAsyncComponent } from 'vue';
+import { useGoogleMaps } from '@/composables/useGoogleMaps';
 import TextInput from '@/components/TextInput.vue';
 
+const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
+
 const isVisible = ref(false);
+const { loadGoogleMapsScript } = useGoogleMaps();
 
 onMounted(() => {
   isVisible.value = true;
+  loadGoogleMapsScript();
 });
 
 const form = ref({
@@ -27,7 +32,6 @@ const validationErrors = ref({
 });
 
 const handleSubmit = async () => {
-  // Reset messages and validation errors
   successMessage.value = '';
   errorMessage.value = '';
   validationErrors.value = {
@@ -37,7 +41,6 @@ const handleSubmit = async () => {
     message: '',
   };
 
-  // Validate form
   if (!form.value.name) {
     validationErrors.value.name = 'Name is required';
     return;
@@ -57,8 +60,7 @@ const handleSubmit = async () => {
 
   try {
     loading.value = true;
-    // TODO: Implement the actual contact form submission
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     successMessage.value = 'Thank you for your message! We will get back to you soon.';
     form.value = {
       name: '',
@@ -80,6 +82,11 @@ const contactInfo = {
   email: 'info@fyndrx.com',
   phone: '+233 24 399 6999',
   hours: 'Monday - Friday: 9:00 AM - 6:00 PM',
+};
+
+const officeLocation = {
+  lat: 5.6698,
+  lng: -0.0166
 };
 
 const socialLinks = [
@@ -282,10 +289,84 @@ const socialLinks = [
         </div>
       </div>
     </section>
+
+    <!-- Map Section -->
+    <section class="py-16 bg-gray-50 dark:bg-gray-900">
+      <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="mb-8 text-center">
+          <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+            Visit Our Office
+          </h2>
+          <p class="mt-2 text-lg text-gray-600 dark:text-gray-300">
+            We're located in Tema, Greater Accra
+          </p>
+        </div>
+
+        <div class="overflow-hidden bg-white shadow-xl dark:bg-gray-800 rounded-2xl">
+          <div class="grid grid-cols-1 lg:grid-cols-3">
+            <!-- Map -->
+            <div class="lg:col-span-2 h-96 lg:h-auto">
+              <PharmacyMap
+                :location="officeLocation"
+                pharmacy-name="FyndRx Office"
+              />
+            </div>
+
+            <!-- Location Info -->
+            <div class="p-8 bg-gradient-to-br from-[#246BFD]/5 to-[#FE9615]/5 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10">
+              <h3 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+                Our Location
+              </h3>
+
+              <div class="space-y-6">
+                <div class="flex items-start gap-3">
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-[#246BFD]/10">
+                    <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Address</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ contactInfo.address }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ contactInfo.city }}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-[#246BFD]/10">
+                    <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Business Hours</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ contactInfo.hours }}</p>
+                  </div>
+                </div>
+
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <a
+                    :href="`https://www.google.com/maps/dir/?api=1&destination=${officeLocation.lat},${officeLocation.lng}`"
+                    target="_blank"
+                    class="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    Get Directions
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
+
 .animate-fade-in {
   animation: fadeIn 1s ease-out forwards;
 }

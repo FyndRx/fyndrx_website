@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import CustomCheckbox from './CustomCheckbox.vue';
 
 interface Option {
   label: string;
@@ -160,19 +161,26 @@ export default {
             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             @click="clearSelection"
           >
-            <i class="fas fa-times"></i>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
           </button>
-          <i 
-            class="transition-transform duration-200 fas fa-chevron-down"
+          <svg 
+            class="w-5 h-5 transition-transform duration-200 text-gray-400"
             :class="{ 'transform rotate-180': isOpen }"
-          ></i>
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
         </div>
       </button>
 
       <!-- Dropdown Menu -->
       <div
         v-if="isOpen"
-        class="absolute z-50 w-full mt-2 overflow-auto bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-2xl dark:border-gray-700 max-h-60"
+        class="absolute z-[100] w-full mt-2 overflow-auto bg-white border border-gray-200 shadow-lg dark:bg-gray-800 rounded-2xl dark:border-gray-700 max-h-60"
       >
         <!-- Search Input -->
         <div v-if="searchable" class="sticky top-0 p-2 bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
@@ -200,11 +208,10 @@ export default {
             @click="selectOption(option)"
           >
             <div class="flex items-center">
-              <div v-if="multiple" class="mr-2">
-                <input
-                  type="checkbox"
-                  :checked="(modelValue as (string | number)[]).includes(option.value)"
-                  class="rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]"
+              <div v-if="multiple" class="mr-2" @click.stop>
+                <CustomCheckbox
+                  :model-value="(modelValue as (string | number)[]).includes(option.value)"
+                  size="small"
                   @click.stop
                 />
               </div>

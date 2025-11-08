@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import LazyImage from '@/components/LazyImage.vue';
+import RatingStars from '@/components/RatingStars.vue';
+import { dataService } from '@/services/dataService';
 
 interface Props {
   medication: {
@@ -30,6 +32,10 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const router = useRouter();
+
+const medicationRating = computed(() => {
+  return dataService.getMedicationRating(props.medication.id);
+});
 
 const discountPercentage = computed(() => {
   if (props.medication.price && props.medication.discountPrice) {
@@ -93,6 +99,18 @@ export default {
       <h4 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">
         {{ medication.drug_name }}
       </h4>
+      
+      <div class="mb-3">
+        <RatingStars 
+          v-if="medicationRating.count > 0"
+          :rating="medicationRating.average" 
+          :count="medicationRating.count"
+          :show-count="true"
+          size="sm"
+        />
+        <span v-else class="text-sm text-gray-500 dark:text-gray-400">No reviews yet</span>
+      </div>
+
       <p v-if="medication.description" class="mb-4 text-gray-600 dark:text-gray-300">
         {{ medication.description }}
       </p>
@@ -200,6 +218,7 @@ export default {
 </template>
 
 <style scoped>
+
 .hover-lift {
   transition: transform 0.3s ease;
 }

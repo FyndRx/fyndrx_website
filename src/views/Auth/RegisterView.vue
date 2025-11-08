@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
+import CustomCheckbox from '@/components/CustomCheckbox.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
@@ -214,26 +215,22 @@ const handlePhoneValidation = (isValid: boolean) => {
           />
 
           <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <input
-                id="terms"
+            <div class="pt-0.5">
+              <CustomCheckbox
                 v-model="form.acceptTerms"
-                name="terms"
-                type="checkbox"
-                required
-                class="h-4 w-4 text-[#246BFD] focus:ring-[#246BFD] border-gray-300 dark:border-gray-600 rounded"
+                size="small"
               />
             </div>
             <div class="ml-3 text-sm">
-              <label for="terms" class="font-medium text-gray-900 dark:text-gray-300">
+              <label class="font-medium text-gray-900 dark:text-gray-300">
                 I agree to the
-                <a href="#" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]">
+                <router-link to="/terms" target="_blank" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD] underline">
                   Terms of Service
-                </a>
+                </router-link>
                 and
-                <a href="#" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD]">
+                <router-link to="/privacy" target="_blank" class="text-[#246BFD] hover:text-[#5089FF] dark:text-[#5089FF] dark:hover:text-[#246BFD] underline">
                   Privacy Policy
-                </a>
+                </router-link>
               </label>
               <p v-if="validationErrors.terms" class="mt-1 text-red-600 dark:text-red-400">
                 {{ validationErrors.terms }}

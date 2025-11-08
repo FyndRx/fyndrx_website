@@ -1,0 +1,254 @@
+[
+  {
+    "pharmacyId": 1,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 1,
+    "price": 30.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 2,
+    "price": 45.00,
+    "discountPrice": 35.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 1,
+    "formId": 2,
+    "strengthId": 3,
+    "price": 28.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 1,
+    "formId": 2,
+    "strengthId": 4,
+    "price": 42.00,
+    "discountPrice": 38.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 12.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 8,
+    "price": 18.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 13,
+    "price": 15.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 1,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 14,
+    "price": 25.00,
+    "discountPrice": 20.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 2,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 1,
+    "price": 32.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 2,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 2,
+    "price": 48.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 2,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 13.50,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 2,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 8,
+    "price": 20.00,
+    "discountPrice": 16.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 2,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 14,
+    "price": 24.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 3,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 1,
+    "price": 28.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 3,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 2,
+    "price": 42.00,
+    "discountPrice": 33.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 3,
+    "medicationId": 1,
+    "formId": 3,
+    "strengthId": 5,
+    "price": 40.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 3,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 11.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 3,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 14,
+    "price": 26.00,
+    "inStock": false
+  },
+  {
+    "pharmacyId": 4,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 14.00,
+    "discountPrice": 12.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 4,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 8,
+    "price": 22.00,
+    "discountPrice": 17.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 4,
+    "medicationId": 4,
+    "formId": 10,
+    "strengthId": 18,
+    "price": 50.00,
+    "discountPrice": 42.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 4,
+    "medicationId": 4,
+    "formId": 10,
+    "strengthId": 19,
+    "price": 75.00,
+    "discountPrice": 65.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 5,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 2,
+    "price": 44.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 5,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 12.50,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 5,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 14,
+    "price": 25.50,
+    "discountPrice": 20.50,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 6,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 1,
+    "price": 29.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 6,
+    "medicationId": 1,
+    "formId": 1,
+    "strengthId": 2,
+    "price": 46.00,
+    "discountPrice": 36.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 6,
+    "medicationId": 2,
+    "formId": 4,
+    "strengthId": 7,
+    "price": 13.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 6,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 13,
+    "price": 18.00,
+    "inStock": true
+  },
+  {
+    "pharmacyId": 6,
+    "medicationId": 3,
+    "formId": 7,
+    "strengthId": 14,
+    "price": 24.50,
+    "discountPrice": 19.50,
+    "inStock": true
+  }
+]

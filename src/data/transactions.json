@@ -1,0 +1,98 @@
+[
+  {
+    "id": "TXN-2024-001",
+    "orderId": "ORD-2024-001",
+    "orderNumber": "#FRX-001234",
+    "amount": 1050.00,
+    "currency": "GHS",
+    "status": "success",
+    "paymentMethod": "platform",
+    "paymentGateway": "paystack",
+    "reference": "PST-20241105-001234-ABC123",
+    "paidAt": "2024-11-05T10:35:00Z",
+    "createdAt": "2024-11-05T10:30:00Z",
+    "metadata": {
+      "pharmacyName": "HealthPlus Pharmacy",
+      "itemsCount": 1,
+      "customerEmail": "john.mensah@example.com",
+      "customerPhone": "+233 24 555 1234"
+    }
+  },
+  {
+    "id": "TXN-2024-002",
+    "orderId": "ORD-2024-002",
+    "orderNumber": "#FRX-001235",
+    "amount": 515.00,
+    "currency": "GHS",
+    "status": "pending",
+    "paymentMethod": "direct",
+    "paymentGateway": "cash",
+    "reference": "DIRECT-20241106-001235",
+    "createdAt": "2024-11-06T14:20:00Z",
+    "metadata": {
+      "pharmacyName": "MediCare Pharmacy",
+      "itemsCount": 2,
+      "customerEmail": "john.mensah@example.com",
+      "customerPhone": "+233 24 555 1234"
+    }
+  },
+  {
+    "id": "TXN-2024-003",
+    "orderId": "ORD-2024-003",
+    "orderNumber": "#FRX-001236",
+    "amount": 6480.00,
+    "currency": "GHS",
+    "status": "success",
+    "paymentMethod": "platform",
+    "paymentGateway": "paystack",
+    "reference": "PST-20241107-001236-XYZ789",
+    "paidAt": "2024-11-07T08:05:00Z",
+    "createdAt": "2024-11-07T08:00:00Z",
+    "metadata": {
+      "pharmacyName": "PharmAccess Limited",
+      "itemsCount": 1,
+      "customerEmail": "john.mensah@example.com",
+      "customerPhone": "+233 24 555 1234"
+    }
+  },
+  {
+    "id": "TXN-2024-004",
+    "orderId": "ORD-2024-004",
+    "orderNumber": "#FRX-001237",
+    "amount": 1650.00,
+    "currency": "GHS",
+    "status": "pending",
+    "paymentMethod": "direct",
+    "paymentGateway": "cash",
+    "reference": "DIRECT-20241107-001237",
+    "createdAt": "2024-11-07T13:45:00Z",
+    "metadata": {
+      "pharmacyName": "HealthPlus Pharmacy",
+      "itemsCount": 1,
+      "customerEmail": "john.mensah@example.com",
+      "customerPhone": "+233 24 555 1234"
+    }
+  },
+  {
+    "id": "TXN-2024-005",
+    "orderId": "ORD-2024-001",
+    "orderNumber": "#FRX-001234",
+    "amount": 50.00,
+    "currency": "GHS",
+    "status": "refunded",
+    "paymentMethod": "platform",
+    "paymentGateway": "paystack",
+    "reference": "PST-20241020-000999-REF123",
+    "paidAt": "2024-10-20T10:30:00Z",
+    "createdAt": "2024-10-20T10:25:00Z",
+    "refundedAt": "2024-10-22T15:20:00Z",
+    "refundReason": "Customer requested cancellation",
+    "metadata": {
+      "pharmacyName": "City Pharmacy",
+      "itemsCount": 1,
+      "customerEmail": "john.mensah@example.com",
+      "customerPhone": "+233 24 555 1234"
+    }
+  }
+]
+

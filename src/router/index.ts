@@ -3,6 +3,18 @@ import { useAuthStore } from '@/store/auth';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth',
+      };
+    } else {
+      return { top: 0, behavior: 'smooth' };
+    }
+  },
   routes: [
     {
       path: '/',
@@ -156,11 +168,107 @@ const router = createRouter({
       },
     },
     {
+      path: '/medications',
+      name: 'medications',
+      component: () => import('@/views/MedicationsView.vue'),
+      meta: {
+        title: 'Browse Medications | FyndRX',
+        description: 'Browse and search for medications. Compare prices across pharmacies.'
+      }
+    },
+    {
+      path: '/favorites',
+      name: 'favorites',
+      component: () => import('@/views/FavoritesView.vue'),
+      meta: {
+        title: 'My Favorites | FyndRX',
+        description: 'View your favorite medications and pharmacies'
+      }
+    },
+    {
       path: '/medication/:id',
       name: 'MedicationDetail',
       component: () => import('@/views/MedicationDetail.vue'),
       meta: {
-        title: 'Medication Details'
+        title: 'Medication Details | FyndRX'
+      }
+    },
+    {
+      path: '/cart',
+      name: 'cart',
+      component: () => import('@/views/CartView.vue'),
+      meta: {
+        title: 'Shopping Cart | FyndRX',
+        description: 'View and manage your shopping cart'
+      }
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: () => import('@/views/CheckoutView.vue'),
+      meta: {
+        title: 'Checkout | FyndRX',
+        description: 'Complete your order',
+        requiresAuth: false
+      }
+    },
+    {
+      path: '/orders',
+      name: 'orders',
+      component: () => import('@/views/OrdersView.vue'),
+      meta: {
+        title: 'Order History | FyndRX',
+        description: 'View and track your orders',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/orders/:id',
+      name: 'order-detail',
+      component: () => import('@/views/OrderDetailView.vue'),
+      meta: {
+        title: 'Order Details | FyndRX',
+        description: 'View order details and track status',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/prescriptions',
+      name: 'prescriptions',
+      component: () => import('@/views/PrescriptionsView.vue'),
+      meta: {
+        title: 'My Prescriptions | FyndRX',
+        description: 'View and manage your prescriptions',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/transactions',
+      name: 'transactions',
+      component: () => import('@/views/TransactionsView.vue'),
+      meta: {
+        title: 'Transactions | FyndRX',
+        description: 'View your payment history',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/receipt/:id',
+      name: 'receipt',
+      component: () => import('@/views/ReceiptView.vue'),
+      meta: {
+        title: 'Receipt | FyndRX',
+        description: 'View payment receipt',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/payment/callback',
+      name: 'payment-callback',
+      component: () => import('@/views/PaymentCallbackView.vue'),
+      meta: {
+        title: 'Payment Processing | FyndRX',
+        description: 'Processing your payment'
       }
     },
     {
@@ -170,6 +278,15 @@ const router = createRouter({
       meta: {
         title: 'Help Center | FyndRX',
         description: 'Get help and support for your FyndRX experience. Find answers to frequently asked questions and contact our support team.'
+      }
+    },
+    {
+      path: '/faq',
+      name: 'faq',
+      component: () => import('@/views/FAQView.vue'),
+      meta: {
+        title: 'FAQ | FyndRX',
+        description: 'Frequently asked questions about FyndRx ePharmacy platform. Find answers about orders, prescriptions, payments, and more.'
       }
     },
     {
@@ -197,15 +314,6 @@ const router = createRouter({
       meta: {
         title: 'Privacy Policy',
         description: 'Privacy policy and data protection information'
-      }
-    },
-    {
-      path: '/letterhead',
-      name: 'letterhead',
-      component: () => import('@/views/Legal/Letterhead.vue'),
-      meta: {
-        title: 'Official Letterhead | FyndRX',
-        description: 'Download our official letterhead for business correspondence'
       }
     },
     {

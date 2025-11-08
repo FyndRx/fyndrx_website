@@ -17,6 +17,7 @@ export interface BlogPost {
   tags?: string[];
   readTime?: number;
   likes?: number;
+  views?: number;
   comments?: Comment[];
 }
 

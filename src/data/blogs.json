@@ -1,0 +1,231 @@
+[
+  {
+    "id": 1,
+    "title": "Understanding Antibiotic Resistance: What You Need to Know",
+    "slug": "understanding-antibiotic-resistance",
+    "excerpt": "Learn about the growing concern of antibiotic resistance and how to use antibiotics responsibly to protect public health.",
+    "content": "<h2>What is Antibiotic Resistance?</h2><p>Antibiotic resistance occurs when bacteria evolve and develop the ability to defeat drugs designed to kill them. This means infections that were once easily treatable become dangerous or even deadly.</p><h3>Why It Matters</h3><p>When antibiotics lose their effectiveness, simple infections can become serious health threats. This is one of the biggest challenges facing modern medicine today.</p><h3>How You Can Help</h3><ul><li>Only take antibiotics when prescribed by a healthcare professional</li><li>Always complete the full course, even if you feel better</li><li>Never share antibiotics with others</li><li>Practice good hygiene to prevent infections</li></ul><h3>The Future</h3><p>Researchers are working on new treatments and diagnostic tools to combat antibiotic resistance. Your responsible use of antibiotics today helps protect everyone's health tomorrow.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=3870&auto=format&fit=crop",
+    "category": "Drug Information",
+    "date": "2024-11-05",
+    "author": {
+      "name": "Alhassan Latifa",
+      "avatar": "/src/assets/team/latifa.jpg",
+      "bio": "Clinical Pharmacist specializing in antimicrobial stewardship"
+    },
+    "tags": ["Antibiotics", "Drug Safety", "Public Health", "Resistance"],
+    "readTime": 8,
+    "likes": 156,
+    "views": 2340
+  },
+  {
+    "id": 2,
+    "title": "5 Tips for Managing Chronic Medications",
+    "slug": "managing-chronic-medications",
+    "excerpt": "Essential strategies for staying organized and compliant with long-term medication regimens.",
+    "content": "<h2>Staying Organized</h2><p>Managing chronic conditions requires consistent medication adherence. Here are five proven strategies to help you stay on track.</p><h3>1. Use a Pill Organizer</h3><p>A weekly pill organizer helps you prepare medications in advance and ensures you never miss a dose.</p><h3>2. Set Daily Reminders</h3><p>Use your smartphone or smart speaker to set daily medication reminders at the same time each day.</p><h3>3. Keep a Medication List</h3><p>Maintain an up-to-date list of all your medications, including dosages and timing. Share this with all your healthcare providers.</p><h3>4. Use a Medication Tracking App</h3><p>Modern apps can send reminders, track refills, and even notify you of potential drug interactions.</p><h3>5. Build It Into Your Routine</h3><p>Link medication-taking to daily activities like brushing your teeth or having breakfast to create a consistent habit.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?q=80&w=3869&auto=format&fit=crop",
+    "category": "Wellness",
+    "date": "2024-11-03",
+    "author": {
+      "name": "Abdul Basit Yahaya",
+      "avatar": "/src/assets/team/aby.jpg",
+      "bio": "Healthcare Technology Specialist"
+    },
+    "tags": ["Medication Management", "Wellness", "Chronic Care", "Tips"],
+    "readTime": 6,
+    "likes": 89,
+    "views": 1520
+  },
+  {
+    "id": 3,
+    "title": "The Complete Guide to Blood Pressure Medications",
+    "slug": "blood-pressure-medications-guide",
+    "excerpt": "Everything you need to know about hypertension medications, from types to side effects and lifestyle changes.",
+    "content": "<h2>Understanding Blood Pressure</h2><p>High blood pressure affects millions worldwide. Proper medication management is crucial for preventing serious complications.</p><h3>Types of Blood Pressure Medications</h3><p><strong>ACE Inhibitors:</strong> Help relax blood vessels by blocking hormone production.</p><p><strong>Beta Blockers:</strong> Reduce heart rate and the force of heart contractions.</p><p><strong>Calcium Channel Blockers:</strong> Prevent calcium from entering heart and blood vessel cells.</p><p><strong>Diuretics:</strong> Help your body eliminate sodium and water to reduce blood volume.</p><h3>Important Considerations</h3><ul><li>Take medications at the same time daily</li><li>Monitor your blood pressure regularly</li><li>Report any side effects to your doctor</li><li>Don't stop medications without consulting your physician</li></ul><h3>Lifestyle Changes</h3><p>Combine medications with healthy lifestyle choices like reducing sodium, exercising regularly, and managing stress for best results.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=3816&auto=format&fit=crop",
+    "category": "Health Conditions",
+    "date": "2024-11-01",
+    "author": {
+      "name": "Wunnam Confidence",
+      "avatar": "/src/assets/team/wunnam.jpg",
+      "bio": "Cardiovascular Pharmacist"
+    },
+    "tags": ["Hypertension", "Heart Health", "Medications", "Guide"],
+    "readTime": 10,
+    "likes": 203,
+    "views": 3120
+  },
+  {
+    "id": 4,
+    "title": "Diabetes Medication Breakthrough: What's New in 2024",
+    "slug": "diabetes-medication-breakthrough-2024",
+    "excerpt": "Discover the latest advances in diabetes treatment and what they mean for patients managing this chronic condition.",
+    "content": "<h2>Revolutionary Developments</h2><p>2024 has brought exciting new options for diabetes management, offering hope to millions of patients worldwide.</p><h3>New GLP-1 Agonists</h3><p>The latest generation of GLP-1 receptor agonists shows improved efficacy with fewer side effects and more convenient dosing schedules.</p><h3>Smart Insulin Delivery</h3><p>Advanced insulin pumps with AI-powered glucose prediction are changing how patients manage their condition.</p><h3>Oral Insulin Progress</h3><p>Researchers are making significant strides in developing oral insulin formulations, which could eliminate the need for daily injections.</p><h3>What This Means for You</h3><p>Talk to your healthcare provider about whether these new options might be right for your diabetes management plan.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1579154341406-25afffaa3c66?q=80&w=3870&auto=format&fit=crop",
+    "category": "News",
+    "date": "2024-10-28",
+    "author": {
+      "name": "Yahuza Majeed",
+      "avatar": "/src/assets/team/yahuza.jpg",
+      "bio": "Endocrinology Specialist"
+    },
+    "tags": ["Diabetes", "Innovation", "Treatment", "Medical News"],
+    "readTime": 7,
+    "likes": 178,
+    "views": 2890
+  },
+  {
+    "id": 5,
+    "title": "How to Save Money on Prescription Medications",
+    "slug": "save-money-prescription-medications",
+    "excerpt": "Practical strategies to reduce your medication costs without compromising on quality or safety.",
+    "content": "<h2>Smart Savings Strategies</h2><p>Prescription costs can be overwhelming, but there are proven ways to save money while maintaining your health.</p><h3>1. Ask About Generic Alternatives</h3><p>Generic medications contain the same active ingredients as brand-name drugs but cost 80-85% less on average.</p><h3>2. Compare Pharmacy Prices</h3><p>Prices can vary significantly between pharmacies. Use FyndRX to compare prices and find the best deals near you.</p><h3>3. Consider Mail-Order Pharmacies</h3><p>For maintenance medications, 90-day supplies through mail-order can offer significant savings.</p><h3>4. Look for Patient Assistance Programs</h3><p>Many pharmaceutical companies offer programs to help patients afford their medications.</p><h3>5. Split Pills When Appropriate</h3><p>Ask your doctor if pill-splitting is safe for your medication - it can cut costs in half.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1559526324-593bc073d938?q=80&w=3870&auto=format&fit=crop",
+    "category": "Wellness",
+    "date": "2024-10-25",
+    "author": {
+      "name": "Alhassan Latifa",
+      "avatar": "/src/assets/team/latifa.jpg",
+      "bio": "Clinical Pharmacist"
+    },
+    "tags": ["Cost Savings", "Tips", "Generic Drugs", "Patient Resources"],
+    "readTime": 5,
+    "likes": 267,
+    "views": 4560
+  },
+  {
+    "id": 6,
+    "title": "Understanding Medication Interactions: A Patient's Guide",
+    "slug": "medication-interactions-guide",
+    "excerpt": "Learn how different medications can interact with each other and what to do to stay safe.",
+    "content": "<h2>What Are Drug Interactions?</h2><p>Drug interactions occur when one medication affects how another works. Understanding these interactions is crucial for safe medication use.</p><h3>Types of Interactions</h3><p><strong>Drug-Drug Interactions:</strong> When two or more medications react with each other.</p><p><strong>Drug-Food Interactions:</strong> When food or beverages affect medication absorption.</p><p><strong>Drug-Condition Interactions:</strong> When a medication worsens an existing health condition.</p><h3>Warning Signs</h3><ul><li>Unexpected side effects</li><li>Medication doesn't seem to work</li><li>New symptoms after starting a medication</li></ul><h3>Stay Safe</h3><p>Always inform your pharmacist and doctor about all medications you're taking, including over-the-counter drugs and supplements.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?q=80&w=3870&auto=format&fit=crop",
+    "category": "Drug Information",
+    "date": "2024-10-22",
+    "author": {
+      "name": "Abdul Basit Yahaya",
+      "avatar": "/src/assets/team/aby.jpg",
+      "bio": "Clinical Pharmacologist"
+    },
+    "tags": ["Drug Interactions", "Safety", "Patient Education"],
+    "readTime": 9,
+    "likes": 134,
+    "views": 2100
+  },
+  {
+    "id": 7,
+    "title": "Mental Health Medications: Breaking the Stigma",
+    "slug": "mental-health-medications-stigma",
+    "excerpt": "An honest conversation about mental health medications and why seeking treatment is a sign of strength.",
+    "content": "<h2>Changing the Conversation</h2><p>Mental health medications are as important as any other medical treatment, yet stigma often prevents people from seeking help.</p><h3>Common Misconceptions</h3><p>Let's address some myths: No, antidepressants aren't 'happy pills.' No, needing medication doesn't mean you're weak. Yes, therapy and medication can work together.</p><h3>Types of Mental Health Medications</h3><p><strong>Antidepressants:</strong> Help balance brain chemistry to improve mood and reduce anxiety.</p><p><strong>Anti-anxiety medications:</strong> Provide relief from severe anxiety symptoms.</p><p><strong>Mood stabilizers:</strong> Help regulate mood swings in conditions like bipolar disorder.</p><h3>Finding the Right Treatment</h3><p>It may take time to find the right medication and dosage. Be patient and communicate openly with your healthcare provider about your experience.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1527689368864-3a821dbccc34?q=80&w=3870&auto=format&fit=crop",
+    "category": "Health Conditions",
+    "date": "2024-10-20",
+    "author": {
+      "name": "Wunnam Confidence",
+      "avatar": "/src/assets/team/wunnam.jpg",
+      "bio": "Psychiatric Pharmacist"
+    },
+    "tags": ["Mental Health", "Awareness", "Treatment", "Stigma"],
+    "readTime": 7,
+    "likes": 421,
+    "views": 5670
+  },
+  {
+    "id": 8,
+    "title": "Vaccine Safety: Separating Fact from Fiction",
+    "slug": "vaccine-safety-facts",
+    "excerpt": "Evidence-based information about vaccine safety, effectiveness, and importance for public health.",
+    "content": "<h2>The Science of Vaccines</h2><p>Vaccines are one of the greatest public health achievements, saving millions of lives each year through disease prevention.</p><h3>How Vaccines Work</h3><p>Vaccines train your immune system to recognize and fight specific diseases without causing the actual illness.</p><h3>Safety Standards</h3><p>Vaccines undergo rigorous testing in multiple phases before approval. Post-approval monitoring continues to ensure ongoing safety.</p><h3>Common Concerns Addressed</h3><p><strong>Side Effects:</strong> Most are mild and temporary, like soreness at injection site or low-grade fever.</p><p><strong>Effectiveness:</strong> Vaccines significantly reduce disease risk and severity, though no vaccine is 100% effective.</p><h3>Protecting Your Community</h3><p>Vaccination helps create herd immunity, protecting those who cannot be vaccinated due to medical conditions.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1632053002928-8c01748c3e0c?q=80&w=3870&auto=format&fit=crop",
+    "category": "News",
+    "date": "2024-10-18",
+    "author": {
+      "name": "Yahuza Majeed",
+      "avatar": "/src/assets/team/yahuza.jpg",
+      "bio": "Immunization Specialist"
+    },
+    "tags": ["Vaccines", "Public Health", "Safety", "Science"],
+    "readTime": 9,
+    "likes": 312,
+    "views": 4890
+  },
+  {
+    "id": 9,
+    "title": "Pain Management: Options Beyond Opioids",
+    "slug": "pain-management-alternatives",
+    "excerpt": "Explore effective pain management strategies that don't rely on potentially addictive opioid medications.",
+    "content": "<h2>The Pain Management Challenge</h2><p>Chronic pain affects millions, but the opioid crisis has highlighted the need for safer alternatives.</p><h3>Non-Opioid Medications</h3><p><strong>NSAIDs:</strong> Like ibuprofen for inflammation and moderate pain.</p><p><strong>Acetaminophen:</strong> Effective for many types of pain without anti-inflammatory effects.</p><p><strong>Topical Treatments:</strong> Creams and patches deliver relief directly to painful areas.</p><h3>Non-Medication Approaches</h3><ul><li>Physical therapy and exercise</li><li>Acupuncture and massage</li><li>Cognitive behavioral therapy</li><li>Heat and cold therapy</li></ul><h3>When Opioids Are Necessary</h3><p>Some situations require opioids, but they should be used at the lowest effective dose for the shortest time possible, under close medical supervision.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=3870&auto=format&fit=crop",
+    "category": "Health Conditions",
+    "date": "2024-10-15",
+    "author": {
+      "name": "Wunnam Confidence",
+      "avatar": "/src/assets/team/wunnam.jpg",
+      "bio": "Pain Management Specialist"
+    },
+    "tags": ["Pain Management", "Alternatives", "Chronic Pain", "Treatment Options"],
+    "readTime": 8,
+    "likes": 198,
+    "views": 3210
+  },
+  {
+    "id": 10,
+    "title": "Understanding Your Prescription Label",
+    "slug": "understanding-prescription-labels",
+    "excerpt": "A comprehensive guide to reading and understanding all the information on your medication label.",
+    "content": "<h2>Decoding Your Prescription</h2><p>Prescription labels contain critical information about your medication. Here's how to read them correctly.</p><h3>Key Information</h3><p><strong>Drug Name:</strong> Both generic and brand names are listed.</p><p><strong>Dosage Instructions:</strong> Exactly how much and how often to take the medication.</p><p><strong>Warnings:</strong> Important precautions and potential side effects.</p><p><strong>Expiration Date:</strong> When the medication is no longer guaranteed to be effective.</p><h3>Important Symbols</h3><p>Labels use standardized symbols and abbreviations. Ask your pharmacist if anything is unclear.</p><h3>Storage Instructions</h3><p>Proper storage ensures medication effectiveness. Some require refrigeration, others should be kept at room temperature away from light.</p><h3>When in Doubt, Ask</h3><p>Never hesitate to ask your pharmacist questions about your prescription. It's their job to ensure you understand how to use your medication safely.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1585435557343-3b092031a831?q=80&w=3870&auto=format&fit=crop",
+    "category": "Drug Information",
+    "date": "2024-10-12",
+    "author": {
+      "name": "Alhassan Latifa",
+      "avatar": "/src/assets/team/latifa.jpg",
+      "bio": "Clinical Pharmacist"
+    },
+    "tags": ["Prescriptions", "Patient Education", "Medication Safety"],
+    "readTime": 6,
+    "likes": 145,
+    "views": 2340
+  },
+  {
+    "id": 11,
+    "title": "The Rise of Telemedicine and E-Pharmacy Services",
+    "slug": "telemedicine-epharmacy-rise",
+    "excerpt": "How digital health services are revolutionizing access to healthcare and medications in Ghana and beyond.",
+    "content": "<h2>The Digital Health Revolution</h2><p>Telemedicine and e-pharmacy services are transforming healthcare delivery, making it more accessible and convenient than ever.</p><h3>Benefits of E-Pharmacy</h3><ul><li>24/7 access to medication information</li><li>Easy price comparison</li><li>Home delivery convenience</li><li>Better medication tracking</li><li>Reduced waiting times</li></ul><h3>Telemedicine Advantages</h3><p>Virtual consultations save time and money while maintaining quality care. They're especially valuable for follow-up appointments and prescription refills.</p><h3>Safety and Regulation</h3><p>Legitimate e-pharmacy services are regulated and licensed. Always verify credentials before ordering medications online.</p><h3>The Future</h3><p>As technology advances, we'll see even more integration between telemedicine, e-pharmacy, and traditional healthcare services.</p>",
+    "coverImage": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=3870&auto=format&fit=crop",
+    "category": "News",
+    "date": "2024-10-10",
+    "author": {
+      "name": "Abdul Basit Yahaya",
+      "avatar": "/src/assets/team/aby.jpg",
+      "bio": "Digital Health Innovator"
+    },
+    "tags": ["Telemedicine", "E-Pharmacy", "Digital Health", "Innovation"],
+    "readTime": 6,
+    "likes": 234,
+    "views": 3980
+  },
+  {
+    "id": 12,
+    "title": "Seasonal Allergies: Medications and Management",
+    "slug": "seasonal-allergies-management",
+    "excerpt": "Your complete guide to understanding and managing seasonal allergies with the right medications and lifestyle changes.",
+    "content": "<h2>Understanding Seasonal Allergies</h2><p>Millions suffer from seasonal allergies. The right combination of medications and lifestyle changes can provide significant relief.</p><h3>Types of Allergy Medications</h3><p><strong>Antihistamines:</strong> Block histamine to reduce sneezing, itching, and runny nose.</p><p><strong>Decongestants:</strong> Relieve nasal congestion.</p><p><strong>Nasal Corticosteroids:</strong> Reduce inflammation in nasal passages.</p><p><strong>Eye Drops:</strong> Provide relief for itchy, watery eyes.</p><h3>When to Start Treatment</h3><p>Begin taking allergy medications before symptoms start for best results. If you know pollen season triggers your allergies, start preventive treatment early.</p><h3>Lifestyle Tips</h3><ul><li>Keep windows closed during high pollen days</li><li>Shower and change clothes after being outdoors</li><li>Use air purifiers in your home</li><li>Check daily pollen counts</li></ul>",
+    "coverImage": "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=3853&auto=format&fit=crop",
+    "category": "Health Conditions",
+    "date": "2024-10-08",
+    "author": {
+      "name": "Yahuza Majeed",
+      "avatar": "/src/assets/team/yahuza.jpg",
+      "bio": "Allergy and Immunology Specialist"
+    },
+    "tags": ["Allergies", "Seasonal Health", "Treatment", "Prevention"],
+    "readTime": 7,
+    "likes": 167,
+    "views": 2670
+  }
+]
+

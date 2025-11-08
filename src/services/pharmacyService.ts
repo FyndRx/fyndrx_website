@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Pharmacy, PharmacyFilters, Review } from '@/types/pharmacy';
+import type { Pharmacy, PharmacyFilters, PharmacyReview } from '@/models/Pharmacy';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.fyndrx.com/v1';
 
@@ -156,10 +156,9 @@ export const pharmacyService = {
   },
 
   // Add review
-  async addReview(pharmacyId: number, review: Omit<Review, 'id'>): Promise<Review> {
+  async addReview(pharmacyId: number, review: Omit<PharmacyReview, 'id'>): Promise<PharmacyReview> {
     try {
       if (import.meta.env.DEV) {
-        // Simulate API call in development
         await new Promise(resolve => setTimeout(resolve, 1000));
         return {
           id: Math.floor(Math.random() * 1000),

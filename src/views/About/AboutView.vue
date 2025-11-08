@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import latifaImage from '@/assets/team/latifa.jpg';
 import abyImage from '@/assets/team/aby.jpg';
 import wunnamImage from '@/assets/team/wunnam.jpg';
+// import yahuzaImage from '@/assets/team/yahuza.jpg';
 
 const isVisible = ref(false);
 
@@ -20,23 +21,23 @@ const stats = [
 const team = [
   {
     name: 'Alhassan Latifa',
-    role: 'Medical Director',
+    role: 'Business Lead and Marketing Strategist',
     image: latifaImage,
   },
   {
     name: 'Abdul Basit Yahaya',
-    role: 'Head of Technology',
+    role: 'General Technincal Operations Lead',
     image: abyImage,
   },
   {
     name: 'Mahmud Wunnam',
-    role: 'Operations Manager',
+    role: 'Lead Developer',
     image: wunnamImage,
   },
   // {
   //   name: 'Nurudeen Yahuza',
   //   role: 'Software Engineer',
-  //   image: '/src/assets/team/yahuza.jpg',
+  //   image: yahuzaImage,
   // },
 ];
 </script>
@@ -49,7 +50,7 @@ const team = [
       <div class="relative px-4 py-24 mx-auto max-w-7xl sm:py-32 sm:px-6 lg:px-8">
         <div class="text-center" :class="{ 'animate-fade-in': isVisible }">
           <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
-            About <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615]">FyndRX</span>
+            About <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615]">FyndRx</span>
           </h1>
           <p class="max-w-3xl mx-auto mt-6 text-xl text-gray-600 dark:text-gray-300">
             We're revolutionizing healthcare access through technology, making quality care more accessible and affordable for everyone.
@@ -148,6 +149,7 @@ const team = [
 </template>
 
 <style scoped>
+
 .animate-fade-in {
   animation: fadeIn 1s ease-out forwards;
 }

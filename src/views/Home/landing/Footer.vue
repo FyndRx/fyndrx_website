@@ -56,7 +56,7 @@ const quickLinks = [
 
 const supportLinks = [
   { name: 'Help Center', path: '/help' },
-  { name: 'FAQs', path: '/faqs' },
+  { name: 'FAQs', path: '/faq' },
   { name: 'Report a Problem', path: '/report' },
   { name: 'Feedback', path: '/feedback' }
 ];
@@ -64,7 +64,6 @@ const supportLinks = [
 const informationLinks = [
   { name: 'Terms of Service', path: '/terms' },
   { name: 'Privacy Policy', path: '/privacy' },
-  { name: 'Letterhead', path: '/letterhead' },
   { name: 'Cookie Policy', path: '/cookies' },
   { name: 'Accessibility', path: '/accessibility' }
 ];
@@ -226,7 +225,8 @@ export default {
 </template>
 
 <style scoped>
+
 .router-link-active {
-  @apply text-white;
+  color: white;
 }
 </style> 

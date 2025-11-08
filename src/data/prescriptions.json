@@ -1,0 +1,105 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "prescriptionNumber": "RX-2024-001",
+    "patientName": "John Mensah",
+    "doctorName": "Dr. Sarah Asante",
+    "prescriptionDate": "2024-11-05T10:30:00Z",
+    "expiryDate": "2025-02-05T10:30:00Z",
+    "status": "active",
+    "medications": [
+      {
+        "name": "Amoxicillin",
+        "dosage": "500mg",
+        "frequency": "3 times daily",
+        "duration": "7 days",
+        "instructions": "Take after meals"
+      },
+      {
+        "name": "Paracetamol",
+        "dosage": "500mg",
+        "frequency": "As needed",
+        "duration": "When in pain",
+        "instructions": "Do not exceed 8 tablets per day"
+      }
+    ],
+    "prescriptionImage": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=400&fit=crop",
+    "notes": "Patient has mild penicillin allergy. Monitor for reactions.",
+    "createdAt": "2024-11-05T10:30:00Z"
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "prescriptionNumber": "RX-2024-002",
+    "patientName": "John Mensah",
+    "doctorName": "Dr. Kwame Osei",
+    "prescriptionDate": "2024-10-15T14:20:00Z",
+    "expiryDate": "2025-01-15T14:20:00Z",
+    "status": "active",
+    "medications": [
+      {
+        "name": "Metformin",
+        "dosage": "500mg",
+        "frequency": "Twice daily",
+        "duration": "Ongoing",
+        "instructions": "Take with breakfast and dinner"
+      },
+      {
+        "name": "Lisinopril",
+        "dosage": "10mg",
+        "frequency": "Once daily",
+        "duration": "Ongoing",
+        "instructions": "Take in the morning"
+      }
+    ],
+    "prescriptionImage": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=400&fit=crop",
+    "notes": "Regular monitoring of blood sugar and blood pressure required.",
+    "createdAt": "2024-10-15T14:20:00Z"
+  },
+  {
+    "id": 3,
+    "userId": 1,
+    "prescriptionNumber": "RX-2024-003",
+    "patientName": "John Mensah",
+    "doctorName": "Dr. Ama Boateng",
+    "prescriptionDate": "2024-09-20T09:00:00Z",
+    "expiryDate": "2024-12-20T09:00:00Z",
+    "status": "expired",
+    "medications": [
+      {
+        "name": "Ibuprofen",
+        "dosage": "400mg",
+        "frequency": "3 times daily",
+        "duration": "5 days",
+        "instructions": "Take with food"
+      }
+    ],
+    "prescriptionImage": "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=400&h=400&fit=crop",
+    "notes": "For lower back pain management.",
+    "createdAt": "2024-09-20T09:00:00Z"
+  },
+  {
+    "id": 4,
+    "userId": 1,
+    "prescriptionNumber": "RX-2024-004",
+    "patientName": "John Mensah",
+    "doctorName": "Dr. Emmanuel Adom",
+    "prescriptionDate": "2024-11-01T11:15:00Z",
+    "expiryDate": "2025-02-01T11:15:00Z",
+    "status": "pending_approval",
+    "medications": [
+      {
+        "name": "Omeprazole",
+        "dosage": "20mg",
+        "frequency": "Once daily",
+        "duration": "30 days",
+        "instructions": "Take before breakfast"
+      }
+    ],
+    "prescriptionImage": "https://images.unsplash.com/photo-1585435421671-0c16764de7f0?w=400&h=400&fit=crop",
+    "notes": "For acid reflux management. Follow up in 1 month.",
+    "createdAt": "2024-11-01T11:15:00Z"
+  }
+]
+

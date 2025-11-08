@@ -15,27 +15,27 @@ onMounted(() => {
 const steps = ref([
   {
     id: 1,
-    title: 'Search for Pharmacies',
-    description: 'Enter your location to find pharmacies near you',
-    icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z'
+    title: 'Search for Drugs',
+    description: 'Search by drug name, brand, or medical condition',
+    icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
   },
   {
     id: 2,
-    title: 'Compare Prices',
-    description: 'View and compare prices for your prescriptions',
-    icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+    title: 'Upload Prescription',
+    description: 'Upload your prescription for pharmacist verification',
+    icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12'
   },
   {
     id: 3,
-    title: 'Apply Coupons',
-    description: 'Use available coupons to save on your purchase',
-    icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+    title: 'Add to Cart & Checkout',
+    description: 'Select pharmacy, add to cart, and complete your order',
+    icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'
   },
   {
     id: 4,
-    title: 'Save Money',
-    description: 'Get the best deals and save on your prescriptions',
-    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+    title: 'Track Your Order',
+    description: 'Monitor your order status and get real-time updates',
+    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
   }
 ]);
 </script>
@@ -55,7 +55,7 @@ const steps = ref([
           How It <span class="text-[#246BFD]">Works</span>
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-300">
-          Save money on your prescriptions in just a few simple steps
+          Get your medications delivered in just a few simple steps
         </p>
       </div>
 
@@ -102,6 +102,7 @@ const steps = ref([
 </template>
 
 <style scoped>
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
 }

@@ -1,0 +1,528 @@
+[
+  {
+    "id": 1,
+    "name": "HealthPlus Pharmacy",
+    "address": "Community 10, Mayflower Building, Tema, Greater Accra",
+    "rating": 4.8,
+    "reviews": [
+      {
+        "id": 1,
+        "rating": 5,
+        "comment": "Excellent service! They have a wide range of medications and the staff is very knowledgeable. Quick delivery too!",
+        "user": "Kwame A.",
+        "date": "2024-11-05"
+      },
+      {
+        "id": 2,
+        "rating": 5,
+        "comment": "Very professional and courteous staff. Medications are always in stock and reasonably priced.",
+        "user": "Ama B.",
+        "date": "2024-11-03"
+      },
+      {
+        "id": 3,
+        "rating": 4,
+        "comment": "Good pharmacy with fair prices. Sometimes a bit crowded during peak hours.",
+        "user": "Michael O.",
+        "date": "2024-10-28"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&h=600&fit=crop",
+    "isOpen": true,
+    "distance": "0.5 km",
+    "services": ["Prescription Delivery", "24/7 Service", "Online Ordering", "Vaccination", "Health Consultations", "Home Delivery"],
+    "workingHours": {
+      "monday": "24 Hours",
+      "tuesday": "24 Hours",
+      "wednesday": "24 Hours",
+      "thursday": "24 Hours",
+      "friday": "24 Hours",
+      "saturday": "24 Hours",
+      "sunday": "24 Hours"
+    },
+    "phone": "+233 24 399 6999",
+    "email": "info@healthplus.com.gh",
+    "website": "https://www.healthplus.com.gh",
+    "description": "Leading 24/7 pharmacy in Tema offering comprehensive healthcare services, prescription medications, and wellness products. We pride ourselves on quality service and affordable healthcare.",
+    "location": {
+      "lat": 5.6698,
+      "lng": -0.0166
+    },
+    "medications": [
+      {
+        "id": 1,
+        "name": "Amoxicillin 500mg",
+        "description": "Antibiotic for bacterial infections",
+        "price": 35.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 12.00,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 3,
+        "name": "Ibuprofen 400mg",
+        "description": "Anti-inflammatory and pain reliever",
+        "price": 20.00,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 4,
+        "name": "Omeprazole 20mg",
+        "description": "Treats stomach acid problems",
+        "price": 48.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 5,
+        "name": "Metformin 500mg",
+        "description": "Diabetes medication",
+        "price": 70.00,
+        "inStock": true,
+        "requiresPrescription": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "MediCare Pharmacy",
+    "address": "Spintex Road, Accra, Greater Accra",
+    "rating": 4.6,
+    "reviews": [
+      {
+        "id": 4,
+        "rating": 5,
+        "comment": "Best pharmacy in Accra! They go above and beyond to help their customers.",
+        "user": "Abena M.",
+        "date": "2024-11-04"
+      },
+      {
+        "id": 5,
+        "rating": 4,
+        "comment": "Great selection and competitive prices. Friendly pharmacists who take time to explain medications.",
+        "user": "Kofi T.",
+        "date": "2024-11-01"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=600&fit=crop",
+    "isOpen": true,
+    "distance": "2.3 km",
+    "services": ["Home Delivery", "Online Ordering", "Health Consultations", "Blood Pressure Checks", "Vaccination"],
+    "workingHours": {
+      "monday": "7:00 AM - 10:00 PM",
+      "tuesday": "7:00 AM - 10:00 PM",
+      "wednesday": "7:00 AM - 10:00 PM",
+      "thursday": "7:00 AM - 10:00 PM",
+      "friday": "7:00 AM - 10:00 PM",
+      "saturday": "8:00 AM - 9:00 PM",
+      "sunday": "9:00 AM - 8:00 PM"
+    },
+    "phone": "+233 30 276 5432",
+    "email": "contact@medicare.com.gh",
+    "website": "https://www.medicare.com.gh",
+    "description": "Trusted community pharmacy serving Accra for over 15 years. We offer quality medications, health screenings, and professional pharmaceutical care.",
+    "location": {
+      "lat": 5.6352,
+      "lng": -0.0695
+    },
+    "medications": [
+      {
+        "id": 1,
+        "name": "Amoxicillin 500mg",
+        "description": "Antibiotic for bacterial infections",
+        "price": 38.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 13.50,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 3,
+        "name": "Ibuprofen 400mg",
+        "description": "Anti-inflammatory and pain reliever",
+        "price": 19.00,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 6,
+        "name": "Ciprofloxacin 500mg",
+        "description": "Fluoroquinolone antibiotic",
+        "price": 58.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 7,
+        "name": "Lisinopril 10mg",
+        "description": "Blood pressure medication",
+        "price": 76.00,
+        "inStock": false,
+        "requiresPrescription": true
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "PharmAccess Limited",
+    "address": "Ring Road Central, Accra, Greater Accra",
+    "rating": 4.7,
+    "reviews": [
+      {
+        "id": 6,
+        "rating": 5,
+        "comment": "Professional service and always have my medications in stock. Highly recommend!",
+        "user": "Yaw K.",
+        "date": "2024-11-02"
+      },
+      {
+        "id": 7,
+        "rating": 4,
+        "comment": "Good pharmacy with knowledgeable staff. Prices are fair and service is quick.",
+        "user": "Akua D.",
+        "date": "2024-10-30"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1576602975814-3b0d_98c1e68?w=800&h=600&fit=crop",
+    "isOpen": true,
+    "distance": "3.8 km",
+    "services": ["Online Ordering", "Vaccination", "Health Consultations", "Prescription Delivery", "Emergency Service"],
+    "workingHours": {
+      "monday": "8:00 AM - 9:00 PM",
+      "tuesday": "8:00 AM - 9:00 PM",
+      "wednesday": "8:00 AM - 9:00 PM",
+      "thursday": "8:00 AM - 9:00 PM",
+      "friday": "8:00 AM - 10:00 PM",
+      "saturday": "8:00 AM - 10:00 PM",
+      "sunday": "10:00 AM - 7:00 PM"
+    },
+    "phone": "+233 20 123 4567",
+    "email": "info@pharmaccess.com.gh",
+    "website": "https://www.pharmaccess.com.gh",
+    "description": "Modern pharmacy chain with multiple locations across Accra. We provide convenient access to medications and health services with competitive pricing.",
+    "location": {
+      "lat": 5.6037,
+      "lng": -0.1870
+    },
+    "medications": [
+      {
+        "id": 1,
+        "name": "Amoxicillin 500mg",
+        "description": "Antibiotic for bacterial infections",
+        "price": 33.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 11.50,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 3,
+        "name": "Ibuprofen 400mg",
+        "description": "Anti-inflammatory and pain reliever",
+        "price": 21.00,
+        "inStock": false,
+        "requiresPrescription": false
+      },
+      {
+        "id": 4,
+        "name": "Omeprazole 20mg",
+        "description": "Treats stomach acid problems",
+        "price": 50.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 8,
+        "name": "Azithromycin 500mg",
+        "description": "Macrolide antibiotic",
+        "price": 103.00,
+        "inStock": true,
+        "requiresPrescription": true
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Wellness Pharmacy",
+    "address": "Oxford Street, Osu, Accra",
+    "rating": 4.5,
+    "reviews": [
+      {
+        "id": 8,
+        "rating": 5,
+        "comment": "Excellent customer service and very clean facility. They truly care about their customers.",
+        "user": "Emmanuel S.",
+        "date": "2024-10-29"
+      },
+      {
+        "id": 9,
+        "rating": 4,
+        "comment": "Convenient location in Osu with good parking. Staff is helpful and professional.",
+        "user": "Grace N.",
+        "date": "2024-10-25"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&h=600&fit=crop",
+    "isOpen": true,
+    "distance": "5.2 km",
+    "services": ["Home Delivery", "Blood Pressure Checks", "Vaccination", "Health Screenings", "Online Ordering"],
+    "workingHours": {
+      "monday": "8:00 AM - 8:00 PM",
+      "tuesday": "8:00 AM - 8:00 PM",
+      "wednesday": "8:00 AM - 8:00 PM",
+      "thursday": "8:00 AM - 8:00 PM",
+      "friday": "8:00 AM - 9:00 PM",
+      "saturday": "9:00 AM - 8:00 PM",
+      "sunday": "10:00 AM - 6:00 PM"
+    },
+    "phone": "+233 24 555 7890",
+    "email": "hello@wellnesspharmacy.com.gh",
+    "website": "https://www.wellnesspharmacy.com.gh",
+    "description": "Your health and wellness partner in Osu. We offer a wide range of medications, health products, and wellness services in a comfortable modern setting.",
+    "location": {
+      "lat": 5.5600,
+      "lng": -0.1800
+    },
+    "medications": [
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 14.00,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 4,
+        "name": "Omeprazole 20mg",
+        "description": "Treats stomach acid problems",
+        "price": 52.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 5,
+        "name": "Metformin 500mg",
+        "description": "Diabetes medication",
+        "price": 77.00,
+        "inStock": false,
+        "requiresPrescription": true
+      },
+      {
+        "id": 7,
+        "name": "Lisinopril 10mg",
+        "description": "Blood pressure medication",
+        "price": 83.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 8,
+        "name": "Azithromycin 500mg",
+        "description": "Macrolide antibiotic",
+        "price": 110.00,
+        "inStock": true,
+        "requiresPrescription": true
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "QuickMeds Pharmacy",
+    "address": "Madina Shopping Mall, Madina, Accra",
+    "rating": 4.4,
+    "reviews": [
+      {
+        "id": 10,
+        "rating": 4,
+        "comment": "Fast service and good prices. Located conveniently in the mall.",
+        "user": "Sarah A.",
+        "date": "2024-10-27"
+      },
+      {
+        "id": 11,
+        "rating": 5,
+        "comment": "Very efficient pharmacy with friendly staff. Quick prescription fulfillment.",
+        "user": "David L.",
+        "date": "2024-10-23"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=600&fit=crop",
+    "isOpen": true,
+    "distance": "7.5 km",
+    "services": ["Online Ordering", "Vaccination", "Health Consultations", "Express Service"],
+    "workingHours": {
+      "monday": "9:00 AM - 9:00 PM",
+      "tuesday": "9:00 AM - 9:00 PM",
+      "wednesday": "9:00 AM - 9:00 PM",
+      "thursday": "9:00 AM - 9:00 PM",
+      "friday": "9:00 AM - 10:00 PM",
+      "saturday": "9:00 AM - 10:00 PM",
+      "sunday": "10:00 AM - 8:00 PM"
+    },
+    "phone": "+233 55 234 5678",
+    "email": "support@quickmeds.com.gh",
+    "website": "https://www.quickmeds.com.gh",
+    "description": "Fast and reliable pharmacy service in Madina. We focus on speed without compromising quality, ensuring you get your medications quickly.",
+    "location": {
+      "lat": 5.6789,
+      "lng": -0.1689
+    },
+    "medications": [
+      {
+        "id": 1,
+        "name": "Amoxicillin 500mg",
+        "description": "Antibiotic for bacterial infections",
+        "price": 34.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 12.50,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 3,
+        "name": "Ibuprofen 400mg",
+        "description": "Anti-inflammatory and pain reliever",
+        "price": 20.50,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 5,
+        "name": "Metformin 500mg",
+        "description": "Diabetes medication",
+        "price": 71.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 6,
+        "name": "Ciprofloxacin 500mg",
+        "description": "Fluoroquinolone antibiotic",
+        "price": 54.00,
+        "inStock": true,
+        "requiresPrescription": true
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "CarePoint Pharmacy",
+    "address": "Achimota Mile 7, Accra, Greater Accra",
+    "rating": 4.3,
+    "reviews": [
+      {
+        "id": 12,
+        "rating": 4,
+        "comment": "Reliable pharmacy with consistent stock. Staff is courteous and helpful.",
+        "user": "Jennifer M.",
+        "date": "2024-10-26"
+      },
+      {
+        "id": 13,
+        "rating": 4,
+        "comment": "Good service and fair prices. They have most medications I need.",
+        "user": "Patrick B.",
+        "date": "2024-10-20"
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1576602975814-3b0de98c1e68?w=800&h=600&fit=crop",
+    "isOpen": false,
+    "distance": "9.1 km",
+    "services": ["Online Ordering", "Home Delivery", "Health Consultations", "Vaccination"],
+    "workingHours": {
+      "monday": "8:00 AM - 7:00 PM",
+      "tuesday": "8:00 AM - 7:00 PM",
+      "wednesday": "8:00 AM - 7:00 PM",
+      "thursday": "8:00 AM - 7:00 PM",
+      "friday": "8:00 AM - 7:00 PM",
+      "saturday": "9:00 AM - 6:00 PM",
+      "sunday": "Closed"
+    },
+    "phone": "+233 30 254 9876",
+    "email": "info@carepoint.com.gh",
+    "website": "https://www.carepoint.com.gh",
+    "description": "Community-focused pharmacy in Achimota providing personalized pharmaceutical care and health services to our neighbors.",
+    "location": {
+      "lat": 5.6892,
+      "lng": -0.2243
+    },
+    "medications": [
+      {
+        "id": 2,
+        "name": "Paracetamol 500mg",
+        "description": "Pain reliever and fever reducer",
+        "price": 13.00,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 3,
+        "name": "Ibuprofen 400mg",
+        "description": "Anti-inflammatory and pain reliever",
+        "price": 19.50,
+        "inStock": true,
+        "requiresPrescription": false
+      },
+      {
+        "id": 4,
+        "name": "Omeprazole 20mg",
+        "description": "Treats stomach acid problems",
+        "price": 49.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 6,
+        "name": "Ciprofloxacin 500mg",
+        "description": "Fluoroquinolone antibiotic",
+        "price": 56.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 7,
+        "name": "Lisinopril 10mg",
+        "description": "Blood pressure medication",
+        "price": 79.00,
+        "inStock": true,
+        "requiresPrescription": true
+      },
+      {
+        "id": 8,
+        "name": "Azithromycin 500mg",
+        "description": "Macrolide antibiotic",
+        "price": 104.00,
+        "inStock": true,
+        "requiresPrescription": true
+      }
+    ]
+  }
+]
+

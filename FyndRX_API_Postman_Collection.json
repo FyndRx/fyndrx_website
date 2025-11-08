@@ -1,0 +1,759 @@
+{
+  "info": {
+    "name": "FyndRX API",
+    "description": "Complete API collection for FyndRX e-Pharmacy Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phone_number\": \"+233123456789\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": ["{{base_url}}"],
+              "path": ["register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"access_token\", jsonData.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"phone_number\": \"+233123456789\",\n  \"address\": \"123 Main St, Accra\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user/profile",
+              "host": ["{{base_url}}"],
+              "path": ["user", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Upload Profile Picture",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profile_picture",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/user/profile/picture",
+              "host": ["{{base_url}}"],
+              "path": ["user", "profile", "picture"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Medications",
+      "item": [
+        {
+          "name": "Get All Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/medications?page=1&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["medications"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "per_page", "value": "15"},
+                {"key": "category", "value": "Antibiotics", "disabled": true},
+                {"key": "q", "value": "amoxicillin", "disabled": true},
+                {"key": "requires_prescription", "value": "true", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Medication by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/medications/1",
+              "host": ["{{base_url}}"],
+              "path": ["medications", "1"]
+            }
+          }
+        },
+        {
+          "name": "Search Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/medications/search?q=paracetamol",
+              "host": ["{{base_url}}"],
+              "path": ["medications", "search"],
+              "query": [{"key": "q", "value": "paracetamol"}]
+            }
+          }
+        },
+        {
+          "name": "Get Medication Prices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/medications/1/prices?form_id=1&strength_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["medications", "1", "prices"],
+              "query": [
+                {"key": "form_id", "value": "1"},
+                {"key": "strength_id", "value": "1"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Medication Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/medications/1/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["medications", "1", "reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pharmacies",
+      "item": [
+        {
+          "name": "Get All Pharmacies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pharmacies?page=1&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["pharmacies"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "per_page", "value": "15"},
+                {"key": "is_open", "value": "true", "disabled": true},
+                {"key": "q", "value": "pharmacy name", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pharmacy by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pharmacies/1",
+              "host": ["{{base_url}}"],
+              "path": ["pharmacies", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Nearby Pharmacies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pharmacies/nearby?lat=5.6037&lng=-0.1870&radius=10",
+              "host": ["{{base_url}}"],
+              "path": ["pharmacies", "nearby"],
+              "query": [
+                {"key": "lat", "value": "5.6037"},
+                {"key": "lng", "value": "-0.1870"},
+                {"key": "radius", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pharmacy Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pharmacies/1/medications",
+              "host": ["{{base_url}}"],
+              "path": ["pharmacies", "1", "medications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"pharmacy_id\": 1,\n  \"items\": [\n    {\n      \"medication_id\": 1,\n      \"brand_id\": 1,\n      \"form_id\": 1,\n      \"strength_id\": 1,\n      \"uom_id\": 1,\n      \"quantity\": 2,\n      \"price\": 25.00\n    }\n  ],\n  \"delivery_method\": \"delivery\",\n  \"delivery_address\": \"123 Main St, Accra\",\n  \"phone_number\": \"+233123456789\",\n  \"payment_method\": \"platform\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [{"key": "status", "value": "pending", "disabled": true}]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/:order_id",
+              "host": ["{{base_url}}"],
+              "path": ["orders", ":order_id"]
+            }
+          }
+        },
+        {
+          "name": "Track Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/:order_id/track",
+              "host": ["{{base_url}}"],
+              "path": ["orders", ":order_id", "track"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"cancellation_reason\": \"Changed my mind\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/:order_id/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["orders", ":order_id", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Prescriptions",
+      "item": [
+        {
+          "name": "Upload Prescription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "prescription",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "order_id",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/prescriptions/upload",
+              "host": ["{{base_url}}"],
+              "path": ["prescriptions", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get My Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/prescriptions",
+              "host": ["{{base_url}}"],
+              "path": ["prescriptions"]
+            }
+          }
+        },
+        {
+          "name": "Download Prescription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/prescriptions/:id/download",
+              "host": ["{{base_url}}"],
+              "path": ["prescriptions", ":id", "download"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"reviewable_type\": \"pharmacy\",\n  \"reviewable_id\": 1,\n  \"rating\": 5,\n  \"title\": \"Excellent Service\",\n  \"comment\": \"Fast delivery and great prices!\",\n  \"order_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"]
+            }
+          }
+        },
+        {
+          "name": "Get Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews?type=pharmacy&id=1",
+              "host": ["{{base_url}}"],
+              "path": ["reviews"],
+              "query": [
+                {"key": "type", "value": "pharmacy"},
+                {"key": "id", "value": "1"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Review Helpful",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/:id/helpful",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", ":id", "helpful"]
+            }
+          }
+        },
+        {
+          "name": "Get Review Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/reviews/stats?type=pharmacy&id=1",
+              "host": ["{{base_url}}"],
+              "path": ["reviews", "stats"],
+              "query": [
+                {"key": "type", "value": "pharmacy"},
+                {"key": "id", "value": "1"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "item": [
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/blog/posts?page=1&limit=9&category=Health Conditions",
+              "host": ["{{base_url}}"],
+              "path": ["blog", "posts"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "9"},
+                {"key": "category", "value": "Health Conditions", "disabled": true},
+                {"key": "search", "value": "diabetes", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/blog/posts/understanding-antibiotic-resistance",
+              "host": ["{{base_url}}"],
+              "path": ["blog", "posts", "understanding-antibiotic-resistance"]
+            }
+          }
+        },
+        {
+          "name": "Get Related Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/blog/posts/1/related?limit=3",
+              "host": ["{{base_url}}"],
+              "path": ["blog", "posts", "1", "related"],
+              "query": [{"key": "limit", "value": "3"}]
+            }
+          }
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/blog/categories",
+              "host": ["{{base_url}}"],
+              "path": ["blog", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Like Post",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/blog/posts/:id/like",
+              "host": ["{{base_url}}"],
+              "path": ["blog", "posts", ":id", "like"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            }
+          }
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"medication_id\": 1,\n  \"pharmacy_id\": 1,\n  \"brand_id\": 1,\n  \"form_id\": 1,\n  \"strength_id\": 1,\n  \"uom_id\": 1,\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"quantity\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items/:item_id",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", ":item_id"]
+            }
+          }
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart/items/:item_id",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", ":item_id"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart/clear",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "clear"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Initialize Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"order_id\": \"uuid-here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments/initialize",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "initialize"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payments/verify/:reference",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "verify", ":reference"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Get Favorites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/favorites",
+              "host": ["{{base_url}}"],
+              "path": ["favorites"]
+            }
+          }
+        },
+        {
+          "name": "Add Favorite",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"favoritable_type\": \"medication\",\n  \"favoritable_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/favorites",
+              "host": ["{{base_url}}"],
+              "path": ["favorites"]
+            }
+          }
+        },
+        {
+          "name": "Remove Favorite",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/favorites/:id",
+              "host": ["{{base_url}}"],
+              "path": ["favorites", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Get Favorite Medications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/favorites/medications",
+              "host": ["{{base_url}}"],
+              "path": ["favorites", "medications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recently Viewed",
+      "item": [
+        {
+          "name": "Get Recently Viewed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/recently-viewed",
+              "host": ["{{base_url}}"],
+              "path": ["recently-viewed"]
+            }
+          }
+        },
+        {
+          "name": "Add to Recently Viewed",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"medication_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/recently-viewed",
+              "host": ["{{base_url}}"],
+              "path": ["recently-viewed"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

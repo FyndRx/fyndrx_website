@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MainLayout from '@/layouts/MainLayout.vue';
+import NotificationContainer from '@/components/NotificationContainer.vue';
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/store/auth';
 
@@ -17,11 +18,11 @@ onMounted(async () => {
         <component :is="Component" />
       </transition>
     </router-view>
+    <NotificationContainer />
   </MainLayout>
 </template>
 
-<style>
-@import './styles/global.css';
+<style scoped>
 
 .fade-enter-active,
 .fade-leave-active {

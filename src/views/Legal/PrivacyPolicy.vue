@@ -93,10 +93,22 @@ const sections = ref([
 
 <style scoped>
 .prose :deep(h2) {
-  @apply text-xl font-semibold text-gray-900 dark:text-white mb-4;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+  margin-bottom: 1rem;
+}
+
+.dark .prose :deep(h2) {
+  color: white;
 }
 
 .prose :deep(p) {
-  @apply text-gray-600 dark:text-gray-300 leading-relaxed;
+  color: rgb(75 85 99);
+  line-height: 1.75;
+}
+
+.dark .prose :deep(p) {
+  color: rgb(209 213 219);
 }
 </style> 

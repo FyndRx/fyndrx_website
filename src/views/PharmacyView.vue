@@ -1,43 +1,62 @@
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
-import { pharmacyService } from '@/services/pharmacyService';
-import type { Pharmacy } from '@/types/pharmacy';
+import { useNotification } from '@/composables/useNotification';
+import { dataService } from '@/services/dataService';
+import { reviewService } from '@/services/reviewService';
+import type { Pharmacy } from '@/models/Pharmacy';
+import type { Medication } from '@/models/Medication';
+import type { Review, ReviewStats } from '@/models/Review';
 import LazyImage from '@/components/LazyImage.vue';
+import RatingStars from '@/components/RatingStars.vue';
+import ReviewCard from '@/components/ReviewCard.vue';
+import AddReviewModal from '@/components/AddReviewModal.vue';
 
-// Import components
+const router = useRouter();
+const notification = useNotification();
+
 const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
-const DateTimePicker = defineAsyncComponent(() => import('@/components/DateTimePicker.vue'));
 
 const route = useRoute();
 const { registerElement } = useScrollAnimation();
 
 const pharmacy = ref<Pharmacy | null>(null);
+const pharmacyMedications = ref<Medication[]>([]);
+const reviews = ref<Review[]>([]);
+const reviewStats = ref<ReviewStats | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const activeTab = ref('overview');
-const newReview = ref({
-  rating: 5,
-  comment: '',
-  user: 'Anonymous', // In a real app, this would come from the auth store
-  date: new Date().toISOString()
-});
+const medicationSearch = ref('');
+const showAddReviewModal = ref(false);
+const reviewsLoading = ref(false);
 
-const showReviewForm = ref(false);
-const prescriptionFile = ref<File | null>(null);
-const pickupDateTime = ref('');
-const prescriptionError = ref<string | null>(null);
-const pickupError = ref<string | null>(null);
-const isUploading = ref(false);
-const isScheduling = ref(false);
+const filteredPharmacyMedications = computed(() => {
+  if (!medicationSearch.value) return pharmacyMedications.value;
+  
+  const query = medicationSearch.value.toLowerCase();
+  return pharmacyMedications.value.filter(med =>
+    med.drug_name.toLowerCase().includes(query) ||
+    med.category.toLowerCase().includes(query) ||
+    med.description.toLowerCase().includes(query)
+  );
+});
 
 const loadPharmacy = async () => {
   loading.value = true;
   error.value = null;
   try {
     const id = parseInt(route.params.id as string);
-    pharmacy.value = await pharmacyService.getPharmacy(id);
+    const pharmacyData = dataService.getPharmacyById(id);
+    
+    if (pharmacyData) {
+      pharmacy.value = pharmacyData;
+      pharmacyMedications.value = dataService.getMedicationsForPharmacy(id);
+      await loadReviews();
+    } else {
+      error.value = 'Pharmacy not found';
+    }
   } catch (err) {
     error.value = 'Failed to load pharmacy details. Please try again later.';
     console.error('Error loading pharmacy:', err);
@@ -46,87 +65,76 @@ const loadPharmacy = async () => {
   }
 };
 
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    const file = target.files[0];
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
-      prescriptionError.value = 'Please upload a PDF, JPEG, or PNG file';
-      return;
-    }
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      prescriptionError.value = 'File size should be less than 5MB';
-      return;
-    }
-    prescriptionFile.value = file;
-    prescriptionError.value = null;
-  }
-};
-
-const handlePrescriptionUpload = async () => {
-  if (!prescriptionFile.value || !pharmacy.value) return;
-
-  isUploading.value = true;
-  prescriptionError.value = null;
-
+const loadReviews = async () => {
+  if (!pharmacy.value) return;
+  
+  reviewsLoading.value = true;
   try {
-    await pharmacyService.uploadPrescription(Number(pharmacy.value?.id), prescriptionFile.value);
-    // Show success message
-    prescriptionFile.value = null;
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
+    const pharmacyId = String(pharmacy.value.id);
+    reviews.value = await reviewService.getReviewsByTarget('pharmacy', pharmacyId);
+    reviewStats.value = await reviewService.getReviewStats('pharmacy', pharmacyId);
   } catch (err) {
-    prescriptionError.value = 'Failed to upload prescription. Please try again.';
-    console.error('Error uploading prescription:', err);
+    console.error('Error loading reviews:', err);
   } finally {
-    isUploading.value = false;
+    reviewsLoading.value = false;
   }
 };
 
-const handlePickupSchedule = async () => {
-  if (!pharmacy.value || !pickupDateTime.value) return;
-
-  isScheduling.value = true;
-  pickupError.value = null;
-
+const handleAddReview = async (reviewData: { rating: number; title: string; comment: string }) => {
+  if (!pharmacy.value) return;
+  
   try {
-    const date = new Date(pickupDateTime.value);
-    const formattedDate = date.toISOString().split('T')[0];
-    const formattedTime = date.toTimeString().split(' ')[0];
-
-    await pharmacyService.schedulePickup(Number(pharmacy.value?.id), formattedDate, formattedTime);
-    // Show success message
-    pickupDateTime.value = '';
-  } catch (err) {
-    pickupError.value = 'Failed to schedule pickup. Please try again.';
-    console.error('Error scheduling pickup:', err);
-  } finally {
-    isScheduling.value = false;
+    await reviewService.addReview({
+      targetType: 'pharmacy',
+      targetId: String(pharmacy.value.id),
+      targetName: pharmacy.value.name,
+      rating: reviewData.rating,
+      title: reviewData.title,
+      comment: reviewData.comment,
+    });
+    
+    await loadReviews();
+    notification.success('Review Submitted', 'Thank you for your feedback!');
+  } catch (error) {
+    notification.error('Submission Failed', 'Failed to submit review. Please try again.');
   }
 };
 
-const handleReviewSubmit = async () => {
-  if (!pharmacy.value || !newReview.value.comment) return;
-
+const handleReviewHelpful = async (reviewId: string) => {
   try {
-    await pharmacyService.addReview(Number(pharmacy.value?.id), newReview.value);
-    // Refresh pharmacy data to show new review
-    await loadPharmacy();
-    // Reset form
-    newReview.value = {
-      rating: 5,
-      comment: '',
-      user: 'Anonymous',
-      date: new Date().toISOString()
-    };
-    showReviewForm.value = false;
-  } catch (err) {
-    console.error('Error submitting review:', err);
-    // Show error message
+    await reviewService.markHelpful(reviewId);
+    const review = reviews.value.find(r => r.id === reviewId);
+    if (review) review.helpful++;
+  } catch (error) {
+    notification.error('Action Failed', 'Failed to mark review as helpful.');
   }
+};
+
+const handleReviewNotHelpful = async (reviewId: string) => {
+  try {
+    await reviewService.markNotHelpful(reviewId);
+    const review = reviews.value.find(r => r.id === reviewId);
+    if (review) review.notHelpful++;
+  } catch (error) {
+    notification.error('Action Failed', 'Failed to mark review.');
+  }
+};
+
+const viewMedicationDetails = (medicationId: number) => {
+  router.push({ name: 'MedicationDetail', params: { id: medicationId } });
+};
+
+const switchTab = (tab: string) => {
+  activeTab.value = tab;
+  
+  setTimeout(() => {
+    const tabContent = document.querySelector('.tab-content-container');
+    if (tabContent) {
+      const yOffset = -100;
+      const y = tabContent.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, 50);
 };
 
 onMounted(() => {
@@ -137,15 +145,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-12 bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
+      <div>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
+        <p class="mt-4 text-gray-600 dark:text-gray-300">Loading pharmacy...</p>
+      </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen">
-      <p class="mb-4 text-red-600 dark:text-red-400">{{ error }}</p>
+      <svg class="w-16 h-16 mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <p class="mb-4 text-xl font-medium text-gray-900 dark:text-white">{{ error }}</p>
       <button 
         @click="loadPharmacy"
         class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
@@ -155,95 +169,125 @@ onMounted(() => {
     </div>
 
     <!-- Pharmacy Content -->
-    <div v-else-if="pharmacy" class="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div v-else-if="pharmacy" class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <!-- Back Button -->
+      <div class="mb-6">
+        <button
+          @click="router.push({ name: 'pharmacies' })"
+          class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-[#246BFD] transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to Pharmacies
+        </button>
+      </div>
+
       <!-- Hero Section -->
-      <div class="mb-8 overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
-        <div class="relative h-64">
-          <div class="absolute inset-0 bg-gradient-to-br from-[#246BFD]/20 to-[#FE9615]/20 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10"></div>
-          <LazyImage
-            :src="pharmacy.image"
-            :alt="pharmacy.name"
-            aspectRatio="landscape"
-            className="w-full h-full object-cover"
-          />
-          <!-- <div class="absolute inset-0 flex items-center justify-center">
-            <p class="text-gray-400 dark:text-gray-500">Pharmacy Image</p>
-          </div> -->
-          <div class="absolute top-4 right-4">
+      <div class="mb-8 overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+        <!-- Header Image -->
+        <div class="relative h-80">
+          <div class="absolute inset-0">
+            <LazyImage
+              :src="pharmacy.image"
+              :alt="pharmacy.name"
+              aspectRatio="landscape"
+              className="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          </div>
+          
+          <!-- Badges Overlay -->
+          <div class="absolute top-6 right-6 flex gap-2">
             <span
-              class="px-3 py-1 text-sm font-medium rounded-full"
-              :class="pharmacy.isOpen ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
+              class="px-4 py-2 text-sm font-semibold rounded-full backdrop-blur-md border-2"
+              :class="pharmacy.isOpen 
+                ? 'bg-green-500/90 text-white border-green-400' 
+                : 'bg-red-500/90 text-white border-red-400'"
             >
-              {{ pharmacy.isOpen ? 'Open' : 'Closed' }}
+              {{ pharmacy.isOpen ? '● Open Now' : '● Closed' }}
             </span>
+          </div>
+
+          <!-- Pharmacy Info Overlay -->
+          <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <h1 class="mb-2 text-3xl font-bold md:text-4xl">
+                  {{ pharmacy.name }}
+                </h1>
+                <div class="flex flex-col gap-2 text-sm md:flex-row md:items-center md:gap-4">
+                  <div class="flex items-center gap-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    </svg>
+                    <span>{{ pharmacy.address }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span>{{ pharmacy.rating }} ({{ pharmacy.reviews.length }} reviews)</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+                    </svg>
+                    <span>{{ pharmacy.distance }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="p-6">
-          <div class="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">
-                {{ pharmacy.name }}
-              </h1>
-              <p class="text-gray-600 dark:text-gray-300">{{ pharmacy.address }}</p>
-            </div>
-            <div class="flex items-center mt-4 space-x-4 md:mt-0">
-              <div class="flex items-center">
-                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                </svg>
-                <span class="ml-1 text-gray-600 dark:text-gray-300">
-                  {{ pharmacy.rating }} ({{ pharmacy.reviews.length }} reviews)
-                </span>
-              </div>
-              <div class="flex items-center">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                </svg>
-                <span class="ml-1 text-gray-600 dark:text-gray-300">
-                  {{ pharmacy.distance }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Actions -->
+        <!-- Quick Actions Bar -->
+        <div class="p-6 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
           <div class="flex flex-wrap gap-3">
-            <button
-              @click="showReviewForm = true"
-              class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
+            <a
+              :href="`tel:${pharmacy.phone}`"
+              class="flex items-center gap-2 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg"
             >
-              Write a Review
-            </button>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+              Call Now
+            </a>
             <a
               :href="`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}`"
               target="_blank"
-              class="px-6 py-3 rounded-full bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+              class="flex items-center gap-2 px-6 py-3 rounded-full bg-white dark:bg-gray-800 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
             >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+              </svg>
               Get Directions
             </a>
-            <a
-              :href="`tel:${pharmacy.phone}`"
-              class="px-6 py-3 rounded-full bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+            <button
+              @click="showAddReviewModal = true"
+              class="flex items-center gap-2 px-6 py-3 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium border-2 border-gray-300 dark:border-gray-600 hover:border-[#246BFD] hover:text-[#246BFD] transition-all duration-300"
             >
-              Call Pharmacy
-            </a>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+              </svg>
+              Write Review
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-col gap-8 lg:flex-row">
+      <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <!-- Main Content -->
-        <div class="flex-1">
+        <div class="lg:col-span-2">
           <!-- Tabs -->
-          <div class="mb-8 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+          <div class="mb-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl tab-content-container">
             <div class="border-b border-gray-200 dark:border-gray-700">
-              <nav class="flex -mb-px">
+              <nav class="flex overflow-x-auto -mb-px">
                 <button
-                  v-for="tab in ['overview', 'services', 'reviews', 'medications']"
+                  v-for="tab in ['overview', 'medications', 'services', 'reviews']"
                   :key="tab"
-                  @click="activeTab = tab"
-                  class="px-6 py-4 text-sm font-medium transition-colors border-b-2"
+                  @click="switchTab(tab)"
+                  class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                   :class="[
                     activeTab === tab
                       ? 'border-[#246BFD] text-[#246BFD]'
@@ -316,258 +360,294 @@ onMounted(() => {
 
               <!-- Reviews Tab -->
               <div v-if="activeTab === 'reviews'" class="space-y-6">
-                <!-- Review Form -->
-                <div v-if="showReviewForm" class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Write a Review</h3>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Rating
-                      </label>
-                      <div class="flex items-center">
-                        <button
-                          v-for="star in 5"
-                          :key="star"
-                          @click="newReview.rating = star"
-                          class="text-2xl"
-                          :class="star <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'"
-                        >
-                          ★
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Your Review
-                      </label>
-                      <textarea
-                        v-model="newReview.comment"
-                        rows="4"
-                        class="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]"
-                        placeholder="Share your experience..."
-                      ></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                      <button
-                        @click="showReviewForm = false"
-                        class="px-4 py-2 text-gray-600 rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        @click="handleReviewSubmit"
-                        class="px-4 py-2 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF]"
-                      >
-                        Submit Review
-                      </button>
-                    </div>
-                  </div>
+                <div v-if="reviewsLoading" class="py-12 text-center">
+                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
+                  <p class="mt-4 text-gray-600 dark:text-gray-300">Loading reviews...</p>
                 </div>
 
-                <!-- Reviews List -->
-                <div class="space-y-6">
-                  <div
-                    v-for="review in pharmacy.reviews"
-                    :key="review.id"
-                    class="p-6 rounded-lg bg-gray-50 dark:bg-gray-700"
-                  >
-                    <div class="flex items-center justify-between mb-4">
-                      <div class="flex items-center">
-                        <div class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full dark:bg-gray-600">
-                          <span class="font-medium text-gray-600 dark:text-gray-300">
-                            {{ review.user.charAt(0) }}
+                <div v-else>
+                  <div v-if="reviewStats" class="p-6 mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div class="flex items-center gap-3 mb-2">
+                          <span class="text-5xl font-bold text-gray-900 dark:text-white">
+                            {{ reviewStats.averageRating.toFixed(1) }}
+                          </span>
+                          <div>
+                            <RatingStars :rating="reviewStats.averageRating" size="lg" />
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              Based on {{ reviewStats.totalReviews }} review{{ reviewStats.totalReviews !== 1 ? 's' : '' }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex-1 max-w-md space-y-2">
+                        <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-2">
+                          <span class="text-sm text-gray-600 dark:text-gray-400 w-3">{{ rating }}</span>
+                          <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                          </svg>
+                          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              class="h-full bg-yellow-400"
+                              :style="{ width: `${(reviewStats.ratingDistribution[rating as keyof typeof reviewStats.ratingDistribution] / reviewStats.totalReviews) * 100}%` }"
+                            ></div>
+                          </div>
+                          <span class="text-sm text-gray-600 dark:text-gray-400 w-8 text-right">
+                            {{ reviewStats.ratingDistribution[rating as keyof typeof reviewStats.ratingDistribution] }}
                           </span>
                         </div>
-                        <div class="ml-3">
-                          <p class="font-medium text-gray-900 dark:text-white">{{ review.user }}</p>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ new Date(review.date).toLocaleDateString() }}
-                          </p>
-                        </div>
-                      </div>
-                      <div class="flex items-center">
-                        <span class="mr-1 text-yellow-400">★</span>
-                        <span class="text-gray-600 dark:text-gray-300">{{ review.rating }}</span>
                       </div>
                     </div>
-                    <p class="text-gray-600 dark:text-gray-300">{{ review.comment }}</p>
+                  </div>
+
+                  <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                      Customer Reviews
+                    </h3>
+                    <button
+                      @click="showAddReviewModal = true"
+                      class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all flex items-center gap-2"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                      </svg>
+                      Write a Review
+                    </button>
+                  </div>
+
+                  <div v-if="reviews.length > 0" class="space-y-4">
+                    <ReviewCard
+                      v-for="review in reviews"
+                      :key="review.id"
+                      :review="review"
+                      @helpful="handleReviewHelpful"
+                      @not-helpful="handleReviewNotHelpful"
+                    />
+                  </div>
+
+                  <div v-else class="py-12 text-center">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No reviews yet</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Be the first to review this pharmacy!</p>
+                    <button
+                      @click="showAddReviewModal = true"
+                      class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all"
+                    >
+                      Write the First Review
+                    </button>
                   </div>
                 </div>
               </div>
 
               <!-- Medications Tab -->
               <div v-if="activeTab === 'medications'" class="space-y-6">
-                <!-- Prescription Upload -->
-                <div class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Upload Prescription</h3>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Prescription File
-                      </label>
-                      <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-600 border-dashed rounded-lg hover:border-[#246BFD] dark:hover:border-[#246BFD] transition-colors">
-                        <div class="space-y-1 text-center">
-                          <svg class="w-12 h-12 mx-auto text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                          </svg>
-                          <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                            <label class="relative cursor-pointer rounded-md font-medium text-[#246BFD] hover:text-[#5089FF] focus-within:outline-none">
-                              <span>Upload a file</span>
+                <!-- Search Bar -->
+                <div class="mb-6">
+                  <div class="relative">
                               <input
-                                type="file"
-                                class="sr-only"
-                                @change="handleFileChange"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                              />
-                            </label>
-                            <p class="pl-1">or drag and drop</p>
+                      v-model="medicationSearch"
+                      type="text"
+                      placeholder="Search medications at this pharmacy..."
+                      class="w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    />
+                    <svg class="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 right-4 top-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                  </div>
+                  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Showing {{ filteredPharmacyMedications.length }} of {{ pharmacyMedications.length }} medications
+                  </p>
+                </div>
+
+                <!-- Medications Grid -->
+                <div v-if="filteredPharmacyMedications.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div
+                    v-for="medication in filteredPharmacyMedications"
+                    :key="medication.id"
+                    @click="viewMedicationDetails(medication.id)"
+                    class="p-6 transition-all duration-300 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+                  >
+                    <div class="flex gap-4">
+                      <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-white dark:bg-gray-800 rounded-lg">
+                        <LazyImage
+                          :src="medication.image"
+                          :alt="medication.drug_name"
+                          aspectRatio="square"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between mb-2">
+                          <div class="flex-1">
+                            <h4 class="mb-1 font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">
+                              {{ medication.drug_name }}
+                            </h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                              {{ medication.description }}
+                            </p>
                           </div>
-                          <p class="text-xs text-gray-500 dark:text-gray-400">
-                            PDF, JPG, PNG up to 5MB
+                        </div>
+                        
+                        <div class="flex items-center gap-2 mb-2">
+                          <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                            {{ medication.category }}
+                          </span>
+                          <span v-if="medication.requiresPrescription" class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
+                            Rx Required
+                      </span>
+                    </div>
+
+                        <div class="flex items-center justify-between mt-3">
+                          <p class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ medication.forms.length }} {{ medication.forms.length === 1 ? 'form' : 'forms' }} available
                           </p>
+                          <button class="text-xs font-medium text-[#246BFD] hover:text-[#5089FF] transition-colors">
+                            View Details →
+                          </button>
                         </div>
                       </div>
-                      <p v-if="prescriptionFile" class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                        Selected file: {{ prescriptionFile.name }}
-                      </p>
-                      <p v-if="prescriptionError" class="mt-2 text-sm text-red-500 dark:text-red-400">
-                        {{ prescriptionError }}
-                      </p>
                     </div>
-                    <button
-                      @click="handlePrescriptionUpload"
-                      :disabled="!prescriptionFile || isUploading"
-                      class="w-full px-4 py-2 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <span v-if="isUploading" class="flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </span>
-                      <span v-else>Upload Prescription</span>
-                    </button>
                   </div>
                 </div>
 
-                <!-- Pickup Schedule -->
-                <div class="p-6 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
-                  <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Schedule Pickup</h3>
-                  <div class="space-y-4">
-                    <DateTimePicker
-                      v-model="pickupDateTime"
-                      label="Pickup Date and Time"
-                      format="datetime"
-                      :min-date="new Date().toISOString()"
-                      helper="Select when you'd like to pick up your prescription"
-                      :error="pickupError || undefined"
-                      required
-                    />
-                    <button
-                      @click="handlePickupSchedule"
-                      :disabled="!pickupDateTime || isScheduling"
-                      class="w-full px-4 py-2 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <span v-if="isScheduling" class="flex items-center justify-center">
-                        <svg class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Scheduling...
-                      </span>
-                      <span v-else>Schedule Pickup</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Medications List -->
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div
-                    v-for="medication in pharmacy.medications"
-                    :key="medication.id"
-                    class="p-6 transition-shadow rounded-lg bg-gray-50 dark:bg-gray-700 hover:shadow-lg"
-                  >
-                    <div class="flex items-start justify-between mb-4">
-                      <div>
-                        <h4 class="mb-1 font-medium text-gray-900 dark:text-white">{{ medication.name }}</h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">{{ medication.description }}</p>
-                      </div>
-                      <span
-                        class="px-3 py-1 text-sm font-medium rounded-full"
-                        :class="medication.inStock ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
-                      >
-                        {{ medication.inStock ? 'In Stock' : 'Out of Stock' }}
-                      </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-lg font-medium text-gray-900 dark:text-white">
-                        ${{ medication.price }}
-                      </span>
-                      <span
-                        v-if="medication.requiresPrescription"
-                        class="text-sm text-gray-500 dark:text-gray-400"
-                      >
-                        Requires Prescription
-                      </span>
-                    </div>
-                  </div>
+                <!-- Empty State -->
+                <div v-else class="py-12 text-center">
+                  <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <p class="text-gray-600 dark:text-gray-300">No medications found</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Right Column -->
-        <div class="flex-shrink-0 lg:w-96">
-          <!-- Location Card -->
-          <div class="mb-8 delay-200 bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <!-- Google Maps Card -->
+          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl overflow-hidden">
             <div class="p-6">
-              <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Location</h3>
-              <div class="h-64 mb-4 overflow-hidden rounded-lg">
+              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                </svg>
+                Location
+              </h3>
+              <div class="h-64 mb-4 overflow-hidden rounded-xl">
                 <PharmacyMap
                   :location="pharmacy.location"
                   :pharmacy-name="pharmacy.name"
                 />
               </div>
-              <p class="text-gray-600 dark:text-gray-300">{{ pharmacy.address }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{{ pharmacy.address }}</p>
             </div>
           </div>
 
-          <!-- Quick Actions -->
-          <div class="delay-300 bg-white shadow-lg dark:bg-gray-800 rounded-2xl scroll-animate slide-up">
+          <!-- Contact Card -->
+          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
             <div class="p-6">
-              <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h3>
+              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h3>
               <div class="space-y-3">
-                <button
-                  @click="showReviewForm = true"
-                  class="w-full px-4 py-3 rounded-lg bg-[#246BFD] text-white hover:bg-[#5089FF] transition-colors"
-                >
-                  Write a Review
-                </button>
-                <a
-                  :href="`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}`"
-                  target="_blank"
-                  class="block w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 text-center"
-                >
-                  Get Directions
-                </a>
-                <a
+                <a 
                   :href="`tel:${pharmacy.phone}`"
-                  class="block w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 text-center"
+                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
                 >
-                  Call Pharmacy
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-[#246BFD] group-hover:bg-[#246BFD] group-hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Phone</p>
+                    <p class="font-medium text-gray-900 dark:text-white">{{ pharmacy.phone }}</p>
+                  </div>
                 </a>
+
+                <a 
+                  :href="`mailto:${pharmacy.email}`"
+                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
+                >
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Email</p>
+                    <p class="font-medium text-gray-900 dark:text-white truncate">{{ pharmacy.email }}</p>
+                  </div>
+                </a>
+
+                <a 
+                  v-if="pharmacy.website"
+                  :href="pharmacy.website"
+                  target="_blank"
+                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
+                >
+                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Website</p>
+                    <p class="font-medium text-gray-900 dark:text-white truncate">Visit Website</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Working Hours Card -->
+          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+            <div class="p-6">
+              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Working Hours
+              </h3>
+              <div class="space-y-2">
+                <div
+                  v-for="(hours, day) in pharmacy.workingHours"
+                  :key="day"
+                  class="flex justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <span class="font-medium text-gray-700 dark:text-gray-300 capitalize">{{ day }}</span>
+                  <span class="text-gray-600 dark:text-gray-400">{{ hours }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <AddReviewModal
+      :show="showAddReviewModal"
+      :target-type="'pharmacy'"
+      :target-id="pharmacy ? String(pharmacy.id) : ''"
+      :target-name="pharmacy ? pharmacy.name : ''"
+      @close="showAddReviewModal = false"
+      @submit="handleAddReview"
+    />
   </div>
 </template>
 
 <style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .scroll-animate {
   opacity: 0;
   transform: translateY(20px);

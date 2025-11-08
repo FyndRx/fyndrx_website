@@ -1,32 +1,44 @@
 <script setup lang="ts">
-import type { Pharmacy } from '@/types/pharmacy';
+import { computed } from 'vue';
+import type { Pharmacy } from '@/models/Pharmacy';
+import LazyImage from '@/components/LazyImage.vue';
+import RatingStars from '@/components/RatingStars.vue';
+import { dataService } from '@/services/dataService';
 
 interface Props {
   pharmacy: Pharmacy;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+const pharmacyRating = computed(() => {
+  return dataService.getPharmacyRating(props.pharmacy.id);
+});
 </script>
 
 <script lang="ts">
-    export default {
-    name: 'PharmacyCard'
-    }
+export default {
+  name: 'PharmacyCard'
+}
 </script>
 
 <template>
-  <div class="overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl hover-lift">
+  <div class="h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-gray-800 rounded-2xl hover:shadow-2xl hover:-translate-y-2">
     <!-- Pharmacy Image -->
-    <div class="relative h-48">
-      <div class="absolute inset-0 bg-gradient-to-br from-[#246BFD]/20 to-[#FE9615]/20 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10"></div>
-      <div class="absolute inset-0 flex items-center justify-center">
-        <p class="text-gray-400 dark:text-gray-500">Pharmacy Image</p>
-      </div>
+    <div class="relative h-48 overflow-hidden">
+      <LazyImage
+        :src="pharmacy.image"
+        :alt="pharmacy.name"
+        aspectRatio="landscape"
+        className="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
       <div class="absolute top-4 right-4">
         <span
-          class="px-3 py-1 text-sm font-medium rounded-full"
-          :class="pharmacy.isOpen ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
+          class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-md backdrop-blur-sm"
+          :class="pharmacy.isOpen ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
         >
+          <span class="w-2 h-2 mr-1.5 rounded-full animate-pulse bg-white"></span>
           {{ pharmacy.isOpen ? 'Open' : 'Closed' }}
         </span>
       </div>
@@ -40,13 +52,15 @@ defineProps<Props>();
       <p class="mb-4 text-gray-600 dark:text-gray-300">{{ pharmacy.address }}</p>
       
       <div class="flex items-center mb-4 space-x-4">
-        <div class="flex items-center">
-          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-          </svg>
-          <span class="ml-1 text-gray-600 dark:text-gray-300">
-            {{ pharmacy.rating }} ({{ pharmacy.reviews.length }} reviews)
-          </span>
+        <div class="flex items-center gap-1">
+          <RatingStars 
+            v-if="pharmacyRating.count > 0"
+            :rating="pharmacyRating.average" 
+            :count="pharmacyRating.count"
+            :show-count="true"
+            size="sm"
+          />
+          <span v-else class="text-sm text-gray-500 dark:text-gray-400">No reviews yet</span>
         </div>
         <div class="flex items-center">
           <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,29 +75,36 @@ defineProps<Props>();
 
       <!-- Services -->
       <div class="mb-4">
+        <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Services</p>
         <div class="flex flex-wrap gap-2">
           <span
-            v-for="service in pharmacy.services"
+            v-for="service in pharmacy.services.slice(0, 3)"
             :key="service"
-            class="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-300"
+            class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-[#246BFD] bg-[#246BFD]/10 rounded-full dark:text-[#5089FF] dark:bg-[#246BFD]/20"
           >
             {{ service }}
+          </span>
+          <span
+            v-if="pharmacy.services.length > 3"
+            class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full dark:text-gray-400 dark:bg-gray-700"
+          >
+            +{{ pharmacy.services.length - 3 }} more
           </span>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-col gap-3 sm:flex-row">
+      <div class="flex flex-col gap-2">
         <router-link
           :to="'/pharmacy/' + pharmacy.id"
-          class="flex-1 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors text-center"
+          class="w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors text-center"
         >
           View Details
         </router-link>
         <a
           :href="`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}`"
           target="_blank"
-          class="px-6 py-3 rounded-full bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 text-center"
+          class="w-full px-6 py-3 rounded-full bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 text-center"
         >
           Get Directions
         </a>
@@ -93,6 +114,7 @@ defineProps<Props>();
 </template>
 
 <style scoped>
+
 .hover-lift {
   transition: transform 0.2s ease-out;
 }

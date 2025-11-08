@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
+import CustomCheckbox from '@/components/CustomCheckbox.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
@@ -51,7 +52,14 @@ const handleSubmit = async () => {
     await authStore.checkAuth();
     // Small delay to show success message
     await new Promise(resolve => setTimeout(resolve, 1000));
-    router.push({ name: 'home' });
+    
+    // Redirect based on user role
+    const userRole = authStore.user?.role;
+    if (userRole === 'pharmacy' || userRole === 'pharmacy_staff') {
+      router.push({ name: 'pharmacy-dashboard' });
+    } else {
+      router.push({ name: 'dashboard' });
+    }
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('Network error')) {
@@ -148,18 +156,11 @@ const handleLoginValidation = (isValid: boolean) => {
 
           <div class="flex items-center justify-between">
             <!-- <Checkbox label="Remember me" v-model="form.rememberMe" /> -->
-            <div class="flex items-center">
-               <input
-                id="remember-me"
-                v-model="form.rememberMe"
-                name="remember-me"
-                type="checkbox"
-                class="h-4 w-4 text-[#246BFD] focus:ring-[#246BFD] border-gray-300 dark:border-gray-600 rounded"
-              /> 
-              <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                Remember me
-              </label>
-            </div>
+            <CustomCheckbox
+              v-model="form.rememberMe"
+              label="Remember me"
+              size="small"
+            />
 
             <div class="text-sm">
               <router-link

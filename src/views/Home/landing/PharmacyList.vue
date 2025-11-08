@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Pharmacy } from '@/types/pharmacy';
+import { dataService } from '@/services/dataService';
+import type { Pharmacy } from '@/models/Pharmacy';
 import PharmacyCard from '@/components/PharmacyCard.vue';
-import { mockPharmacies } from '@/data/mockPharmacies';
-import PharmacySearchBar from '@/components/PharmacySearchBar.vue';
 
-const pharmacies = ref<Pharmacy[]>(mockPharmacies);
+const allPharmacies = dataService.getAllPharmacies();
+const pharmacies = ref<Pharmacy[]>(allPharmacies.slice(0, 6));
 const containerRef = ref<HTMLElement | null>(null);
 
 const scrollLeft = () => {
@@ -37,17 +37,14 @@ const scrollRight = () => {
     <section class="py-20 bg-gray-50 dark:bg-gray-900">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       
-          <!-- Section Header -->
       <div class="mb-12 text-center scroll-animate slide-up">
         <h2 class="mb-4 text-4xl font-medium text-gray-900 dark:text-white">
-          Find Pharmacies Near You
+          Featured <span class="text-[#246BFD]">Pharmacy</span> Partners
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-300">
-          Compare prices and find the best deals at pharmacies in your area
+          Browse our trusted and verified pharmacy partners across Ghana
         </p>
       </div>
-
-      <PharmacySearchBar />
 
       <!-- Horizontal Scroll Container -->
       <div class="relative">
@@ -99,6 +96,7 @@ const scrollRight = () => {
 </template>
 
 <style scoped>
+
 .scroll-animate {
   opacity: 0;
   transform: translateY(20px);

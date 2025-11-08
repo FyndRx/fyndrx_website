@@ -62,32 +62,32 @@ const handleSubmit = async () => {
         <!-- Left Column -->
         <div class="scroll-animate slide-in-left">
           <h2 class="mb-4 text-4xl font-medium text-white">
-            Stay Updated with the Latest Deals
+            Stay Updated with FyndRx
           </h2>
           <p class="mb-8 text-xl text-blue-100">
-            Subscribe to our newsletter and never miss out on exclusive pharmacy deals and savings tips.
+            Subscribe to our newsletter for health tips, medication updates, and platform news.
           </p>
           <div class="flex items-center space-x-4">
             <div class="flex items-center space-x-2">
               <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white/10">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
               </div>
               <div>
                 <p class="text-2xl font-medium text-white">100+</p>
-                <p class="font-light text-blue-100">Pharmacies</p>
+                <p class="font-light text-blue-100">Verified Pharmacies</p>
               </div>
             </div>
             <div class="flex items-center space-x-2">
               <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white/10">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
               </div>
               <div>
-                <p class="text-2xl font-medium text-white">50%</p>
-                <p class="font-light text-blue-100">Average Savings</p>
+                <p class="text-2xl font-medium text-white">Fast</p>
+                <p class="font-light text-blue-100">Delivery</p>
               </div>
             </div>
           </div>
@@ -151,6 +151,7 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped>
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
 }

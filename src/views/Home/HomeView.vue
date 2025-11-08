@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import Hero from '@/views/Home/landing/Hero.vue';
-import Medications from '@/views/Home/landing/Medications.vue';
-import PharmacyList from '@/views/Home/landing/PharmacyList.vue';
-import CouponCarousel from '@/views/Home/landing/CouponCarousel.vue';
+import QuickSearch from '@/views/Home/landing/QuickSearch.vue';
+import Features from '@/views/Home/landing/Features.vue';
 import HowItWorks from '@/views/Home/landing/HowItWorks.vue';
-import PopularCoupons from '@/views/Home/landing/PopularCoupons.vue';
+import Stats from '@/views/Home/landing/Stats.vue';
+import PharmacyList from '@/views/Home/landing/PharmacyList.vue';
+import Testimonials from '@/views/Home/landing/Testimonials.vue';
+import CTA from '@/views/Home/landing/CTA.vue';
 import BlogPosts from '@/views/Home/landing/BlogPosts.vue';
 import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
 
 const isVisible = ref(false);
 
 onMounted(() => {
-  // Trigger animations when component is mounted
   isVisible.value = true;
 });
 </script>
@@ -25,31 +26,20 @@ onMounted(() => {
       <Hero />
     </section>
 
-    <!-- Medications Section -->
+    <!-- Quick Search Section -->
     <section 
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
-      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
-      <Medications />
+      <QuickSearch />
     </section>
 
-    <!-- Pharmacy List -->
+    <!-- Features Section -->
     <section 
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
-      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
-      <PharmacyList />
-    </section>
-
-    <!-- Coupon Carousel -->
-    <section 
-      class="relative overflow-hidden"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <div class="absolute inset-0 bg-gradient-to-r from-[#FE9615]/10 to-[#246BFD]/10"></div>
-      <CouponCarousel />
+      <Features />
     </section>
 
     <!-- How It Works -->
@@ -61,13 +51,37 @@ onMounted(() => {
       <HowItWorks />
     </section>
 
-    <!-- Popular Coupons -->
+    <!-- Pharmacy List -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
+      <PharmacyList />
+    </section>
+
+    <!-- Stats Section -->
     <section 
       class="relative overflow-hidden"
       :class="{ 'animate-fade-in': isVisible }"
     >
-      <div class="absolute inset-0 bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10"></div>
-      <PopularCoupons />
+      <Stats />
+    </section>
+
+    <!-- Testimonials Section -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <Testimonials />
+    </section>
+
+    <!-- CTA Section -->
+    <section 
+      class="relative overflow-hidden"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <CTA />
     </section>
 
     <!-- Blog Posts -->
@@ -75,7 +89,6 @@ onMounted(() => {
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
-      <!-- <div class="absolute inset-0 bg-[#246BFD]/5"></div> -->
       <BlogPosts />
     </section>
 
@@ -91,6 +104,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
 .animate-fade-in {
   animation: fadeIn 1s ease-out forwards;
 }
