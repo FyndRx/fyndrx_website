@@ -54,7 +54,7 @@ const handleSubmit = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Redirect based on user role
-    const userRole = authStore.user?.role;
+    const userRole = (authStore.user as any)?.role;
     if (userRole === 'pharmacy' || userRole === 'pharmacy_staff') {
       router.push({ name: 'pharmacy-dashboard' });
     } else {

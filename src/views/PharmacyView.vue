@@ -391,11 +391,11 @@ onMounted(() => {
                           <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
                               class="h-full bg-yellow-400"
-                              :style="{ width: `${(reviewStats.ratingDistribution[rating as keyof typeof reviewStats.ratingDistribution] / reviewStats.totalReviews) * 100}%` }"
+                              :style="{ width: `${((reviewStats.ratingDistribution as any)[rating] / reviewStats.totalReviews) * 100}%` }"
                             ></div>
                           </div>
                           <span class="text-sm text-gray-600 dark:text-gray-400 w-8 text-right">
-                            {{ reviewStats.ratingDistribution[rating as keyof typeof reviewStats.ratingDistribution] }}
+                            {{ (reviewStats.ratingDistribution as any)[rating] }}
                           </span>
                         </div>
                       </div>

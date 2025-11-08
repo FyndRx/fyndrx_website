@@ -260,7 +260,7 @@ const handleSubmit = async () => {
                 </div>
                 <div v-else class="flex-shrink-0">
                   <img
-                    :src="prescriptionPreview"
+                    :src="prescriptionPreview || ''"
                     alt="Prescription preview"
                     class="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                   />

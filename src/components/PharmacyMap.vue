@@ -37,9 +37,6 @@ const initializeMap = () => {
   map.value = new google.maps.Map(mapContainer.value, {
     center: location,
     zoom: 15,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: true,
     styles: [
       {
         featureType: 'poi',
@@ -56,14 +53,14 @@ const initializeMap = () => {
     animation: google.maps.Animation.DROP
   });
 
-  const infoWindow = new google.maps.InfoWindow({
+  const infoWindow = new (google.maps as any).InfoWindow({
     content: `<div style="padding: 8px;">
       <h3 style="margin: 0 0 4px 0; font-weight: 600; color: #246BFD;">${props.pharmacyName}</h3>
       <p style="margin: 0; font-size: 12px; color: #666;">Click for directions</p>
     </div>`
   });
 
-  marker.value.addListener('click', () => {
+  (marker.value as any).addListener('click', () => {
     infoWindow.open(map.value!, marker.value!);
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`, '_blank');
   });

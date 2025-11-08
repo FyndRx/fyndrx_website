@@ -79,7 +79,6 @@ const downloadReceipt = async () => {
     });
 
     const imgWidth = 210;
-    const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
     const pdf = new jsPDF('p', 'mm', 'a4');

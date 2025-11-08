@@ -52,15 +52,15 @@ export const cartService = {
         return {
           id: `item-${Date.now()}-${Math.random()}`,
           medicationId: item.medicationId,
-          medicationName: medication?.name || 'Unknown',
+          medicationName: medication?.drug_name || 'Unknown',
           brandId: item.brandId,
           brandName: brand?.name,
           formId: item.formId,
-          formName: form?.name || 'Unknown',
+          formName: form?.form_name || 'Unknown',
           strengthId: item.strengthId,
           strength: strength?.strength || 'Unknown',
           uomId: item.uomId,
-          uom: medication?.uom || 'UNIT(S)',
+          uom: 'UNIT(S)',
           quantity: item.quantity,
           price: item.price,
           image: medication?.image

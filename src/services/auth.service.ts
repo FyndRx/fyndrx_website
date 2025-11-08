@@ -38,7 +38,7 @@ export interface UserDetailsResponse {
   user: User;
 }
 
-const mockUsers = usersData as User[];
+const mockUsers = usersData as any[];
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const MOCK_CREDENTIALS = {
@@ -48,7 +48,7 @@ const MOCK_CREDENTIALS = {
 };
 
 class AuthService {
-  private currentUser: User | null = null;
+  private currentUser: any = null;
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     await delay(800);
@@ -92,14 +92,14 @@ class AuthService {
     await delay(1000);
     
     const existingUser = mockUsers.find(
-      u => u.email === credentials.email || u.phone === credentials.phoneNumber
+      u => u.email === credentials.email || (u as any).phone === credentials.phoneNumber
     );
     
     if (existingUser) {
       throw new Error('User with this email or phone already exists');
     }
     
-    const newUser: User = {
+    const newUser: any = {
       id: mockUsers.length + 1,
       firstname: credentials.firstName,
       lastname: credentials.lastName,
@@ -109,7 +109,7 @@ class AuthService {
       profile_picture_full: null,
       role: credentials.role || 'patient',
       created_at: new Date().toISOString(),
-      address: ''
+      address: null
     };
     
     mockUsers.push(newUser);
@@ -164,7 +164,7 @@ class AuthService {
     };
   }
 
-  async resetPassword(credentials: ResetPasswordCredentials): Promise<{ message: string }> {
+  async resetPassword(_credentials: ResetPasswordCredentials): Promise<{ message: string }> {
     await delay(500);
     
     return {

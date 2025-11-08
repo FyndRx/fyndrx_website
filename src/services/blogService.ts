@@ -1,4 +1,4 @@
-import type { BlogPost, Comment } from '@/types/blog';
+import type { BlogPost } from '@/types/blog';
 import blogsData from '@/data/blogs.json';
 
 export const blogService = {

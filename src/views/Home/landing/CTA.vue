@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useRouter } from 'vue-router';
 

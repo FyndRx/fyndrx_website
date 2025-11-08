@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { dataService } from '@/services/dataService';
 import type { Medication } from '@/models/Medication';
 import LazyImage from './LazyImage.vue';

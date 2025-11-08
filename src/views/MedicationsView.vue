@@ -46,8 +46,7 @@ const baseFilteredMedications = computed(() => {
     meds = meds.filter(med =>
       med.drug_name.toLowerCase().includes(query) ||
       med.description.toLowerCase().includes(query) ||
-      med.category.toLowerCase().includes(query) ||
-      med.genericName?.toLowerCase().includes(query)
+      med.category.toLowerCase().includes(query)
     );
   }
 
@@ -72,7 +71,7 @@ const formOptions = computed(() => {
   }
   
   meds.forEach(med => {
-    med.forms.forEach(form => forms.add(form.name));
+    med.forms.forEach(form => forms.add(form.form_name));
   });
   
   return [
@@ -90,7 +89,7 @@ const brandOptions = computed(() => {
   }
   
   if (selectedForm.value !== 'all') {
-    meds = meds.filter(med => med.forms.some(form => form.name === selectedForm.value));
+    meds = meds.filter(med => med.forms.some(form => form.form_name === selectedForm.value));
   }
   
   meds.forEach(med => {
@@ -149,7 +148,7 @@ const filteredMedications = computed(() => {
   // Form filter
   if (selectedForm.value !== 'all') {
     meds = meds.filter(med =>
-      med.forms.some(form => form.name === selectedForm.value)
+      med.forms.some(form => form.form_name === selectedForm.value)
     );
   }
 

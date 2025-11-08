@@ -4,8 +4,7 @@ import { useRoute } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
 import { dataService } from '@/services/dataService';
-import type { Pharmacy, PharmacyFilters } from '@/models/Pharmacy';
-import PharmacySearchBar from '@/components/PharmacySearchBar.vue';
+import type { Pharmacy } from '@/models/Pharmacy';
 import PharmacyCard from '@/components/PharmacyCard.vue';
 import Dropdown from '@/components/Dropdown.vue';
 import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
@@ -42,12 +41,6 @@ const sortOptions = [
   { label: 'Name (A-Z)', value: 'name' }
 ];
 
-const filters = computed<PharmacyFilters>(() => ({
-  searchQuery: searchQuery.value,
-  selectedServices: selectedServices.value,
-  sortBy: sortBy.value,
-  isOpenNow: isOpenNow.value
-}));
 
 const loadPharmacies = async () => {
   loading.value = true;
