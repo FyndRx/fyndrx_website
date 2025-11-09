@@ -108,8 +108,7 @@ Black: #000000
 
 #### Font Family
 ```
-Primary: System default (SF Pro for iOS, Roboto for Android)
-Fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+Primary: Made Okine
 ```
 
 #### Font Sizes
@@ -616,8 +615,15 @@ interface Transaction {
 ┌─────────────────────────────────────────┐
 │           Bottom Tab Bar                │
 ├─────────────────────────────────────────┤
-│  Home  │  Browse  │  Cart  │  Profile   │
+│  🏠     📋     🛒(2)    👤             │
+│ Home │ Browse │ Cart │ Profile         │
+│ ──── (Active page highlighted)          │
 └─────────────────────────────────────────┘
+
+Visual States:
+- Active Tab: Primary blue (#0ea5e9), bold text, underline/pill
+- Inactive Tabs: Gray (#9ca3af), normal weight
+- Cart Badge: Red dot with count
 ```
 
 ### Navigation Tree
@@ -933,10 +939,18 @@ Features:
 **App Bar / Header**
 ```
 Features:
-- Title
-- Back button
-- Action buttons (search, filter, menu)
+- Title (current screen name)
+- Back button (← left side)
+- Action buttons (search, filter, menu) on right
 - Transparent/solid variants
+- Breadcrumb support for nested navigation (optional)
+- Current page title clearly visible
+- Scroll behavior (hide on scroll down, show on scroll up)
+
+Visual Hierarchy:
+- Title: text-lg font-semibold
+- Current location context
+- Consistent placement across all screens
 ```
 
 **Bottom Tab Bar**
@@ -948,9 +962,15 @@ Tabs:
 - Profile
 
 Features:
-- Active state indicator
-- Icons + labels
-- Badge support
+- Active state indicator (highlighted icon + text)
+- Current page clearly distinguished:
+  * Active tab: Primary color (#0ea5e9)
+  * Inactive tabs: Gray (#9ca3af)
+  * Active tab with bold font weight
+  * Optional: Active tab with background pill/underline
+- Icons + labels for all tabs
+- Badge support (notification count on Cart)
+- Smooth transitions between tabs
 ```
 
 **Search Bar**
@@ -1552,6 +1572,26 @@ GET    /transactions/:id               - Get transaction
 - Bottom tabs on mobile
 - Persistent across screens
 - Badge for notifications
+- **Active State Indicators:**
+  - Icon color change (Gray → Primary Blue)
+  - Text color change (Gray → Primary Blue)
+  - Font weight increase (Normal → Bold)
+  - Optional visual accent (Underline, Pill background, or Top border)
+  - Smooth color transitions (200ms ease)
+  
+**Visual States Example:**
+```
+Inactive Tab:
+  Icon: #9ca3af (gray-400)
+  Text: #9ca3af (gray-400)
+  Font: 400 (normal)
+
+Active Tab:
+  Icon: #0ea5e9 (primary-500)
+  Text: #0ea5e9 (primary-500)
+  Font: 600 (semibold)
+  Accent: 2px bottom border or pill background
+```
 
 **Modal Navigation**
 - Swipe down to dismiss
@@ -1608,6 +1648,13 @@ GET    /transactions/:id               - Get transaction
 │  Health Tips / Blog Posts           │
 ├─────────────────────────────────────┤
 │  Quick Actions (Upload Rx, etc)     │
+└─────────────────────────────────────┘
+
+Bottom Navigation:
+┌─────────────────────────────────────┐
+│ 🏠 Home │ Browse │ Cart │ Profile   │
+│ ════════                             │
+│ (Active - Primary Blue)              │
 └─────────────────────────────────────┘
 ```
 
@@ -1931,6 +1978,13 @@ GET    /transactions/:id               - Get transaction
 │  • Feedback                         │
 │  • Settings                         │
 │  • Logout                           │
+└─────────────────────────────────────┘
+
+Bottom Navigation:
+┌─────────────────────────────────────┐
+│ Home │ Browse │ Cart │ 👤 Profile   │
+│                       ═══════════   │
+│                    (Active - Primary Blue) │
 └─────────────────────────────────────┘
 ```
 
