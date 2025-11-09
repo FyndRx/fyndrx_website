@@ -1,17 +1,18 @@
 import type { Medication } from '@/models/Medication';
 import { apiService } from './api';
-import type { 
-  LiveSearchApiResponse, 
-  MedicationDetailApiResponse, 
+import type {
+  LiveSearchApiResponse,
+  MedicationDetailApiResponse,
   MultipleMedicationsApiResponse,
-  MedicationApiResponse 
+  MedicationApiResponse
 } from '@/models/api';
+import type { SmartSearchResponse } from '@/models/api/SmartSearchResponse';
 import type { PaginationMeta } from '@/models/api/ApiResponse';
-import { 
-  unwrapApiResponse, 
+import {
+  unwrapApiResponse,
   unwrapArrayResponse,
-  transformMedication, 
-  transformMedications 
+  transformMedication,
+  transformMedications
 } from '@/utils/responseTransformers';
 
 export interface LiveSearchFilters {
@@ -41,50 +42,50 @@ export const medicationService = {
     try {
       const filters: LiveSearchFilters = typeof params === 'string' ? { query: params } : params;
       const query = filters.query?.trim() || '';
-      
+
       const searchParams = new URLSearchParams();
       // Only add query param if it's not empty, otherwise API should return all medications
       if (query.length > 0) {
         searchParams.set('q', query);
       }
-      
+
       if (filters.page && filters.page > 0) {
         searchParams.set('page', String(filters.page));
       }
-      
+
       if (filters.perPage && filters.perPage > 0) {
         searchParams.set('per_page', String(filters.perPage));
       }
-      
+
       if (filters.category && filters.category !== 'all') {
         searchParams.set('category', filters.category);
       }
-      
+
       if (filters.form && filters.form !== 'all') {
         searchParams.set('form', filters.form);
       }
-      
+
       if (filters.brand && filters.brand !== 'all') {
         searchParams.set('brand', filters.brand);
       }
-      
+
       if (filters.requiresPrescription) {
         searchParams.set('requires_prescription', filters.requiresPrescription);
       }
-      
+
       if (filters.sort) {
         searchParams.set('sort_by', filters.sort);
       }
-      
+
       const url = `/drug/live-search?${searchParams.toString()}`;
       console.log('Fetching from URL:', url);
 
       const response = await apiService.get<LiveSearchApiResponse>(url);
       console.log('Raw API response:', response);
-      
+
       const apiMeds = unwrapArrayResponse(response);
       const meta = !Array.isArray(response) && 'meta' in response ? response.meta : undefined;
-      
+
       const transformed = transformMedications(apiMeds);
       console.log('Transformed medications:', transformed);
 
@@ -95,6 +96,23 @@ export const medicationService = {
     } catch (error) {
       console.error('Error in medicationService.liveSearch:', error);
       throw error;
+    }
+  },
+
+  async smartSearch(query: string): Promise<SmartSearchResponse> {
+    try {
+      const response = await apiService.get<SmartSearchResponse>('/search/smart', {
+        params: { q: query }
+      });
+      return response;
+    } catch (error) {
+      console.error('Error in smartSearch:', error);
+      // Fallback to empty response to prevent UI crash
+      return {
+        query,
+        results: { products: [], brands: [], generics: [], categories: [] },
+        suggestions: []
+      };
     }
   },
 
@@ -118,15 +136,15 @@ export const medicationService = {
     if (!drugIds || drugIds.length === 0) {
       return [];
     }
-    
+
     const params = drugIds.map(id => `drug_ids[]=${id}`).join('&');
     const response = await apiService.get<MultipleMedicationsApiResponse>(
       `/drugs/show/multiple?${params}`
     );
-    
+
     // Handle different response formats
     let apiMeds: MedicationApiResponse[] = [];
-    
+
     if (Array.isArray(response)) {
       apiMeds = response;
     } else if (typeof response === 'object') {
@@ -138,7 +156,7 @@ export const medicationService = {
         apiMeds = Object.values(response) as MedicationApiResponse[];
       }
     }
-    
+
     return transformMedications(apiMeds);
   }
 };

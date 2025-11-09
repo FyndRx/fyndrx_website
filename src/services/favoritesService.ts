@@ -1,8 +1,7 @@
 import { reactive } from 'vue';
 import { apiService } from './api';
-import type { Medication } from '@/models/Medication';
 import type { MedicationApiResponse } from '@/models/api';
-import { unwrapArrayResponse, transformMedication } from '@/utils/responseTransformers';
+import { transformMedication } from '@/utils/responseTransformers';
 
 export interface SavedDrug {
   id: number;
