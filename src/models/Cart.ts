@@ -20,6 +20,7 @@ export interface CartItem {
   image?: string;
   inStock: boolean;
   requiresPrescription?: boolean;
+  pharmacyDrugPriceId?: number; // Added for API compatibility
 }
 
 export interface Cart {
