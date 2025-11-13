@@ -204,9 +204,15 @@ const closeComparison = () => {
                       :key="`brands-${medication.id}`"
                       class="p-4 text-center"
                     >
-                      <span class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ medication.brands.length }} brand{{ medication.brands.length !== 1 ? 's' : '' }}
-                      </span>
+                      <div class="flex flex-wrap gap-1 justify-center">
+                        <span 
+                          v-for="(brand, i) in medication.brands" 
+                          :key="i"
+                          class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                        >
+                          {{ brand.name || brand }}
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
