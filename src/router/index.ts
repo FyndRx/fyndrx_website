@@ -225,6 +225,24 @@ const router = createRouter({
       }
     },
     {
+      path: '/consultations/new',
+      name: 'create-consultation',
+      component: () => import('@/views/CreateConsultationView.vue'),
+      meta: {
+        title: 'New Consultation | FyndRX',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/consultations/:id',
+      name: 'consultation-detail',
+      component: () => import('@/views/ConsultationDetailView.vue'),
+      meta: {
+        title: 'Consultation Details | FyndRX',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/orders',
       name: 'orders',
       component: () => import('@/views/OrdersView.vue'),
@@ -345,7 +363,11 @@ router.beforeEach(async (to, _, next) => {
   document.title = (to.meta.title as string) || 'FyndRX';
 
   const authStore = useAuthStore();
-  const isAuthenticated = await authStore.checkAuth();
+
+  // Initialize auth if needed (check token existence)
+  // We don't await checkAuth() here to avoid blocking every navigation on an API call
+  // Instead we rely on the store's state which should be hydrated from localStorage
+  const isAuthenticated = authStore.isAuthenticated;
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !isAuthenticated) {
@@ -357,6 +379,20 @@ router.beforeEach(async (to, _, next) => {
   if (to.meta.requiresGuest && isAuthenticated) {
     next({ name: 'home' });
     return;
+  }
+
+  // If authenticated but user details are missing (e.g. page reload), fetch them in background
+  // or block if critical. For now we let it happen in background or App.vue
+  if (isAuthenticated && !authStore.user) {
+    try {
+      await authStore.fetchUserDetails();
+    } catch (error) {
+      // If fetching user details fails (e.g. token expired), let the interceptor handle it
+      // or redirect to login
+      console.error('Failed to fetch user details during navigation:', error);
+      // Optional: authStore.logout(); next({ name: 'login' }); 
+      // But we generally prefer the global error handler to do this.
+    }
   }
 
   next();
