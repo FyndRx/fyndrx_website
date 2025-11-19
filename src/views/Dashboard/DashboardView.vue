@@ -343,12 +343,17 @@ onMounted(() => {
               >
                 <div class="flex-shrink-0 w-12 h-12 overflow-hidden bg-gray-200 dark:bg-gray-600 rounded-lg">
                   <LazyImage
-                    v-if="order.items[0].image"
+                    v-if="order.items && order.items.length > 0 && order.items[0].image"
                     :src="order.items[0].image"
                     :alt="order.items[0].medicationName"
                     aspectRatio="square"
                     className="w-full h-full object-cover"
                   />
+                  <div v-else class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                  </div>
                 </div>
                 
                 <div class="flex-1 min-w-0">
@@ -362,10 +367,10 @@ onMounted(() => {
                   <span
                     :class="[
                       'inline-block px-2 py-1 text-xs font-medium rounded-full',
-                      statusColors[order.status]
+                      statusColors[order.status] || statusColors.pending
                     ]"
                   >
-                    {{ order.status === 'out_for_delivery' ? 'Delivering' : order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
+                    {{ order.status === 'out_for_delivery' ? 'Delivering' : (order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Unknown') }}
                   </span>
                 </div>
               </div>

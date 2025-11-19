@@ -149,7 +149,7 @@ export default {
     >
       <button
         type="button"
-        class="flex items-center justify-between w-full px-5 py-3 bg-white border rounded-full dark:bg-gray-800"
+        class="flex items-center justify-between w-full px-5 py-3 bg-white border rounded-full dark:bg-gray-800 dark:text-white"
         :disabled="disabled"
         @click="toggleDropdown"
       >
@@ -198,7 +198,7 @@ export default {
           <div
             v-for="option in filteredOptions"
             :key="option.value"
-            class="px-4 py-2 transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="px-4 py-2 transition-colors cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
             :class="{
               'opacity-50 cursor-not-allowed': option.disabled,
               'bg-[#246BFD]/10 text-[#246BFD]': 
