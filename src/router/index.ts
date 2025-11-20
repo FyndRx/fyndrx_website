@@ -173,7 +173,8 @@ const router = createRouter({
       component: () => import('@/views/MedicationsView.vue'),
       meta: {
         title: 'Browse Medications | FyndRX',
-        description: 'Browse and search for medications. Compare prices across pharmacies.'
+        description: 'Browse and search for medications. Compare prices across pharmacies.',
+        requiresAuth: false
       }
     },
     {
@@ -190,7 +191,8 @@ const router = createRouter({
       name: 'MedicationDetail',
       component: () => import('@/views/MedicationDetail.vue'),
       meta: {
-        title: 'Medication Details | FyndRX'
+        title: 'Medication Details | FyndRX',
+        requiresAuth: false
       }
     },
     {

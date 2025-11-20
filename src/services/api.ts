@@ -16,8 +16,21 @@ class ApiService {
       },
     };
 
-    // Base API instance without auth
+    // Base API instance without auth (for public endpoints with API key)
     this.api = axios.create(baseConfig);
+    
+    // Add API key to public endpoints
+    this.api.interceptors.request.use(
+      config => {
+        if (serverConfig.apiKey) {
+          config.headers['X-API-Key'] = serverConfig.apiKey;
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(handleApiError(error));
+      }
+    );
 
     // Auth API instance with interceptor for Bearer token
     this.authApi = axios.create(baseConfig);

@@ -3,11 +3,15 @@ import MainLayout from '@/layouts/MainLayout.vue';
 import NotificationContainer from '@/components/NotificationContainer.vue';
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/store/auth';
+import { favoritesService } from '@/services/favoritesService';
 
 const authStore = useAuthStore();
 
 onMounted(async () => {
   await authStore.checkAuth();
+  if (authStore.isAuthenticated) {
+    await favoritesService.initialize();
+  }
 });
 </script>
 
