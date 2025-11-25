@@ -1,5 +1,13 @@
 import type { User } from '@/models/User';
-import usersData from '@/data/users.json';
+import { apiService } from './api';
+import type { 
+  LoginApiResponse, 
+  RegisterApiResponse,
+  UserApiResponse,
+  OtpResponse,
+  ProfilePictureResponse 
+} from '@/models/api';
+import { unwrapApiResponse, transformUser } from '@/utils/responseTransformers';
 
 export interface LoginCredentials {
   login: string;
@@ -7,25 +15,32 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
-  phoneNumber: string;
+  phone_number: string;
   password: string;
-  role: string;
+  otp: string;
+}
+
+export interface TestRegisterCredentials {
+  email: string;
+  password: string;
 }
 
 export interface ResetPasswordCredentials {
-  access_token: string;
+  phone_number: string;
+  otp: string;
   password: string;
+  password_confirmation: string;
 }
 
-export interface ForgotPasswordCredentials {
-  email: string;
+export interface SendOTPCredentials {
+  phone_number: string;
 }
 
 export interface VerifyOTPCredentials {
-  email: string;
+  phone_number: string;
   otp: string;
 }
 
@@ -34,148 +49,157 @@ export interface LoginResponse {
   access_token: string;
 }
 
-export interface UserDetailsResponse {
-  user: User;
+export interface UpdateUserDetailsRequest {
+  firstname?: string;
+  lastname?: string;
+  phone_number?: string;
+  address?: string;
 }
 
-const mockUsers = usersData as any[];
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const MOCK_CREDENTIALS = {
-  email: 'john.mensah@example.com',
-  phone: '+233245551234',
-  password: 'password123'
-};
-
 class AuthService {
-  private currentUser: any = null;
-
+  /**
+   * Login user
+   * @param credentials - Login credentials (email/phone and password)
+   * @returns Login response with access token
+   */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    await delay(800);
-    
-    const normalizedLogin = credentials.login.toLowerCase().replace(/\s/g, '');
-    const normalizedEmail = MOCK_CREDENTIALS.email.toLowerCase();
-    const normalizedPhone = MOCK_CREDENTIALS.phone.replace(/\s/g, '');
-    
-    if (
-      (normalizedLogin === normalizedEmail || normalizedLogin === normalizedPhone) && 
-      credentials.password === MOCK_CREDENTIALS.password
-    ) {
-      this.currentUser = mockUsers[0];
-      const mockToken = 'mock_token_' + Date.now();
-      
-      return {
-        message: 'Login successful',
-        access_token: mockToken
-      };
-    }
-    
-    throw new Error('Invalid credentials. Use email: john.mensah@example.com, password: password123');
+    const response = await apiService.post<LoginApiResponse>('/auth/login', credentials);
+    return {
+      message: response.message,
+      access_token: response.access_token,
+    };
   }
 
+  /**
+   * Get current user details
+   * @returns User object
+   */
   async getUserDetails(): Promise<User> {
-    await delay(300);
-    
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-    
-    if (!this.currentUser) {
-      this.currentUser = mockUsers[0];
-    }
-    
-    return this.currentUser;
-  }
-
-  async register(credentials: RegisterCredentials): Promise<{ message: string }> {
-    await delay(1000);
-    
-    const existingUser = mockUsers.find(
-      u => u.email === credentials.email || (u as any).phone === credentials.phoneNumber
+    const response = await apiService.getAuth<UserApiResponse | { data: UserApiResponse }>(
+      '/user/details/get'
     );
-    
-    if (existingUser) {
-      throw new Error('User with this email or phone already exists');
-    }
-    
-    const newUser: any = {
-      id: mockUsers.length + 1,
-      firstname: credentials.firstName,
-      lastname: credentials.lastName,
-      email: credentials.email,
-      phone: credentials.phoneNumber,
-      profile_picture: null,
-      profile_picture_full: null,
-      role: credentials.role || 'patient',
-      created_at: new Date().toISOString(),
-      address: null
-    };
-    
-    mockUsers.push(newUser);
-    
+    const apiUser = unwrapApiResponse(response);
+    return transformUser(apiUser);
+  }
+
+  /**
+   * Register new user
+   * @param credentials - Registration credentials including OTP
+   * @returns Login response with access token
+   */
+  async register(credentials: RegisterCredentials): Promise<LoginResponse> {
+    const response = await apiService.post<RegisterApiResponse>('/auth/register', credentials);
     return {
-      message: 'Registration successful. Please verify your email.'
+      message: response.message,
+      access_token: response.access_token,
     };
   }
 
-  async verifyOTP(credentials: VerifyOTPCredentials): Promise<LoginResponse> {
-    await delay(500);
-    
-    if (credentials.otp === '123456') {
-      const user = mockUsers.find(u => u.email === credentials.email);
-      if (user) {
-        this.currentUser = user;
-        const mockToken = 'mock_token_' + Date.now();
-        
-        return {
-          message: 'OTP verified successfully',
-          access_token: mockToken
-        };
-      }
-    }
-    
-    throw new Error('Invalid OTP. Use 123456 for testing.');
-  }
-
-  async resendOTP(email: string): Promise<{ message: string }> {
-    await delay(500);
-    
-    const user = mockUsers.find(u => u.email === email);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    
+  /**
+   * Test registration (no OTP required)
+   * @param credentials - Test registration credentials
+   * @returns Login response with access token
+   */
+  async testRegister(credentials: TestRegisterCredentials): Promise<LoginResponse> {
+    const response = await apiService.post<RegisterApiResponse>('/auth/test-signup', credentials);
     return {
-      message: 'OTP resent successfully. Use 123456 for testing.'
+      message: response.message,
+      access_token: response.access_token,
     };
   }
 
-  async forgotPassword(credentials: ForgotPasswordCredentials): Promise<{ message: string }> {
-    await delay(500);
-    
-    const user = mockUsers.find(u => u.email === credentials.email);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    
-    return {
-      message: 'Password reset link sent to your email'
-    };
+  /**
+   * Send OTP to phone number
+   * @param credentials - Phone number
+   * @returns Success message
+   */
+  async sendOTP(credentials: SendOTPCredentials): Promise<{ message: string }> {
+    return await apiService.post<OtpResponse>('/auth/user-otp-send', credentials);
   }
 
-  async resetPassword(_credentials: ResetPasswordCredentials): Promise<{ message: string }> {
-    await delay(500);
-    
-    return {
-      message: 'Password reset successfully'
-    };
+  /**
+   * Verify OTP
+   * @param credentials - Phone number and OTP
+   * @returns Success message
+   */
+  async verifyOTP(credentials: VerifyOTPCredentials): Promise<{ message: string }> {
+    return await apiService.post<OtpResponse>('/auth/user-otp-verify', credentials);
   }
 
+  /**
+   * Reset password
+   * @param credentials - Phone number, OTP, and new password
+   * @returns Success message
+   */
+  async resetPassword(credentials: ResetPasswordCredentials): Promise<{ message: string }> {
+    return await apiService.post<OtpResponse>('/auth/password-reset', credentials);
+  }
+
+  /**
+   * Logout user
+   */
   async logout(): Promise<void> {
-    await delay(300);
-    this.currentUser = null;
+    await apiService.postAuth<void>('/auth/logout');
     localStorage.removeItem('access_token');
+  }
+
+  /**
+   * Delete user account
+   * @param credentials - Email, password, and deletion reason
+   * @returns Success message
+   */
+  async deleteAccount(credentials: { 
+    email: string; 
+    password: string; 
+    delete_reason: string 
+  }): Promise<{ message: string }> {
+    return await apiService.deleteAuth<OtpResponse>('/auth/delete-account', {
+      data: credentials
+    });
+  }
+
+  /**
+   * Update user details
+   * @param data - User details to update
+   * @returns Updated user object
+   */
+  async updateUserDetails(data: UpdateUserDetailsRequest): Promise<User> {
+    const response = await apiService.postAuth<UserApiResponse | { data: UserApiResponse }>(
+      '/user/details/update', 
+      data
+    );
+    const apiUser = unwrapApiResponse(response);
+    return transformUser(apiUser);
+  }
+
+  /**
+   * Upload profile picture
+   * @param file - Image file
+   * @returns Response with profile picture URL
+   */
+  async uploadProfilePicture(file: File): Promise<{ message: string; profile_picture: string }> {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    return await apiService.postAuth<ProfilePictureResponse>(
+      '/user/picture/upload',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+  }
+
+  /**
+   * Update profile picture
+   * @param file - Image file
+   * @returns Response with profile picture URL
+   */
+  async updateProfilePicture(file: File): Promise<{ message: string; profile_picture: string }> {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    return await apiService.postAuth<ProfilePictureResponse>(
+      '/user/picture/update',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
   }
 }
 
