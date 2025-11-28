@@ -4,6 +4,8 @@ import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
 import { cartService } from '@/services/cartService';
+import { orderService } from '@/services/orderService';
+import { paymentService } from '@/services/paymentService';
 import type { CartPharmacyGroup } from '@/models/Cart';
 import LazyImage from '@/components/LazyImage.vue';
 
@@ -45,11 +47,39 @@ const needsPrescription = (pharmacyId: number) => {
   return pharmacy?.items.some(item => item.requiresPrescription) || false;
 };
 
-onMounted(() => {
+const syncCartWithAPI = async () => {
+  try {
+    // Sync local cart with API before checkout
+    const cartItems = cartStore.items;
+    if (cartItems.length > 0) {
+      const syncItems = cartItems.map(item => ({
+        drug_id: item.medicationId,
+        drug_brand_id: item.brandId || 0,
+        drug_brand_form_id: item.formId,
+        dosage_id: item.strengthId,
+        strength_uom_id: item.uomId,
+        pharmacy_branch_id: item.pharmacyBranchId || item.pharmacyId,
+        quantity: item.quantity
+      }));
+      await cartService.syncCart(syncItems);
+    }
+  } catch (err) {
+    console.error('Error syncing cart:', err);
+  }
+};
+
+onMounted(async () => {
   const pharmacyIdsParam = route.query.pharmacies as string;
   if (pharmacyIdsParam) {
     selectedPharmacyIds.value = pharmacyIdsParam.split(',').map(id => parseInt(id));
     
+    // Sync cart with API first
+    await syncCartWithAPI();
+    
+    // Get updated cart from API
+    const apiCart = await cartService.getCart();
+    
+    // Group items by pharmacy for display
     pharmaciesCheckout.value = cartStore.groupedByPharmacy.filter(group => 
       selectedPharmacyIds.value.includes(group.pharmacyId)
     );
@@ -139,28 +169,64 @@ const placeOrder = async (pharmacyId: number) => {
     processingOrders.value.add(pharmacyId);
     error.value = null;
 
+    // Get pharmacy_branch_id from the first item (all items in group have same pharmacy)
+    const firstItem = pharmacy.items[0];
+    const pharmacyBranchId = firstItem.pharmacyBranchId || pharmacy.pharmacyId;
+    
+    // Get user location if delivery method is delivery
+    let deliveryLat: number | undefined;
+    let deliveryLng: number | undefined;
+    
+    if (deliveryMethod.value === 'delivery') {
+      try {
+        const location = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error('Geolocation not supported'));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            }),
+            reject,
+            { timeout: 5000 }
+          );
+        });
+        deliveryLat = location.lat;
+        deliveryLng = location.lng;
+      } catch (err) {
+        console.warn('Could not get user location:', err);
+        // Continue without coordinates - API might handle it
+      }
+    }
+    
+    // Create order payload - API creates order from cart items automatically
+    // We just need to specify which pharmacy branch and delivery details
     const orderPayload = {
-      pharmacyId: pharmacy.pharmacyId,
-      items: pharmacy.items.map(item => ({
-        medicationId: item.medicationId,
-        brandId: item.brandId,
-        formId: item.formId,
-        strengthId: item.strengthId,
-        uomId: item.uomId,
-        quantity: item.quantity,
-        price: item.discountPrice || item.price
-      })),
-      paymentMethod: paymentMethods.value.get(pharmacyId) || 'platform',
-      deliveryMethod: deliveryMethod.value,
-      deliveryAddress: deliveryMethod.value === 'delivery' ? deliveryAddress.value : undefined,
-      prescriptionFile: prescriptionFiles.value.get(pharmacyId)
+      pharmacy_branch_id: pharmacyBranchId,
+      delivery_method: deliveryMethod.value,
+      delivery_address: deliveryMethod.value === 'delivery' ? deliveryAddress.value : undefined,
+      delivery_lat: deliveryLat,
+      delivery_lng: deliveryLng,
+      phone_number: phoneNumber.value,
+      payment_method: paymentMethods.value.get(pharmacyId) || 'platform',
+      notes: deliveryMethod.value === 'delivery' ? 'Please handle with care' : undefined
     };
 
-    const order = await cartService.createOrder(orderPayload);
+    // Create order - API will automatically use cart items for this pharmacy_branch_id
+    const order = await orderService.createOrder(orderPayload);
 
+    // Upload prescription if provided
+    const prescriptionFile = prescriptionFiles.value.get(pharmacyId);
+    if (prescriptionFile) {
+      await orderService.uploadPrescription(order.id, prescriptionFile);
+    }
+
+    // If payment method is platform, initialize payment
     if (order.paymentMethod === 'platform' && order.paymentStatus === 'pending') {
-      const paymentResponse = await cartService.initiatePayment(order.id);
-      window.location.href = paymentResponse.paymentUrl;
+      const paymentResponse = await paymentService.initializePayment(order.id);
+      window.location.href = paymentResponse.authorization_url;
     } else {
       successfulOrders.value.add(pharmacyId);
       cartStore.clearPharmacyItems(pharmacyId);

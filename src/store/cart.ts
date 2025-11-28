@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { cartService } from '@/services/cartService';
 import type { CartItem, Cart, CartPharmacyGroup } from '@/models/Cart';
 
 export const useCartStore = defineStore('cart', () => {
@@ -59,7 +60,7 @@ export const useCartStore = defineStore('cart', () => {
     return Array.from(groups.values());
   });
 
-  const addItem = (item: Omit<CartItem, 'id'>) => {
+  const addItem = async (item: Omit<CartItem, 'id'>) => {
     const existingItemIndex = items.value.findIndex(
       i => i.medicationId === item.medicationId &&
            i.pharmacyId === item.pharmacyId &&
@@ -79,21 +80,67 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     saveToLocalStorage();
+    
+    // Sync with API if user is authenticated
+    try {
+      const token = localStorage.getItem('access_token');
+      if (token && item.pharmacyBranchId) {
+        await cartService.addToCart({
+          drug_id: item.medicationId,
+          drug_brand_id: item.brandId || 0,
+          drug_brand_form_id: item.formId,
+          dosage_id: item.strengthId,
+          strength_uom_id: item.uomId,
+          pharmacy_branch_id: item.pharmacyBranchId,
+          quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
+        });
+      }
+    } catch (err) {
+      console.error('Error syncing cart item to API:', err);
+      // Don't block UI - continue with local cart
+    }
   };
 
-  const removeItem = (itemId: string) => {
+  const removeItem = async (itemId: string) => {
+    const item = items.value.find(i => i.id === itemId);
     items.value = items.value.filter(item => item.id !== itemId);
     saveToLocalStorage();
+    
+    // Sync with API if user is authenticated
+    if (item) {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (token && item.id) {
+          // Try to remove from API - item.id might be the API cart item ID
+          // If it's a local ID, we'll need to sync the whole cart
+          await cartService.removeFromCart(item.id);
+        }
+      } catch (err) {
+        console.error('Error removing cart item from API:', err);
+        // Don't block UI - continue with local cart
+      }
+    }
   };
 
-  const updateQuantity = (itemId: string, quantity: number) => {
+  const updateQuantity = async (itemId: string, quantity: number) => {
     const item = items.value.find(i => i.id === itemId);
     if (item) {
       if (quantity <= 0) {
-        removeItem(itemId);
+        await removeItem(itemId);
       } else {
         item.quantity = quantity;
         saveToLocalStorage();
+        
+        // Sync with API if user is authenticated
+        try {
+          const token = localStorage.getItem('access_token');
+          if (token && item.id) {
+            await cartService.updateCartItem(item.id, quantity);
+          }
+        } catch (err) {
+          console.error('Error updating cart item quantity in API:', err);
+          // Don't block UI - continue with local cart
+        }
       }
     }
   };
@@ -121,6 +168,20 @@ export const useCartStore = defineStore('cart', () => {
         console.error('Error loading cart from localStorage:', error);
         items.value = [];
       }
+    }
+  };
+
+  const syncWithAPI = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    
+    try {
+      const apiCart = await cartService.getCart();
+      // Merge API cart with local cart
+      // API cart items might have different structure, so we'll keep local for now
+      // but could update to use API cart as source of truth
+    } catch (err) {
+      console.error('Error syncing cart with API:', err);
     }
   };
 
@@ -152,7 +213,8 @@ export const useCartStore = defineStore('cart', () => {
     clearPharmacyItems,
     hasItemsFromPharmacy,
     getPharmacyItemsCount,
-    loadFromLocalStorage
+    loadFromLocalStorage,
+    syncWithAPI
   };
 });
 

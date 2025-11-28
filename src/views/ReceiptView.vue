@@ -4,8 +4,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
 import type { Transaction } from '@/models/Payment';
 import type { Order } from '@/models/Order';
-import transactionsData from '@/data/transactions.json';
-import ordersData from '@/data/orders.json';
+import { paymentService } from '@/services/paymentService';
+import { orderService } from '@/services/orderService';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -24,14 +24,14 @@ const receiptData = computed(() => {
 
   return {
     orderId: order.value.id,
-    orderNumber: order.value.orderNumber,
+    orderNumber: order.value.orderNumber || order.value.id,
     transactionId: transaction.value.id,
     transactionReference: transaction.value.reference,
     customerName: 'John Mensah',
-    customerEmail: transaction.value.metadata?.customerEmail || '',
-    customerPhone: transaction.value.metadata?.customerPhone || order.value.phoneNumber,
+    customerEmail: (transaction.value as any).metadata?.customerEmail || '',
+    customerPhone: (transaction.value as any).metadata?.customerPhone || order.value.phoneNumber,
     pharmacyName: order.value.pharmacyName,
-    pharmacyAddress: order.value.pharmacyAddress,
+    pharmacyAddress: order.value.pharmacyAddress || '',
     items: order.value.items.map(item => ({
       name: `${item.medicationName}${item.brandName ? ` (${item.brandName})` : ''} - ${item.formName} ${item.strength}`,
       quantity: item.quantity,
@@ -42,9 +42,9 @@ const receiptData = computed(() => {
     deliveryFee: order.value.deliveryFee,
     total: order.value.total,
     amountPaid: transaction.value.amount,
-    paymentMethod: transaction.value.paymentMethod === 'platform' ? 'Online Payment (Paystack)' : 'Pay at Pharmacy',
+    paymentMethod: transaction.value.payment_method === 'platform' ? 'Online Payment (Paystack)' : 'Pay at Pharmacy',
     paymentStatus: transaction.value.status,
-    paidAt: transaction.value.paidAt,
+    paidAt: transaction.value.paid_at,
     issuedAt: new Date().toISOString()
   };
 });
@@ -98,24 +98,30 @@ const downloadReceipt = async () => {
   }
 };
 
-onMounted(() => {
-  const transactionId = route.params.id as string;
-  
-  const transactionData = (transactionsData as Transaction[]).find(t => t.id === transactionId);
-  if (transactionData) {
-    transaction.value = transactionData;
+const loadReceipt = async () => {
+  loading.value = true;
+  try {
+    const transactionId = route.params.id as string;
+    transaction.value = await paymentService.getTransaction(transactionId);
     
-    const orderData = (ordersData as Order[]).find(o => o.id === transactionData.orderId);
-    if (orderData) {
-      order.value = orderData;
+    if (transaction.value && transaction.value.order_id) {
+      order.value = await orderService.getOrder(transaction.value.order_id);
     }
-  }
-  
-  if (!transaction.value || !order.value) {
+    
+    if (!transaction.value || !order.value) {
+      router.push({ name: 'transactions' });
+    }
+  } catch (err) {
+    console.error('Error loading receipt:', err);
+    notification.error('Error', 'Failed to load receipt');
     router.push({ name: 'transactions' });
+  } finally {
+    loading.value = false;
   }
-  
-  loading.value = false;
+};
+
+onMounted(() => {
+  loadReceipt();
 });
 </script>
 

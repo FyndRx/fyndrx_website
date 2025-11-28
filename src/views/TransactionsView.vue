@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Transaction } from '@/models/Payment';
-import transactionsData from '@/data/transactions.json';
+import { paymentService } from '@/services/paymentService';
 
 const router = useRouter();
 const transactions = ref<Transaction[]>([]);
@@ -59,11 +59,23 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const loadTransactions = async () => {
+  loading.value = true;
+  try {
+    transactions.value = await paymentService.getTransactions();
+    transactions.value = transactions.value.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  } catch (err) {
+    console.error('Error loading transactions:', err);
+    transactions.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
-  transactions.value = (transactionsData as Transaction[]).sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-  loading.value = false;
+  loadTransactions();
 });
 </script>
 
@@ -197,7 +209,7 @@ onMounted(() => {
           v-for="transaction in filteredTransactions"
           :key="transaction.id"
           class="p-6 transition-all duration-300 bg-white cursor-pointer dark:bg-gray-800 rounded-2xl hover:shadow-xl hover:-translate-y-1"
-          @click="viewOrder(transaction.orderId)"
+          @click="viewOrder(transaction.order_id)"
         >
           <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div class="flex-1">
@@ -205,7 +217,7 @@ onMounted(() => {
                 <div>
                   <div class="flex items-center gap-3 mb-2">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      {{ transaction.orderNumber }}
+                      {{ transaction.reference || transaction.order_id }}
                     </h3>
                     <span
                       :class="[
@@ -217,8 +229,8 @@ onMounted(() => {
                       {{ statusLabels[transaction.status] }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ transaction.metadata?.pharmacyName }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(transaction.createdAt) }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ (transaction as any).metadata?.pharmacyName || 'Order Payment' }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(transaction.created_at) }}</p>
                 </div>
               </div>
 
@@ -227,7 +239,7 @@ onMounted(() => {
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                   </svg>
-                  <span>{{ transaction.paymentMethod === 'platform' ? 'Online Payment' : 'Pay at Pharmacy' }}</span>
+                  <span>{{ transaction.payment_method === 'platform' ? 'Online Payment' : 'Pay at Pharmacy' }}</span>
                 </div>
                 <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +269,7 @@ onMounted(() => {
                   View Receipt
                 </button>
                 <button
-                  @click.stop="viewOrder(transaction.orderId)"
+                  @click.stop="viewOrder(transaction.order_id)"
                   class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all"
                 >
                   View Order
