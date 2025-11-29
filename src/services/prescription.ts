@@ -2,8 +2,7 @@ import { apiService } from './api';
 import type { Prescription } from '@/models/Prescription';
 import type { 
   PrescriptionsApiResponse,
-  PrescriptionDetailApiResponse,
-  PrescriptionApiResponse 
+  PrescriptionDetailApiResponse 
 } from '@/models/api';
 import { 
   unwrapApiResponse,
