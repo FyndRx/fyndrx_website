@@ -61,39 +61,44 @@ export const useCartStore = defineStore('cart', () => {
   });
 
   const addItem = async (item: Omit<CartItem, 'id'>) => {
-    const existingItemIndex = items.value.findIndex(
-      i => i.medicationId === item.medicationId &&
-           i.pharmacyId === item.pharmacyId &&
-           i.formId === item.formId &&
-           i.strengthId === item.strengthId &&
-           i.uomId === item.uomId
-    );
+    // Basic deduplication based on priceId if available, or fallback to complex composite key
+    const existingItemIndex = items.value.findIndex(i => {
+      if (item.pharmacyDrugPriceId && i.pharmacyDrugPriceId) {
+        return i.pharmacyDrugPriceId === item.pharmacyDrugPriceId;
+      }
+      // Fallback for legacy local items without price ID
+      return i.medicationId === item.medicationId &&
+        i.pharmacyId === item.pharmacyId &&
+        i.formId === item.formId &&
+        i.strengthId === item.strengthId &&
+        i.uomId === item.uomId;
+    });
 
     if (existingItemIndex !== -1) {
       items.value[existingItemIndex].quantity += item.quantity;
     } else {
       const newItem: CartItem = {
         ...item,
-        id: `${item.pharmacyId}-${item.medicationId}-${item.formId}-${item.strengthId}-${item.uomId}-${Date.now()}`
+        id: item.pharmacyDrugPriceId
+          ? `${item.pharmacyDrugPriceId}-${Date.now()}`
+          : `${item.pharmacyId}-${item.medicationId}-${item.formId}-${item.strengthId}-${item.uomId}-${Date.now()}`
       };
       items.value.push(newItem);
     }
 
     saveToLocalStorage();
-    
+
     // Sync with API if user is authenticated
     try {
       const token = localStorage.getItem('access_token');
-      if (token && item.pharmacyBranchId) {
+      // Crucial change: We now REQUIRE pharmacyDrugPriceId for API sync
+      if (token && item.pharmacyDrugPriceId) {
         await cartService.addToCart({
-          drug_id: item.medicationId,
-          drug_brand_id: item.brandId || 0,
-          drug_brand_form_id: item.formId,
-          dosage_id: item.strengthId,
-          strength_uom_id: item.uomId,
-          pharmacy_branch_id: item.pharmacyBranchId,
+          pharmacy_drug_price_id: item.pharmacyDrugPriceId,
           quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
         });
+      } else if (token) {
+        console.warn('Skipping API sync for cart item: Missing pharmacyDrugPriceId', item);
       }
     } catch (err) {
       console.error('Error syncing cart item to API:', err);
@@ -105,7 +110,7 @@ export const useCartStore = defineStore('cart', () => {
     const item = items.value.find(i => i.id === itemId);
     items.value = items.value.filter(item => item.id !== itemId);
     saveToLocalStorage();
-    
+
     // Sync with API if user is authenticated
     if (item) {
       try {
@@ -130,7 +135,7 @@ export const useCartStore = defineStore('cart', () => {
       } else {
         item.quantity = quantity;
         saveToLocalStorage();
-        
+
         // Sync with API if user is authenticated
         try {
           const token = localStorage.getItem('access_token');
@@ -174,9 +179,9 @@ export const useCartStore = defineStore('cart', () => {
   const syncWithAPI = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) return;
-    
+
     try {
-      const apiCart = await cartService.getCart();
+      await cartService.getCart();
       // Merge API cart with local cart
       // API cart items might have different structure, so we'll keep local for now
       // but could update to use API cart as source of truth
