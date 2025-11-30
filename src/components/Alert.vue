@@ -1,3 +1,32 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/solid';
+
+const props = defineProps<{
+  variant?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  closable?: boolean;
+}>();
+
+defineEmits<{
+  (e: 'close'): void;
+}>();
+
+const icon = computed(() => {
+  switch (props.variant) {
+    case 'success':
+      return CheckCircleIcon;
+    case 'warning':
+      return ExclamationTriangleIcon;
+    case 'error':
+      return ExclamationCircleIcon;
+    default:
+      return InformationCircleIcon;
+  }
+});
+</script>
+
 <template>
   <div
     :class="[
@@ -77,33 +106,4 @@
       </div>
     </div>
   </div>
-</template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
-import { InformationCircleIcon, CheckCircleIcon, ExclamationTriangleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/solid';
-
-const props = defineProps<{
-  variant?: 'info' | 'success' | 'warning' | 'error';
-  title?: string;
-  closable?: boolean;
-}>();
-
-defineEmits<{
-  (e: 'close'): void;
-}>();
-
-const icon = computed(() => {
-  switch (props.variant) {
-    case 'success':
-      return CheckCircleIcon;
-    case 'warning':
-      return ExclamationTriangleIcon;
-    case 'error':
-      return ExclamationCircleIcon;
-    default:
-      return InformationCircleIcon;
-  }
-});
-</script> 
+</template> 

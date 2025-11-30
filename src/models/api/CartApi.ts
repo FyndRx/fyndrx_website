@@ -11,12 +11,13 @@ export interface CartItemApiResponse {
   dosage_id: number;
   strength_uom_id: number;
   pharmacy_branch_id: number;
+  pharmacy_drug_price_id: number;
   quantity: number;
   price: number;
   discount_price?: number;
   created_at?: string;
   updated_at?: string;
-  
+
   // Optional nested medication data
   medication?: {
     id: number;
@@ -24,14 +25,14 @@ export interface CartItemApiResponse {
     image?: string;
     requires_prescription?: boolean;
   };
-  
+
   // Optional nested pharmacy data
   pharmacy?: {
     id: number;
     name: string;
     logo?: string;
   };
-  
+
   // Optional nested brand/form/strength data
   brand?: {
     id: number;
