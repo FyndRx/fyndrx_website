@@ -18,7 +18,7 @@ class ApiService {
 
     // Base API instance without auth (for public endpoints with API key)
     this.api = axios.create(baseConfig);
-    
+
     // Add API key to public endpoints
     this.api.interceptors.request.use(
       config => {
@@ -40,7 +40,11 @@ class ApiService {
       config => {
         const token = localStorage.getItem('access_token');
         if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+          config.headers['Authorization'] = `Bearer ${token}`;
+          // console.log('Attached auth token:', token.substring(0, 10) + '...');
+        }
+        if (serverConfig.apiKey) {
+          config.headers['X-API-Key'] = serverConfig.apiKey;
         }
         return config;
       },
@@ -55,8 +59,9 @@ class ApiService {
       async error => {
         if (isAuthError(error)) {
           // Handle unauthorized access
-          localStorage.removeItem('access_token');
-          window.location.href = '/login';
+          // Dispatch event for App.vue to handle (logout + redirect)
+          // This prevents hard reload loops
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
         }
         return Promise.reject(handleApiError(error));
       }
