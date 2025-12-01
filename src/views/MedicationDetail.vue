@@ -1,9 +1,12 @@
 <script setup lang="ts">
+// HMR Trigger Final
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
-import { dataService } from '@/services/dataService';
+import { medicationService } from '@/services/medicationService';
+import { pharmacyService } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
 import { blogService } from '@/services/blogService';
@@ -17,10 +20,14 @@ import RatingStars from '@/components/RatingStars.vue';
 import ReviewCard from '@/components/ReviewCard.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
+import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
+import Pagination from '@/components/Pagination.vue';
 
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 const notification = useNotification();
 const router = useRouter();
+const route = useRoute();
 
 interface Pharmacy {
   id: number;
@@ -31,31 +38,173 @@ interface Pharmacy {
   inStock: boolean;
   distance?: string;
   rating?: number;
+  // Additional fields for cart operations
+  priceId?: number;
+  pharmacyBranchId?: number;
+  formId?: number;
+  strengthId?: number;
+  uomId?: number;
+  // For filtering
+  pharmacy?: {
+    name: string;
+    logo: string;
+    distance?: string;
+    rating?: number;
+    is_open?: boolean;
+  };
+  pharmacy_name?: string; // Fallback for pharmacy name
 }
 
+// State
 const medication = ref<Medication | null>(null);
+const loading = ref(true);
+const error = ref<string | null>(null);
+const pharmacies = ref<Pharmacy[]>([]);
+const loadingPharmacies = ref(false);
+const reviews = ref<Review[]>([]);
+const reviewStats = ref<ReviewStats | null>(null); // Kept from original
+const reviewsLoading = ref(false);
+const showAddReviewModal = ref(false); // Kept from original
+const relatedBlogs = ref<BlogPost[]>([]);
+const blogsLoading = ref(false);
+
+// Pharmacy Filtering State
+const pharmacySearch = ref('');
+const pharmacySort = ref('price_asc');
+const showOpenOnly = ref(false);
+const showInStockOnly = ref(false);
+const currentPage = ref(1);
+const itemsPerPage = ref(9);
+const userLocation = ref<{ lat: number; lng: number } | null>(null);
+
 const selectedBrand = ref<number | null>(null);
 const selectedForm = ref<string | number>('');
 const selectedStrength = ref<string | number>('');
 const selectedUom = ref<string | number>('');
 const customQuantities = ref<Map<number, number>>(new Map());
-const loading = ref(true);
 
-const pharmacies = ref<Pharmacy[]>([]);
-const reviews = ref<Review[]>([]);
-const reviewStats = ref<ReviewStats | null>(null);
-const reviewsLoading = ref(false);
-const showAddReviewModal = ref(false);
-const relatedBlogs = ref<BlogPost[]>([]);
-const blogsLoading = ref(false);
+const filteredPharmacies = computed(() => {
+  let result = [...pharmacies.value];
 
-// const brandOptions = computed(() => {
-//   if (!medication.value) return [];
-//   return medication.value.brands.map(brand => ({
-//     label: brand.name,
-//     value: brand.id
-//   }));
-// });
+  // 1. Search
+  if (pharmacySearch.value) {
+    const query = pharmacySearch.value.toLowerCase();
+    result = result.filter(p => 
+      p.pharmacy?.name?.toLowerCase().includes(query) ||
+      p.pharmacy_name?.toLowerCase().includes(query)
+    );
+  }
+
+  // 2. Filter: Open Now
+  if (showOpenOnly.value) {
+    result = result.filter(p => p.pharmacy?.is_open);
+  }
+
+  // 3. Filter: In Stock
+  if (showInStockOnly.value) {
+    result = result.filter(p => p.inStock); // Use p.inStock from the Pharmacy interface
+  }
+
+  // 4. Sort
+  result.sort((a, b) => {
+    switch (pharmacySort.value) {
+      case 'price_asc':
+        return a.price - b.price;
+      case 'price_desc':
+        return b.price - a.price;
+      case 'rating_desc':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'distance_asc':
+        // Sort by numeric distance if available (from location search), otherwise string parsing
+        const distA = (a as any).distanceValue ?? parseFloat(a.distance || '0');
+        const distB = (b as any).distanceValue ?? parseFloat(b.distance || '0');
+        return distA - distB;
+      default:
+        return 0;
+    }
+  });
+
+  return result;
+});
+
+const paginatedPharmacies = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredPharmacies.value.slice(start, end);
+});
+
+const totalPages = computed(() => Math.ceil(filteredPharmacies.value.length / itemsPerPage.value));
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  // Scroll to top of pharmacy list
+  const pharmacySection = document.getElementById('pharmacy-list');
+  if (pharmacySection) {
+    pharmacySection.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+};
+
+const deg2rad = (deg: number): number => {
+  return deg * (Math.PI / 180);
+};
+
+const handleLocationSearch = () => {
+  if (!navigator.geolocation) {
+    notification.error('Error', 'Geolocation is not supported by your browser');
+    return;
+  }
+
+  loadingPharmacies.value = true;
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLocation.value = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+
+      // Update pharmacies with distance
+      pharmacies.value = pharmacies.value.map(p => {
+        // Assuming pharmacy object has location { lat, lng } or similar
+        // If not available in current data, we might need to fetch it or use mock data
+        // Checking pharmacy.pharmacy.location or similar
+        const pLat = (p.pharmacy as any)?.location?.lat || (p.pharmacy as any)?.latitude;
+        const pLng = (p.pharmacy as any)?.location?.lng || (p.pharmacy as any)?.longitude;
+
+        if (pLat && pLng) {
+          const dist = calculateDistance(userLocation.value!.lat, userLocation.value!.lng, pLat, pLng);
+          return {
+            ...p,
+            distance: `${dist.toFixed(1)} km`,
+            distanceValue: dist // Store numeric value for sorting
+          };
+        }
+        return p;
+      });
+
+      pharmacySort.value = 'distance_asc';
+      loadingPharmacies.value = false;
+      notification.success('Location Updated', 'Pharmacies sorted by distance to your location');
+    },
+    (error) => {
+      console.error('Geolocation error:', error);
+      loadingPharmacies.value = false;
+      notification.error('Error', 'Unable to retrieve your location');
+    }
+  );
+};
 
 const formOptions = computed(() => {
   if (!medication.value) return [];
@@ -84,70 +233,100 @@ const uomOptions = computed(() => {
   })) || [];
 });
 
-const updatePharmacyPrices = () => {
-  if (!medication.value || !selectedForm.value || !selectedStrength.value) {
-    return;
-  }
 
-  const formId = Number(selectedForm.value);
-  const strengthId = Number(selectedStrength.value);
+
+const updatePharmacyPrices = async () => {
+  if (!medication.value) return;
   
-  const availablePrices = dataService.getPharmaciesForMedication(
-    medication.value.id,
-    formId,
-    strengthId
-  );
-  
-  const allPharmacies = dataService.getAllPharmacies();
-  
-  pharmacies.value = availablePrices.map(price => {
-    const pharmacy = allPharmacies.find(p => p.id === price.pharmacyId);
-    const pharmacyData = {
-      id: price.pharmacyId,
-      name: pharmacy?.name || `Pharmacy ${price.pharmacyId}`,
-      logo: pharmacy?.image || '',
-      price: price.price,
-      discountPrice: price.discountPrice,
-      inStock: price.inStock,
-      distance: pharmacy?.distance,
-      rating: pharmacy?.rating
+  loadingPharmacies.value = true;
+  try {
+    const filters = {
+      drug_brand_form_id: selectedForm.value ? Number(selectedForm.value) : undefined,
+      dosage_id: selectedStrength.value ? Number(selectedStrength.value) : undefined,
+      strength_uom_id: selectedUom.value ? Number(selectedUom.value) : undefined
     };
     
-    if (!customQuantities.value.has(price.pharmacyId)) {
-      customQuantities.value.set(price.pharmacyId, 1);
-    }
+    const prices = await pharmacyService.getPricesByDrug(medication.value.id, filters);
     
-    return pharmacyData;
-  });
+    // Deduplicate pharmacies - keep the one with the lowest price
+    const pharmacyMap = new Map<number, any>();
+    
+    prices.forEach(price => {
+      const pharmacyId = price.pharmacy_id;
+      const existing = pharmacyMap.get(pharmacyId);
+      
+      if (!existing || price.price < existing.price) {
+        pharmacyMap.set(pharmacyId, price);
+      }
+    });
+
+    pharmacies.value = Array.from(pharmacyMap.values()).map(price => ({
+      id: price.pharmacy_id,
+      name: price.pharmacy_name || price.pharmacy?.name || 'Unknown Pharmacy',
+      logo: price.pharmacy_logo || price.pharmacy?.logo || '',
+      price: price.price,
+      discountPrice: price.discount_price,
+      inStock: price.in_stock ?? false,
+      distance: price.distance || price.pharmacy?.distance,
+      rating: price.rating || price.pharmacy?.rating,
+      priceId: price.id,
+      pharmacyBranchId: price.pharmacy_branch_id,
+      formId: price.drug_brand_form_id,
+      strengthId: price.dosage_id,
+      uomId: price.strength_uom_id,
+      // Pass the pharmacy object for filtering
+      pharmacy: price.pharmacy || {
+        name: price.pharmacy_name || 'Unknown Pharmacy',
+        logo: price.pharmacy_logo || '',
+        distance: price.distance,
+        rating: price.rating,
+        is_open: price.pharmacy?.is_open
+      },
+      pharmacy_name: price.pharmacy_name
+    }));
+  } catch (err) {
+    console.error('Error loading pharmacy prices:', err);
+    pharmacies.value = [];
+  } finally {
+    loadingPharmacies.value = false;
+  }
 };
 
-watch(selectedForm, (newFormId) => {
+watch(selectedForm, async (newFormId) => {
   if (newFormId && medication.value) {
-    const form = medication.value.forms.find(f => f.id === Number(newFormId));
-    if (form?.strengths.length) {
+    const form = medication.value.forms.find((f: any) => f.id === Number(newFormId));
+    if (form?.strengths && form.strengths.length) {
       selectedStrength.value = form.strengths[0].id;
-      if (form.strengths[0].uoms.length) {
+      if (form.strengths[0].uoms && form.strengths[0].uoms.length) {
         selectedUom.value = form.strengths[0].uoms[0].id;
       }
     }
-    updatePharmacyPrices();
+    await updatePharmacyPrices();
   }
 });
 
-watch(selectedStrength, (newStrengthId) => {
+watch(selectedStrength, async (newStrengthId) => {
   if (newStrengthId && medication.value) {
-    const form = medication.value.forms.find(f => f.id === Number(selectedForm.value));
-    const strength = form?.strengths.find(s => s.id === Number(newStrengthId));
-    if (strength?.uoms.length) {
+    const form = medication.value.forms.find((f: any) => f.id === Number(selectedForm.value));
+    const strength = form?.strengths.find((s: any) => s.id === Number(newStrengthId));
+    if (strength?.uoms && strength.uoms.length) {
       selectedUom.value = strength.uoms[0].id;
     }
-    updatePharmacyPrices();
+    await updatePharmacyPrices();
   }
 });
+
+watch(selectedUom, async () => {
+  if (selectedUom.value && selectedForm.value && selectedStrength.value) {
+    await updatePharmacyPrices();
+  }
+});
+
 
 const handleBrandSelect = (brandId: number) => {
   selectedBrand.value = brandId;
 };
+
 
 const getCustomQuantity = (pharmacyId: number): number => {
   return customQuantities.value.get(pharmacyId) || 1;
@@ -183,7 +362,10 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
 
   if (!form || !strength || !uom) return;
 
-  const brand = medication.value.brands.find(b => b.id === selectedBrand.value);
+  // const brand = medication.value.brands.find(b => b.id === selectedBrand.value); // Removed selectedBrand
+
+  // Use pharmacy_branch_id from the price response if available
+  const pharmacyBranchId = pharmacy.pharmacyBranchId || pharmacy.id;
 
   cartStore.addItem({
     medicationId: medication.value.id,
@@ -191,8 +373,8 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     pharmacyId: pharmacy.id,
     pharmacyName: pharmacy.name,
     pharmacyLogo: pharmacy.logo,
-    brandId: brand?.id,
-    brandName: brand?.name,
+    // brandId: brand?.id, // Removed selectedBrand
+    // brandName: brand?.name, // Removed selectedBrand
     formId: form.id,
     formName: form.form_name,
     strengthId: strength.id,
@@ -204,7 +386,9 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     discountPrice: pharmacy.discountPrice,
     image: medication.value.image,
     inStock: pharmacy.inStock,
-    requiresPrescription: medication.value.requiresPrescription
+    requiresPrescription: medication.value.requiresPrescription,
+    // Store pharmacy_branch_id for API calls
+    pharmacyBranchId: pharmacyBranchId
   });
 
   notification.success(
@@ -218,9 +402,8 @@ const loadReviews = async () => {
   
   reviewsLoading.value = true;
   try {
-    const medicationId = String(medication.value.id);
-    reviews.value = await reviewService.getReviewsByTarget('medication', medicationId);
-    reviewStats.value = await reviewService.getReviewStats('medication', medicationId);
+    reviews.value = await reviewService.getReviewsByTarget('medication', medication.value.id);
+    reviewStats.value = await reviewService.getReviewStats('medication', medication.value.id);
   } catch (err) {
     console.error('Error loading reviews:', err);
   } finally {
@@ -233,36 +416,36 @@ const handleAddReview = async (reviewData: { rating: number; title: string; comm
   
   try {
     await reviewService.addReview({
-      targetType: 'medication',
-      targetId: String(medication.value.id),
-      targetName: medication.value.drug_name,
+      reviewable_type: 'medication',
+      reviewable_id: medication.value.id,
       rating: reviewData.rating,
       title: reviewData.title,
       comment: reviewData.comment,
     });
     
     await loadReviews();
+    showAddReviewModal.value = false;
     notification.success('Review Submitted', 'Thank you for your feedback!');
   } catch (error) {
     notification.error('Submission Failed', 'Failed to submit review. Please try again.');
   }
 };
 
-const handleReviewHelpful = async (reviewId: string) => {
+const handleReviewHelpful = async (reviewId: string | number) => {
   try {
-    await reviewService.markHelpful(reviewId);
+    await reviewService.markHelpful(reviewId, true);
     const review = reviews.value.find(r => r.id === reviewId);
-    if (review) review.helpful++;
+    if (review) (review as any).helpful = ((review as any).helpful || 0) + 1;
   } catch (error) {
     notification.error('Action Failed', 'Failed to mark review as helpful.');
   }
 };
 
-const handleReviewNotHelpful = async (reviewId: string) => {
+const handleReviewNotHelpful = async (reviewId: string | number) => {
   try {
-    await reviewService.markNotHelpful(reviewId);
+    await reviewService.markHelpful(reviewId, false);
     const review = reviews.value.find(r => r.id === reviewId);
-    if (review) review.notHelpful++;
+    if (review) (review as any).notHelpful = ((review as any).notHelpful || 0) + 1;
   } catch (error) {
     notification.error('Action Failed', 'Failed to mark review.');
   }
@@ -282,7 +465,7 @@ const loadRelatedBlogs = async () => {
     const allPosts = blogService.getAllPosts();
     const relevant = allPosts.filter(post => {
       const postText = `${post.title} ${post.excerpt} ${post.tags?.join(' ')} ${post.category}`.toLowerCase();
-      return searchTerms.some(term => postText.includes(term.toLowerCase()));
+      return searchTerms.some((term: string | string[]) => Array.isArray(term) ? term.some(t => postText.includes(t.toLowerCase())) : postText.includes(term.toLowerCase()));
     }).slice(0, 3);
     
     if (relevant.length === 0) {
@@ -302,43 +485,76 @@ const viewBlogPost = (slug: string) => {
   router.push({ name: 'blog-post', params: { slug } });
 };
 
-onMounted(async () => {
-  const route = useRoute();
-  const medicationId = route.params.id ? parseInt(route.params.id as string) : 1;
-  
-  const medicationData = dataService.getMedicationById(medicationId);
-  medication.value = medicationData || dataService.getAllMedications()[0];
-  
-  if (medication.value) {
-    recentlyViewedService.addItem(medication.value.id);
+const loadMedicationDetails = async (medicationId: number) => {
+  loading.value = true;
+  try {
+    medication.value = await medicationService.getMedicationById(medicationId);
     
-    if (medication.value.brands.length) {
-      selectedBrand.value = medication.value.brands[0].id;
-    }
-    
-    if (medication.value.forms.length) {
-      selectedForm.value = medication.value.forms[0].id;
-      const firstStrength = medication.value.forms[0].strengths[0];
-      if (firstStrength) {
-        selectedStrength.value = firstStrength.id;
-        if (firstStrength.uoms.length) {
-          selectedUom.value = firstStrength.uoms[0].id;
+    if (medication.value) {
+      if (authStore.isAuthenticated) {
+        await recentlyViewedService.addToRecentlyViewed(medication.value.id);
+      }
+      
+      if (medication.value.brands && medication.value.brands.length) {
+        selectedBrand.value = (medication.value.brands[0] as any).id;
+      }
+      
+      if (medication.value.forms && medication.value.forms.length) {
+        selectedForm.value = (medication.value.forms[0] as any).id;
+        const firstStrength = (medication.value.forms[0] as any).strengths?.[0];
+        if (firstStrength) {
+          selectedStrength.value = firstStrength.id;
+          if (firstStrength.uoms && firstStrength.uoms.length) {
+            selectedUom.value = firstStrength.uoms[0].id;
+          }
         }
       }
+      
+      await updatePharmacyPrices();
+      await loadReviews();
+      // await loadRelatedBlogs(); // Temporarily disabled as it causes infinite loading
     }
-    
-    updatePharmacyPrices();
-    await loadReviews();
-    await loadRelatedBlogs();
+  } catch (err) {
+    console.error('Error loading medication:', err);
+    notification.error('Error', 'Failed to load medication details');
+  } finally {
+    loading.value = false;
   }
-  
-  loading.value = false;
+};
+// ...
+/*
+        <!-- Reviews Section -->
+        <div class="mt-12">
+          <!-- ... content commented out ... -->
+        </div>
+
+        <!-- Related Blogs Section -->
+        <div class="mt-12">
+          <!-- ... content commented out ... -->
+        </div>
+*/
+
+onMounted(async () => {
+  const medicationId = route.params.id ? parseInt(route.params.id as string) : 1;
+  console.log('MedicationDetail mounted, id:', medicationId);
+  await loadMedicationDetails(medicationId);
+});
+
+// Watch for route changes to reload medication when navigating between different medications
+watch(() => route.params.id, async (newId) => {
+  if (newId) {
+    const medicationId = parseInt(newId as string);
+    console.log('Route changed, loading medication:', medicationId);
+    await loadMedicationDetails(medicationId);
+  }
 });
 </script>
 
 <template>
   <div class="min-h-screen pt-10 bg-gray-50 dark:bg-gray-900">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+
+
       <!-- Loading State -->
       <div v-if="loading" class="py-12 text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
@@ -411,6 +627,7 @@ onMounted(async () => {
                       </button>
                     </div>
                   </div>
+                  
                   <!-- Horizontal Form Fields -->
                   <div class="flex flex-wrap gap-4">
                     <!-- Form Selection -->
@@ -454,7 +671,7 @@ onMounted(async () => {
         </div>
 
         <!-- Available Pharmacies -->
-        <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+        <div id="pharmacy-list" class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
           <div class="p-8 overflow-visible">
             <div class="mb-6">
               <div class="flex items-center justify-between mb-4">
@@ -462,9 +679,20 @@ onMounted(async () => {
                   Available at Pharmacies
                 </h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ pharmacies.length }} {{ pharmacies.length === 1 ? 'pharmacy' : 'pharmacies' }} available
+                  {{ filteredPharmacies.length }} {{ filteredPharmacies.length === 1 ? 'pharmacy' : 'pharmacies' }} available
                 </p>
               </div>
+
+              <!-- Search and Filters -->
+              <!-- Search and Filters -->
+              <PharmacySearchFilter
+                v-model="pharmacySearch"
+                v-model:sort-by="pharmacySort"
+                v-model:show-open-only="showOpenOnly"
+                v-model:show-in-stock-only="showInStockOnly"
+                @use-location="handleLocationSearch"
+              />
+
               <div v-if="selectedForm && selectedStrength" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
                 <p class="text-sm text-blue-800 dark:text-blue-300">
                   <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -475,128 +703,155 @@ onMounted(async () => {
               </div>
             </div>
             
-            <div v-if="pharmacies.length === 0" class="py-12 text-center">
+            <div v-if="loadingPharmacies" class="py-12 text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
+              <p class="mt-4 text-gray-600 dark:text-gray-300">Loading pharmacy prices...</p>
+            </div>
+
+            <div v-else-if="filteredPharmacies.length === 0" class="py-12 text-center">
               <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
               </svg>
-              <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No Pharmacies Available</h3>
-              <p class="text-gray-600 dark:text-gray-300">This specific form and strength combination is not currently available at any pharmacy.</p>
-              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Try selecting a different form or strength.</p>
+              <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No Pharmacies Found</h3>
+              <p class="text-gray-600 dark:text-gray-300">No pharmacies match your current search or filters.</p>
+              <button 
+                @click="pharmacySearch = ''; showOpenOnly = false; showInStockOnly = false"
+                class="mt-4 text-[#246BFD] font-medium hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
 
-            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" style="overflow: visible;">
+            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <div
-                v-for="(pharmacy, index) in pharmacies"
-                :key="pharmacy.id"
-                class="group relative overflow-hidden transition-all duration-300 bg-white dark:bg-gray-800 rounded-2xl hover:shadow-2xl hover:-translate-y-1 border border-gray-200 dark:border-gray-700"
-                :class="!pharmacy.inStock && 'opacity-75'"
-                :style="{ zIndex: pharmacies.length - index }"
+                v-for="(pharmacy, index) in paginatedPharmacies"
+                :key="index"
+                class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all"
               >
-                <div class="p-6">
-                  <!-- Pharmacy Logo (Large & Centered) -->
-                  <div class="relative mb-6">
-                    <div class="w-full h-32 overflow-hidden transition-transform duration-300 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl shadow-md group-hover:scale-105 flex items-center justify-center">
-                      <LazyImage
-                        :src="pharmacy.logo"
-                        :alt="pharmacy.name"
-                        aspectRatio="landscape"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <!-- Stock Badge Overlay -->
-                    <div class="absolute top-2 right-2">
-                      <span
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-lg backdrop-blur-sm"
-                        :class="pharmacy.inStock 
-                          ? 'bg-green-500/90 text-white' 
-                          : 'bg-red-500/90 text-white'"
-                      >
-                        <span class="w-2 h-2 mr-1.5 rounded-full animate-pulse bg-white"></span>
-                        {{ pharmacy.inStock ? 'In Stock' : 'Out of Stock' }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Pharmacy Info -->
-                  <div class="mb-6">
-                    <h3 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">
-                      {{ pharmacy.name }}
-                    </h3>
-                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                      <span v-if="pharmacy.distance" class="flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        </svg>
-                        {{ pharmacy.distance }}
-                      </span>
-                      <span v-if="pharmacy.rating" class="flex items-center">
-                        <svg class="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                        </svg>
-                        {{ pharmacy.rating }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Pricing -->
-                  <div class="p-5 mb-6 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800">
-                    <div class="flex items-center justify-between mb-3">
-                      <p class="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        {{ pharmacy.discountPrice ? 'Special Price' : 'Price' }}
-                      </p>
-                      <span v-if="pharmacy.discountPrice" class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full bg-green-500 text-white shadow-md">
-                        Save GHS {{ (pharmacy.price - pharmacy.discountPrice).toFixed(2) }}
-                      </span>
-                    </div>
-                    <div class="flex items-baseline gap-3 flex-wrap">
-                      <span class="text-4xl font-bold text-[#246BFD] dark:text-[#5089FF]">
-                        GHS {{ (pharmacy.discountPrice || pharmacy.price).toFixed(2) }}
-                      </span>
-                      <span v-if="pharmacy.discountPrice" class="text-lg text-gray-500 line-through dark:text-gray-400">
-                        GHS {{ pharmacy.price.toFixed(2) }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Add to Cart -->
-                  <div v-if="pharmacy.inStock" class="flex gap-2 items-start">
-                    <div class="flex-1">
-                      <Dropdown
-                        :model-value="getCustomQuantity(pharmacy.id)"
-                        @update:model-value="setCustomQuantity(pharmacy.id, Number($event))"
-                        :options="getQuantityOptions"
-                        placeholder="Select quantity"
-                        :searchable="false"
-                      />
-                    </div>
-                    <button
-                      @click="addToCart(pharmacy, getCustomQuantity(pharmacy.id))"
-                      class="flex-shrink-0 px-6 py-3 rounded-full bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                  <div class="flex items-start justify-between mb-4">
+                    <router-link 
+                      :to="{ name: 'pharmacy', params: { id: pharmacy.id } }"
+                      class="flex items-center gap-3 group"
                     >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                      </svg>
-                      Add to Cart
-                    </button>
+                      <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-2 shadow-sm group-hover:shadow-md transition-all">
+                        <img
+                          v-if="pharmacy.logo"
+                          :src="pharmacy.logo"
+                          :alt="pharmacy.name"
+                          class="w-full h-full object-contain"
+                          @error="($event.target as HTMLImageElement).style.display='none'"
+                        />
+                        <svg v-else class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-[#246BFD] transition-colors">{{ pharmacy.name }}</h3>
+                        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <span 
+                            class="flex items-center gap-1 font-medium"
+                            :class="pharmacy.pharmacy?.is_open ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                          >
+                            <span class="w-1.5 h-1.5 rounded-full" :class="pharmacy.pharmacy?.is_open ? 'bg-green-500' : 'bg-red-500'"></span>
+                            {{ pharmacy.pharmacy?.is_open ? 'Open' : 'Closed' }}
+                          </span>
+                          <span v-if="pharmacy.distance" class="flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            {{ pharmacy.distance }}
+                          </span>
+                          <span v-if="pharmacy.rating" class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                            </svg>
+                            {{ pharmacy.rating }}
+                          </span>
+                        </div>
+                      </div>
+                    </router-link>
                   </div>
-                  <div v-else>
-                    <button
-                      disabled
-                      class="w-full px-4 py-3 rounded-xl bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-semibold cursor-not-allowed flex items-center justify-center gap-2"
+
+                <div class="flex items-end justify-between mb-4">
+                  <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price per unit</p>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-2xl font-bold text-[#246BFD]">
+                        GH₵ {{ pharmacy.price.toFixed(2) }}
+                      </span>
+                      <span v-if="pharmacy.discountPrice" class="text-sm text-gray-400 line-through">
+                        GH₵ {{ pharmacy.discountPrice.toFixed(2) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="pharmacy.inStock ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
                     >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
-                      Out of Stock
-                    </button>
+                      {{ pharmacy.inStock ? 'In Stock' : 'Out of Stock' }}
+                    </span>
                   </div>
                 </div>
+
+                <div class="flex items-center gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                      <button
+                        @click="setCustomQuantity(pharmacy.id, Math.max(1, getCustomQuantity(pharmacy.id) - 1))"
+                        class="px-3 py-2 text-gray-500 hover:text-[#246BFD] transition-colors"
+                        :disabled="!pharmacy.inStock"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        :value="getCustomQuantity(pharmacy.id)"
+                        @input="(e) => setCustomQuantity(pharmacy.id, parseInt((e.target as HTMLInputElement).value) || 1)"
+                        class="w-full text-center bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-gray-900 dark:text-white"
+                        min="1"
+                        :disabled="!pharmacy.inStock"
+                      />
+                      <button
+                        @click="setCustomQuantity(pharmacy.id, getCustomQuantity(pharmacy.id) + 1)"
+                        class="px-3 py-2 text-gray-500 hover:text-[#246BFD] transition-colors"
+                        :disabled="!pharmacy.inStock"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    @click="addToCart(pharmacy, getCustomQuantity(pharmacy.id))"
+                    class="flex-1 px-4 py-2 bg-[#246BFD] text-white rounded-lg font-medium hover:bg-[#5089FF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    :disabled="!pharmacy.inStock"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Add
+                  </button>
+                </div>
               </div>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="filteredPharmacies.length > itemsPerPage" class="mt-8">
+              <Pagination
+                :current-page="currentPage"
+                :total-pages="totalPages"
+                :total-items="filteredPharmacies.length"
+                :per-page="itemsPerPage"
+                @update:page="handlePageChange"
+                @update:per-page="(val) => itemsPerPage = val"
+              />
             </div>
           </div>
         </div>
 
-        <!-- Reviews Section -->
+
+      <!-- Reviews Section -->
         <div class="mt-12">
           <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
             <div v-if="reviewsLoading" class="py-12 text-center">

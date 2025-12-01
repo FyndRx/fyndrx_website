@@ -1,176 +1,212 @@
-import axios from 'axios';
-import type { Pharmacy, PharmacyFilters, PharmacyReview } from '@/models/Pharmacy';
+import { apiService } from './api';
+import type { Pharmacy } from '@/models/Pharmacy';
+import type { PharmacyPrice } from '@/models/PharmacyPrice';
+import type { Medication } from '@/models/Medication';
+import type {
+  PharmaciesApiResponse,
+  PharmacyDetailApiResponse,
+  PharmacyPricesApiResponse,
+  PharmacyPricesByPharmacyApiResponse,
+  PharmacyPricesByDrugApiResponse,
+  PharmacyDrugsApiResponse,
+  PharmacyDrugApiResponse
+} from '@/models/api';
+import {
+  unwrapApiResponse,
+  unwrapArrayResponse,
+  transformPharmacy,
+  transformPharmacies,
+  transformPharmacyPrices
+} from '@/utils/responseTransformers';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.fyndrx.com/v1';
+export interface DrugSearchQuery {
+  drug_id: number;
+  brand_id: number;
+  form_id: number;
+  dosage_id: number;
+}
 
-// Demo data for development
-const demoPharmacies: Pharmacy[] = [
-  {
-    id: 1,
-    name: 'MedPlus Pharmacy',
-    address: '123 Health Street, Medical District',
-    rating: 4.8,
-    reviews: [
-      {
-        id: 1,
-        user: 'John Doe',
-        rating: 5,
-        comment: 'Excellent service! The staff is very knowledgeable and helpful.',
-        date: '2024-03-15',
-      },
-      {
-        id: 2,
-        user: 'Jane Smith',
-        rating: 4,
-        comment: 'Great pharmacy with quick service. Would recommend!',
-        date: '2024-03-10',
-      },
-    ],
-    image: '/src/assets/pharmacy-placeholder.jpg',
-    isOpen: true,
-    distance: '0.5 miles',
-    services: ['Prescription Delivery', '24/7 Service', 'Online Ordering'],
-    workingHours: {
-      monday: '8:00 AM - 10:00 PM',
-      tuesday: '8:00 AM - 10:00 PM',
-      wednesday: '8:00 AM - 10:00 PM',
-      thursday: '8:00 AM - 10:00 PM',
-      friday: '8:00 AM - 10:00 PM',
-      saturday: '9:00 AM - 8:00 PM',
-      sunday: '10:00 AM - 6:00 PM',
-    },
-    phone: '+1 (555) 123-4567',
-    email: 'contact@medplus.com',
-    website: 'www.medplus.com',
-    description:
-      'MedPlus Pharmacy is a full-service pharmacy committed to providing exceptional healthcare services to our community.',
-    location: {
-      lat: 37.7749,
-      lng: -122.4194,
-    },
-    medications: [
-      {
-        id: 1,
-        name: 'Amoxicillin',
-        description: 'Antibiotic used to treat bacterial infections',
-        price: 15.99,
-        inStock: true,
-        requiresPrescription: true,
-      },
-      {
-        id: 2,
-        name: 'Ibuprofen',
-        description: 'Non-steroidal anti-inflammatory drug (NSAID)',
-        price: 8.99,
-        inStock: true,
-        requiresPrescription: false,
-      },
-    ],
-  },
-  // Add more demo pharmacies as needed
-];
+// Re-export PharmacyPrice from model
+export type { PharmacyPrice } from '@/models/PharmacyPrice';
 
 export const pharmacyService = {
-  // Get all pharmacies with filters
-  async getPharmacies(filters: PharmacyFilters): Promise<Pharmacy[]> {
+  /**
+   * Get all pharmacies (without drugs parameter)
+   * Note: This endpoint may not exist - API might require drugs parameter
+   */
+  async getAllPharmacies(): Promise<Pharmacy[]> {
     try {
-      if (import.meta.env.DEV) {
-        // Use demo data in development
-        return demoPharmacies;
+      const response = await apiService.get<PharmaciesApiResponse>('/pharmacies');
+      const apiPharmacies = unwrapArrayResponse(response);
+      return transformPharmacies(apiPharmacies);
+    } catch (error: any) {
+      // If endpoint doesn't exist or requires drugs parameter, return empty array
+      if (error?.response?.status === 404 || error?.message?.includes('404')) {
+        return [];
       }
-
-      const response = await axios.get(`${API_BASE_URL}/pharmacies`, { params: filters });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching pharmacies:', error);
       throw error;
     }
   },
 
-  // Get a single pharmacy by ID
+  /**
+   * Search pharmacies by drugs (with drugs parameter)
+   * @param drugs - Array of drug search queries
+   * @returns Array of pharmacies that have the specified drugs
+   */
+  async searchPharmaciesByDrugs(drugs: DrugSearchQuery[]): Promise<Pharmacy[]> {
+    // If no drugs specified, try to get all pharmacies
+    if (!drugs || drugs.length === 0) {
+      return await this.getAllPharmacies();
+    }
+
+    const drugsObject = drugs.reduce((acc, drug, index) => {
+      acc[index] = drug;
+      return acc;
+    }, {} as Record<number, DrugSearchQuery>);
+
+    const drugsParam = encodeURIComponent(JSON.stringify(drugsObject));
+    const response = await apiService.get<PharmaciesApiResponse>(
+      `/pharmacies?drugs=${drugsParam}`
+    );
+
+    const apiPharmacies = unwrapArrayResponse(response);
+    return transformPharmacies(apiPharmacies);
+  },
+
+  /**
+   * Get pharmacy details by ID
+   * @param id - Pharmacy ID
+   * @returns Pharmacy details
+   */
   async getPharmacy(id: number): Promise<Pharmacy> {
     try {
-      if (import.meta.env.DEV) {
-        // Use demo data in development
-        const pharmacy = demoPharmacies.find(p => p.id === id);
-        if (!pharmacy) throw new Error('Pharmacy not found');
-        return pharmacy;
+      const response = await apiService.get<PharmacyDetailApiResponse>(`/pharmacies/${id}`);
+      const apiPharmacy = unwrapApiResponse(response);
+      return transformPharmacy(apiPharmacy);
+    } catch (error: any) {
+      if (error?.response?.status === 404 || error?.message?.includes('404')) {
+        throw new Error(`Pharmacy with id ${id} not found`);
       }
-
-      const response = await axios.get(`${API_BASE_URL}/pharmacies/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching pharmacy:', error);
       throw error;
     }
   },
 
-  // Upload prescription
-  async uploadPrescription(
-    pharmacyId: number,
-    file: File
-  ): Promise<{ success: boolean; message: string }> {
-    try {
-      const formData = new FormData();
-      formData.append('prescription', file);
-
-      if (import.meta.env.DEV) {
-        // Simulate API call in development
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return { success: true, message: 'Prescription uploaded successfully' };
-      }
-
-      const response = await axios.post(
-        `${API_BASE_URL}/pharmacies/${pharmacyId}/prescriptions`,
-        formData
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading prescription:', error);
-      throw error;
-    }
+  /**
+   * Get all pharmacy prices
+   * @returns Array of all pharmacy prices
+   */
+  async getAllPharmacyPrices(): Promise<PharmacyPrice[]> {
+    const response = await apiService.get<PharmacyPricesApiResponse>('/pharmacy-prices');
+    const apiPrices = unwrapArrayResponse(response);
+    return transformPharmacyPrices(apiPrices);
   },
 
-  // Schedule pickup
-  async schedulePickup(
-    pharmacyId: number,
-    date: string,
-    time: string
-  ): Promise<{ success: boolean; message: string }> {
-    try {
-      if (import.meta.env.DEV) {
-        // Simulate API call in development
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return { success: true, message: 'Pickup scheduled successfully' };
-      }
-
-      const response = await axios.post(`${API_BASE_URL}/pharmacies/${pharmacyId}/pickups`, {
-        date,
-        time,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error scheduling pickup:', error);
-      throw error;
-    }
+  /**
+   * Get prices for a specific pharmacy
+   * @param pharmacyId - Pharmacy ID
+   * @returns Array of prices for the pharmacy
+   */
+  async getPricesByPharmacy(pharmacyId: number): Promise<PharmacyPrice[]> {
+    const response = await apiService.get<PharmacyPricesByPharmacyApiResponse>(
+      `/pharmacy-prices/${pharmacyId}`
+    );
+    const apiPrices = unwrapArrayResponse(response);
+    return transformPharmacyPrices(apiPrices);
   },
 
-  // Add review
-  async addReview(pharmacyId: number, review: Omit<PharmacyReview, 'id'>): Promise<PharmacyReview> {
+  /**
+   * Get prices for a specific drug across all pharmacies
+   * @param drugId - Drug ID
+   * @param filters - Optional filters for form, dosage, and strength
+   * @returns Array of prices for the drug
+   */
+  async getPricesByDrug(
+    drugId: number,
+    filters?: {
+      drug_brand_form_id?: number;
+      dosage_id?: number;
+      strength_uom_id?: number;
+    }
+  ): Promise<PharmacyPrice[]> {
+    let url = `/pharmacy-prices/drug/${drugId}`;
+    const params = new URLSearchParams();
+
+    if (filters?.drug_brand_form_id) {
+      params.append('drug_brand_form_id', filters.drug_brand_form_id.toString());
+    }
+    if (filters?.dosage_id) {
+      params.append('dosage_id', filters.dosage_id.toString());
+    }
+    if (filters?.strength_uom_id) {
+      params.append('strength_uom_id', filters.strength_uom_id.toString());
+    }
+
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+
+    const response = await apiService.get<PharmacyPricesByDrugApiResponse>(url);
+    const apiPrices = unwrapArrayResponse(response);
+    return transformPharmacyPrices(apiPrices);
+  },
+
+  /**
+   * Get medications available at a pharmacy
+   * 
+   * Uses the /pharmacy-drugs endpoint. If pharmacyId is provided, it's added to the path.
+   * 
+   * @param pharmacyId - Pharmacy ID (optional, for filtering)
+   * @returns Array of medications available at the pharmacy
+   */
+  async getPharmacyMedications(pharmacyId?: number): Promise<Medication[]> {
     try {
-      if (import.meta.env.DEV) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      let url = '/pharmacy-drugs';
+      if (pharmacyId) {
+        url += `/${pharmacyId}`;
+      }
+
+      const response = await apiService.get<PharmacyDrugsApiResponse>(url);
+      const drugs = unwrapArrayResponse<PharmacyDrugApiResponse>(response);
+
+      // Map pharmacy drug response to Medication model
+      return drugs.map((drug): Medication => {
+        // Parse predefinedQuantities from string array to number array
+        // Example: ["1", "2", "5", "10", "30"] -> [1, 2, 5, 10, 30]
+        const parsedQuantities: number[] = (drug.predefinedQuantities || []).map(qtyStr => {
+          const num = parseInt(qtyStr.trim(), 10);
+          return isNaN(num) ? 0 : num;
+        }).filter(num => num > 0);
+
+        // Map brands from API format to MedicationBrand format
+        const brands = (drug.brands || []).map(brand => ({
+          id: brand.brand_id, // Use brand_id as the id
+          name: brand.name,
+        }));
+
+        // Map forms from API format to MedicationForm format
+        // Note: API forms don't include strengths, so we create empty strengths array
+        const forms = (drug.forms || []).map(form => ({
+          id: form.form_id, // Use form_id as the id
+          form_name: form.form_name,
+          strengths: [], // Not available in pharmacy-drugs response
+        }));
+
         return {
-          id: Math.floor(Math.random() * 1000),
-          ...review,
+          id: drug.drugId, // Use drugId as the medication ID
+          drug_name: drug.name,
+          description: drug.description,
+          brands,
+          forms,
+          image: drug.image || '',
+          predefinedQuantities: parsedQuantities,
+          category: drug.category || [], // Keep as array for chip display
+          requiresPrescription: drug.requiresPrescription,
         };
-      }
-
-      const response = await axios.post(`${API_BASE_URL}/pharmacies/${pharmacyId}/reviews`, review);
-      return response.data;
+      });
     } catch (error) {
-      console.error('Error adding review:', error);
-      throw error;
+      console.error('Error in getPharmacyMedications:', error);
+      return [];
     }
-  },
+  }
 };

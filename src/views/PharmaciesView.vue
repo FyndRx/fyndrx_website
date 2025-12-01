@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
-import { dataService } from '@/services/dataService';
+import { reviewService } from '@/services/reviewService';
+import { pharmacyService } from '@/services/pharmacyService';
+import { useDataCacheStore } from '@/store/dataCache';
 import type { Pharmacy } from '@/models/Pharmacy';
 import PharmacyCard from '@/components/PharmacyCard.vue';
 import Dropdown from '@/components/Dropdown.vue';
@@ -14,6 +16,7 @@ import SearchAutocomplete from '@/components/SearchAutocomplete.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
 
 const route = useRoute();
+const dataCache = useDataCacheStore();
 
 const { registerElement } = useScrollAnimation();
 const pharmacies = ref<Pharmacy[]>([]);
@@ -46,31 +49,61 @@ const loadPharmacies = async () => {
   loading.value = true;
   error.value = null;
   try {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    let result = dataService.getAllPharmacies();
-
-    if (searchQuery.value) {
-      result = dataService.searchPharmacies(searchQuery.value);
+    // Get all pharmacies directly from /pharmacies endpoint (without drugs param)
+    // Note: We don't need pharmacy prices here - those are only needed on the pharmacy detail page
+    let result = await pharmacyService.getAllPharmacies();
+    
+    // Cache the pharmacies for later use
+    dataCache.setPharmacies(result);
+    
+    // Apply search filter if provided
+    if (searchQuery.value && searchQuery.value.trim()) {
+      const query = searchQuery.value.toLowerCase().trim();
+      result = result.filter((pharmacy: Pharmacy) =>
+        pharmacy.name?.toLowerCase().includes(query) ||
+        pharmacy.address?.toLowerCase().includes(query)
+      );
     }
 
     if (selectedServices.value.length > 0) {
-      result = result.filter(pharmacy =>
-        selectedServices.value.every(service => pharmacy.services.includes(service))
+      result = result.filter((pharmacy: Pharmacy) =>
+        pharmacy.services && selectedServices.value.every(service => 
+          pharmacy.services.includes(service)
+        )
       );
     }
 
     if (isOpenNow.value) {
-      result = result.filter(pharmacy => pharmacy.isOpen);
+      result = result.filter((pharmacy: Pharmacy) => pharmacy.isOpen);
     }
 
     if (sortBy.value === 'name') {
-      result.sort((a, b) => a.name.localeCompare(b.name));
+      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     } else if (sortBy.value === 'rating') {
-      result.sort((a, b) => {
-        const ratingA = dataService.getPharmacyRating(a.id).average;
-        const ratingB = dataService.getPharmacyRating(b.id).average;
-        return ratingB - ratingA;
-      });
+      // Filter out pharmacies with invalid IDs before fetching ratings
+      const validPharmacies = result.filter((pharmacy: Pharmacy) => 
+        pharmacy.id && typeof pharmacy.id === 'number' && !isNaN(pharmacy.id)
+      );
+      
+      const invalidPharmacies = result.filter((pharmacy: Pharmacy) => 
+        !pharmacy.id || typeof pharmacy.id !== 'number' || isNaN(pharmacy.id)
+      );
+      
+      const ratings = await Promise.all(
+        validPharmacies.map(async (pharmacy: Pharmacy) => {
+          try {
+            const stats = await reviewService.getReviewStats('pharmacy', pharmacy.id);
+            return { pharmacy, rating: stats.averageRating || 0 };
+          } catch (err: any) {
+            console.warn(`Error loading pharmacy rating for pharmacy ${pharmacy.id}:`, err);
+            return { pharmacy, rating: 0 };
+          }
+        })
+      );
+      ratings.sort((a, b) => b.rating - a.rating);
+      
+      // Combine sorted valid pharmacies with invalid ones (invalid ones at the end with rating 0)
+      result = [...ratings.map(r => r.pharmacy), ...invalidPharmacies];
     }
 
     pharmacies.value = result;
@@ -108,6 +141,16 @@ const hasActiveFilters = computed(() => {
          selectedServices.value.length > 0 || 
          isOpenNow.value || 
          sortBy.value !== 'distance';
+});
+
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+watch(searchQuery, () => {
+  if (searchDebounce) {
+    clearTimeout(searchDebounce);
+  }
+  searchDebounce = setTimeout(() => {
+    loadPharmacies();
+  }, 300);
 });
 
 const { handleTouchStart, handleTouchMove, handleTouchEnd, pullDistance, isRefreshing } = usePullToRefresh(async () => {
@@ -172,6 +215,7 @@ onMounted(async () => {
         <!-- Search Bar -->
         <div class="delay-200 scroll-animate slide-up">
           <SearchAutocomplete
+            v-model="searchQuery"
             placeholder="Search pharmacies by name, location, or services..."
             search-type="pharmacies"
           />
@@ -301,7 +345,7 @@ onMounted(async () => {
           <EmptyState
             v-else-if="pharmacies.length === 0"
             type="search"
-            message="We couldn't find any pharmacies matching your search criteria."
+            :message="searchQuery ? 'We couldn\'t find any pharmacies matching your search criteria. Try searching for specific medications to find pharmacies that stock them.' : 'Search for medications to find pharmacies that stock them. The API requires medication information to locate pharmacies.'"
             @action="clearAllFilters"
           />
 

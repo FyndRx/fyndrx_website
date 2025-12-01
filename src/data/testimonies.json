@@ -1,0 +1,147 @@
+[
+  {
+    "id": 1,
+    "name": "Sarah Mensah",
+    "role": "Patient",
+    "location": "Accra, Ghana",
+    "avatar": "/src/assets/team/latifa.jpg",
+    "rating": 5,
+    "testimony": "FyndRX has completely transformed how I manage my medications. I can now compare prices across different pharmacies and save so much money. The delivery service is fast and reliable!",
+    "date": "2024-10-15",
+    "verified": true,
+    "featured": true
+  },
+  {
+    "id": 2,
+    "name": "Dr. Kwame Osei",
+    "role": "Healthcare Professional",
+    "location": "Kumasi, Ghana",
+    "avatar": "/src/assets/team/yahuza.jpg",
+    "rating": 5,
+    "testimony": "As a healthcare provider, I recommend FyndRX to all my patients. It makes medication access easier and more affordable. The prescription upload feature is particularly helpful.",
+    "date": "2024-10-12",
+    "verified": true,
+    "featured": true
+  },
+  {
+    "id": 3,
+    "name": "Aisha Ibrahim",
+    "role": "Parent",
+    "location": "Tamale, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "Being able to find the best prices for my children's medications has been a blessing. The app is easy to use and I always get notifications about my orders. Highly recommended!",
+    "date": "2024-10-08",
+    "verified": true,
+    "featured": true
+  },
+  {
+    "id": 4,
+    "name": "Emmanuel Boateng",
+    "role": "Senior Citizen",
+    "location": "Cape Coast, Ghana",
+    "avatar": "/src/assets/team/wunnam.jpg",
+    "rating": 5,
+    "testimony": "FyndRX makes it so convenient for me to order my medications without leaving home. The customer service is excellent and the prices are very competitive.",
+    "date": "2024-09-28",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 5,
+    "name": "Grace Asante",
+    "role": "Pharmacy Owner",
+    "location": "Takoradi, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "Partnering with FyndRX has significantly increased our customer base. The platform is well-designed and helps us reach more patients who need our services.",
+    "date": "2024-09-25",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 6,
+    "name": "Daniel Adjei",
+    "role": "Patient",
+    "location": "Accra, Ghana",
+    "avatar": "/src/assets/team/aby.jpg",
+    "rating": 5,
+    "testimony": "The price comparison feature alone has saved me hundreds of cedis. I love that I can see which pharmacy has my medication in stock before I order. Great service!",
+    "date": "2024-09-20",
+    "verified": true,
+    "featured": true
+  },
+  {
+    "id": 7,
+    "name": "Fatima Alhassan",
+    "role": "Working Professional",
+    "location": "Kumasi, Ghana",
+    "avatar": null,
+    "rating": 4,
+    "testimony": "FyndRX has made managing my chronic condition so much easier. I can schedule deliveries and never run out of my medications. The reminders are very helpful too.",
+    "date": "2024-09-15",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 8,
+    "name": "Joseph Owusu",
+    "role": "Student",
+    "location": "Legon, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "As a student on a budget, FyndRX helps me find affordable medications. The search feature is fast and I appreciate the detailed information about each drug.",
+    "date": "2024-09-10",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 9,
+    "name": "Rebecca Darkwa",
+    "role": "Caregiver",
+    "location": "Tema, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "Taking care of my elderly parents became easier with FyndRX. I can order all their medications in one place and have them delivered. The service is reliable and professional.",
+    "date": "2024-08-30",
+    "verified": true,
+    "featured": true
+  },
+  {
+    "id": 10,
+    "name": "Michael Tetteh",
+    "role": "Business Owner",
+    "location": "Accra, Ghana",
+    "avatar": null,
+    "rating": 4,
+    "testimony": "The convenience of comparing prices and ordering medications online is incredible. FyndRX has become my go-to platform for all my healthcare needs.",
+    "date": "2024-08-25",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 11,
+    "name": "Abena Gyasi",
+    "role": "Patient",
+    "location": "Sunyani, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "I was skeptical at first, but FyndRX exceeded my expectations. The medications are genuine, delivery is prompt, and the prices are unbeatable. I'm now a loyal customer!",
+    "date": "2024-08-18",
+    "verified": true,
+    "featured": false
+  },
+  {
+    "id": 12,
+    "name": "Kwabena Appiah",
+    "role": "Patient",
+    "location": "Ho, Ghana",
+    "avatar": null,
+    "rating": 5,
+    "testimony": "FyndRX has revolutionized healthcare access in Ghana. I can now get my medications at fair prices without having to visit multiple pharmacies. Truly innovative!",
+    "date": "2024-08-10",
+    "verified": true,
+    "featured": true
+  }
+]
+

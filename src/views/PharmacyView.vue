@@ -3,8 +3,9 @@ import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useNotification } from '@/composables/useNotification';
-import { dataService } from '@/services/dataService';
+import { pharmacyService } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
+import { useDataCacheStore } from '@/store/dataCache';
 import type { Pharmacy } from '@/models/Pharmacy';
 import type { Medication } from '@/models/Medication';
 import type { Review, ReviewStats } from '@/models/Review';
@@ -19,6 +20,7 @@ const notification = useNotification();
 const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
 
 const route = useRoute();
+const dataCache = useDataCacheStore();
 const { registerElement } = useScrollAnimation();
 
 const pharmacy = ref<Pharmacy | null>(null);
@@ -38,7 +40,9 @@ const filteredPharmacyMedications = computed(() => {
   const query = medicationSearch.value.toLowerCase();
   return pharmacyMedications.value.filter(med =>
     med.drug_name.toLowerCase().includes(query) ||
-    med.category.toLowerCase().includes(query) ||
+    (Array.isArray(med.category) 
+      ? med.category.some(cat => cat.toLowerCase().includes(query))
+      : med.category.toLowerCase().includes(query)) ||
     med.description.toLowerCase().includes(query)
   );
 });
@@ -48,18 +52,88 @@ const loadPharmacy = async () => {
   error.value = null;
   try {
     const id = parseInt(route.params.id as string);
-    const pharmacyData = dataService.getPharmacyById(id);
     
-    if (pharmacyData) {
-      pharmacy.value = pharmacyData;
-      pharmacyMedications.value = dataService.getMedicationsForPharmacy(id);
+    // Validate route param
+    if (isNaN(id)) {
+      error.value = 'Invalid pharmacy ID';
+      return;
+    }
+    
+    // Get pharmacy details directly from API
+    try {
+      pharmacy.value = await pharmacyService.getPharmacy(id);
+    } catch (errorr) {
+    // } catch (pharmacyErr: any) {
+      // If pharmacy detail endpoint doesn't exist (404), try to get pharmacy info from prices
+      // if (pharmacyErr?.response?.status === 404 || pharmacyErr?.message?.includes('404')) {
+      //   const prices = await pharmacyService.getPricesByPharmacy(id);
+      //   if (prices.length > 0) {
+      //     const firstPrice = prices[0];
+      //     const pharmacyInfo = firstPrice.pharmacy || firstPrice.pharmacy_branch;
+          
+      //     if (pharmacyInfo) {
+      //       // Use pharmacy info directly from price response - use API field names
+      //       pharmacy.value = {
+      //         id: pharmacyInfo.id || firstPrice.pharmacy_id || id,
+      //         name: pharmacyInfo.name || '',
+      //         address: pharmacyInfo.address || '',
+      //         rating: (pharmacyInfo as any).rating || 0,
+      //         reviews: [],
+      //         image: (pharmacyInfo as any).logo || '',
+      //         isOpen: (pharmacyInfo as any).is_open ?? true,
+      //         distance: (pharmacyInfo as any).distance || '',
+      //         services: [],
+      //         workingHours: {
+      //           monday: '',
+      //           tuesday: '',
+      //           wednesday: '',
+      //           thursday: '',
+      //           friday: '',
+      //           saturday: '',
+      //           sunday: ''
+      //         },
+      //         phone: '',
+      //         email: '',
+      //         website: '',
+      //         description: '',
+      //         location: { lat: 0, lng: 0 },
+      //         medications: []
+      //       };
+      //     } else {
+      //       error.value = 'Pharmacy not found';
+      //       return;
+      //     }
+      //   } else {
+      //     error.value = 'Pharmacy not found';
+      //     return;
+      //   }
+      // } else {
+        // throw pharmacyErr;
+      // }
+      error.value = errorr as string || 'Pharmacy not found';
+      return;
+    }
+    
+    if (pharmacy.value) {
+      // Get prices for this pharmacy and cache them
+      const prices = await pharmacyService.getPricesByPharmacy(id);
+      dataCache.setPharmacyPrices(prices);
+      
+      // Get medications available at this pharmacy
+      // This method handles the workaround: gets prices, extracts medication IDs, and fetches medications
+      pharmacyMedications.value = await pharmacyService.getPharmacyMedications(id);
+      
+      // Cache the fetched medications
+      if (pharmacyMedications.value.length > 0) {
+        dataCache.setMedications(pharmacyMedications.value);
+      }
+      
       await loadReviews();
     } else {
       error.value = 'Pharmacy not found';
     }
   } catch (err) {
     error.value = 'Failed to load pharmacy details. Please try again later.';
-    console.error('Error loading pharmacy:', err);
   } finally {
     loading.value = false;
   }
@@ -68,13 +142,57 @@ const loadPharmacy = async () => {
 const loadReviews = async () => {
   if (!pharmacy.value) return;
   
+  // Validate pharmacy ID before making API calls
+  const pharmacyId = pharmacy.value.id;
+  if (!pharmacyId || typeof pharmacyId !== 'number' || isNaN(pharmacyId)) {
+    error.value = 'Cannot load reviews: pharmacy.id is invalid';
+    return;
+  }
+  
   reviewsLoading.value = true;
   try {
-    const pharmacyId = String(pharmacy.value.id);
-    reviews.value = await reviewService.getReviewsByTarget('pharmacy', pharmacyId);
+    const reviewsResponse = await reviewService.getReviewsByTarget('pharmacy', pharmacyId);    
+    // Handle different response structures
+    const reviewsAny = reviewsResponse as any;
+    let reviewsArray: any[] = [];
+    
+    if (Array.isArray(reviewsAny)) {
+      reviewsArray = reviewsAny;
+    } else if (reviewsAny && typeof reviewsAny === 'object') {
+      if (Array.isArray(reviewsAny.data)) {
+        reviewsArray = reviewsAny.data;
+      } else if (Array.isArray(reviewsAny.reviews)) {
+        reviewsArray = reviewsAny.reviews;
+      }
+    }
+    
+    // Map API response to Review model (handle snake_case to camelCase)
+    reviews.value = reviewsArray.map((review: any) => ({
+      id: review.id?.toString() ?? review.id,
+      userId: review.user_id?.toString() ?? review.userId?.toString() ?? '',
+      userName: review.user_name ?? review.userName ?? '',
+      userAvatar: review.user_avatar ?? review.userAvatar,
+      targetType: review.target_type ?? review.targetType ?? review.reviewable_type ?? 'pharmacy',
+      targetId: review.target_id?.toString() ?? review.targetId?.toString() ?? review.reviewable_id?.toString() ?? '',
+      targetName: review.target_name ?? review.targetName,
+      orderId: review.order_id?.toString() ?? review.orderId?.toString(),
+      rating: review.rating,
+      title: review.title,
+      comment: review.comment,
+      images: review.images,
+      verified: review.verified ?? false,
+      helpful: review.helpful ?? review.helpful_count ?? 0,
+      notHelpful: review.not_helpful ?? review.not_helpful_count ?? review.notHelpful ?? 0,
+      pharmacyResponse: review.pharmacy_response ?? review.pharmacyResponse,
+      createdAt: review.created_at ?? review.createdAt,
+      updatedAt: review.updated_at ?? review.updatedAt
+    }));
+    
+    // Service already returns transformed ReviewStats model
     reviewStats.value = await reviewService.getReviewStats('pharmacy', pharmacyId);
   } catch (err) {
-    console.error('Error loading reviews:', err);
+    // Don't set defaults - let error show
+    reviewStats.value = null;
   } finally {
     reviewsLoading.value = false;
   }
@@ -83,38 +201,45 @@ const loadReviews = async () => {
 const handleAddReview = async (reviewData: { rating: number; title: string; comment: string }) => {
   if (!pharmacy.value) return;
   
+  // Validate pharmacy ID
+  const pharmacyId = pharmacy.value.id;
+  if (!pharmacyId || typeof pharmacyId !== 'number' || isNaN(pharmacyId)) {
+    notification.error('Error', 'Invalid pharmacy ID');
+    return;
+  }
+  
   try {
     await reviewService.addReview({
-      targetType: 'pharmacy',
-      targetId: String(pharmacy.value.id),
-      targetName: pharmacy.value.name,
+      reviewable_type: 'pharmacy',
+      reviewable_id: pharmacyId,
       rating: reviewData.rating,
       title: reviewData.title,
       comment: reviewData.comment,
     });
     
     await loadReviews();
+    showAddReviewModal.value = false;
     notification.success('Review Submitted', 'Thank you for your feedback!');
   } catch (error) {
     notification.error('Submission Failed', 'Failed to submit review. Please try again.');
   }
 };
 
-const handleReviewHelpful = async (reviewId: string) => {
+const handleReviewHelpful = async (reviewId: string | number) => {
   try {
-    await reviewService.markHelpful(reviewId);
+    await reviewService.markHelpful(reviewId, true);
     const review = reviews.value.find(r => r.id === reviewId);
-    if (review) review.helpful++;
+    if (review) (review as any).helpful = ((review as any).helpful || 0) + 1;
   } catch (error) {
     notification.error('Action Failed', 'Failed to mark review as helpful.');
   }
 };
 
-const handleReviewNotHelpful = async (reviewId: string) => {
+const handleReviewNotHelpful = async (reviewId: string | number) => {
   try {
-    await reviewService.markNotHelpful(reviewId);
+    await reviewService.markHelpful(reviewId, false);
     const review = reviews.value.find(r => r.id === reviewId);
-    if (review) review.notHelpful++;
+    if (review) (review as any).notHelpful = ((review as any).notHelpful || 0) + 1;
   } catch (error) {
     notification.error('Action Failed', 'Failed to mark review.');
   }
@@ -227,7 +352,7 @@ onMounted(() => {
                     <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                     </svg>
-                    <span>{{ pharmacy.rating }} ({{ pharmacy.reviews.length }} reviews)</span>
+                    <span>{{ pharmacy.rating }} ({{ pharmacy.reviews?.length || 0 }} reviews)</span>
                   </div>
                   <div class="flex items-center gap-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +379,7 @@ onMounted(() => {
               Call Now
             </a>
             <a
-              :href="`https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}`"
+              :href="pharmacy.location ? `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}` : '#'"
               target="_blank"
               class="flex items-center gap-2 px-6 py-3 rounded-full bg-white dark:bg-gray-800 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
             >
@@ -371,12 +496,12 @@ onMounted(() => {
                       <div>
                         <div class="flex items-center gap-3 mb-2">
                           <span class="text-5xl font-bold text-gray-900 dark:text-white">
-                            {{ reviewStats.averageRating.toFixed(1) }}
+                            {{ (reviewStats?.averageRating || 0).toFixed(1) }}
                           </span>
                           <div>
-                            <RatingStars :rating="reviewStats.averageRating" size="lg" />
+                            <RatingStars :rating="reviewStats?.averageRating || 0" size="lg" />
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Based on {{ reviewStats.totalReviews }} review{{ reviewStats.totalReviews !== 1 ? 's' : '' }}
+                              Based on {{ reviewStats?.totalReviews || 0 }} review{{ (reviewStats?.totalReviews || 0) !== 1 ? 's' : '' }}
                             </p>
                           </div>
                         </div>
@@ -391,11 +516,11 @@ onMounted(() => {
                           <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
                               class="h-full bg-yellow-400"
-                              :style="{ width: `${((reviewStats.ratingDistribution as any)[rating] / reviewStats.totalReviews) * 100}%` }"
+                              :style="{ width: `${reviewStats?.totalReviews ? (((reviewStats.ratingDistribution as any)?.[rating] || 0) / reviewStats.totalReviews) * 100 : 0}%` }"
                             ></div>
                           </div>
                           <span class="text-sm text-gray-600 dark:text-gray-400 w-8 text-right">
-                            {{ (reviewStats.ratingDistribution as any)[rating] }}
+                            {{ (reviewStats?.ratingDistribution as any)?.[rating] || 0 }}
                           </span>
                         </div>
                       </div>
@@ -459,14 +584,14 @@ onMounted(() => {
                         </svg>
                   </div>
                   <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Showing {{ filteredPharmacyMedications.length }} of {{ pharmacyMedications.length }} medications
+                    Showing {{ filteredPharmacyMedications.length > 10 ? 10 : filteredPharmacyMedications.length }} of {{ pharmacyMedications.length }} medications
                   </p>
                 </div>
 
                 <!-- Medications Grid -->
                 <div v-if="filteredPharmacyMedications.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div
-                    v-for="medication in filteredPharmacyMedications"
+                    v-for="medication in filteredPharmacyMedications.slice(0, 10)"
                     :key="medication.id"
                     @click="viewMedicationDetails(medication.id)"
                     class="p-6 transition-all duration-300 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
@@ -493,14 +618,18 @@ onMounted(() => {
                           </div>
                         </div>
                         
-                        <div class="flex items-center gap-2 mb-2">
-                          <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                            {{ medication.category }}
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                          <span 
+                            v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
+                            :key="index"
+                            class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                          >
+                            {{ cat }}
                           </span>
                           <span v-if="medication.requiresPrescription" class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
                             Rx Required
-                      </span>
-                    </div>
+                          </span>
+                        </div>
 
                         <div class="flex items-center justify-between mt-3">
                           <p class="text-xs text-gray-600 dark:text-gray-400">
@@ -540,7 +669,7 @@ onMounted(() => {
               </h3>
               <div class="h-64 mb-4 overflow-hidden rounded-xl">
                 <PharmacyMap
-                  :location="pharmacy.location"
+                  :location="pharmacy.location || { lat: 0, lng: 0 }"
                   :pharmacy-name="pharmacy.name"
                 />
               </div>
