@@ -372,6 +372,124 @@
       ]
     },
     {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Smart Hybrid Search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/search/smart?q=Panadol 500mg",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "search",
+                "smart"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Panadol 500mg",
+                  "description": "Search query - can be brand name, category, product name, drug name, or UOM"
+                }
+              ]
+            },
+            "description": "Public endpoint - requires API key. Smart hybrid search that intelligently routes users to the most relevant content (Category, Brand, or Specific Product) based on their query. Returns tiered results:\n\n**Tier 1 (Navigational)**: Exact category/brand matches - returns redirect action\n**Tier 2 (Transactional)**: Specific product matches (Drug + Brand + Form + Strength + UOM)\n**Tier 3 (Informational)**: Broad matches (brands, drugs, categories)\n\n**Response Structure:**\n- `top_match`: Best match with confidence score, action (navigate/list), and target URL\n- `results`: Grouped results (products, brands, generics, categories)\n- `suggestions`: Search suggestions\n\n**Examples:**\n- `q=Antibiotics` → Returns category match with navigate action\n- `q=Panadol` → Returns brand match with navigate action\n- `q=Panadol 500mg Box of 30` → Returns specific product match\n- `q=Paracetamol` → Returns drug matches with variants count"
+          },
+          "response": [
+            {
+              "name": "Example Response - Product Match",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/search/smart?q=Panadol 500mg",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "search",
+                    "smart"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "Panadol 500mg"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"query\": \"Panadol 500mg\",\n  \"top_match\": {\n    \"type\": \"product\",\n    \"confidence\": 0.95,\n    \"action\": \"navigate\",\n    \"target\": \"/medication/55?drug=55&brand=12&form=3&strength=5&uom=8\",\n    \"data\": {\n      \"id\": 55,\n      \"name\": \"Panadol Paracetamol 500mg Tablet - Box of 30\",\n      \"detail\": \"500mg Tablet - Box of 30\",\n      \"brand\": \"PANADOL\",\n      \"brand_id\": 12,\n      \"drug\": \"PARACETAMOL\",\n      \"form\": \"Tablet\",\n      \"form_id\": 3,\n      \"strength\": \"500mg\",\n      \"strength_id\": 5,\n      \"uom\": \"Box of 30\",\n      \"uom_id\": 8,\n      \"image\": \"https://example.com/panadol.jpg\",\n      \"requires_prescription\": false,\n      \"url\": \"/medication/55?drug=55&brand=12&form=3&strength=5&uom=8\"\n    }\n  },\n  \"results\": {\n    \"products\": [\n      {\n        \"id\": 55,\n        \"name\": \"Panadol Paracetamol 500mg Tablet - Box of 30\",\n        \"detail\": \"500mg Tablet - Box of 30\",\n        \"brand\": \"PANADOL\",\n        \"brand_id\": 12,\n        \"drug\": \"PARACETAMOL\",\n        \"form\": \"Tablet\",\n        \"form_id\": 3,\n        \"strength\": \"500mg\",\n        \"strength_id\": 5,\n        \"uom\": \"Box of 30\",\n        \"uom_id\": 8,\n        \"image\": \"https://example.com/panadol.jpg\",\n        \"requires_prescription\": false,\n        \"url\": \"/medication/55?drug=55&brand=12&form=3&strength=5&uom=8\"\n      }\n    ],\n    \"brands\": [],\n    \"generics\": [],\n    \"categories\": []\n  },\n  \"suggestions\": [\n    {\n      \"text\": \"Panadol Paracetamol 500mg Tablet - Box of 30\",\n      \"type\": \"product\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Example Response - Category Match",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/search/smart?q=Antibiotics",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "search",
+                    "smart"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "Antibiotics"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"query\": \"Antibiotics\",\n  \"top_match\": {\n    \"type\": \"category\",\n    \"confidence\": 1.0,\n    \"action\": \"navigate\",\n    \"target\": \"/medications?category=antibiotics\",\n    \"data\": {\n      \"id\": 1,\n      \"name\": \"Antibiotics\",\n      \"slug\": \"antibiotics\"\n    }\n  },\n  \"results\": {\n    \"products\": [],\n    \"brands\": [],\n    \"generics\": [],\n    \"categories\": []\n  },\n  \"suggestions\": []\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Drugs",
       "item": [
         {
@@ -716,7 +834,13 @@
           "name": "Get Recently Viewed",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/recently-viewed?page=1&per_page=15",
               "host": [
@@ -986,7 +1110,7 @@
             "header": [],
             "body": {
               "mode": "json",
-              "raw": "{\n  \"drug_id\": 1,\n  \"drug_brand_id\": 1,\n  \"drug_brand_form_id\": 1,\n  \"dosage_id\": 1,\n  \"strength_uom_id\": 1,\n  \"pharmacy_branch_id\": 1,\n  \"quantity\": 2\n}"
+              "raw": "{\n  \"pharmacy_drug_price_id\": 1,\n  \"quantity\": 2\n}"
             },
             "url": {
               "raw": "{{base_url}}/cart/items",
@@ -1065,7 +1189,7 @@
             "header": [],
             "body": {
               "mode": "json",
-              "raw": "{\n  \"items\": [\n    {\n      \"drug_id\": 1,\n      \"drug_brand_id\": 1,\n      \"drug_brand_form_id\": 1,\n      \"dosage_id\": 1,\n      \"strength_uom_id\": 1,\n      \"pharmacy_branch_id\": 1,\n      \"quantity\": 2\n    }\n  ]\n}"
+              "raw": "{\n  \"items\": [\n    {\n      \"pharmacy_drug_price_id\": 1,\n      \"quantity\": 2\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/cart/sync",
@@ -1349,6 +1473,75 @@
               ]
             },
             "description": "Public endpoint - requires API key (X-API-Key header)"
+          }
+        },
+        {
+          "name": "Add Drug to Prescription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"pharmacy_drug_price_id\": 1,\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/prescriptions/:id/drugs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                ":id",
+                "drugs"
+              ]
+            },
+            "description": "Add a drug to a prescription using Pharmacy Price ID."
+          }
+        },
+        {
+          "name": "Add Drugs Bulk",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"drugs\": [\n    {\n      \"pharmacy_drug_price_id\": 1,\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/prescriptions/:id/store-drugs-bulk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                ":id",
+                "store-drugs-bulk"
+              ]
+            },
+            "description": "Bulk add drugs to a prescription."
+          }
+        },
+        {
+          "name": "Update Drugs Bulk",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"drugs\": [\n    {\n      \"prescription_drug_id\": 1,\n      \"pharmacy_drug_price_id\": 1,\n      \"quantity\": 3\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/prescriptions/:id/update-drugs-bulk",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "prescriptions",
+                ":id",
+                "update-drugs-bulk"
+              ]
+            },
+            "description": "Bulk update drugs in a prescription."
           }
         }
       ]
@@ -2257,7 +2450,12 @@
             ],
             "body": {
               "mode": "json",
-              "raw": "{\n  \"consultation_type\": \"general\",\n  \"subject\": \"Question about medication dosage\",\n  \"symptoms\": \"Experiencing mild headaches after taking medication\",\n  \"medical_history\": \"Hypertension, diabetes\",\n  \"current_medications\": \"Metformin 500mg twice daily, Lisinopril 10mg once daily\",\n  \"allergies\": \"Penicillin\",\n  \"consultation_notes\": \"Need advice on proper medication timing\",\n  \"priority\": \"normal\",\n  \"patient_name\": \"John Doe\",\n  \"patient_email\": \"john@example.com\",\n  \"patient_phone\": \"+233123456789\",\n  \"patient_date_of_birth\": \"1985-05-15\",\n  \"patient_gender\": \"male\",\n  \"pharmacy_id\": 1,\n  \"pharmacy_branch_id\": 1,\n  \"scheduled_at\": null,\n  \"source\": \"web\"\n}"
+              "raw": "{\n  \"consultation_type\": \"general\",\n  \"subject\": \"Question about medication dosage\",\n  \"symptoms\": \"Experiencing mild headaches after taking medication\",\n  \"medical_history\": \"Hypertension, diabetes\",\n  \"current_medications\": \"Metformin 500mg twice daily, Lisinopril 10mg once daily\",\n  \"allergies\": \"Penicillin\",\n  \"consultation_notes\": \"Need advice on proper medication timing\",\n  \"priority\": \"normal\",\n  \"user_id\": 1,\n  \"patient_name\": \"John Doe\",\n  \"patient_email\": \"john@example.com\",\n  \"patient_phone\": \"+233123456789\",\n  \"patient_date_of_birth\": \"1985-05-15\",\n  \"patient_gender\": \"male\",\n  \"pharmacy_id\": 1,\n  \"pharmacy_branch_id\": 1,\n  \"scheduled_at\": \"2024-12-20T10:00:00Z\",\n  \"source\": \"web\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/consultations",
@@ -2268,7 +2466,7 @@
                 "consultations"
               ]
             },
-            "description": "Public endpoint - requires API key. Create a new consultation. If user is authenticated, patient info will be auto-filled from user profile. Supports file attachments via multipart/form-data."
+            "description": "Public endpoint - requires API key. Create a new consultation.\n\n**Required Fields:**\n- `subject` (string, max:255) - Consultation subject/title\n\n**Optional Fields:**\n- `consultation_type` (string) - Type of consultation. Options: `general`, `medication_review`, `chronic_disease`, `acute_illness`, `wellness`, `vaccination`. Default: `general`\n- `symptoms` (string) - Description of symptoms\n- `medical_history` (string) - Patient's medical history\n- `current_medications` (string) - Current medications being taken\n- `allergies` (string) - Known allergies\n- `consultation_notes` (string) - Additional notes about the consultation\n- `priority` (string) - Priority level. Options: `low`, `normal`, `high`, `urgent`. Default: `normal`\n- `user_id` (integer) - ID of registered user to assign consultation to (must exist in users table). If provided, patient info will be auto-filled from user profile if not explicitly provided.\n- `patient_name` (string, max:255) - Patient's full name (auto-filled if user_id provided or user is authenticated)\n- `patient_email` (email, max:255) - Patient's email address (auto-filled if user_id provided or user is authenticated)\n- `patient_phone` (string, max:20) - Patient's phone number (auto-filled if user_id provided or user is authenticated)\n- `patient_date_of_birth` (date) - Patient's date of birth (YYYY-MM-DD format)\n- `patient_gender` (string) - Patient's gender. Options: `male`, `female`\n- `pharmacy_id` (integer) - ID of the pharmacy (must exist in pharmacies table)\n- `pharmacy_branch_id` (integer) - ID of the pharmacy branch (must exist in pharmacy_branches table)\n- `scheduled_at` (datetime) - Scheduled date/time for the consultation (ISO 8601 format, must be in the future)\n- `source` (string) - Source of consultation. Options: `web`, `mobile_app`, `phone`, `walk_in`. Default: `web`\n- `attachments` (array of files) - File attachments (jpeg, png, jpg, pdf, doc, docx, max 5MB each). Note: For file uploads, use `multipart/form-data` instead of JSON.\n\n**Note:** \n- If `user_id` is provided, patient info (`patient_name`, `patient_email`, `patient_phone`) will be auto-filled from that user's profile if not explicitly provided.\n- If user is authenticated (Bearer token) and `user_id` is not provided, the authenticated user's ID will be set automatically and patient info will be auto-filled from the authenticated user's profile if not provided."
           }
         },
         {
@@ -2336,7 +2534,13 @@
           "name": "Get All Consultations",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/consultations?status=pending&priority=high&type=general&pharmacy_id=1&requires_followup=false&search=medication&sort_by=created_at&sort_order=desc&page=1&per_page=15",
               "host": [
@@ -2491,6 +2695,10 @@
           "request": {
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "json",
+              "raw": "{\n  \"completion_notes\": \"Consultation completed successfully. Patient advised to follow up if symptoms persist.\"\n}"
+            },
             "url": {
               "raw": "{{base_url}}/consultations/:id/complete",
               "host": [
@@ -2502,7 +2710,7 @@
                 "complete"
               ]
             },
-            "description": "Mark consultation as completed. Sets completed_at timestamp."
+            "description": "Mark consultation as completed. Sets completed_at timestamp. completion_notes is optional."
           }
         },
         {
