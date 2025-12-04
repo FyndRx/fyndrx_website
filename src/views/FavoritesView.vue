@@ -165,8 +165,12 @@ onMounted(() => {
                 </div>
 
                 <div class="flex items-center gap-2 mb-2 flex-wrap">
-                  <span class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]">
-                    {{ medication.category }}
+                  <span 
+                    v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
+                    :key="index"
+                    class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]"
+                  >
+                    {{ cat }}
                   </span>
                   <span v-if="medication.requiresPrescription" class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
                     Rx Required

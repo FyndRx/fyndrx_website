@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import LazyImage from '@/components/LazyImage.vue';
 import RatingStars from '@/components/RatingStars.vue';
-import { dataService } from '@/services/dataService';
+import { reviewService } from '@/services/reviewService';
 
 interface Props {
   medication: {
@@ -32,9 +32,24 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const router = useRouter();
+const rating = ref<{ average: number; count: number }>({ average: 0, count: 0 });
 
-const medicationRating = computed(() => {
-  return dataService.getMedicationRating(props.medication.id);
+const loadRating = async () => {
+  try {
+    const stats = await reviewService.getReviewStats('medication', props.medication.id);
+    rating.value = {
+      average: stats.averageRating || 0,
+      count: stats.totalReviews || 0
+    };
+  } catch (err) {
+    console.error('Error loading medication rating:', err);
+  }
+};
+
+const medicationRating = computed(() => rating.value);
+
+onMounted(() => {
+  loadRating();
 });
 
 const discountPercentage = computed(() => {
@@ -59,10 +74,10 @@ export default {
   <!-- Simple List View -->
   <div 
     v-if="variant === 'simple'" 
-    class="inline-flex items-center gap-2 px-4 py-2 transition-all bg-white border border-gray-200 rounded-full shadow-sm cursor-pointer dark:bg-gray-800 hover:shadow-md dark:border-gray-700"
+    class="inline-flex gap-2 items-center px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm transition-all cursor-pointer dark:bg-gray-800 hover:shadow-md dark:border-gray-700"
     @click="handleClick"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex gap-2 items-center">
       <span class="font-medium text-gray-900 dark:text-white">{{ medication.drug_name }}</span>
       <span v-if="medication.brands?.length" class="text-sm text-gray-500 dark:text-gray-400">
         ({{ medication.brands.map(brand => brand.name).join(', ') }})
@@ -76,7 +91,7 @@ export default {
   <!-- Detailed Card View -->
   <div 
     v-else-if="variant === 'detailed'" 
-    class="overflow-hidden bg-white shadow-lg cursor-pointer dark:bg-gray-800 rounded-2xl hover-lift"
+    class="overflow-hidden bg-white rounded-2xl shadow-lg cursor-pointer dark:bg-gray-800 hover-lift"
     @click="handleClick"
   >
     <!-- Drug Image -->
@@ -150,7 +165,7 @@ export default {
           <div 
             v-for="form in medication.forms" 
             :key="form.id"
-            class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
+            class="p-3 bg-gray-50 rounded-lg dark:bg-gray-700"
           >
             <div class="mb-1 font-medium text-gray-900 dark:text-white">
               {{ form.form_name }}
@@ -177,7 +192,7 @@ export default {
     @click="handleClick"
   >
     <div class="p-6">
-      <div class="flex items-start justify-between mb-4">
+      <div class="flex justify-between items-start mb-4">
         <div>
           <h4 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">
             {{ medication.drug_name }}
@@ -192,7 +207,7 @@ export default {
         </div>
       </div>
 
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex justify-between items-center mb-4">
         <div v-if="medication.price && medication.discountPrice">
           <span class="text-lg font-medium text-gray-900 dark:text-white">
             Ghc{{ medication.discountPrice.toFixed(2) }}

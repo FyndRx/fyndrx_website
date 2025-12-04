@@ -6,13 +6,13 @@ export type User = {
   username: string | null;
   dob: string | null;
   email: string;
-  pharmacy_id: null;
-  pharmacy_branch_id: null;
+  pharmacy_id: number | null;
+  pharmacy_branch_id: number | null;
   phone_number: string;
-  status: null;
+  status: string | null;
   member_id: string;
-  address: null;
-  image: null;
+  address: string | null;
+  image: string | null;
   profile_picture: string | null;
   profile_picture_full: string | null;
   saved_money: number;

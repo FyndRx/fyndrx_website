@@ -1,86 +1,130 @@
+import { reactive } from 'vue';
+import { apiService } from './api';
 import type { Medication } from '@/models/Medication';
-import type { Pharmacy } from '@/models/Pharmacy';
-import { dataService } from './dataService';
+import type { MedicationApiResponse } from '@/models/api';
+import { unwrapArrayResponse, transformMedication } from '@/utils/responseTransformers';
 
-const STORAGE_KEY = 'fyndrx_favorites';
-
-export interface FavoriteItem {
-  id: string;
-  type: 'medication' | 'pharmacy';
-  itemId: number;
-  addedAt: number;
+export interface SavedDrug {
+  id: number;
+  drug_id: number;
+  brand_id: number;
+  user_id: number;
+  created_at: string;
+  drug?: MedicationApiResponse;
+  brand?: any;
 }
 
+// Reactive state for favorites
+const state = reactive({
+  savedDrugIds: new Set<number>(),
+  initialized: false
+});
+
 export const favoritesService = {
-  addFavorite(type: 'medication' | 'pharmacy', itemId: number): void {
-    const favorites = this.getFavorites();
-    const id = `${type}-${itemId}`;
-    
-    const exists = favorites.find(f => f.id === id);
-    if (exists) return;
-    
-    favorites.unshift({
-      id,
-      type,
-      itemId,
-      addedAt: Date.now()
-    });
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  },
+  /**
+   * Initialize favorites service by fetching user's saved drugs
+   */
+  async initialize(): Promise<void> {
+    if (state.initialized) return;
 
-  removeFavorite(type: 'medication' | 'pharmacy', itemId: number): void {
-    const favorites = this.getFavorites();
-    const id = `${type}-${itemId}`;
-    const filtered = favorites.filter(f => f.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-  },
-
-  isFavorite(type: 'medication' | 'pharmacy', itemId: number): boolean {
-    const favorites = this.getFavorites();
-    const id = `${type}-${itemId}`;
-    return favorites.some(f => f.id === id);
-  },
-
-  toggleFavorite(type: 'medication' | 'pharmacy', itemId: number): boolean {
-    if (this.isFavorite(type, itemId)) {
-      this.removeFavorite(type, itemId);
-      return false;
-    } else {
-      this.addFavorite(type, itemId);
-      return true;
-    }
-  },
-
-  getFavorites(): FavoriteItem[] {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return [];
-      return JSON.parse(stored);
+      const saved = await this.getSavedDrugs();
+      state.savedDrugIds.clear();
+      saved.forEach(item => {
+        // We track by drug_id for now as the UI seems to favor medications
+        state.savedDrugIds.add(item.drug_id);
+      });
+      state.initialized = true;
     } catch (error) {
-      console.error('Error reading favorites:', error);
-      return [];
+      console.error('Failed to initialize favorites:', error);
     }
   },
 
-  getFavoriteMedications(): Medication[] {
-    const favorites = this.getFavorites();
-    const medicationFavorites = favorites.filter(f => f.type === 'medication');
-    return medicationFavorites
-      .map(f => dataService.getMedicationById(f.itemId))
-      .filter((med): med is Medication => med !== undefined);
+  /**
+   * Get user's saved drugs
+   * @returns Array of saved drugs
+   */
+  async getSavedDrugs(): Promise<SavedDrug[]> {
+    const response = await apiService.getAuth<SavedDrug[]>('/user-saved-drugs');
+    // Transform nested drug if present
+    if (Array.isArray(response)) {
+      return response.map(item => ({
+        ...item,
+        drug: item.drug ? transformMedication(item.drug) : undefined
+      }));
+    }
+    return [];
   },
 
-  getFavoritePharmacies(): Pharmacy[] {
-    const favorites = this.getFavorites();
-    const pharmacyFavorites = favorites.filter(f => f.type === 'pharmacy');
-    return pharmacyFavorites
-      .map(f => dataService.getPharmacyById(f.itemId))
-      .filter((pharmacy): pharmacy is Pharmacy => pharmacy !== undefined);
+  /**
+   * Save a drug to favorites
+   * @param drugId - Drug ID
+   * @param brandId - Brand ID
+   * @returns Success response
+   */
+  async saveDrug(drugId: number, brandId: number): Promise<any> {
+    return await apiService.getAuth<any>(`/store-saved-drug/${drugId}/${brandId}`);
   },
 
-  clear(): void {
-    localStorage.removeItem(STORAGE_KEY);
+  /**
+   * Check if a drug is saved (async version)
+   * @param drugId - Drug ID
+   * @param brandId - Brand ID
+   * @returns True if drug is saved
+   */
+  async isSaved(drugId: number, brandId: number): Promise<boolean> {
+    try {
+      const saved = await this.getSavedDrugs();
+      return saved.some(item => item.drug_id === drugId && item.brand_id === brandId);
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Check if an item is favorited (synchronous check against local state)
+   * @param type - Type of item ('medication' or 'pharmacy')
+   * @param itemId - ID of the item
+   */
+  isFavorite(type: 'medication' | 'pharmacy', itemId: number): boolean {
+    if (type === 'medication') {
+      return state.savedDrugIds.has(itemId);
+    }
+    // Pharmacy favorites not yet implemented in state
+    return false;
+  },
+
+  /**
+   * Toggle favorite status for an item
+   * @param type - Type of item ('medication' or 'pharmacy')
+   * @param itemId - ID of the item
+   * @returns New favorite state (true = favorited, false = unfavorited)
+   */
+  toggleFavorite(type: 'medication' | 'pharmacy', itemId: number): boolean {
+    if (type === 'medication') {
+      const isCurrentlySaved = state.savedDrugIds.has(itemId);
+      const newState = !isCurrentlySaved;
+
+      // Optimistic update
+      if (newState) {
+        state.savedDrugIds.add(itemId);
+        // We default to brandId 0 for generic medication favorite if not specified
+        // TODO: If brand context is needed, this method signature needs to change
+        this.saveDrug(itemId, 0).catch(err => {
+          console.error('Failed to save drug:', err);
+          // Revert on failure
+          state.savedDrugIds.delete(itemId);
+        });
+      } else {
+        state.savedDrugIds.delete(itemId);
+        // TODO: Implement remove endpoint when available
+        // For now we just update local state as we don't have a clear remove endpoint
+        console.warn('Remove favorite endpoint not confirmed, only updating local state');
+      }
+
+      return newState;
+    }
+
+    return false;
   }
 };
-

@@ -1,61 +1,59 @@
+import { apiService } from './api';
 import type { Medication } from '@/models/Medication';
-import { dataService } from './dataService';
+import type { MedicationApiResponse } from '@/models/api';
+import { unwrapArrayResponse, transformMedication } from '@/utils/responseTransformers';
 
-const STORAGE_KEY = 'fyndrx_recently_viewed';
-const MAX_ITEMS = 12;
-
-export interface RecentlyViewedItem {
-  medicationId: number;
-  viewedAt: number;
+export interface RecentlyViewedDrug {
+  id: number;
+  drug_id: number;
+  user_id: number;
+  viewed_at: string;
+  drug?: MedicationApiResponse;
 }
 
 export const recentlyViewedService = {
-  addItem(medicationId: number): void {
-    const items = this.getItems();
-    
-    const existingIndex = items.findIndex(item => item.medicationId === medicationId);
-    if (existingIndex !== -1) {
-      items.splice(existingIndex, 1);
+  /**
+   * Get user's recently viewed drugs
+   * @returns Array of recently viewed drugs
+   */
+  async getRecentlyViewed(): Promise<RecentlyViewedDrug[]> {
+    const response = await apiService.getAuth<RecentlyViewedDrug[]>('/recently-viewed');
+    // Transform nested drug if present
+    if (Array.isArray(response)) {
+      return response.map(item => ({
+        ...item,
+        drug: item.drug ? transformMedication(item.drug) : undefined
+      }));
     }
-    
-    items.unshift({
-      medicationId,
-      viewedAt: Date.now()
-    });
-    
-    if (items.length > MAX_ITEMS) {
-      items.splice(MAX_ITEMS);
-    }
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    return [];
   },
 
-  getItems(): RecentlyViewedItem[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return [];
-      return JSON.parse(stored);
-    } catch (error) {
-      console.error('Error reading recently viewed:', error);
-      return [];
-    }
+  /**
+   * Add a drug to recently viewed
+   * @param drugId - Drug ID
+   * @returns Success response
+   */
+  async addToRecentlyViewed(drugId: number): Promise<any> {
+    return await apiService.postAuth<any>('/recently-viewed', { drug_id: drugId });
   },
 
-  getMedications(): Medication[] {
-    const items = this.getItems();
-    return items
-      .map(item => dataService.getMedicationById(item.medicationId))
-      .filter((med): med is Medication => med !== undefined);
+  /**
+   * Get recent drugs (public endpoint)
+   * @returns Array of recent drugs
+   */
+  async getRecentDrugs(): Promise<Medication[]> {
+    const response = await apiService.get<MedicationApiResponse[]>('/recent-drugs');
+    const apiMeds = unwrapArrayResponse(response);
+    return apiMeds.map(transformMedication);
   },
 
-  clear(): void {
-    localStorage.removeItem(STORAGE_KEY);
-  },
-
-  removeItem(medicationId: number): void {
-    const items = this.getItems();
-    const filtered = items.filter(item => item.medicationId !== medicationId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  /**
+   * Get top searched drugs (public endpoint)
+   * @returns Array of top searched drugs
+   */
+  async getTopSearched(): Promise<Medication[]> {
+    const response = await apiService.get<MedicationApiResponse[]>('/top-searched-drugs');
+    const apiMeds = unwrapArrayResponse(response);
+    return apiMeds.map(transformMedication);
   }
 };
-

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Order } from '@/models/Order';
-import ordersData from '@/data/orders.json';
+import { orderService } from '@/services/orderService';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
@@ -59,11 +59,40 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const loadOrders = async () => {
+  loading.value = true;
+  try {
+    const statusMap: Record<string, string | undefined> = {
+      'all': undefined,
+      'active': undefined,
+      'completed': 'completed',
+      'cancelled': 'cancelled'
+    };
+    
+    const status = statusMap[selectedFilter.value];
+    const allOrders = await orderService.getOrders({ status, per_page: 100 });
+    
+    if (selectedFilter.value === 'active') {
+      orders.value = allOrders.filter(o => !['completed', 'cancelled'].includes(o.status));
+    } else {
+      orders.value = allOrders.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    }
+  } catch (err) {
+    console.error('Error loading orders:', err);
+    orders.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(selectedFilter, () => {
+  loadOrders();
+});
+
 onMounted(() => {
-  orders.value = (ordersData as Order[]).sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-  loading.value = false;
+  loadOrders();
 });
 </script>
 

@@ -1,59 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { dataService } from '@/services/dataService';
-import type { Medication } from '@/models/Medication';
+import { storeToRefs } from 'pinia';
+import { useMedicationsStore } from '@/store/medications';
 import LazyImage from './LazyImage.vue';
 
-const comparisonList = ref<Medication[]>([]);
-const showModal = ref(false);
+const medicationsStore = useMedicationsStore();
+const { comparisonList, comparisonModalOpen } = storeToRefs(medicationsStore);
 
-export interface MedicationComparisonService {
-  addToComparison: (medicationId: number) => void;
-  removeFromComparison: (medicationId: number) => void;
-  isInComparison: (medicationId: number) => boolean;
-  getCount: () => number;
-  openComparison: () => void;
-}
-
-const addToComparison = (medicationId: number) => {
-  if (comparisonList.value.length >= 4) {
-    return;
-  }
-  
-  const medication = dataService.getMedicationById(medicationId);
-  if (medication && !isInComparison(medicationId)) {
-    comparisonList.value.push(medication);
-  }
+const clearAll = () => {
+  medicationsStore.clearComparison();
 };
 
-const removeFromComparison = (medicationId: number) => {
-  comparisonList.value = comparisonList.value.filter(m => m.id !== medicationId);
-};
-
-const isInComparison = (medicationId: number): boolean => {
-  return comparisonList.value.some(m => m.id === medicationId);
-};
-
-const getCount = (): number => {
-  return comparisonList.value.length;
+const removeFromComparison = (id: number) => {
+  medicationsStore.removeFromComparison(id);
 };
 
 const openComparison = () => {
-  showModal.value = true;
+  medicationsStore.openComparisonModal();
 };
 
-const clearAll = () => {
-  comparisonList.value = [];
-  showModal.value = false;
+const closeComparison = () => {
+  medicationsStore.closeComparisonModal();
 };
-
-defineExpose({
-  addToComparison,
-  removeFromComparison,
-  isInComparison,
-  getCount,
-  openComparison
-});
 </script>
 
 <template>
@@ -88,7 +55,12 @@ defineExpose({
             :key="medication.id"
             class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
           >
-            <img :src="medication.image" :alt="medication.drug_name" class="w-10 h-10 rounded object-cover" />
+            <LazyImage
+              :src="medication.image"
+              :alt="medication.drug_name"
+              aspectRatio="square"
+              className="w-10 h-10 rounded object-cover"
+            />
             <span class="flex-1 text-sm font-medium text-gray-900 dark:text-white truncate">
               {{ medication.drug_name }}
             </span>
@@ -116,16 +88,16 @@ defineExpose({
     <Teleport to="body">
       <Transition name="modal">
         <div
-          v-if="showModal"
+          v-if="comparisonModalOpen"
           class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
-          @click.self="showModal = false"
+          @click.self="closeComparison"
         >
           <div
             class="relative w-full max-w-7xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 my-8"
             @click.stop
           >
             <button
-              @click="showModal = false"
+              @click="closeComparison"
               class="absolute top-4 right-4 p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,9 +141,15 @@ defineExpose({
                       :key="`cat-${medication.id}`"
                       class="p-4 text-center"
                     >
-                      <span class="inline-block px-3 py-1 text-sm rounded-full bg-[#246BFD]/10 text-[#246BFD]">
-                        {{ medication.category }}
-                      </span>
+                      <div class="flex flex-wrap gap-1 justify-center">
+                        <span 
+                          v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
+                          :key="index"
+                          class="inline-block px-3 py-1 text-sm rounded-full bg-[#246BFD]/10 text-[#246BFD]"
+                        >
+                          {{ cat }}
+                        </span>
+                      </div>
                     </td>
                   </tr>
 
@@ -276,6 +254,7 @@ defineExpose({
 
 .line-clamp-2 {
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

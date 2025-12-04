@@ -25,7 +25,9 @@ export const dataService = {
     return medications.filter(med =>
       med.drug_name.toLowerCase().includes(searchTerm) ||
       med.description.toLowerCase().includes(searchTerm) ||
-      med.category.toLowerCase().includes(searchTerm) ||
+      (Array.isArray(med.category) 
+        ? med.category.some(cat => cat.toLowerCase().includes(searchTerm))
+        : med.category.toLowerCase().includes(searchTerm)) ||
       med.brands.some(brand => brand.name.toLowerCase().includes(searchTerm))
     );
   },
@@ -33,7 +35,12 @@ export const dataService = {
   getMedicationsByCategory(category: string): Medication[] {
     const medications = medicationsData as Medication[];
     if (!category || category === 'all') return medications;
-    return medications.filter(med => med.category === category);
+    return medications.filter(med => {
+      if (Array.isArray(med.category)) {
+        return med.category.includes(category);
+      }
+      return med.category === category;
+    });
   },
 
   getAllPharmacies(): Pharmacy[] {

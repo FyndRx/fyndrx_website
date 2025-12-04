@@ -1,11 +1,24 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { dataService } from '@/services/dataService';
+import { ref, onMounted } from 'vue';
+import { pharmacyService } from '@/services/pharmacyService';
 import type { Pharmacy } from '@/models/Pharmacy';
 import PharmacyCard from '@/components/PharmacyCard.vue';
 
-const allPharmacies = dataService.getAllPharmacies();
-const pharmacies = ref<Pharmacy[]>(allPharmacies.slice(0, 6));
+const pharmacies = ref<Pharmacy[]>([]);
+
+const loadPharmacies = async () => {
+  try {
+    const allPharmacies = await pharmacyService.searchPharmaciesByDrugs([]);
+    pharmacies.value = allPharmacies.slice(0, 6);
+  } catch (err) {
+    console.error('Error loading pharmacies:', err);
+    pharmacies.value = [];
+  }
+};
+
+onMounted(() => {
+  loadPharmacies();
+});
 const containerRef = ref<HTMLElement | null>(null);
 
 const scrollLeft = () => {

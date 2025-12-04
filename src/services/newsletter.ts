@@ -1,15 +1,11 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiService } from './api';
 
 export const newsletterService = {
-  async subscribe(email: string) {
-    const response = await axios.post(`${API_URL}/newsletter/subscribe`, { email });
-    return response.data;
+  async subscribe(email: string): Promise<{ message: string }> {
+    return await apiService.post<{ message: string }>('/newsletter/subscribe', { email });
   },
 
-  async unsubscribe(email: string) {
-    const response = await axios.post(`${API_URL}/newsletter/unsubscribe`, { email });
-    return response.data;
+  async unsubscribe(email: string): Promise<{ message: string }> {
+    return await apiService.post<{ message: string }>('/newsletter/unsubscribe', { email });
   }
 }; 

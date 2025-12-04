@@ -1,46 +1,108 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { dataService } from '@/services/dataService';
+import { medicationService } from '@/services/medicationService';
+import { pharmacyService } from '@/services/pharmacyService';
 import type { Medication } from '@/models/Medication';
 import type { Pharmacy } from '@/models/Pharmacy';
+import LazyImage from './LazyImage.vue';
 
 interface Props {
+  modelValue?: string;
   placeholder?: string;
   searchType?: 'medications' | 'pharmacies' | 'all';
   autoFocus?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
   placeholder: 'Search medications, pharmacies...',
   searchType: 'all',
   autoFocus: false
 });
 
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void;
+}>();
+
 const router = useRouter();
-const searchQuery = ref('');
+const searchQuery = ref(props.modelValue ?? '');
 const showResults = ref(false);
 const selectedIndex = ref(-1);
 const searchInput = ref<HTMLInputElement | null>(null);
+const medications = ref<Medication[]>([]);
+const pharmacies = ref<Pharmacy[]>([]);
+const searching = ref(false);
 
 const searchResults = computed(() => {
-  if (!searchQuery.value || searchQuery.value.length < 2) {
-    return { medications: [], pharmacies: [] };
+  return { medications: medications.value, pharmacies: pharmacies.value };
+});
+
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const performSearch = async (query: string) => {
+  if (!query || query.trim().length < 2) {
+    medications.value = [];
+    pharmacies.value = [];
+    return;
   }
 
-  const query = searchQuery.value.toLowerCase();
-  let medications: Medication[] = [];
-  let pharmacies: Pharmacy[] = [];
+  searching.value = true;
+  try {
+    const searchPromises: Promise<any>[] = [];
 
-  if (props.searchType === 'medications' || props.searchType === 'all') {
-    medications = dataService.searchMedications(query).slice(0, 5);
+    if (props.searchType === 'medications' || props.searchType === 'all') {
+      searchPromises.push(
+        medicationService.liveSearch({ query: query.trim(), perPage: 5 }).then(result => {
+          medications.value = result.medications.slice(0, 5);
+        }).catch(() => {
+          medications.value = [];
+        })
+      );
+    } else {
+      medications.value = [];
+    }
+
+    if (props.searchType === 'pharmacies' || props.searchType === 'all') {
+      searchPromises.push(
+        pharmacyService.searchPharmaciesByDrugs([]).then(results => {
+          const filtered = results.filter((p: Pharmacy) => 
+            p.name?.toLowerCase().includes(query.toLowerCase())
+          );
+          pharmacies.value = filtered.slice(0, 5);
+        }).catch(() => {
+          pharmacies.value = [];
+        })
+      );
+    } else {
+      pharmacies.value = [];
+    }
+
+    await Promise.all(searchPromises);
+  } catch (err) {
+    console.error('Search error:', err);
+    medications.value = [];
+    pharmacies.value = [];
+  } finally {
+    searching.value = false;
   }
+};
 
-  if (props.searchType === 'pharmacies' || props.searchType === 'all') {
-    pharmacies = dataService.searchPharmacies(query).slice(0, 5);
+watch(() => props.modelValue, value => {
+  if (value !== undefined && value !== searchQuery.value) {
+    searchQuery.value = value;
   }
+});
 
-  return { medications, pharmacies };
+watch(searchQuery, (newQuery) => {
+  emit('update:modelValue', newQuery);
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
+  
+  searchTimeout = setTimeout(() => {
+    performSearch(newQuery);
+  }, 300);
 });
 
 const totalResults = computed(() => {
@@ -101,7 +163,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-const handleClickOutside = (event: MouseEvent) => {
+const handlePointerDownOutside = (event: PointerEvent) => {
   const target = event.target as HTMLElement;
   if (searchInput.value && !searchInput.value.contains(target)) {
     showResults.value = false;
@@ -114,14 +176,14 @@ watch(searchQuery, () => {
 });
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('pointerdown', handlePointerDownOutside);
   if (props.autoFocus && searchInput.value) {
     searchInput.value.focus();
   }
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('pointerdown', handlePointerDownOutside);
 });
 </script>
 
@@ -170,17 +232,24 @@ onBeforeUnmount(() => {
               selectedIndex === index ? 'bg-gray-50 dark:bg-gray-700' : ''
             ]"
           >
-            <img
+            <LazyImage
               :src="medication.image"
               :alt="medication.drug_name"
-              class="w-12 h-12 rounded-lg object-cover"
+              aspectRatio="square"
+              className="w-12 h-12 rounded-lg object-cover"
             />
             <div class="flex-1 min-w-0">
               <div class="font-medium text-gray-900 dark:text-white truncate">
                 {{ medication.drug_name }}
               </div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                {{ medication.category }}
+              <div class="flex flex-wrap gap-1">
+                <span 
+                  v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 1) : [medication.category])"
+                  :key="index"
+                  class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                >
+                  {{ cat }}
+                </span>
               </div>
             </div>
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,10 +271,11 @@ onBeforeUnmount(() => {
               selectedIndex === (searchResults.medications.length + index) ? 'bg-gray-50 dark:bg-gray-700' : ''
             ]"
           >
-            <img
+            <LazyImage
               :src="pharmacy.image"
               :alt="pharmacy.name"
-              class="w-12 h-12 rounded-lg object-cover"
+              aspectRatio="square"
+              className="w-12 h-12 rounded-lg object-cover"
             />
             <div class="flex-1 min-w-0">
               <div class="font-medium text-gray-900 dark:text-white truncate">

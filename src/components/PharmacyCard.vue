@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import type { Pharmacy } from '@/models/Pharmacy';
 import LazyImage from '@/components/LazyImage.vue';
 import RatingStars from '@/components/RatingStars.vue';
-import { dataService } from '@/services/dataService';
+import { reviewService } from '@/services/reviewService';
 
 interface Props {
   pharmacy: Pharmacy;
@@ -11,8 +11,24 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const pharmacyRating = computed(() => {
-  return dataService.getPharmacyRating(props.pharmacy.id);
+const rating = ref<{ average: number; count: number }>({ average: 0, count: 0 });
+
+const loadRating = async () => {
+  try {
+    const stats = await reviewService.getReviewStats('pharmacy', props.pharmacy.id);
+    rating.value = {
+      average: stats.average_rating || 0,
+      count: stats.total_reviews || 0
+    };
+  } catch (err) {
+    console.error('Error loading pharmacy rating:', err);
+  }
+};
+
+const pharmacyRating = computed(() => rating.value);
+
+onMounted(() => {
+  loadRating();
 });
 </script>
 

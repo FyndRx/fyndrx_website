@@ -1,161 +1,64 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { medicationService } from '@/services/medicationService';
+import { recentlyViewedService } from '@/services/recentlyViewedService';
 import MedicationCard from '@/components/MedicationCard.vue';
-
-interface Medication {
-  id: number;
-  drug_name: string;
-  description?: string | null;
-  brands?: Array<{ id: number; name: string }>;
-  forms?: Array<{
-    id: number;
-    form_name: string;
-    strengths: Array<{
-      id: number;
-      strength: string;
-      uoms: Array<{ id: number; uom: string }>;
-    }>;
-  }>;
-  price?: number;
-  discountPrice?: number;
-  image?: string;
-}
+import type { Medication } from '@/models/Medication';
 
 const searchQuery = ref('');
 const searchResults = ref<Medication[]>([]);
-const popularDrugs = ref([
-  {
-    id: 1,
-    drug_name: 'Amoxicillin',
-    image: '/src/assets/images/medications/amoxicillin.jpg',
-    description: 'Antibiotic used to treat bacterial infections',
-    price: 25.99,
-    discountPrice: 19.99,
-    brands: [
-      { id: 1, name: 'Amoxil' },
-      { id: 2, name: 'Trimox' }
-    ],
-    forms: [
-      {
-        id: 1,
-        form_name: 'Capsules',
-        strengths: [
-          { id: 1, strength: '250mg', uoms: [{ id: 1, uom: 'CAPSULE(S)' }] },
-          { id: 2, strength: '500mg', uoms: [{ id: 1, uom: 'CAPSULE(S)' }] }
-        ]
-      },
-      {
-        id: 2,
-        form_name: 'Suspension',
-        strengths: [
-          { id: 3, strength: '125mg/5ml', uoms: [{ id: 2, uom: 'ML' }] },
-          { id: 4, strength: '250mg/5ml', uoms: [{ id: 2, uom: 'ML' }] }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    drug_name: 'Ibuprofen',
-    image: '/src/assets/images/medications/ibuprofen.jpg',
-    description: 'Nonsteroidal anti-inflammatory drug (NSAID) used to reduce pain and inflammation',
-    price: 15.99,
-    discountPrice: 12.99,
-    brands: [
-      { id: 3, name: 'Advil' },
-      { id: 4, name: 'Motrin' }
-    ],
-    forms: [
-      {
-        id: 3,
-        form_name: 'Tablets',
-        strengths: [
-          { id: 5, strength: '200mg', uoms: [{ id: 1, uom: 'TABLET(S)' }] },
-          { id: 6, strength: '400mg', uoms: [{ id: 1, uom: 'TABLET(S)' }] },
-          { id: 7, strength: '600mg', uoms: [{ id: 1, uom: 'TABLET(S)' }] }
-        ]
-      },
-      {
-        id: 4,
-        form_name: 'Liquid',
-        strengths: [
-          { id: 8, strength: '100mg/5ml', uoms: [{ id: 2, uom: 'ML' }] }
-        ]
-      }
-    ]
-  },
-  {
-    id: 3,
-    drug_name: 'Omeprazole',
-    image: '/src/assets/images/medications/omeprazole.jpg',
-    description: 'Proton pump inhibitor used to reduce stomach acid production',
-    price: 35.99,
-    discountPrice: 29.99,
-    brands: [
-      { id: 5, name: 'Prilosec' },
-      { id: 6, name: 'Losec' }
-    ],
-    forms: [
-      {
-        id: 5,
-        form_name: 'Capsules',
-        strengths: [
-          { id: 9, strength: '10mg', uoms: [{ id: 1, uom: 'CAPSULE(S)' }] },
-          { id: 10, strength: '20mg', uoms: [{ id: 1, uom: 'CAPSULE(S)' }] },
-          { id: 11, strength: '40mg', uoms: [{ id: 1, uom: 'CAPSULE(S)' }] }
-        ]
-      },
-      {
-        id: 6,
-        form_name: 'Tablets',
-        strengths: [
-          { id: 12, strength: '20mg', uoms: [{ id: 1, uom: 'TABLET(S)' }] }
-        ]
-      }
-    ]
-  }
-]);
+const popularDrugs = ref<Medication[]>([]);
+const loading = ref(true);
 
-const handleSearch = () => {
+const handleSearch = async () => {
   if (!searchQuery.value.trim()) {
     searchResults.value = [];
     return;
   }
 
-  const query = searchQuery.value.toLowerCase().trim();
-  
-  searchResults.value = popularDrugs.value.filter(drug => {
-    // Search in drug name
-    if (drug.drug_name.toLowerCase().includes(query)) {
-      return true;
-    }
-    
-    // Search in brand names
-    if (drug.brands?.some(brand => brand.name.toLowerCase().includes(query))) {
-      return true;
-    }
-    
-    // Search in description
-    if (drug.description?.toLowerCase().includes(query)) {
-      return true;
-    }
-    
-    // Search in forms and strengths
-    if (drug.forms?.some(form => 
-      form.form_name.toLowerCase().includes(query) ||
-      form.strengths.some(strength => strength.strength.toLowerCase().includes(query))
-    )) {
-      return true;
-    }
-    
-    return false;
-  });
+  try {
+    const { medications } = await medicationService.liveSearch({
+      query: searchQuery.value.trim(),
+      perPage: 6,
+    });
+    searchResults.value = medications.slice(0, 6);
+  } catch (err) {
+    console.error('Error searching medications:', err);
+    searchResults.value = [];
+  }
 };
 
 const isVisible = ref(false);
 
+const loadPopularDrugs = async () => {
+  loading.value = true;
+  try {
+    const topSearched = await recentlyViewedService.getTopSearched();
+    if (topSearched && topSearched.length > 0) {
+      const drugIds = topSearched.slice(0, 3).map((drug: any) => drug.drug_id || drug.id);
+      if (drugIds.length > 0) {
+        popularDrugs.value = await medicationService.getMultipleMedications(drugIds);
+      }
+    } else {
+      const recentDrugs = await recentlyViewedService.getRecentDrugs();
+      if (recentDrugs && recentDrugs.length > 0) {
+        const drugIds = recentDrugs.slice(0, 3).map((drug: any) => drug.drug_id || drug.id);
+        if (drugIds.length > 0) {
+          popularDrugs.value = await medicationService.getMultipleMedications(drugIds);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error loading popular drugs:', err);
+    popularDrugs.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
   isVisible.value = true;
+  loadPopularDrugs();
 });
 </script>
 

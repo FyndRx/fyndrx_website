@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { dataService } from '@/services/dataService';
+import { medicationService } from '@/services/medicationService';
 import type { Medication } from '@/models/Medication';
 import LazyImage from './LazyImage.vue';
 import FavoriteButton from './FavoriteButton.vue';
@@ -21,12 +21,17 @@ const medication = ref<Medication | null>(null);
 const loading = ref(false);
 
 const loadMedication = async () => {
-  if (!props.medicationId) return;
+  if (!props.medicationId) {
+    medication.value = null;
+    return;
+  }
   
   loading.value = true;
   try {
-    const med = dataService.getMedicationById(props.medicationId);
-    medication.value = med || null;
+    medication.value = await medicationService.getMedicationById(props.medicationId);
+  } catch (err) {
+    console.error('Error loading medication:', err);
+    medication.value = null;
   } finally {
     loading.value = false;
   }
@@ -34,18 +39,30 @@ const loadMedication = async () => {
 
 const viewFullDetails = () => {
   if (medication.value) {
-    router.push({ name: 'MedicationDetail', params: { id: medication.value.id } });
+    router.push({ name: 'MedicationDetail', params: { id: String(medication.value.id) } });
     emit('close');
   }
 };
 
-watch(() => props.show, (newVal) => {
-  if (newVal && props.medicationId) {
+// Watch for show prop changes
+watch(() => props.show, (isShowing) => {
+  if (isShowing && props.medicationId) {
     loadMedication();
+  } else if (!isShowing) {
+    medication.value = null;
   }
 });
 
-watch(() => props.medicationId, () => {
+// Watch for medicationId changes
+watch(() => props.medicationId, (newId, oldId) => {
+  if (props.show && newId && newId !== oldId) {
+    loadMedication();
+  } else if (!newId) {
+    medication.value = null;
+  }
+});
+
+onMounted(() => {
   if (props.show && props.medicationId) {
     loadMedication();
   }
@@ -98,9 +115,13 @@ watch(() => props.medicationId, () => {
               </div>
 
               <div>
-                <div class="flex items-start gap-3 mb-4">
-                  <span class="inline-block px-3 py-1 text-sm font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]">
-                    {{ medication.category }}
+                <div class="flex items-start gap-3 mb-4 flex-wrap">
+                  <span 
+                    v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
+                    :key="index"
+                    class="inline-block px-3 py-1 text-sm font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]"
+                  >
+                    {{ cat }}
                   </span>
                   <span 
                     v-if="medication.requiresPrescription" 

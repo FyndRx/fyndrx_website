@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
+import { medicationService } from '@/services/medicationService';
 import type { Medication } from '@/models/Medication';
 import LazyImage from './LazyImage.vue';
 
@@ -17,10 +18,30 @@ const props = withDefaults(defineProps<Props>(), {
 
 const router = useRouter();
 const recentlyViewed = ref<Medication[]>([]);
+const loading = ref(false);
 
-const loadRecentlyViewed = () => {
-  const items = recentlyViewedService.getMedications();
-  recentlyViewed.value = items.slice(0, props.limit);
+const loadRecentlyViewed = async () => {
+  loading.value = true;
+  try {
+    // Get recently viewed drug IDs from API
+    const viewedItems = await recentlyViewedService.getRecentlyViewed();
+    
+    if (viewedItems.length > 0) {
+      // Get the drug IDs
+      const drugIds = viewedItems.slice(0, props.limit).map(item => item.drug_id);
+      
+      // Fetch full medication details
+      if (drugIds.length > 0) {
+        const medications = await medicationService.getMultipleMedications(drugIds);
+        recentlyViewed.value = medications;
+      }
+    }
+  } catch (err) {
+    console.error('Error loading recently viewed medications:', err);
+    recentlyViewed.value = [];
+  } finally {
+    loading.value = false;
+  }
 };
 
 const viewMedication = (id: number) => {
@@ -33,7 +54,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="recentlyViewed.length > 0" class="mb-8">
+  <div v-if="!loading && recentlyViewed.length > 0" class="mb-8">
     <div v-if="showTitle" class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -51,10 +72,10 @@ onMounted(() => {
         </div>
       </div>
       <button
-        @click="recentlyViewedService.clear(); loadRecentlyViewed()"
-        class="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+        @click="loadRecentlyViewed"
+        class="text-sm text-gray-500 hover:text-[#246BFD] dark:text-gray-400 dark:hover:text-[#5089FF] transition-colors"
       >
-        Clear History
+        Refresh
       </button>
     </div>
 
@@ -84,9 +105,15 @@ onMounted(() => {
             {{ medication.drug_name }}
           </h3>
           
-          <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-            {{ medication.category }}
-          </p>
+          <div class="flex flex-wrap gap-1">
+            <span 
+              v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 2) : [medication.category])"
+              :key="index"
+              class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+            >
+              {{ cat }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

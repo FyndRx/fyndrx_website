@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import prescriptionsData from '@/data/prescriptions.json';
+import { prescriptionService } from '@/services/prescription';
 import LazyImage from '@/components/LazyImage.vue';
 
 interface Medication {
@@ -84,11 +84,23 @@ const uploadNewPrescription = () => {
   router.push({ name: 'upload-prescription' });
 };
 
+const loadPrescriptions = async () => {
+  loading.value = true;
+  try {
+    const data = await prescriptionService.getPrescriptions();
+    prescriptions.value = data.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  } catch (err) {
+    console.error('Error loading prescriptions:', err);
+    prescriptions.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
-  prescriptions.value = (prescriptionsData as Prescription[]).sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-  loading.value = false;
+  loadPrescriptions();
 });
 </script>
 

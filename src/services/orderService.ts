@@ -1,98 +1,137 @@
-import type { Order, OrderTracking, OrderStatusHistory } from '@/models/Order';
-import ordersData from '@/data/orders.json';
+import type { Order, OrderTracking } from '@/models/Order';
+import { apiService } from './api';
+import type { 
+  OrderDetailApiResponse,
+  OrdersApiResponse,
+  OrderTrackingDetailApiResponse,
+  OrderApiResponse 
+} from '@/models/api';
+import { 
+  unwrapApiResponse,
+  unwrapArrayResponse,
+  transformOrder,
+  transformOrders,
+  transformOrderTracking 
+} from '@/utils/responseTransformers';
 
-const mockOrders = [...(ordersData as Order[])];
+export interface CreateOrderPayload {
+  pharmacy_branch_id: number;
+  delivery_method: 'delivery' | 'pickup';
+  delivery_address?: string;
+  delivery_lat?: number;
+  delivery_lng?: number;
+  phone_number: string;
+  payment_method: 'platform' | 'direct';
+  notes?: string;
+}
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Helper function to get user location
+export const getUserLocation = (): Promise<{ lat: number; lng: number }> => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        reject(error);
+      },
+      { timeout: 10000 }
+    );
+  });
+};
+
+export interface GetOrdersParams {
+  status?: string;
+  per_page?: number;
+  page?: number;
+}
 
 export const orderService = {
-  async getOrders(): Promise<Order[]> {
-    try {
-      await delay(500);
-      return mockOrders.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      throw error;
-    }
+  /**
+   * Create a new order
+   * @param payload - Order creation payload
+   * @returns Created order
+   */
+  async createOrder(payload: CreateOrderPayload): Promise<Order> {
+    const response = await apiService.postAuth<OrderDetailApiResponse>('/orders', payload);
+    const apiOrder = unwrapApiResponse(response);
+    return transformOrder(apiOrder);
   },
 
-  async getOrder(orderId: string): Promise<Order> {
-    try {
-      await delay(300);
-      const order = mockOrders.find(o => o.id === orderId);
-      if (!order) {
-        throw new Error('Order not found');
-      }
-      return order;
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      throw error;
+  /**
+   * Get user's orders
+   * @param params - Optional query parameters
+   * @returns Array of orders
+   */
+  async getOrders(params?: GetOrdersParams): Promise<Order[]> {
+    let url = '/orders';
+    if (params) {
+      const queryParams = new URLSearchParams();
+      if (params.status) queryParams.append('status', params.status);
+      if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+      if (params.page) queryParams.append('page', params.page.toString());
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
     }
+    const response = await apiService.getAuth<OrdersApiResponse>(url);
+    const apiOrders = unwrapArrayResponse(response);
+    return transformOrders(apiOrders);
   },
 
-  async getOrderTracking(orderId: string): Promise<OrderTracking> {
-    try {
-      await delay(300);
-      const order = mockOrders.find(o => o.id === orderId);
-      if (!order) {
-        throw new Error('Order not found');
-      }
-
-      const statusHistory: OrderStatusHistory[] = [
-        { status: 'pending', timestamp: order.createdAt, note: 'Order placed' }
-      ];
-
-      const statusOrder: Order['status'][] = ['pending', 'confirmed', 'processing', 'ready', 'out_for_delivery', 'completed'];
-      const currentIndex = statusOrder.indexOf(order.status);
-      
-      for (let i = 1; i <= currentIndex; i++) {
-        statusHistory.push({
-          status: statusOrder[i],
-          timestamp: new Date(new Date(order.createdAt).getTime() + i * 3600000).toISOString()
-        });
-      }
-
-      return {
-        order,
-        statusHistory,
-        currentStep: currentIndex,
-        estimatedDelivery: order.estimatedReadyTime
-      };
-    } catch (error) {
-      console.error('Error fetching order tracking:', error);
-      throw error;
-    }
+  /**
+   * Get order by ID
+   * @param orderId - Order ID
+   * @returns Order details
+   */
+  async getOrder(orderId: string | number): Promise<Order> {
+    const response = await apiService.getAuth<OrderDetailApiResponse>(`/orders/${orderId}`);
+    const apiOrder = unwrapApiResponse(response);
+    return transformOrder(apiOrder);
   },
 
-  async cancelOrder(orderId: string, reason?: string): Promise<void> {
-    try {
-      await delay(500);
-      const orderIndex = mockOrders.findIndex(o => o.id === orderId);
-      if (orderIndex !== -1) {
-        mockOrders[orderIndex].status = 'cancelled';
-        mockOrders[orderIndex].cancelledAt = new Date().toISOString();
-        mockOrders[orderIndex].cancellationReason = reason;
-      }
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      throw error;
-    }
+  /**
+   * Track order status
+   * @param orderId - Order ID
+   * @returns Order tracking information
+   */
+  async trackOrder(orderId: string | number): Promise<OrderTracking> {
+    const response = await apiService.getAuth<OrderTrackingDetailApiResponse>(
+      `/orders/${orderId}/track`
+    );
+    const apiTracking = unwrapApiResponse(response);
+    return transformOrderTracking(apiTracking);
   },
 
-  async reorder(orderId: string): Promise<void> {
-    try {
-      await delay(500);
-      const order = mockOrders.find(o => o.id === orderId);
-      if (!order) {
-        throw new Error('Order not found');
-      }
-      console.log('Reorder functionality will be implemented');
-    } catch (error) {
-      console.error('Error reordering:', error);
-      throw error;
-    }
+  /**
+   * Cancel an order
+   * @param orderId - Order ID
+   * @param cancellationReason - Reason for cancellation
+   */
+  async cancelOrder(orderId: string | number, cancellationReason: string): Promise<void> {
+    return await apiService.putAuth<void>(`/orders/${orderId}/cancel`, {
+      cancellation_reason: cancellationReason
+    });
+  },
+
+  /**
+   * Upload prescription for an order
+   * @param orderId - Order ID
+   * @param file - Prescription file
+   */
+  async uploadPrescription(orderId: string | number, file: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('prescription', file);
+    return await apiService.postAuth<void>(`/orders/${orderId}/prescription`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   }
 };
 

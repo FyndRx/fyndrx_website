@@ -28,7 +28,7 @@ export interface Medication {
   forms: MedicationForm[];
   image: string;
   predefinedQuantities: number[];
-  category: string;
+  category: string | string[]; // Can be string (legacy) or array of strings
   requiresPrescription: boolean;
 }
 

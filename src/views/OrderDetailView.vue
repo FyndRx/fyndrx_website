@@ -7,8 +7,8 @@ import type { Order } from '@/models/Order';
 import type { Transaction } from '@/models/Payment';
 import LazyImage from '@/components/LazyImage.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
-import ordersDataJson from '@/data/orders.json';
-import transactionsDataJson from '@/data/transactions.json';
+import { orderService } from '@/services/orderService';
+import { paymentService } from '@/services/paymentService';
 
 const route = useRoute();
 const router = useRouter();
@@ -70,12 +70,13 @@ const canCancel = computed(() => {
 });
 
 const handleCancelOrder = async () => {
-  if (!order.value) return;
+  if (!order.value || !cancellationReason.value.trim()) return;
 
   try {
+    await orderService.cancelOrder(order.value.id, cancellationReason.value);
     notification.success('Order Cancelled', 'Your order has been cancelled successfully.');
     showCancelModal.value = false;
-    router.push({ name: 'orders' });
+    await loadOrder();
   } catch (error) {
     notification.error('Cancellation Failed', 'Failed to cancel order. Please try again.');
   }
@@ -102,44 +103,51 @@ const handleAddReview = async (reviewData: { rating: number; title: string; comm
   
   try {
     await reviewService.addReview({
-      targetType: 'pharmacy',
-      targetId: String(order.value.pharmacyId),
-      targetName: order.value.pharmacyName,
-      orderId: order.value.id,
+      reviewable_type: 'pharmacy',
+      reviewable_id: order.value.pharmacyId,
       rating: reviewData.rating,
       title: reviewData.title,
       comment: reviewData.comment,
+      order_id: parseInt(order.value.id) || undefined,
     });
     
+    showAddReviewModal.value = false;
     notification.success('Review Submitted', 'Thank you for your feedback!');
   } catch (error) {
     notification.error('Submission Failed', 'Failed to submit review. Please try again.');
   }
 };
 
-onMounted(() => {
-  const orderId = route.params.id as string;
-  const ordersData = ordersDataJson as unknown as Order[];
-  const transactionsData = transactionsDataJson as unknown as Transaction[];
-  
-  console.log('Order ID:', orderId);
-  console.log('Orders Data:', ordersData);
-  console.log('Found Order:', ordersData.find(o => o.id === orderId));
-  
-  const orderData = ordersData.find(o => o.id === orderId);
-  
-  if (orderData) {
-    order.value = orderData;
+const loadOrder = async () => {
+  loading.value = true;
+  try {
+    const orderId = route.params.id as string;
+    order.value = await orderService.getOrder(orderId);
     
-    const transactionData = transactionsData.find(t => t.orderId === orderId);
-    if (transactionData) {
-      transaction.value = transactionData;
+    if (order.value) {
+      try {
+        const transactions = await paymentService.getTransactions();
+        const transactionData = transactions.find(t => t.order_id === orderId);
+        if (transactionData) {
+          transaction.value = transactionData;
+        }
+      } catch (err) {
+        console.error('Error loading transaction:', err);
+      }
+    } else {
+      router.push({ name: 'orders' });
     }
-  } else {
+  } catch (err) {
+    console.error('Error loading order:', err);
+    notification.error('Error', 'Failed to load order details');
     router.push({ name: 'orders' });
+  } finally {
+    loading.value = false;
   }
-  
-  loading.value = false;
+};
+
+onMounted(() => {
+  loadOrder();
 });
 </script>
 

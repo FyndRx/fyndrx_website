@@ -8,7 +8,7 @@ import { recentlyViewedService } from '@/services/recentlyViewedService';
 import type { Order } from '@/models/Order';
 import type { Medication } from '@/models/Medication';
 import type { Pharmacy } from '@/models/Pharmacy';
-import ordersData from '@/data/orders.json';
+import { orderService } from '@/services/orderService';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
@@ -56,16 +56,36 @@ const totalFavorites = computed(() => {
   return favoriteMedications.value.length + favoritePharmacies.value.length;
 });
 
+const loadDashboardData = async () => {
+  loading.value = true;
+  try {
+    orders.value = await orderService.getOrders({ per_page: 10 });
+    orders.value = orders.value.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    const savedDrugs = await favoritesService.getSavedDrugs();
+    if (savedDrugs.length > 0) {
+      const drugIds = savedDrugs.slice(0, 3).map(d => d.drug_id);
+      const { medicationService } = await import('@/services/medicationService');
+      favoriteMedications.value = await medicationService.getMultipleMedications(drugIds);
+    }
+    
+    const recentlyViewedData = await recentlyViewedService.getRecentlyViewed();
+    if (recentlyViewedData.length > 0) {
+      const drugIds = recentlyViewedData.slice(0, 4).map(d => d.drug_id);
+      const { medicationService } = await import('@/services/medicationService');
+      recentlyViewed.value = await medicationService.getMultipleMedications(drugIds);
+    }
+  } catch (err) {
+    console.error('Error loading dashboard data:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
-  orders.value = (ordersData as Order[]).sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-  
-  favoriteMedications.value = favoritesService.getFavoriteMedications().slice(0, 3);
-  favoritePharmacies.value = favoritesService.getFavoritePharmacies().slice(0, 2);
-  recentlyViewed.value = recentlyViewedService.getMedications().slice(0, 4);
-  
-  loading.value = false;
+  loadDashboardData();
 });
 </script>
 
@@ -186,7 +206,15 @@ onMounted(() => {
               />
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-gray-900 dark:text-white truncate">{{ medication.drug_name }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ medication.category }}</p>
+                <div class="flex flex-wrap gap-1">
+                  <span 
+                    v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 1) : [medication.category])"
+                    :key="index"
+                    class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                  >
+                    {{ cat }}
+                  </span>
+                </div>
               </div>
               <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
@@ -262,7 +290,15 @@ onMounted(() => {
                 className="w-full h-20 rounded-lg object-cover mb-2"
               />
               <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ medication.drug_name }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ medication.category }}</p>
+              <div class="flex flex-wrap gap-1">
+                <span 
+                  v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 1) : [medication.category])"
+                  :key="index"
+                  class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                >
+                  {{ cat }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
