@@ -49,7 +49,7 @@ const handleSubmit = async () => {
     });
     successMessage.value = 'Login successful! Redirecting...';
     // Wait for the auth store to update and verify authentication
-    await authStore.checkAuth();
+    // await authStore.checkAuth(); // Optimization: Removed redundant check
     // Small delay to show success message
     await new Promise(resolve => setTimeout(resolve, 1000));
     
