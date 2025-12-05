@@ -17,23 +17,41 @@ export interface PharmacyDrugFormApiResponse {
 
 export interface PharmacyDrugApiResponse {
   id: number;
-  drugId: number;
-  drug_price_id: number;
-  name: string; // Drug name with strength (e.g., "TOLBUTAMIDE 200MCG")
-  description: string;
-  price: number;
-  inStock: boolean;
-  stockQuantity: number;
-  category: string[];
-  image: string | null;
-  predefinedQuantities: string[]; // Array of strings like ["1", "2", "5", "10", "30"]
-  brands: PharmacyDrugBrandApiResponse[];
-  forms: PharmacyDrugFormApiResponse[];
-  requiresPrescription: boolean;
+  pharmacy_id: number;
+  branch_id: number;
+  drug_id: number;
+  drug: {
+    id: number;
+    drug_name: string;
+    description: string | null;
+    image: string | null;
+    requires_prescription: boolean;
+  };
+  brand: {
+    id: number;
+    name: string;
+  } | null;
+  form: {
+    id: number;
+    form_name: string;
+  } | null;
+  strength: {
+    id: number;
+    strength: string;
+  } | null;
+  uom: {
+    id: number;
+    uom: string;
+  } | null;
+  normal_price: number;
+  discounted_price: number;
+  max_discounted_price: string;
+  is_active: number;
+  predefinedQuantities?: string[]; // Optional as it wasn't in the curl output but might be there
 }
 
 // Response from /pharmacy-drugs
-export type PharmacyDrugsApiResponse = 
+export type PharmacyDrugsApiResponse =
   | PharmacyDrugApiResponse[]
   | { data: PharmacyDrugApiResponse[] };
 

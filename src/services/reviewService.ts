@@ -1,17 +1,17 @@
 import type { Review, ReviewStats } from '@/models/Review';
 import { apiService } from './api';
-import type { 
+import type {
   ReviewsApiResponse,
   ReviewStatsDetailApiResponse,
   ReviewApiResponse,
-  ReviewStatsApiResponse 
+  ReviewStatsApiResponse
 } from '@/models/api';
-import { 
+import {
   unwrapApiResponse,
   unwrapArrayResponse,
   transformReview,
   transformReviews,
-  transformReviewStats 
+  transformReviewStats
 } from '@/utils/responseTransformers';
 
 export interface GetReviewsParams {
@@ -91,7 +91,7 @@ class ReviewService {
    */
   async addReview(review: CreateReviewRequest): Promise<Review> {
     const response = await apiService.postAuth<ReviewApiResponse | { data: ReviewApiResponse }>(
-      '/reviews', 
+      '/reviews',
       review
     );
     const apiReview = unwrapApiResponse(response);
@@ -106,7 +106,7 @@ class ReviewService {
    */
   async updateReview(reviewId: string | number, data: UpdateReviewRequest): Promise<Review> {
     const response = await apiService.putAuth<ReviewApiResponse | { data: ReviewApiResponse }>(
-      `/reviews/${reviewId}`, 
+      `/reviews/${reviewId}`,
       data
     );
     const apiReview = unwrapApiResponse(response);
@@ -140,8 +140,8 @@ class ReviewService {
    * @returns Array of reviews
    */
   async getReviewsByTarget(
-    targetType: 'medication' | 'pharmacy', 
-    targetId: number, 
+    targetType: 'medication' | 'pharmacy',
+    targetId: number,
     params?: Omit<GetReviewsParams, 'type' | 'id'>
   ): Promise<Review[]> {
     return this.getReviews({

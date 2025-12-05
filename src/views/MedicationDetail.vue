@@ -90,8 +90,8 @@ const filteredPharmacies = computed(() => {
   if (pharmacySearch.value) {
     const query = pharmacySearch.value.toLowerCase();
     result = result.filter(p => 
-      p.pharmacy?.name?.toLowerCase().includes(query) ||
-      p.pharmacy_name?.toLowerCase().includes(query)
+      (p.pharmacy?.name || '').toLowerCase().includes(query) ||
+      (p.pharmacy_name || '').toLowerCase().includes(query)
     );
   }
 
@@ -684,7 +684,6 @@ watch(() => route.params.id, async (newId) => {
               </div>
 
               <!-- Search and Filters -->
-              <!-- Search and Filters -->
               <PharmacySearchFilter
                 v-model="pharmacySearch"
                 v-model:sort-by="pharmacySort"
@@ -778,10 +777,10 @@ watch(() => route.params.id, async (newId) => {
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price per unit</p>
                     <div class="flex items-baseline gap-2">
                       <span class="text-2xl font-bold text-[#246BFD]">
-                        GH₵ {{ pharmacy.price.toFixed(2) }}
+                        GH₵ {{ (pharmacy.price || 0).toFixed(2) }}
                       </span>
                       <span v-if="pharmacy.discountPrice" class="text-sm text-gray-400 line-through">
-                        GH₵ {{ pharmacy.discountPrice.toFixed(2) }}
+                        GH₵ {{ (pharmacy.discountPrice || 0).toFixed(2) }}
                       </span>
                     </div>
                   </div>
@@ -851,7 +850,7 @@ watch(() => route.params.id, async (newId) => {
         </div>
 
 
-      <!-- Reviews Section -->
+        <!-- Reviews Section -->
         <div class="mt-12">
           <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
             <div v-if="reviewsLoading" class="py-12 text-center">

@@ -172,36 +172,41 @@ export const pharmacyService = {
       // Map pharmacy drug response to Medication model
       return drugs.map((drug): Medication => {
         // Parse predefinedQuantities from string array to number array
-        // Example: ["1", "2", "5", "10", "30"] -> [1, 2, 5, 10, 30]
         const parsedQuantities: number[] = (drug.predefinedQuantities || []).map(qtyStr => {
           const num = parseInt(qtyStr.trim(), 10);
           return isNaN(num) ? 0 : num;
         }).filter(num => num > 0);
 
-        // Map brands from API format to MedicationBrand format
-        const brands = (drug.brands || []).map(brand => ({
-          id: brand.brand_id, // Use brand_id as the id
-          name: brand.name,
-        }));
+        // Map single brand to array
+        const brands = drug.brand ? [{
+          id: drug.brand.id,
+          name: drug.brand.name,
+        }] : [];
 
-        // Map forms from API format to MedicationForm format
-        // Note: API forms don't include strengths, so we create empty strengths array
-        const forms = (drug.forms || []).map(form => ({
-          id: form.form_id, // Use form_id as the id
-          form_name: form.form_name,
-          strengths: [], // Not available in pharmacy-drugs response
-        }));
+        // Map single form to array
+        const forms = drug.form ? [{
+          id: drug.form.id,
+          form_name: drug.form.form_name,
+          strengths: drug.strength ? [{
+            id: drug.strength.id,
+            strength: drug.strength.strength,
+            uoms: drug.uom ? [{
+              id: drug.uom.id,
+              uom: drug.uom.uom
+            }] : []
+          }] : []
+        }] : [];
 
         return {
-          id: drug.drugId, // Use drugId as the medication ID
-          drug_name: drug.name,
-          description: drug.description,
+          id: drug.drug_id,
+          drug_name: drug.drug?.drug_name || '',
+          description: drug.drug?.description || '',
           brands,
           forms,
-          image: drug.image || '',
+          image: drug.drug?.image || '',
           predefinedQuantities: parsedQuantities,
-          category: drug.category || [], // Keep as array for chip display
-          requiresPrescription: drug.requiresPrescription,
+          category: [], // Category not present in new response structure
+          requiresPrescription: drug.drug?.requires_prescription || false,
         };
       });
     } catch (error) {
