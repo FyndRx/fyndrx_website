@@ -1,25 +1,18 @@
 import type { CartItem, Cart } from '@/models/Cart';
 import { apiService } from './api';
-import type { 
+import type {
   GetCartApiResponse,
   AddToCartApiResponse,
-  UpdateCartItemApiResponse,
-  CartApiResponse,
-  CartItemApiResponse 
+  UpdateCartItemApiResponse
 } from '@/models/api';
-import { 
+import {
   unwrapApiResponse,
   transformCart,
-  transformCartItem 
+  transformCartItem
 } from '@/utils/responseTransformers';
 
 export interface AddToCartRequest {
-  drug_id: number;
-  drug_brand_id: number;
-  drug_brand_form_id: number;
-  dosage_id: number;
-  strength_uom_id: number;
-  pharmacy_branch_id: number;
+  pharmacy_drug_price_id: number;
   quantity: number;
 }
 
@@ -61,7 +54,7 @@ export const cartService = {
    */
   async updateCartItem(itemId: string | number, quantity: number): Promise<CartItem> {
     const response = await apiService.putAuth<UpdateCartItemApiResponse>(
-      `/cart/items/${itemId}`, 
+      `/cart/items/${itemId}`,
       { quantity }
     );
     const apiItem = unwrapApiResponse(response);

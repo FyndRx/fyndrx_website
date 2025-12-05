@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { consultationService } from '@/services/consultationService';
 import type { Consultation, ConsultationFilters } from '@/types/consultation';
 import ConsultationCard from './ConsultationCard.vue';
@@ -39,12 +40,13 @@ const fetchConsultations = async () => {
     filters.value.sort_order = sortOrder as 'asc' | 'desc';
     
     const response = await consultationService.getConsultations(filters.value);
+    
     // Handle both array response and paginated response structure
     if (Array.isArray(response)) {
       consultations.value = response;
     } else if (response && (response as any).data) {
       consultations.value = (response as any).data;
-      meta.value = (response as any).meta;
+      meta.value = (response as any).meta || {};
     }
   } catch (error) {
     console.error('Failed to fetch consultations:', error);
@@ -78,6 +80,12 @@ watch(selectedSort, () => {
   fetchConsultations();
 });
 
+const router = useRouter();
+
+const handleView = (consultation: Consultation) => {
+  router.push({ name: 'consultation-detail', params: { id: consultation.id } });
+};
+
 onMounted(() => {
   fetchConsultations();
 });
@@ -86,7 +94,7 @@ onMounted(() => {
 <template>
   <div>
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold text-gray-800">My Consultations</h2>
+      <h2 class="text-xl font-semibold text-gray-800 dark:text-white">My Consultations</h2>
       <div class="w-48">
         <Dropdown
           v-model="selectedSort"
@@ -97,7 +105,7 @@ onMounted(() => {
     </div>
 
     <div v-if="loading" class="space-y-4">
-      <div v-for="i in 3" :key="i" class="animate-pulse bg-white rounded-lg h-40"></div>
+      <div v-for="i in 3" :key="i" class="animate-pulse bg-gray-100 dark:bg-gray-800 rounded-2xl h-40 border border-gray-200 dark:border-gray-700"></div>
     </div>
 
     <div v-else-if="consultations.length > 0" class="space-y-4">
@@ -106,13 +114,17 @@ onMounted(() => {
         :key="consultation.id"
         :consultation="consultation"
         @cancel="handleCancel"
+        @view="handleView"
       />
       
       <Pagination
         v-if="meta.last_page > 1"
         :current-page="meta.current_page"
         :total-pages="meta.last_page"
+        :total-items="meta.total"
+        :per-page="meta.per_page"
         @page-change="handlePageChange"
+        @update:per-page="(val) => { filters.per_page = val; fetchConsultations(); }"
         class="mt-6"
       />
     </div>
