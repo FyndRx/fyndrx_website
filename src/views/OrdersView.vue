@@ -190,11 +190,11 @@ onMounted(() => {
                     <span
                       :class="[
                         'px-3 py-1 text-xs font-semibold rounded-full',
-                        statusColors[order.status].bg,
-                        statusColors[order.status].text
+                        (statusColors[order.status] || statusColors.pending).bg,
+                        (statusColors[order.status] || statusColors.pending).text
                       ]"
                     >
-                      {{ statusLabels[order.status] }}
+                      {{ statusLabels[order.status] || order.status }}
                     </span>
                   </div>
                   <p class="text-sm text-gray-600 dark:text-gray-400">{{ order.pharmacyName }}</p>
@@ -218,8 +218,24 @@ onMounted(() => {
                     />
                   </div>
                   <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ item.medicationName }}</p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">Qty: {{ item.quantity }}</p>
+                    <div>
+                      <h4 class="font-medium text-gray-900 dark:text-white">
+                        {{ item.medicationName }}
+                      </h4>
+                      <div class="mt-1 space-y-0.5">
+                        <p v-if="item.brandName" class="text-sm text-gray-600 dark:text-gray-400">
+                          Brand: {{ item.brandName }}
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                          {{ item.formName }} • {{ item.strength }} • {{ item.uom }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm text-gray-500">
+                        {{ item.quantity }} x GHS {{ item.price.toFixed(2) }}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <span v-if="order.items.length > 3" class="text-sm text-gray-500 dark:text-gray-400">
@@ -254,7 +270,7 @@ onMounted(() => {
                 <p class="text-2xl font-bold text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</p>
               </div>
-              <button class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all">
+              <button class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all" title="View Order Details">
                 View Details →
               </button>
             </div>
