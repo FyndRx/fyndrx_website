@@ -215,6 +215,16 @@ const router = createRouter({
       }
     },
     {
+      path: '/consultations',
+      name: 'consultations',
+      component: () => import('@/views/ConsultationsView.vue'),
+      meta: {
+        title: 'Consultations | FyndRX',
+        description: 'Manage your medical consultations',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/orders',
       name: 'orders',
       component: () => import('@/views/OrdersView.vue'),
