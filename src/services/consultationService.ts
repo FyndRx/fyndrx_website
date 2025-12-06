@@ -1,4 +1,4 @@
-import api from './api';
+import { apiService as api } from './api';
 import type {
     Consultation,
     ConsultationStats,
@@ -15,37 +15,57 @@ export const consultationService = {
             }
         });
 
-        const response = await api.get<{ data: Consultation[]; meta: any }>(`/consultations?${params.toString()}`);
-        return response.data;
+        const response = await api.getAuth<{ data: Consultation[]; meta: any }>(`/consultations?${params.toString()}`);
+        return response;
     },
 
     async getConsultationStats() {
-        const response = await api.get<ConsultationStats>('/consultations/stats');
-        return response.data;
+        const response = await api.getAuth<ConsultationStats>('/consultations/stats');
+        return response;
     },
 
     async getConsultationById(id: number) {
-        const response = await api.get<Consultation>(`/consultations/${id}`);
-        return response.data;
+        const response = await api.getAuth<Consultation>(`/consultations/${id}`);
+        return response;
     },
 
     async createConsultation(payload: CreateConsultationPayload) {
-        const response = await api.post<Consultation>('/consultations', payload);
-        return response.data;
+        if (payload.attachments && payload.attachments.length > 0) {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => {
+                if (key === 'attachments') {
+                    (value as File[]).forEach(file => formData.append('attachments[]', file));
+                } else if (value !== undefined && value !== null && value !== '') {
+                    // Convert boolean/numbers to string, explicit check to avoid "undefined" string
+                    formData.append(key, String(value));
+                }
+            });
+            // Debugging payload
+            // for (let pair of formData.entries()) { console.log(pair[0]+ ', ' + pair[1]); }
+            const response = await api.postAuth<Consultation>('/consultations', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return response;
+        }
+
+        const response = await api.postAuth<Consultation>('/consultations', payload);
+        return response;
     },
 
     async updateConsultation(id: number, payload: Partial<CreateConsultationPayload>) {
-        const response = await api.put<Consultation>(`/consultations/${id}`, payload);
-        return response.data;
+        const response = await api.putAuth<Consultation>(`/consultations/${id}`, payload);
+        return response;
     },
 
     async cancelConsultation(id: number, reason: string) {
-        const response = await api.post<Consultation>(`/consultations/${id}/cancel`, { reason });
-        return response.data;
+        const response = await api.postAuth<Consultation>(`/consultations/${id}/cancel`, { reason });
+        return response;
     },
 
     async rateConsultation(id: number, rating: number, feedback?: string) {
-        const response = await api.post<Consultation>(`/consultations/${id}/rate`, { rating, feedback });
-        return response.data;
+        const response = await api.postAuth<Consultation>(`/consultations/${id}/rate`, { rating, feedback });
+        return response;
     }
 };
