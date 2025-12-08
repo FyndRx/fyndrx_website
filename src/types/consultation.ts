@@ -41,6 +41,13 @@ export interface Consultation {
         name: string;
         logo?: string;
     };
+    assigned_pharmacist?: {
+        id: number;
+        name: string;
+        email: string;
+        phone_number: string;
+    };
+    attachments?: string[];
 }
 
 export interface ConsultationStats {
@@ -68,11 +75,13 @@ export interface CreateConsultationPayload {
     patient_email: string;
     patient_phone: string;
     patient_date_of_birth?: string;
-    patient_gender?: 'male' | 'female' | 'other';
+    patient_gender?: 'male' | 'female';
     pharmacy_id: number;
     pharmacy_branch_id?: number;
     scheduled_at?: string;
     source?: string;
+    attachments?: File[];
+    user_id: number;
 }
 
 export interface ConsultationFilters {
