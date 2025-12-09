@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
+import { authService } from '@/services/auth.service';
 import TextInput from '@/components/TextInput.vue';
 
 const router = useRouter();
@@ -17,6 +18,21 @@ const form = ref({
 
 const loading = ref(false);
 const prescriptionFile = ref<File | null>(null);
+
+onMounted(async () => {
+  try {
+    const user = await authService.getUserDetails();
+    if (user) {
+      form.value.first_name = user.firstname || '';
+      form.value.last_name = user.lastname || '';
+      form.value.email = user.email || '';
+      form.value.phone_number = user.phone_number || '';
+    }
+  } catch (error) {
+    console.error('Failed to load user details:', error);
+  }
+});
+
 const prescriptionPreview = ref<string | null>(null);
 const fieldErrors = ref({
   first_name: '',
