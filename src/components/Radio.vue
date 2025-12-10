@@ -1,3 +1,20 @@
+<script setup lang="ts">
+defineProps<{
+  id?: string;
+  name: string;
+  label?: string;
+  value: string;
+  modelValue: string;
+  disabled?: boolean;
+  error?: string;
+  helper?: string;
+}>();
+
+defineEmits<{
+  (e: 'update:modelValue', value: string): void;
+}>();
+</script>
+
 <template>
   <div class="flex items-center">
     <input
@@ -25,21 +42,4 @@
   </div>
   <p v-if="error" class="mt-1 text-sm text-red-500">{{ error }}</p>
   <p v-if="helper" class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ helper }}</p>
-</template>
-
-<script setup lang="ts">
-defineProps<{
-  id?: string;
-  name: string;
-  label?: string;
-  value: string;
-  modelValue: string;
-  disabled?: boolean;
-  error?: string;
-  helper?: string;
-}>();
-
-defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>();
-</script> 
+</template> 
