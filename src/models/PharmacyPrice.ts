@@ -8,14 +8,16 @@ export interface PharmacyPrice {
   drug_brand_id: number;
   drug_brand_form_id: number;
   dosage_id: number;
+  strength_id?: number;
   strength_uom_id: number;
+  uom_id?: number;
   price: number;
   discount_price?: number;
   stock_quantity?: number;
   in_stock?: boolean;
   created_at: string;
   updated_at: string;
-  
+
   // Optional nested pharmacy data (if included in response)
   pharmacy?: {
     id: number;
@@ -35,12 +37,20 @@ export interface PharmacyPrice {
     address?: string;
     pharmacy_id?: number;
   };
-  
+
   // Optional flat fields (if API returns flat structure)
   pharmacy_name?: string;
   pharmacy_logo?: string;
   pharmacy_address?: string;
   distance?: string;
   rating?: number;
+
+  // Optional drug details for display
+  drug_name?: string;
+  drug_image?: string;
+  brand_name?: string;
+  form_name?: string;
+  strength?: string;
+  uom?: string;
 }
 
