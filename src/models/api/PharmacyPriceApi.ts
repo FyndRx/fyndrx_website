@@ -16,7 +16,9 @@ export interface PharmacyPriceApiResponse {
   dosage_id: number;
   strength_uom_id: number;
   price: number;
+  normal_price?: number; // Added from actual API response
   discount_price?: number;
+  discounted_price?: number; // Added from actual API response
   stock_quantity?: number;
   in_stock?: boolean;
   created_at: string;
@@ -40,8 +42,32 @@ export interface PharmacyPriceApiResponse {
   formId?: number;
   strengthId?: number;
   uomId?: number;
+
+  // Raw snake_case fields from some endpoints
+  form_id?: number;
+  strength_id?: number;
+  uom_id?: number;
+
   discountPrice?: number;
   inStock?: boolean;
+
+  // New fields from confirmed API response
+  drug_name?: string;
+  drugName?: string;
+  drug_image?: string;
+  drugImage?: string;
+  brand_name?: string;
+  brandName?: string;
+  form_name?: string;
+  formName?: string;
+  strength?: string;
+  strengthValue?: string;
+  uom?: string;
+  uomValue?: string;
+
+  // Confirmed fields from investigation
+  brand_id?: number;
+  uom_name?: string | { id: number; uom: string }; // Handle both old object and new string format just in case
 }
 
 // Response from /pharmacy-prices
