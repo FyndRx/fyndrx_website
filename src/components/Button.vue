@@ -16,7 +16,7 @@ defineEmits<{
   <button
     :type="type"
     :class="[
-      'rounded-full font-medium transition-all duration-300',
+      'rounded-full font-medium transition-all duration-300 inline-flex items-center justify-center',
       variant === 'primary' ? 'bg-[#246BFD] text-white hover:bg-[#5089FF] hover:shadow-lg hover:shadow-[#246BFD]/20' : 
       variant === 'secondary' ? 'bg-white text-[#246BFD] border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white' :
       variant === 'accent' ? 'bg-[#FE9615] text-white hover:bg-[#ffb547] hover:shadow-lg hover:shadow-[#FE9615]/20' : '',
