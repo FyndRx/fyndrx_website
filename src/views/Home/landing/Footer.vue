@@ -50,6 +50,7 @@ const socialLinks = [
 const quickLinks = [
   { name: 'Home', path: '/' },
   { name: 'Blog', path: '/blog' },
+  { name: 'Consultations', path: '/consultations' },
   { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' }
 ];
