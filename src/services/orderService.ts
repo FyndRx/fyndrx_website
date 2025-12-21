@@ -3,8 +3,7 @@ import { apiService } from './api';
 import type { 
   OrderDetailApiResponse,
   OrdersApiResponse,
-  OrderTrackingDetailApiResponse,
-  OrderApiResponse 
+  OrderTrackingDetailApiResponse 
 } from '@/models/api';
 import { 
   unwrapApiResponse,

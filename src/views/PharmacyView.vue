@@ -3,19 +3,22 @@ import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useNotification } from '@/composables/useNotification';
-import { pharmacyService } from '@/services/pharmacyService';
+import { useCartStore } from '@/store/cart';
+import { pharmacyService, type PharmacyPrice } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
 import { useDataCacheStore } from '@/store/dataCache';
 import type { Pharmacy } from '@/models/Pharmacy';
-import type { Medication } from '@/models/Medication';
 import type { Review, ReviewStats } from '@/models/Review';
 import LazyImage from '@/components/LazyImage.vue';
 import RatingStars from '@/components/RatingStars.vue';
 import ReviewCard from '@/components/ReviewCard.vue';
+
 import AddReviewModal from '@/components/AddReviewModal.vue';
+import Pagination from '@/components/Pagination.vue';
 
 const router = useRouter();
 const notification = useNotification();
+const cartStore = useCartStore();
 
 const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
 
@@ -24,7 +27,7 @@ const dataCache = useDataCacheStore();
 const { registerElement } = useScrollAnimation();
 
 const pharmacy = ref<Pharmacy | null>(null);
-const pharmacyMedications = ref<Medication[]>([]);
+const pharmacyPrices = ref<PharmacyPrice[]>([]);
 const reviews = ref<Review[]>([]);
 const reviewStats = ref<ReviewStats | null>(null);
 const loading = ref(false);
@@ -34,18 +37,36 @@ const medicationSearch = ref('');
 const showAddReviewModal = ref(false);
 const reviewsLoading = ref(false);
 
-const filteredPharmacyMedications = computed(() => {
-  if (!medicationSearch.value) return pharmacyMedications.value;
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+const filteredPrices = computed(() => {
+  if (!medicationSearch.value) return pharmacyPrices.value;
   
   const query = medicationSearch.value.toLowerCase();
-  return pharmacyMedications.value.filter(med =>
-    med.drug_name.toLowerCase().includes(query) ||
-    (Array.isArray(med.category) 
-      ? med.category.some(cat => cat.toLowerCase().includes(query))
-      : med.category.toLowerCase().includes(query)) ||
-    med.description.toLowerCase().includes(query)
+  return pharmacyPrices.value.filter(price =>
+    (price.drug_name || '').toLowerCase().includes(query) ||
+    (price.brand_name || '').toLowerCase().includes(query)
   );
 });
+
+const paginatedPrices = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredPrices.value.slice(start, end);
+});
+
+const totalPages = computed(() => Math.ceil(filteredPrices.value.length / itemsPerPage.value));
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  // Scroll to top of medications list
+  const medSection = document.querySelector('.medications-grid');
+  if (medSection) {
+    medSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 const loadPharmacy = async () => {
   loading.value = true;
@@ -115,18 +136,14 @@ const loadPharmacy = async () => {
     }
     
     if (pharmacy.value) {
-      // Get prices for this pharmacy and cache them
-      const prices = await pharmacyService.getPricesByPharmacy(id);
+      // Get prices for this pharmacy and cache them (requesting large page size to get all)
+      const prices = await pharmacyService.getPricesByPharmacy(id, { per_page: 1000 });
       dataCache.setPharmacyPrices(prices);
       
-      // Get medications available at this pharmacy
-      // This method handles the workaround: gets prices, extracts medication IDs, and fetches medications
-      pharmacyMedications.value = await pharmacyService.getPharmacyMedications(id);
+      // Update state with prices directly
+      pharmacyPrices.value = prices;
       
-      // Cache the fetched medications
-      if (pharmacyMedications.value.length > 0) {
-        dataCache.setMedications(pharmacyMedications.value);
-      }
+      // Removed: getPharmacyMedications call
       
       await loadReviews();
     } else {
@@ -245,7 +262,40 @@ const handleReviewNotHelpful = async (reviewId: string | number) => {
   }
 };
 
+const addToCart = (price: PharmacyPrice) => {
+  if (!pharmacy.value) return;
+  
+  cartStore.addItem({
+    medicationId: price.drug_id || (price as any).medicationId, // mapping might needed based on API
+    medicationName: price.drug_name || '',
+    pharmacyId: pharmacy.value.id,
+    pharmacyName: pharmacy.value.name,
+    pharmacyLogo: pharmacy.value.image, // Check mapping
+
+    formId: price.drug_brand_form_id,
+    formName: price.form_name || '',
+    strengthId: price.dosage_id,
+    strength: price.strength || '',
+    uomId: price.strength_uom_id,
+    uom: price.uom || '',
+    
+    quantity: 1,
+    price: price.price,
+    discountPrice: price.discount_price,
+    image: (price as any).drug_image || '', // Ensure image is available or fallback
+    inStock: price.in_stock || false,
+    requiresPrescription: (price as any).requires_prescription || false,
+    pharmacyBranchId: price.pharmacy_branch_id || pharmacy.value.id
+  });
+
+  notification.success(
+    'Added to Cart!',
+    `1 x ${price.drug_name} (${price.strength} ${price.uom})`
+  );
+};
+
 const viewMedicationDetails = (medicationId: number) => {
+  if (!medicationId) return;
   router.push({ name: 'MedicationDetail', params: { id: medicationId } });
 };
 
@@ -584,63 +634,96 @@ onMounted(() => {
                         </svg>
                   </div>
                   <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Showing {{ filteredPharmacyMedications.length > 10 ? 10 : filteredPharmacyMedications.length }} of {{ pharmacyMedications.length }} medications
+                    Showing {{ paginatedPrices.length }} of {{ filteredPrices.length }} medications
                   </p>
                 </div>
 
-                <!-- Medications Grid -->
-                <div v-if="filteredPharmacyMedications.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Medications List -->
+                <div v-if="paginatedPrices.length > 0" class="space-y-4">
                   <div
-                    v-for="medication in filteredPharmacyMedications.slice(0, 10)"
-                    :key="medication.id"
-                    @click="viewMedicationDetails(medication.id)"
-                    class="p-6 transition-all duration-300 bg-gray-50 dark:bg-gray-700 rounded-xl hover:shadow-lg hover:-translate-y-1 cursor-pointer group"
+                    v-for="price in paginatedPrices"
+                    :key="price.id"
+                    class="p-4 transition-all duration-300 bg-white border border-gray-100 dark:border-gray-700 dark:bg-gray-800 rounded-xl hover:shadow-md group"
                   >
-                    <div class="flex gap-4">
-                      <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-white dark:bg-gray-800 rounded-lg">
-                        <LazyImage
-                          :src="medication.image"
-                          :alt="medication.drug_name"
-                          aspectRatio="square"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between mb-2">
-                          <div class="flex-1">
-                            <h4 class="mb-1 font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">
-                              {{ medication.drug_name }}
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                       <!-- Image (placeholder available) -->
+                       <div class="flex-shrink-0 w-16 h-16 overflow-hidden bg-white dark:bg-gray-700 rounded-lg">
+                         <LazyImage
+                           :src="price.drug_image || ''"
+                           :alt="price.drug_name || ''"
+                           aspectRatio="square"
+                           className="w-full h-full object-cover"
+                         />
+                       </div>
+                       
+                       <div class="flex-1 min-w-0">
+                         <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors cursor-pointer" @click="viewMedicationDetails(price.drug_id || (price as any).medicationId)">
+                              {{ price.drug_name }}
                             </h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                              {{ medication.description }}
-                            </p>
+                            <span v-if="(price as any).requires_prescription" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-300 rounded-full">
+                              Rx
+                            </span>
+                         </div>
+                         
+                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            {{ price.brand_name }} • {{ price.form_name }} • {{ price.strength }} {{ price.uom }}
+                         </p>
+                         
+                         <div class="flex items-center gap-2">
+                           <span 
+                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                             :class="price.in_stock ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'"
+                           >
+                             <span class="w-1.5 h-1.5 rounded-full" :class="price.in_stock ? 'bg-green-500' : 'bg-red-500'"></span>
+                             {{ price.in_stock ? 'In Stock' : 'Out of Stock' }}
+                           </span>
+                         </div>
+                       </div>
+                       
+                       <!-- Price & Action -->
+                       <div class="flex flex-row items-center justify-between gap-4 pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 sm:flex-col sm:items-end sm:justify-center sm:pt-0 sm:mt-0 sm:border-0">
+                          <div class="text-right">
+                            <div class="flex items-baseline gap-2 justify-end">
+                              <span class="text-lg font-bold text-gray-900 dark:text-white">
+                                GH₵ {{ (price.discount_price || price.price).toFixed(2) }}
+                              </span>
+                              <span v-if="price.discount_price && price.discount_price < price.price" class="text-xs text-gray-400 line-through">
+                                GH₵ {{ price.price.toFixed(2) }}
+                              </span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">per unit</p>
                           </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 mb-2 flex-wrap">
-                          <span 
-                            v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
-                            :key="index"
-                            class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
-                          >
-                            {{ cat }}
-                          </span>
-                          <span v-if="medication.requiresPrescription" class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
-                            Rx Required
-                          </span>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-3">
-                          <p class="text-xs text-gray-600 dark:text-gray-400">
-                            {{ medication.forms.length }} {{ medication.forms.length === 1 ? 'form' : 'forms' }} available
-                          </p>
-                          <button class="text-xs font-medium text-[#246BFD] hover:text-[#5089FF] transition-colors">
-                            View Details →
-                          </button>
-                        </div>
-                      </div>
+                          
+                          <div class="flex gap-2">
+                             <button 
+                               @click="viewMedicationDetails(price.drug_id || (price as any).medicationId)"
+                               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                             >
+                               Details
+                             </button>
+                             <button
+                               @click="addToCart(price)"
+                               :disabled="!price.in_stock"
+                               class="px-4 py-2 text-sm font-medium text-white bg-[#246BFD] rounded-lg hover:bg-[#1a5cff] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                             >
+                               Add
+                             </button>
+                          </div>
+                       </div>
                     </div>
+                  </div>
+                  
+                  <!-- Pagination -->
+                  <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <Pagination
+                      :current-page="currentPage"
+                      :total-pages="totalPages"
+                      :total-items="filteredPrices.length"
+                      :per-page="itemsPerPage"
+                      @update:page="handlePageChange"
+                      @update:per-page="(val) => itemsPerPage = val"
+                    />
                   </div>
                 </div>
 
@@ -649,7 +732,7 @@ onMounted(() => {
                   <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
-                  <p class="text-gray-600 dark:text-gray-300">No medications found</p>
+                  <p class="text-gray-600 dark:text-gray-300">No medications found matching your search.</p>
                 </div>
               </div>
             </div>
