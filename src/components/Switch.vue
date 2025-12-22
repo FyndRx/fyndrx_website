@@ -1,3 +1,18 @@
+<script setup lang="ts">
+defineProps<{
+  id?: string;
+  label?: string;
+  modelValue: boolean;
+  disabled?: boolean;
+  error?: string;
+  helper?: string;
+}>();
+
+defineEmits<{
+  (e: 'update:modelValue', value: boolean): void;
+}>();
+</script>
+
 <template>
   <div class="flex items-center">
     <button
@@ -32,19 +47,4 @@
   </div>
   <p v-if="error" class="mt-1 text-sm text-red-500">{{ error }}</p>
   <p v-if="helper" class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ helper }}</p>
-</template>
-
-<script setup lang="ts">
-defineProps<{
-  id?: string;
-  label?: string;
-  modelValue: boolean;
-  disabled?: boolean;
-  error?: string;
-  helper?: string;
-}>();
-
-defineEmits<{
-  (e: 'update:modelValue', value: boolean): void;
-}>();
-</script> 
+</template> 

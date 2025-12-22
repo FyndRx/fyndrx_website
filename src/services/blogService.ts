@@ -51,7 +51,7 @@ export const blogService = {
     return [];
   },
 
-  getPostById(id: number): BlogPost | undefined {
+  getPostById(): BlogPost | undefined {
     console.warn('getPostById() is deprecated. Use getPost() with slug instead.');
     return undefined;
   },
@@ -61,7 +61,7 @@ export const blogService = {
     return [];
   },
 
-  searchPosts(query: string): BlogPost[] {
+  searchPosts(): BlogPost[] {
     console.warn('searchPosts() is deprecated. Use getPosts() with search parameter instead.');
     return [];
   }
