@@ -4,11 +4,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
 import { reviewService } from '@/services/reviewService';
 import type { Order } from '@/models/Order';
-import type { Transaction } from '@/models/Payment';
 import LazyImage from '@/components/LazyImage.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import { orderService } from '@/services/orderService';
-import { paymentService } from '@/services/paymentService';
+import { paymentService, type Transaction } from '@/services/paymentService';
 
 const route = useRoute();
 const router = useRouter();
@@ -55,7 +54,7 @@ const currentStepIndex = computed(() => {
   return currentSteps.value.findIndex(step => step.key === order.value!.status);
 });
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-200',
   confirmed: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-200',
   processing: 'text-purple-600 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-200',

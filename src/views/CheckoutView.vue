@@ -52,11 +52,16 @@ const syncCartWithAPI = async () => {
     // Sync local cart with API before checkout
     const cartItems = cartStore.items;
     if (cartItems.length > 0) {
-      const syncItems = cartItems.map(item => ({
-        pharmacy_drug_price_id: item.pharmacyDrugPriceId,
-        quantity: item.quantity
-      }));
-      await cartService.syncCart(syncItems);
+      const syncItems = cartItems
+        .filter(item => item.pharmacyDrugPriceId !== undefined)
+        .map(item => ({
+          pharmacy_drug_price_id: item.pharmacyDrugPriceId as number,
+          quantity: item.quantity
+        }));
+      
+      if (syncItems.length > 0) {
+        await cartService.syncCart(syncItems);
+      }
     }
   } catch (err) {
     console.error('Error syncing cart:', err);

@@ -17,8 +17,8 @@ const loadRating = async () => {
   try {
     const stats = await reviewService.getReviewStats('pharmacy', props.pharmacy.id);
     rating.value = {
-      average: stats.average_rating || 0,
-      count: stats.total_reviews || 0
+      average: stats.averageRating || 0,
+      count: stats.totalReviews || 0
     };
   } catch (err) {
     console.error('Error loading pharmacy rating:', err);

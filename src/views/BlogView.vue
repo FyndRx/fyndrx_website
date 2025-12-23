@@ -23,14 +23,24 @@ const currentPage = ref(1);
 const postsPerPage = 9;
 const showFilters = ref(false);
 
-const categories = computed(() => {
-  const cats = blogService.getCategories();
-  return [{ label: 'All Categories', value: 'All' }, ...cats.map(c => ({ label: c, value: c }))];
-});
+const categories = ref<{ label: string; value: string }[]>([]);
+const allTags = ref<{ label: string; value: string }[]>([]);
 
-const allTags = computed(() => {
-  const tags = blogService.getAllTags();
-  return [{ label: 'All Tags', value: 'All' }, ...tags.map(t => ({ label: t, value: t }))];
+onMounted(async () => {
+  const [cats, tags] = await Promise.all([
+    blogService.getCategories(),
+    blogService.getAllTags()
+  ]);
+  
+  categories.value = [{ label: 'All Categories', value: 'All' }, ...cats.map((c: string) => ({ label: c, value: c }))];
+  allTags.value = [{ label: 'All Tags', value: 'All' }, ...tags.map((t: string) => ({ label: t, value: t }))];
+
+  const categoryParam = route.query.category as string;
+  if (categoryParam) {
+    selectedCategory.value = categoryParam;
+  }
+  
+  await loadPosts();
 });
 
 const sortOptions = [
@@ -116,14 +126,7 @@ watch(currentPage, () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-onMounted(async () => {
-  const categoryParam = route.query.category as string;
-  if (categoryParam) {
-    selectedCategory.value = categoryParam;
-  }
-  
-  await loadPosts();
-});
+
 </script>
 
 <template>

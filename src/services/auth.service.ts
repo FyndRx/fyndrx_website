@@ -20,7 +20,7 @@ export interface RegisterCredentials {
   email: string;
   phone_number: string;
   password: string;
-  otp: string;
+  otp?: string;
 }
 
 export interface TestRegisterCredentials {
@@ -36,11 +36,13 @@ export interface ResetPasswordCredentials {
 }
 
 export interface SendOTPCredentials {
-  phone_number: string;
+  phone_number?: string;
+  email?: string;
 }
 
 export interface VerifyOTPCredentials {
-  phone_number: string;
+  phone_number?: string;
+  email?: string;
   otp: string;
 }
 

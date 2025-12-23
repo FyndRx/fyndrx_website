@@ -2,9 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
-import type { Transaction } from '@/models/Payment';
 import type { Order } from '@/models/Order';
-import { paymentService } from '@/services/paymentService';
+import { paymentService, type Transaction } from '@/services/paymentService';
 import { orderService } from '@/services/orderService';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';

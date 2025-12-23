@@ -80,12 +80,12 @@ const handleSubmit = async () => {
   try {
     loading.value = true;
     await authStore.register({
-      firstName: form.value.firstName,
-      lastName: form.value.lastName,
+      firstname: form.value.firstName,
+      lastname: form.value.lastName,
       email: form.value.email,
-      phoneNumber: form.value.phoneNumber,
+      phone_number: form.value.phoneNumber,
       password: form.value.password,
-      role: 'patient', // Default role for new registrations
+
     });
     // Redirect to OTP verification page with email
     router.push({

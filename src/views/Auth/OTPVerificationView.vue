@@ -43,7 +43,7 @@ const handleSubmit = async () => {
     });
 
     // Store access_token using the store for reactivity
-    authStore.setToken(response.access_token);
+    authStore.setToken((response as any).access_token);
 
     // Fetch user details
     await authStore.fetchUserDetails();
@@ -65,7 +65,7 @@ const handleResendOTP = async () => {
   try {
     resendLoading.value = true;
     error.value = '';
-    await authService.resendOTP(email.value);
+    await authService.sendOTP({ email: email.value });
   } catch (err: any) {
     const apiError = handleApiError(err);
     if (isNetworkError(err)) {
