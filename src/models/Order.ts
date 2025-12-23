@@ -22,8 +22,10 @@ export interface Order {
   userId: number;
   pharmacyId: number;
   pharmacyName: string;
+  branchName?: string;
   pharmacyPhone: string;
   pharmacyAddress: string;
+  pharmacyImage?: string;
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;
@@ -44,6 +46,7 @@ export interface Order {
   completedAt?: string;
   cancelledAt?: string;
   cancellationReason?: string;
+  statusHistory?: OrderStatusHistory[];
 }
 
 export interface OrderStatusHistory {

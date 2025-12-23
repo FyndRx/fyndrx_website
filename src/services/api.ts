@@ -38,7 +38,7 @@ class ApiService {
     // Add request interceptor for auth API
     this.authApi.interceptors.request.use(
       config => {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
           // console.log('Attached auth token:', token.substring(0, 10) + '...');

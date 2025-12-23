@@ -8,6 +8,7 @@ import type { PaginatedResponse } from './ApiResponse';
 export interface DrugBrandApiResponse {
   id: number;
   name: string;
+  image?: string | null;
 }
 
 export interface DrugUomApiResponse {

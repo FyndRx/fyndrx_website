@@ -44,6 +44,7 @@ export interface PharmacyPrice {
   pharmacy_address?: string;
   distance?: string;
   rating?: number;
+  branch_name?: string; // Flattened branch name
 
   // Optional drug details for display
   drug_name?: string;

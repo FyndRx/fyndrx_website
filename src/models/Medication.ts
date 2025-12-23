@@ -1,6 +1,7 @@
 export interface MedicationBrand {
   id: number;
   name: string;
+  image?: string;
 }
 
 export interface MedicationUOM {

@@ -25,6 +25,7 @@ export interface OrderItemApiResponse {
   brand?: {
     id: number;
     name: string;
+    image?: string | null;
   };
   form?: {
     id: number;
@@ -95,6 +96,8 @@ export interface OrderApiResponse {
   createdAt?: string; // Sometimes camelCase
   updated_at: string;
   updatedAt?: string; // Sometimes camelCase
+  status_history?: OrderStatusHistoryApiResponse[];
+  statusHistory?: OrderStatusHistoryApiResponse[]; // Sometimes camelCase
 }
 
 export interface OrderStatusHistoryApiResponse {

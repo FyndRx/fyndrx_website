@@ -6,6 +6,7 @@ export interface CartItem {
   pharmacyName: string;
   pharmacyLogo?: string;
   pharmacyBranchId?: number; // For API cart operations
+  branchName?: string;
   brandId?: number;
   brandName?: string;
   formId: number;

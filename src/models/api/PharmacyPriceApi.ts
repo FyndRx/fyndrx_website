@@ -9,6 +9,7 @@ export interface PharmacyPriceApiResponse {
   id: number;
   pharmacy_id: number;
   pharmacy_branch_id?: number;
+  branch_name?: string; // Added from updated endpoint
   drug_id?: number; // Legacy field
   medicationId?: number; // Sometimes camelCase
   drug_brand_id: number;
