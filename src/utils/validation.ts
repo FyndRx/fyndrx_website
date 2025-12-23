@@ -18,6 +18,7 @@ export const validationRules = {
     !file || types.includes(file.type) || `File must be one of: ${types.join(', ')}`,
 };
 
+
 export interface ValidationError {
   field: string;
   message: string;
