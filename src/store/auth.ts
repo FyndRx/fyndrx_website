@@ -7,7 +7,7 @@ import { handleApiError, isNetworkError } from '@/utils/errorHandler';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
-  const accessToken = ref<string | null>(localStorage.getItem('access_token'));
+  const accessToken = ref<string | null>(localStorage.getItem('access_token') || localStorage.getItem('token'));
   const loading = ref(false);
   const error = ref<string | null>(null);
   const lastTokenRefresh = ref<number | null>(null);

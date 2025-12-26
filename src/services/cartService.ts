@@ -42,7 +42,8 @@ export const cartService = {
    */
   async addToCart(item: AddToCartRequest): Promise<CartItem> {
     const response = await apiService.postAuth<AddToCartApiResponse>('/cart/items', item);
-    const apiItem = unwrapApiResponse(response);
+    // Handle { message, cart_item } structure
+    const apiItem = (response as any).cart_item || unwrapApiResponse(response);
     return transformCartItem(apiItem);
   },
 
@@ -57,7 +58,8 @@ export const cartService = {
       `/cart/items/${itemId}`,
       { quantity }
     );
-    const apiItem = unwrapApiResponse(response);
+    // Handle { message, cart_item } structure
+    const apiItem = (response as any).cart_item || unwrapApiResponse(response);
     return transformCartItem(apiItem);
   },
 

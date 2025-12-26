@@ -27,20 +27,25 @@ const categories = ref<{ label: string; value: string }[]>([]);
 const allTags = ref<{ label: string; value: string }[]>([]);
 
 onMounted(async () => {
-  const [cats, tags] = await Promise.all([
-    blogService.getCategories(),
-    blogService.getAllTags()
-  ]);
-  
-  categories.value = [{ label: 'All Categories', value: 'All' }, ...cats.map((c: string) => ({ label: c, value: c }))];
-  allTags.value = [{ label: 'All Tags', value: 'All' }, ...tags.map((t: string) => ({ label: t, value: t }))];
+  try {
+    const [cats, tags] = await Promise.all([
+      blogService.getCategories(),
+      blogService.getTags()
+    ]);
+    
+    categories.value = [{ label: 'All Categories', value: 'All' }, ...cats.map((c: string) => ({ label: c, value: c }))];
+    allTags.value = [{ label: 'All Tags', value: 'All' }, ...tags.map((t: string) => ({ label: t, value: t }))];
 
-  const categoryParam = route.query.category as string;
-  if (categoryParam) {
-    selectedCategory.value = categoryParam;
+    const categoryParam = route.query.category as string;
+    if (categoryParam) {
+      selectedCategory.value = categoryParam;
+    }
+    
+    await loadPosts();
+  } catch (error) {
+    console.error('Failed to initialize blog view:', error);
+    isLoading.value = false;
   }
-  
-  await loadPosts();
 });
 
 const sortOptions = [

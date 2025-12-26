@@ -3,7 +3,7 @@ import { apiService } from './api';
 import type { 
   OrderDetailApiResponse,
   OrdersApiResponse,
-  OrderTrackingDetailApiResponse 
+  OrderTrackingDetailApiResponse
 } from '@/models/api';
 import { 
   unwrapApiResponse,
@@ -14,13 +14,15 @@ import {
 } from '@/utils/responseTransformers';
 
 export interface CreateOrderPayload {
-  pharmacy_branch_id: number;
-  delivery_method: 'delivery' | 'pickup';
+  pharmacy_branch_id?: number | null; // Made optional/nullable
+  payment_methods?: Record<number, 'platform' | 'direct'>; // NEW: Map for mixed payments
+  delivery_method?: 'delivery' | 'pickup';
+  delivery_methods?: Record<number, 'delivery' | 'pickup'>; // Map for mixed delivery methods
   delivery_address?: string;
   delivery_lat?: number;
   delivery_lng?: number;
   phone_number: string;
-  payment_method: 'platform' | 'direct';
+  payment_method?: 'platform' | 'direct'; // Global fallback
   notes?: string;
 }
 
@@ -53,16 +55,26 @@ export interface GetOrdersParams {
   page?: number;
 }
 
+
+
 export const orderService = {
   /**
-   * Create a new order
+   * Create a new order (supports bulk creation)
    * @param payload - Order creation payload
-   * @returns Created order
+   * @returns Created order or array of orders
    */
-  async createOrder(payload: CreateOrderPayload): Promise<Order> {
-    const response = await apiService.postAuth<OrderDetailApiResponse>('/orders', payload);
-    const apiOrder = unwrapApiResponse(response);
-    return transformOrder(apiOrder);
+  async createOrder(payload: CreateOrderPayload): Promise<Order | Order[]> {
+    const response = await apiService.postAuth<any>('/orders', payload);
+    const data = unwrapApiResponse(response) as any;
+
+    // specific check for bulk orders array
+    if (data.orders && Array.isArray(data.orders)) {
+      return transformOrders(data.orders);
+    }
+    
+    // Fallback for single order (could be regular wrapped or {order: ...})
+    const singleOrder = data.order || data;
+    return transformOrder(singleOrder);
   },
 
   /**

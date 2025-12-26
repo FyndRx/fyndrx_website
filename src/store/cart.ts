@@ -93,10 +93,26 @@ export const useCartStore = defineStore('cart', () => {
       const token = localStorage.getItem('access_token');
       // Crucial change: We now REQUIRE pharmacyDrugPriceId for API sync
       if (token && item.pharmacyDrugPriceId) {
-        await cartService.addToCart({
+        const addedItem = await cartService.addToCart({
           pharmacy_drug_price_id: item.pharmacyDrugPriceId,
           quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
         });
+        
+        // Update local item with real server ID ONLY if it's valid
+        if (addedItem.id && addedItem.id !== 'undefined') {
+          if (existingItemIndex !== -1) {
+            items.value[existingItemIndex].id = addedItem.id;
+          } else {
+            // Find the item we just added (it might have been at the end)
+            const newItemIndex = items.value.length - 1;
+            if (newItemIndex >= 0) {
+              items.value[newItemIndex].id = addedItem.id;
+            }
+          }
+          saveToLocalStorage();
+        } else {
+          console.warn('Server returned invalid ID for new cart item:', addedItem);
+        }
       } else if (token) {
         console.warn('Skipping API sync for cart item: Missing pharmacyDrugPriceId', item);
       }
@@ -115,9 +131,9 @@ export const useCartStore = defineStore('cart', () => {
     if (item) {
       try {
         const token = localStorage.getItem('access_token');
-        if (token && item.id) {
+        if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
           // Try to remove from API - item.id might be the API cart item ID
-          // If it's a local ID, we'll need to sync the whole cart
+          // Check for local temp IDs (containing '-') to avoid sending them
           await cartService.removeFromCart(item.id);
         }
       } catch (err) {
@@ -139,9 +155,14 @@ export const useCartStore = defineStore('cart', () => {
         // Sync with API if user is authenticated
         try {
           const token = localStorage.getItem('access_token');
-          if (token && item.id) {
-            await cartService.updateCartItem(item.id, quantity);
+          // Start of Changed Logic
+          // Only sync if we have a valid server ID
+          if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
+             await cartService.updateCartItem(item.id, quantity);
+          } else {
+             console.warn('Skipping API sync for updateQuantity: Invalid or Local ID', item.id);
           }
+          // End of Changed Logic
         } catch (err) {
           console.error('Error updating cart item quantity in API:', err);
           // Don't block UI - continue with local cart
@@ -181,10 +202,12 @@ export const useCartStore = defineStore('cart', () => {
     if (!token) return;
 
     try {
-      await cartService.getCart();
-      // Merge API cart with local cart
-      // API cart items might have different structure, so we'll keep local for now
-      // but could update to use API cart as source of truth
+      const apiCart = await cartService.getCart();
+      // Update local items with API items (source of truth)
+      if (apiCart && apiCart.items) {
+        items.value = apiCart.items;
+        saveToLocalStorage();
+      }
     } catch (err) {
       console.error('Error syncing cart with API:', err);
     }
