@@ -32,16 +32,19 @@ import type {
  */
 export function unwrapApiResponse<T>(response: T | { data: T } | { [key: string]: T }): T {
   if (response && typeof response === 'object') {
+    // recursively unwrap 'data' property
     if ('data' in response && response.data !== undefined) {
-      return response.data as T;
+      return unwrapApiResponse(response.data as any) as T;
     }
-    // Handle paginated responses
-    if ('data' in response && Array.isArray((response as any).data)) {
-      return (response as any).data as T;
-    }
-    // Handle object responses like { pharmacies: [...] }
+    // Handle paginated responses where data is an array but we want the wrapper or just the array? 
+    // Usually T is the array or the object. If T is CartApiResponse, it has 'items'.
+    // If response is { data: { items: [] } }, first unwrap gets { items: [] }, which is correct.
+    
+    // Handle object responses like { pharmacies: [...] } which might be a legacy format
     const keys = Object.keys(response);
     if (keys.length === 1 && Array.isArray((response as any)[keys[0]])) {
+      // Be careful not to unwrap if the expected type T SHOULD have that key
+      // But for generic unwrapping this acts as a heuristic
       return (response as any)[keys[0]] as T;
     }
   }
@@ -88,13 +91,21 @@ export function transformUser(apiUser: UserApiResponse): User {
  * Medication Transformers
  */
 export function transformMedication(apiMed: MedicationApiResponse): Medication {
+  const brands = (apiMed.brands ?? []).map(brand => ({
+    ...brand,
+    image: brand.image ?? undefined
+  }));
+
+  // Use the drug image if available, otherwise fallback to the first brand's image
+  const mainImage = apiMed.image || brands[0]?.image || '';
+
   return {
     id: apiMed.id,
     drug_name: apiMed.drug_name,
     description: apiMed.description ?? '',
-    brands: apiMed.brands ?? [],
+    brands: brands,
     forms: apiMed.forms ?? [],
-    image: apiMed.image ?? '',
+    image: mainImage,
     predefinedQuantities: apiMed.predefined_quantities ?? apiMed.predefinedQuantities ?? [],
     category: apiMed.category ?? (apiMed as any).categories ?? '',
     requiresPrescription: apiMed.requires_prescription ?? apiMed.requiresPrescription ?? false,
@@ -196,6 +207,7 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     updated_at: apiPrice.updated_at,
     pharmacy: normalizedPharmacy,
     pharmacy_branch: normalizedBranch,
+    branch_name: apiPrice.branch_name || normalizedBranch?.name, // Map flat branch_name or nested
     pharmacy_name: apiPrice.pharmacy_name,
     pharmacy_logo: apiPrice.pharmacy_logo,
     pharmacy_address: apiPrice.pharmacy_address,
@@ -225,29 +237,49 @@ export function transformCartItem(apiItem: CartItemApiResponse): CartItem {
   const pharmacy = apiItem.pharmacy;
   const brand = apiItem.brand;
   const form = apiItem.form;
-  const strength = apiItem.strength;
+  const strengthObj = apiItem.strength_obj; // Renamed property in interface
   const uom = apiItem.uom;
+
+  // Helper to extract value from potentially nested or flat source
+  const getValue = (primary?: string, secondary?: any, key?: string) => {
+    if (primary) return primary;
+    if (secondary && key && secondary[key]) return secondary[key];
+    return '';
+  };
+
+  const getStrengthVal = (val: string | { strength: string } | undefined) => {
+    if (typeof val === 'string') return val;
+    if (val && typeof val === 'object' && 'strength' in val) return val.strength;
+    return '';
+  };
+
+  const getUomVal = (val: string | { uom: string } | undefined) => {
+    if (typeof val === 'string') return val;
+    if (val && typeof val === 'object' && 'uom' in val) return val.uom;
+    return '';
+  };
 
   return {
     id: String(apiItem.id),
     medicationId: apiItem.drug_id,
-    medicationName: medication?.drug_name || '',
-    pharmacyId: pharmacy?.id || 0,
+    medicationName: getValue(apiItem.drug_name, medication, 'drug_name'),
+    pharmacyId: apiItem.pharmacy_id || pharmacy?.id || 0,
     pharmacyName: pharmacy?.name || '',
     pharmacyLogo: pharmacy?.logo,
     pharmacyBranchId: apiItem.pharmacy_branch_id,
-    brandId: apiItem.drug_brand_id,
-    brandName: brand?.name,
-    formId: apiItem.drug_brand_form_id,
-    formName: form?.form_name || '',
-    strengthId: apiItem.dosage_id,
-    strength: strength?.strength || '',
-    uomId: apiItem.strength_uom_id,
-    uom: uom?.uom || '',
+    branchName: getValue(apiItem.branch_name, apiItem.pharmacy_branch, 'name') || getValue(undefined, apiItem.pharmacy_branch, 'branch_name'),
+    brandId: apiItem.drug_brand_id || brand?.id || 0,
+    brandName: getValue(apiItem.brand_name, brand, 'name'),
+    formId: apiItem.drug_brand_form_id || form?.id || 0,
+    formName: getValue(apiItem.form_name, form, 'form_name'),
+    strengthId: apiItem.dosage_id || strengthObj?.id || 0,
+    strength: getStrengthVal(apiItem.strength) || (strengthObj?.strength || ''),
+    uomId: apiItem.strength_uom_id || uom?.id || 0,
+    uom: getUomVal(apiItem.strength_uom) || (uom?.uom || ''),
     quantity: apiItem.quantity,
     price: apiItem.price,
     discountPrice: apiItem.discount_price,
-    image: medication?.image,
+    image: apiItem.image || brand?.image || medication?.image,
     inStock: true, // Default to true if not provided
     requiresPrescription: medication?.requires_prescription,
     pharmacyDrugPriceId: apiItem.pharmacy_drug_price_id,
@@ -255,19 +287,33 @@ export function transformCartItem(apiItem: CartItemApiResponse): CartItem {
 }
 
 export function transformCart(apiCart: CartApiResponse): Cart {
-  if (!apiCart || !apiCart.items) {
-    console.warn('transformCart received incomplete data:', apiCart);
-    return {
-      items: [],
-      totalItems: 0,
-      subtotal: 0,
-      discount: 0,
-      total: 0
-    };
+  let items: CartItem[] = [];
+
+  if (apiCart.items) {
+    items = apiCart.items.map(transformCartItem);
+  } else if (apiCart.pharmacies) {
+    // Flatten split pharmacy items into single list
+    items = apiCart.pharmacies.flatMap(pharmacyGroup => 
+      (pharmacyGroup.items || []).map(item => transformCartItem({
+        ...item,
+        // Ensure pharmacy details are passed down if missing in item
+        pharmacy: item.pharmacy || {
+          id: pharmacyGroup.pharmacy_id,
+          name: pharmacyGroup.pharmacy_name,
+          logo: pharmacyGroup.pharmacy_logo || undefined
+        }
+      }))
+    );
+  } else {
+    // Only warn if truly empty and not just 0 items
+    if ((apiCart.total_items || 0) > 0) {
+      console.warn('transformCart received incomplete data:', JSON.stringify(apiCart, null, 2));
+    }
   }
+
   return {
-    items: (apiCart.items || []).map(transformCartItem),
-    totalItems: apiCart.total_items || apiCart.totalItems || (apiCart.items ? apiCart.items.length : 0),
+    items,
+    totalItems: apiCart.total_items || apiCart.totalItems || items.length,
     subtotal: apiCart.subtotal || 0,
     discount: apiCart.discount || 0,
     total: apiCart.total || 0,
@@ -299,19 +345,30 @@ export function transformOrderItem(apiItem: OrderItemApiResponse): OrderItem {
   return {
     id: String(apiItem.id || `item-${apiItem.drug_id}-${Math.random()}`),
     medicationId: apiItem.drug_id,
-    medicationName: medication?.drug_name || findProp(apiItem, ['drug_name', 'medication_name', 'name']) || '',
+    medicationName: medication?.drug_name || findProp(apiItem, ['drug_name', 'medication_name', 'name', 'drugName']) || '',
     brandId: apiItem.drug_brand_id,
-    brandName: brand?.name || findProp(apiItem, ['brand_name', 'brandName']),
+    brandName: brand?.name || 
+               (apiItem as any).drug_brand?.brand?.brand_name || 
+               findProp(apiItem, ['brand_name', 'brandName', 'drug_brand_name', 'drugBrandName', 'brand', 'drug_brand'])?.name || 
+               findProp(apiItem, ['brand_name', 'brandName', 'drug_brand_name', 'drugBrandName']) || '',
     formId: apiItem.drug_brand_form_id,
-    formName: form?.form_name || findProp(apiItem, ['form_name', 'formName']) || '',
+    formName: form?.form_name || 
+              (form as any)?.name || 
+              (apiItem as any).drug_form?.form?.form_name ||
+              findProp(apiItem, ['form_name', 'formName', 'drug_form_name', 'drugFormName', 'form', 'dosage_form', 'drug_form'])?.name || 
+              findProp(apiItem, ['form_name', 'formName', 'drug_form_name', 'drugFormName']) || '',
     strengthId: apiItem.dosage_id,
-    strength: strength?.strength || findProp(apiItem, ['strength_value', 'strength']) || '',
+    strength: strength?.strength || 
+              (apiItem as any).drug_strength?.strength?.strength ||
+              findProp(apiItem, ['strength_value', 'strength', 'dosage']) || '',
     uomId: apiItem.strength_uom_id,
-    uom: uom?.uom || findProp(apiItem, ['uom_name', 'uom']) || '',
+    uom: uom?.uom || 
+         (apiItem as any).drug_uom?.uom?.uom ||
+         findProp(apiItem, ['uom_name', 'uom']) || '',
     quantity: Number(apiItem.quantity),
     price: Number(apiItem.price),
     discountPrice: apiItem.discount_price ? Number(apiItem.discount_price) : undefined,
-    image: medication?.image || findProp(apiItem, ['drug_image', 'image']),
+    image: brand?.image || medication?.image || findProp(apiItem, ['brand_image', 'drug_image', 'image']),
   };
 }
 
@@ -349,9 +406,11 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     orderNumber: apiOrder.order_number || apiOrder.orderNumber || '',
     userId: apiOrder.user_id || apiOrder.userId || 0,
     pharmacyId: apiOrder.pharmacy_id || apiOrder.pharmacyId || 0,
-    pharmacyName: apiOrder.pharmacy_name || apiOrder.pharmacyName || '',
-    pharmacyPhone: apiOrder.pharmacy_phone || apiOrder.pharmacyPhone || '',
-    pharmacyAddress: apiOrder.pharmacy_address || apiOrder.pharmacyAddress || '',
+    pharmacyName: apiOrder.pharmacy_name || apiOrder.pharmacyName || (apiOrder as any).pharmacy?.name || '',
+    branchName: (apiOrder as any).pharmacy?.branch_name || (apiOrder as any).pharmacy_branch?.branch_name || (apiOrder as any).branch_name || undefined,
+    pharmacyPhone: apiOrder.pharmacy_phone || apiOrder.pharmacyPhone || (apiOrder as any).pharmacy_branch?.phone || (apiOrder as any).pharmacy?.phone || (apiOrder as any).branch_phone || '',
+    pharmacyAddress: apiOrder.pharmacy_address || (apiOrder as any).pharmacy?.branch_address || (apiOrder as any).pharmacy_branch?.address || apiOrder.pharmacyAddress || (apiOrder as any).pharmacy?.address || '',
+    pharmacyImage: (apiOrder as any).pharmacy?.image || (apiOrder as any).pharmacy?.logo,
     items: (apiOrder.items || []).map(transformOrderItem),
     subtotal: Number(apiOrder.subtotal),
     deliveryFee: Number(apiOrder.delivery_fee || apiOrder.deliveryFee || 0),
@@ -372,6 +431,11 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     cancellationReason: apiOrder.cancellation_reason || apiOrder.cancellationReason,
     createdAt: apiOrder.created_at || apiOrder.createdAt || new Date().toISOString(),
     updatedAt: apiOrder.updated_at || apiOrder.updatedAt || new Date().toISOString(),
+    statusHistory: (apiOrder.status_history || apiOrder.statusHistory || []).map(history => ({
+      status: history.status,
+      timestamp: (history as any).created_at || history.timestamp || new Date().toISOString(),
+      note: history.note,
+    })),
   };
 }
 
