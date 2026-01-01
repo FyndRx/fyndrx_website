@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
@@ -26,6 +26,15 @@ const selectedTotal = computed(() => {
     .filter(group => selectedPharmacies.value.has(group.pharmacyId))
     .reduce((total, group) => total + group.subtotal, 0);
 });
+
+// Auto-select all pharmacies when cart data is available
+watch(() => cartStore.groupedByPharmacy, (groups) => {
+  if (groups.length > 0 && selectedPharmacies.value.size === 0) {
+    groups.forEach(group => {
+      selectedPharmacies.value.add(group.pharmacyId);
+    });
+  }
+}, { immediate: true, deep: true });
 
 const togglePharmacySelection = (pharmacyId: number) => {
   if (selectedPharmacies.value.has(pharmacyId)) {
@@ -129,14 +138,17 @@ const startShopping = () => {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                      {{ pharmacy.pharmacyName }}
-                    </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'item' : 'items' }}
-                    </p>
-                  </div>
+                    <div>
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        {{ pharmacy.pharmacyName }}
+                      </h3>
+                      <p v-if="pharmacy.items[0]?.branchName" class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ pharmacy.items[0].branchName }}
+                      </p>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'item' : 'items' }}
+                      </p>
+                    </div>
                 </div>
                 <button
                   @click="cartStore.clearPharmacyItems(pharmacy.pharmacyId)"
@@ -177,11 +189,9 @@ const startShopping = () => {
                       {{ item.medicationName }}
                     </h4>
                     <div class="mb-2 space-y-1">
-                      <p v-if="item.brandName" class="text-sm text-gray-600 dark:text-gray-400">
-                        Brand: {{ item.brandName }}
-                      </p>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ item.formName }} • {{ item.strength }} • {{ item.uom }}
+                        <span v-if="item.brandName">{{ item.brandName }} • </span>
+                        <span>{{ item.formName }}</span> • <span>{{ item.strength }} {{ item.uom }}</span>
                       </p>
                       <div class="flex items-center gap-2 flex-wrap">
                         <span
