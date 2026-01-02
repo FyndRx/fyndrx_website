@@ -285,7 +285,8 @@ const addToCart = (price: PharmacyPrice) => {
     image: (price as any).drug_image || '', // Ensure image is available or fallback
     inStock: price.in_stock || false,
     requiresPrescription: (price as any).requires_prescription || false,
-    pharmacyBranchId: price.pharmacy_branch_id || pharmacy.value.id
+    pharmacyBranchId: price.pharmacy_branch_id || pharmacy.value.id,
+    branchName: (price as any).branch_name || (price as any).pharmacy_branch?.name || (price as any).pharmacy_branch?.branch_name
   });
 
   notification.success(
@@ -667,6 +668,9 @@ onMounted(() => {
                          </div>
                          
                          <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            <span v-if="(price as any).branch_name || (price as any).pharmacy_branch?.name" class="block text-xs font-medium text-[#246BFD] mb-0.5">
+                              {{ (price as any).branch_name || (price as any).pharmacy_branch?.name }}
+                            </span>
                             {{ price.brand_name }} • {{ price.form_name }} • {{ price.strength }} {{ price.uom }}
                          </p>
                          

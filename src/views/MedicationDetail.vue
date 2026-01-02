@@ -50,8 +50,10 @@ interface Pharmacy {
     distance?: string;
     rating?: number;
     is_open?: boolean;
+    branch_name?: string; // Branch Name
   };
   pharmacy_name?: string; // Fallback for pharmacy name
+  branch_name?: string; // Branch Name
 }
 
 // State
@@ -163,9 +165,11 @@ const filteredPharmacies = computed(() => {
         name: price.pharmacy_name || '',
         logo: price.pharmacy_logo || '',
         rating: price.rating,
-        is_open: true // Default to true if unknown
+        is_open: true, // Default to true if unknown
+        branch_name: price.branch_name
       },
-      pharmacy_name: price.pharmacy_name
+      pharmacy_name: price.pharmacy_name,
+      branch_name: price.branch_name
   }));
 
 
@@ -681,8 +685,10 @@ watch(
                     <h3 class="font-medium text-gray-900 dark:text-white truncate">
                       {{ pharmacy.name }}
                     </h3>
-
                   </div>
+                  <p v-if="pharmacy.branch_name" class="text-xs font-medium text-[#246BFD] mb-1">
+                      {{ pharmacy.branch_name }}
+                  </p>
                   <!-- Medication Details (Brand, Strength, Form) -->
                   <div class="mb-3 text-sm text-gray-600 dark:text-gray-300">
                     <p class="font-medium text-gray-900 dark:text-white">
@@ -796,7 +802,7 @@ watch(
                 :total-items="filteredPharmacies.length"
                 :per-page="itemsPerPage"
                 @update:page="handlePageChange"
-                @update:per-page="(val) => itemsPerPage = val"
+                @update:per-page="(val: number) => itemsPerPage = val"
               />
             </div>
           </div>
