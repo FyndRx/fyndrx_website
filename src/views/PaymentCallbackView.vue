@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
+import { paymentService } from '@/services/paymentService';
 
 const route = useRoute();
 const router = useRouter();
@@ -47,32 +48,51 @@ const statusConfig = computed(() => {
   }
 });
 
+const verifyPayment = async (ref: string) => {
+  try {
+    const response = await paymentService.verifyPayment(ref);
+    // Flexible check: verify status is success. 
+    // We remove the strict 'response.success' boolean check as it might be undefined after unwrapping.
+    if (response.status === 'success' || (response as any).message === 'Verification successful') {
+      paymentStatus.value = 'success';
+      message.value = 'Your payment was processed successfully. We\'ve sent a confirmation email.';
+      // Use standard order_id from response, or fallback to reference if missing
+      // Handle various potential response formats for order ID
+      orderId.value = (response as any).order_id || (response as any).orderId || (response as any).order?.id || ref; 
+      cartStore.clearCart();
+    } else {
+      paymentStatus.value = 'failed';
+      message.value = 'Payment verification failed. Please check your transaction details.';
+    }
+  } catch (err) {
+    console.error('Payment verification error:', err);
+    paymentStatus.value = 'failed';
+    message.value = 'Unable to verify payment status. Please contact support if you were debited.';
+  }
+};
+
 onMounted(async () => {
   const reference = route.query.reference as string;
-  const status = route.query.status as string;
-  const orderIdParam = route.query.orderId as string;
-  
+  const status = route.query.status as string; // Sometimes explicitly passed
+  // const orderIdParam = route.query.orderId as string; // Redundant if we verify
+
   if (reference) {
     transactionReference.value = reference;
-  }
-  
-  if (orderIdParam) {
-    orderId.value = orderIdParam;
-  }
-
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  if (status === 'success' || reference) {
-    paymentStatus.value = 'success';
-    message.value = 'Your payment was processed successfully. We\'ve sent a confirmation email.';
-    
-    cartStore.clearCart();
+    await verifyPayment(reference);
   } else if (status === 'failed') {
     paymentStatus.value = 'failed';
-    message.value = 'Payment processing failed. Please try again or choose a different payment method.';
+    message.value = 'Payment processing failed. Please try again.';
   } else {
-    paymentStatus.value = 'cancelled';
-    message.value = 'You cancelled the payment. Your items are still in your cart.';
+    // Fallback if no ref and no explicit status (e.g. manual nav)
+    // But usually paystack sends reference
+    if (route.query.trxref) { // Paystack legacy param
+       transactionReference.value = route.query.trxref as string;
+       await verifyPayment(route.query.trxref as string);
+    } else {
+      loading.value = false; // Stop loading if nothing to do
+      paymentStatus.value = 'failed'; 
+      message.value = 'Invalid payment callback details.';
+    }
   }
   
   loading.value = false;
@@ -85,8 +105,8 @@ onMounted(async () => {
       <div v-if="loading" class="flex items-center justify-center min-h-[60vh]">
         <div class="text-center">
           <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-[#246BFD] mx-auto mb-4"></div>
-          <p class="text-lg font-medium text-gray-900 dark:text-white">Processing payment...</p>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Please wait while we verify your payment</p>
+          <p class="text-lg font-medium text-gray-900 dark:text-white">Verifying payment...</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Please wait while we confirm your transaction</p>
         </div>
       </div>
 

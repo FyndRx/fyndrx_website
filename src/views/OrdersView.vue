@@ -3,12 +3,31 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Order } from '@/models/Order';
 import { orderService } from '@/services/orderService';
+import { paymentService } from '@/services/paymentService';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
 const orders = ref<Order[]>([]);
 const loading = ref(true);
 const selectedFilter = ref<'all' | 'active' | 'completed' | 'cancelled'>('all');
+
+const payNow = async (order: Order) => {
+  if (!order || order.paymentStatus !== 'pending') return;
+  
+  try {
+    loading.value = true;
+    const response = await paymentService.initializePayment(order.id);
+    if (response && response.authorization_url) {
+      window.location.href = response.authorization_url;
+    } else {
+      console.error('No authorization URL in response');
+    }
+  } catch (err) {
+    console.error('Error initializing payment:', err);
+  } finally {
+    loading.value = false;
+  }
+};
 
 const statusColors = {
   pending: { bg: 'bg-yellow-100 dark:bg-yellow-900/20', text: 'text-yellow-800 dark:text-yellow-200', border: 'border-yellow-200 dark:border-yellow-800' },
@@ -197,7 +216,10 @@ onMounted(() => {
                       {{ statusLabels[order.status] || order.status }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ order.pharmacyName }}</p>
+                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ order.pharmacyName }}
+                    <span v-if="order.branchName" class="text-gray-500">• {{ order.branchName }}</span>
+                  </p>
                   <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(order.createdAt) }}</p>
                 </div>
               </div>
@@ -243,25 +265,33 @@ onMounted(() => {
                 </span>
               </div>
 
-              <div class="flex flex-wrap gap-4 text-sm">
-                <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex flex-wrap gap-2 text-sm mt-3">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                  :class="order.deliveryMethod === 'pickup' 
+                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' 
+                    : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800'">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   </svg>
-                  <span>{{ order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}</span>
-                </div>
-                <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {{ order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}
+                </span>
+
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                  :class="order.paymentMethod === 'platform' && order.paymentStatus === 'paid'
+                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                    : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                   </svg>
-                  <span>{{ order.paymentMethod === 'platform' ? 'Paid Online' : 'Pay at Pharmacy' }}</span>
-                </div>
-                <div v-if="order.prescriptionUploaded" class="flex items-center gap-1 text-green-600 dark:text-green-400">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  {{ order.paymentMethod === 'platform' ? 'Paid Online' : 'Pay at Pharmacy' }}
+                </span>
+
+                <span v-if="order.prescriptionUploaded" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                   </svg>
-                  <span>Prescription Uploaded</span>
-                </div>
+                  Rx Uploaded
+                </span>
               </div>
             </div>
 
@@ -270,9 +300,18 @@ onMounted(() => {
                 <p class="text-2xl font-bold text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</p>
               </div>
-              <button class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all" title="View Order Details">
-                View Details →
-              </button>
+              <div class="flex gap-2">
+                <button 
+                  v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
+                  @click.stop="payNow(order)"
+                  class="px-4 py-2 text-sm font-medium rounded-full text-white bg-green-600 hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
+                >
+                  Pay Now
+                </button>
+                <button class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all" title="View Order Details">
+                  View Details →
+                </button>
+              </div>
             </div>
           </div>
         </div>

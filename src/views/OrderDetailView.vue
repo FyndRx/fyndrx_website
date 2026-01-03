@@ -13,6 +13,25 @@ const route = useRoute();
 const router = useRouter();
 const notification = useNotification();
 
+const payNow = async () => {
+  if (!order.value || order.value.paymentStatus !== 'pending') return;
+  
+  try {
+    loading.value = true;
+    const response = await paymentService.initializePayment(order.value.id);
+    if (response && response.authorization_url) {
+      window.location.href = response.authorization_url;
+    } else {
+      notification.error('Payment Error', 'Could not initialize payment. Please try again.');
+    }
+  } catch (err) {
+    console.error('Error initializing payment:', err);
+    notification.error('Payment Error', 'Failed to initialize payment.');
+  } finally {
+    loading.value = false;
+  }
+};
+
 const order = ref<Order | null>(null);
 const transaction = ref<Transaction | null>(null);
 const loading = ref(true);
@@ -28,32 +47,6 @@ const canReview = computed(() => {
   return order.value?.status === 'completed';
 });
 
-const statusSteps = [
-  { key: 'pending', label: 'Order Placed', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { key: 'confirmed', label: 'Confirmed', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { key: 'processing', label: 'Processing', icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' },
-  { key: 'ready', label: 'Ready', icon: 'M5 13l4 4L19 7' },
-  { key: 'completed', label: 'Completed', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-];
-
-const deliveryStatusSteps = [
-  { key: 'pending', label: 'Order Placed', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { key: 'confirmed', label: 'Confirmed', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  { key: 'processing', label: 'Processing', icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4' },
-  { key: 'out_for_delivery', label: 'Out for Delivery', icon: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
-  { key: 'completed', label: 'Delivered', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-];
-
-const currentSteps = computed(() => {
-  return order.value?.deliveryMethod === 'delivery' ? deliveryStatusSteps : statusSteps;
-});
-
-const currentStepIndex = computed(() => {
-  if (!order.value) return 0;
-  if (order.value.status === 'cancelled') return -1;
-  return currentSteps.value.findIndex(step => step.key === order.value!.status);
-});
-
 const statusColors: Record<string, string> = {
   pending: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-200',
   confirmed: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-200',
@@ -63,6 +56,8 @@ const statusColors: Record<string, string> = {
   completed: 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-200',
   cancelled: 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-200'
 };
+
+
 
 const canCancel = computed(() => {
   return order.value && ['pending', 'confirmed'].includes(order.value.status);
@@ -93,8 +88,10 @@ const formatDate = (dateString: string) => {
 };
 
 const viewReceipt = () => {
-  if (!transaction.value) return;
-  router.push({ name: 'receipt', params: { id: transaction.value.id } });
+  if (!order.value) return;
+  // If we have a transaction, use its ID (preferred). If not, pass the Order ID and let ReceiptView handle it.
+  const routeId = transaction.value ? transaction.value.id : order.value.id;
+  router.push({ name: 'receipt', params: { id: routeId } });
 };
 
 const handleAddReview = async (reviewData: { rating: number; title: string; comment: string }) => {
@@ -117,6 +114,8 @@ const handleAddReview = async (reviewData: { rating: number; title: string; comm
   }
 };
 
+
+
 const loadOrder = async () => {
   loading.value = true;
   try {
@@ -126,9 +125,12 @@ const loadOrder = async () => {
     if (order.value) {
       try {
         const transactions = await paymentService.getTransactions();
-        const transactionData = transactions.find(t => t.order_id === orderId);
+        // Use loose comparison to ensure match (api might return number vs string)
+        const transactionData = transactions.find(t => String(t.order_id) === String(orderId));
         if (transactionData) {
           transaction.value = transactionData;
+        } else {
+          console.warn(`Transaction not found for order ${orderId} in ${transactions.length} transactions`);
         }
       } catch (err) {
         console.error('Error loading transaction:', err);
@@ -171,94 +173,116 @@ onMounted(() => {
           </button>
         </div>
 
-        <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-          <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h1 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
-                {{ order.orderNumber }}
-              </h1>
-              <p class="text-gray-600 dark:text-gray-400">Placed on {{ formatDate(order.createdAt) }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-              <span
-                :class="[
-                  'px-4 py-2 text-sm font-semibold rounded-full',
-                  statusColors[order.status]
-                ]"
-              >
-                {{ order.status === 'out_for_delivery' ? 'Out for Delivery' : order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
-              </span>
+        <!-- Pharmacy & Order Header -->
+        <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-xl">
+          <!-- Decorative Background -->
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20"></div>
+          <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+          
+          <div class="relative p-6 sm:p-8">
+            <div class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+              <div class="flex items-center gap-5">
+                <!-- Pharmacy Logo/Image -->
+                <div class="relative w-20 h-20 rounded-2xl overflow-hidden shadow-lg border-2 border-white dark:border-gray-700 bg-white">
+                  <LazyImage 
+                    :src="order.pharmacyImage || ''" 
+                    alt="Pharmacy Logo"
+                    class="w-full h-full object-cover"
+                    fallback="https://ui-avatars.com/api/?name=Rx&background=246BFD&color=fff"
+                  />
+                </div>
+                
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ order.pharmacyName }}</h1>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                      {{ order.branchName || 'Main Branch' }}
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                      {{ order.pharmacyAddress }}
+                    </span>
+                    <span class="hidden sm:inline w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                      {{ order.pharmacyPhone }}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm text-gray-500 dark:text-gray-500 font-mono">Order #{{ order.orderNumber }}</p>
+                </div>
+              </div>
+
+              <!-- Status Badge -->
+               <div class="flex items-center gap-3">
+                <span :class="['px-5 py-2.5 text-sm font-bold rounded-xl shadow-sm border', statusColors[order.status]]">
+                  {{ order.status === 'out_for_delivery' ? 'Out for Delivery' : order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
+                </span>
+               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="order.status !== 'cancelled'" class="p-8 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-          <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Order Tracking</h2>
-          
-          <div class="relative">
-            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
-            
-            <div class="space-y-8">
-              <div
-                v-for="(step, index) in currentSteps"
-                :key="step.key"
-                class="relative flex items-start gap-4"
-              >
-                <div
-                  :class="[
-                    'relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all',
-                    index <= currentStepIndex
-                      ? 'bg-[#246BFD] border-[#246BFD]'
-                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
-                  ]"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    :class="index <= currentStepIndex ? 'text-white' : 'text-gray-400'"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    v-html="step.icon"
-                  ></svg>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Column: Tracking Timeline -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Timeline Card -->
+            <div class="p-8 bg-white shadow-lg dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">
+              <h2 class="mb-8 text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <svg class="w-6 h-6 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Order Timeline
+              </h2>
+
+              <div class="relative pl-4">
+                 <!-- Vertical Line -->
+                <div class="absolute left-[27px] top-2 bottom-4 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+
+                <!-- Iterate over status history (reversed to show latest first? No, usually oldest first for timeline). 
+                     But providing descending often looks better for "What just happened".
+                     Let's stick to chronological order (API likely provides chronological, but user showed chronological).
+                -->
+                <div v-if="order.statusHistory && order.statusHistory.length > 0" class="space-y-8">
+                  <div v-for="(history, index) in order.statusHistory" :key="index" class="relative flex gap-6 group">
+                     <!-- Dot -->
+                    <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-2xl border-4 border-white dark:border-gray-800 shadow-md transition-transform group-hover:scale-110"
+                      :class="statusColors[history.status]?.replace('bg-', 'bg-').replace('text-', 'text-') || 'bg-gray-100 text-gray-600'">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <!-- Simple mapping for icons based on status key -->
+                        <path v-if="history.status === 'pending'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <path v-else-if="history.status === 'confirmed'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        <path v-else-if="history.status === 'processing'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        <path v-else-if="history.status === 'ready'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                         <path v-else-if="history.status === 'out_for_delivery'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                        <path v-else-if="history.status === 'completed'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
+
+                    <div class="flex-1 py-1">
+                      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white capitalize">
+                          {{ history.status.replace(/_/g, ' ') }}
+                        </h3>
+                        <span class="text-xs font-semibold px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                           {{ formatDate(history.timestamp) }}
+                        </span>
+                      </div>
+                      <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                        {{ history.note || 'Status updated' }}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                
-                <div class="flex-1 pb-8">
-                  <p
-                    :class="[
-                      'font-medium',
-                      index <= currentStepIndex ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
-                    ]"
-                  >
-                    {{ step.label }}
-                  </p>
-                  <p v-if="index <= currentStepIndex" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {{ index === currentStepIndex ? 'In Progress' : 'Completed' }}
-                  </p>
+
+                <!-- Fallback to static steps if no history (should not happen with new API but for safety) -->
+                <div v-else class="text-center py-8 text-gray-500">
+                  No tracking history available.
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div v-else class="p-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl">
-          <div class="flex items-start gap-3">
-            <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-            </svg>
-            <div>
-              <p class="font-semibold text-red-800 dark:text-red-200">Order Cancelled</p>
-              <p class="text-sm text-red-700 dark:text-red-300 mt-1">
-                This order was cancelled on {{ formatDate(order.cancelledAt || order.updatedAt) }}
-              </p>
-              <p v-if="order.cancellationReason" class="text-sm text-red-600 dark:text-red-400 mt-2">
-                Reason: {{ order.cancellationReason }}
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div class="lg:col-span-2 space-y-6">
             <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
               <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Order Items</h2>
               
@@ -308,7 +332,18 @@ onMounted(() => {
             </div>
 
             <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-              <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Delivery Information</h2>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Delivery Information</h2>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                  :class="order.deliveryMethod === 'pickup' 
+                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' 
+                    : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800'">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  </svg>
+                  {{ order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}
+                </span>
+              </div>
               
               <div class="space-y-4">
                 <div class="flex items-start gap-3">
@@ -362,21 +397,46 @@ onMounted(() => {
                   <span>GHS {{ order.deliveryFee.toFixed(2) }}</span>
                 </div>
                 <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div class="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
+                  <div class="flex justify-between text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     <span>Total</span>
                     <span class="text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</span>
                   </div>
+                  
+                  <button 
+                    v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
+                    @click="payNow"
+                    class="w-full py-3 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <span>Secure Checkout</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
 
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Payment Method</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ order.paymentMethod === 'platform' ? 'Paid Online' : 'Pay at Pharmacy' }}
-                </p>
-                <p class="mt-1 text-xs" :class="order.paymentStatus === 'paid' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'">
-                  {{ order.paymentStatus === 'paid' ? '✓ Paid' : 'Payment Pending' }}
-                </p>
+                <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Payment Status</p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                    :class="order.paymentMethod === 'platform' && order.paymentStatus === 'paid'
+                      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                      : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                    {{ order.paymentMethod === 'platform' ? 'Paid Online' : 'Pay at Pharmacy' }}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                    :class="{
+                      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800': order.paymentStatus === 'paid',
+                      'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800': order.paymentStatus === 'pending',
+                      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800': order.paymentStatus === 'failed',
+                       'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600': order.paymentStatus === 'refunded'
+                    }">
+                     {{ order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -385,13 +445,22 @@ onMounted(() => {
               
               <div class="space-y-3">
                 <div>
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ order.pharmacyName }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ order.pharmacyAddress }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Pharmacy</p>
+                  <p class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ order.pharmacyName }}</p>
+                  
+                  <template v-if="order.branchName">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Branch</p>
+                    <p class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ order.branchName }}</p>
+                  </template>
+
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Address</p>
+                  <p class="text-sm text-gray-900 dark:text-white mb-2">{{ order.pharmacyAddress }}</p>
                 </div>
                 <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Contact</p>
                   <a
                     :href="`tel:${order.pharmacyPhone}`"
-                    class="flex items-center gap-2 text-sm text-[#246BFD] hover:text-[#5089FF] transition-colors"
+                    class="flex items-center gap-2 text-sm font-medium text-[#246BFD] hover:text-[#5089FF] transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
