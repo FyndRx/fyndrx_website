@@ -1201,7 +1201,7 @@
                 "sync"
               ]
             },
-            "description": "Replace entire cart with new items array"
+            "description": "Replaces the user's entire cart with the provided array of items. \n\n**Logic:**\n- Clears existing cart items for the user.\n- Iterates through the new items.\n- For each item, it looks up the `PharmacyDrugPrice`.\n- It **automatically derives** the `pharmacy_branch_id` from the price record or its parent pharmacy.\n- **Strict Validation:** If a branch ID cannot be determined for an item, the sync will fail with an error to prevent 'invisible' cart items. \n- Returns the full updated cart structure (same as GET /cart)."
           }
         }
       ]
@@ -1216,7 +1216,7 @@
             "header": [],
             "body": {
               "mode": "json",
-              "raw": "{\n  \"pharmacy_branch_id\": 1,\n  \"delivery_method\": \"delivery\",\n  \"delivery_address\": \"123 Main St, Accra\",\n  \"delivery_lat\": 5.6037,\n  \"delivery_lng\": -0.1870,\n  \"phone_number\": \"+233123456789\",\n  \"payment_method\": \"platform\",\n  \"notes\": \"Please handle with care\"\n}"
+              "raw": "{\n  \"pharmacy_branch_id\": null,\n  \"payment_methods\": {\n    \"1\": \"platform\",\n    \"2\": \"direct\"\n  },\n  \"delivery_method\": \"delivery\",\n  \"delivery_address\": \"123 Main St, Accra\",\n  \"delivery_lat\": 5.6037,\n  \"delivery_lng\": -0.1870,\n  \"phone_number\": \"+233123456789\",\n  \"notes\": \"Please handle with care\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/orders",
@@ -1227,7 +1227,7 @@
                 "orders"
               ]
             },
-            "description": "Creates order from cart items for the specified pharmacy_branch_id. Cart items are automatically converted to order items."
+            "description": "Creates an order from the user's current cart items. \n\n**Modes:**\n1. **Multi-Branch Checkout (Default):** Send `pharmacy_branch_id: null` (or omit it). The API will automatically split your cart into separate orders for each pharmacy branch.\n2. **Single Branch Checkout:** Send a specific `pharmacy_branch_id`. The API will create an order ONLY for that branch. If your cart contains items from other branches, those items will remain in the cart (unlike the previous behavior which caused an error).\n\n**Process:**\n- Validates request.\n- Groups cart items by branch (if multi-branch).\n- Creates Order(s).\n- Clears processed items from the cart.\n- Returns an array of orders (if multi-branch) or a single order object."
           }
         },
         {
