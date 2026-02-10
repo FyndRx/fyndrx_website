@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
+    "@sentry/vue": "^10.38.0",
     "@types/cropperjs": "^1.1.5",
     "@types/file-saver": "^2.0.7",
     "axios": "^1.6.7",
