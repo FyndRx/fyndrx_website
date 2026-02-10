@@ -34,7 +34,7 @@ export default {
 
 <template>
   <header 
-    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+    class="print:hidden fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     :class="{
       'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-lg': isScrolled || isMobileMenuOpen,
       'bg-transparent': !isScrolled,
@@ -62,11 +62,31 @@ export default {
             v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']" 
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
-            class="text-gray-700 hover:text-[#246BFD] font-medium transition-all duration-300 relative group"
-            :class="{'dark:text-white': !isScrolled}"
+            custom
+            v-slot="{ href, navigate, isActive }"
           >
-            {{ link }}
-            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#246BFD] transition-all duration-300 group-hover:w-full"></span>
+            <a 
+              :href="href" 
+              @click="navigate"
+              class="relative font-medium transition-all duration-300 group flex items-center"
+              :class="[
+                isActive ? 'text-[#246BFD]' : 'text-gray-700 hover:text-[#246BFD] dark:text-gray-200',
+              ]"
+            >
+              <!-- Creative Active Dot -->
+              <span 
+                v-if="isActive" 
+                class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_10px_#246BFD] animate-pulse"
+              ></span>
+
+              {{ link }}
+
+              <!-- Hover Underline (Only if not active) -->
+              <span 
+                v-if="!isActive"
+                class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#246BFD] transition-all duration-300 group-hover:w-full opacity-50"
+              ></span>
+            </a>
           </router-link>
         </div>
 

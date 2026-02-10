@@ -79,6 +79,8 @@ const handleSubmit = async () => {
 const contactInfo = {
   address: 'Mayflower Building, Community 10',
   city: 'Tema, Greater Accra',
+  tamaleAddress: 'Behind Nahda Basic School. Nyohini-Yepala',
+  tamaleCity: 'Tamale, Northern Region',
   email: 'info@fyndrx.com',
   phone: '+233 24 399 6999',
   hours: 'Monday - Friday: 9:00 AM - 6:00 PM',
@@ -131,7 +133,7 @@ const socialLinks = [
       <div class="relative px-4 py-24 mx-auto max-w-7xl sm:py-32 sm:px-6 lg:px-8">
         <div class="text-center" :class="{ 'animate-fade-in': isVisible }">
           <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
-            Get in <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615]">Touch</span>
+            Get in <span class="text-[#246BFD]">Touch</span>
           </h1>
           <p class="max-w-3xl mx-auto mt-6 text-xl text-gray-600 dark:text-gray-300">
             Have questions? We're here to help. Reach out to us and we'll get back to you as soon as possible.
@@ -220,7 +222,7 @@ const socialLinks = [
 
           <!-- Contact Information -->
           <div class="space-y-8" :class="{ 'animate-fade-in': isVisible }">
-            <div class="bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10 rounded-2xl p-8">
+            <div class="bg-[#246BFD]/5 rounded-2xl p-8">
               <h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
                 Contact Information
               </h3>
@@ -231,8 +233,13 @@ const socialLinks = [
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <div class="ml-3">
+                    <p class="font-medium text-gray-900 dark:text-white">Tema Office:</p>
                     <p class="text-gray-600 dark:text-gray-300">{{ contactInfo.address }}</p>
-                    <p class="text-gray-600 dark:text-gray-300">{{ contactInfo.city }}</p>
+                    <p class="text-gray-600 dark:text-gray-300 mb-2">{{ contactInfo.city }}</p>
+                    
+                    <p class="font-medium text-gray-900 dark:text-white mt-3">Tamale Office:</p>
+                    <p class="text-gray-600 dark:text-gray-300">{{ contactInfo.tamaleAddress }}</p>
+                    <p class="text-gray-600 dark:text-gray-300">{{ contactInfo.tamaleCity }}</p>
                   </div>
                 </div>
 
@@ -273,7 +280,7 @@ const socialLinks = [
                   v-for="social in socialLinks" 
                   :key="social.name"
                   :href="social.url"
-                  class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10 hover:bg-[#FE9615] transition-all duration-300 group"
+                  class="w-10 h-10 flex items-center justify-center rounded-full bg-[#246BFD]/10 hover:bg-[#FE9615] transition-all duration-300 group"
                 >
                   <svg 
                     class="w-5 h-5 text-gray-600 transition-colors dark:text-gray-300 group-hover:text-white" 
@@ -313,7 +320,7 @@ const socialLinks = [
             </div>
 
             <!-- Location Info -->
-            <div class="p-8 bg-gradient-to-br from-[#246BFD]/5 to-[#FE9615]/5 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10">
+            <div class="p-8 bg-[#246BFD]/5 dark:bg-[#246BFD]/10">
               <h3 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
                 Our Location
               </h3>

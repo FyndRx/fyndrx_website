@@ -14,7 +14,7 @@ onMounted(() => {
       <!-- Decorative elements -->
       <div class="relative mb-8">
         <div class="absolute inset-0 bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10 rounded-full blur-3xl"></div>
-        <h1 class="text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615] relative">
+        <h1 class="text-9xl font-bold text-[#246BFD] relative">
           404
         </h1>
       </div>

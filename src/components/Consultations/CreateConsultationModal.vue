@@ -32,7 +32,7 @@ const error = ref('');
 // Updated interface matching backend requirements
 interface ConsultationForm {
   consultation_type: ConsultationType;
-  subject: string;
+
   symptoms: string;
   medical_history: string;
   current_medications: string;
@@ -43,7 +43,7 @@ interface ConsultationForm {
   patient_email: string;
   patient_phone: string;
   patient_date_of_birth: string;
-  patient_gender: 'male' | 'female' | ''; 
+  patient_gender: string; 
   pharmacy_id: number;
   // pharmacy_branch_id set to 1 by default logic or backend? user prompt says pharmacy_id maintains 1.
   // We'll keep pharmacy_branch_id if needed, or remove if unused. Keeping clean for now.
@@ -55,7 +55,7 @@ interface ConsultationForm {
 
 const form = reactive<ConsultationForm>({
   consultation_type: 'general',
-  subject: '',
+
   symptoms: '',
   medical_history: '',
   current_medications: '',
@@ -132,10 +132,7 @@ const removeFile = (index: number) => {
 };
 
 const validateForm = (): boolean => {
-  if (!form.subject || form.subject.length > 255) {
-    error.value = 'Subject is required and must be less than 255 characters.';
-    return false;
-  }
+
   
   if (form.scheduled_at) {
     const scheduledDate = new Date(form.scheduled_at);
@@ -172,11 +169,9 @@ const submit = async () => {
       // Ensure specific fields are correctly typed/formatted if needed
       user_id: form.user_id,
       pharmacy_id: form.pharmacy_id,
-      patient_gender: form.patient_gender as 'male' | 'female' | undefined, // handle empty string case
+      patient_gender: form.patient_gender,
     };
 
-    // Remove empty strings for optional fields to keep payload clean (optional but good practice)
-    if (!payload.patient_gender) delete payload.patient_gender;
     if (!payload.scheduled_at) delete payload.scheduled_at;
 
     await consultationService.createConsultation(payload);
@@ -301,12 +296,7 @@ const submit = async () => {
                 3. Clinical Details
               </label>
               
-              <TextInput 
-                label="Subject / Chief Complaint" 
-                v-model="form.subject" 
-                placeholder="E.g., Severe migraine since yesterday"
-                required 
-              />
+
               
               <div class="grid grid-cols-1 gap-4">
                 <Textarea label="Symptoms" v-model="form.symptoms" placeholder="Describe symptoms in detail..." :rows="3" />

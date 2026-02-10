@@ -50,7 +50,7 @@ const team = [
       <div class="relative px-4 py-24 mx-auto max-w-7xl sm:py-32 sm:px-6 lg:px-8">
         <div class="text-center" :class="{ 'animate-fade-in': isVisible }">
           <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
-            About <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615]">FyndRx</span>
+            About <span class="text-[#246BFD]">FyndRx</span>
           </h1>
           <p class="max-w-3xl mx-auto mt-6 text-xl text-gray-600 dark:text-gray-300">
             We're revolutionizing healthcare access through technology, making quality care more accessible and affordable for everyone.
@@ -81,7 +81,7 @@ const team = [
       <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="grid grid-cols-2 gap-8 md:grid-cols-4" :class="{ 'animate-fade-in': isVisible }">
           <div v-for="stat in stats" :key="stat.label" class="text-center">
-            <div class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#FE9615]">
+            <div class="text-4xl font-bold text-[#246BFD]">
               {{ stat.value }}
             </div>
             <div class="mt-2 text-lg text-gray-600 dark:text-gray-300">

@@ -3,8 +3,12 @@ import { computed } from 'vue';
 import type { Consultation } from '@/types/consultation';
 import { format } from 'date-fns';
 import Badge from '@/components/Badge.vue';
-import Button from '@/components/Button.vue';
-import { CalendarIcon, BuildingStorefrontIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { 
+  CalendarIcon, 
+  BoltIcon, 
+  PaperClipIcon, 
+  ChevronRightIcon
+} from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
   consultation: Consultation;
@@ -12,12 +16,13 @@ const props = defineProps<{
 
 defineEmits(['view', 'cancel']);
 
-const priorityColor = computed(() => {
-  switch (props.consultation.priority) {
-    case 'urgent': return 'error';
-    case 'high': return 'warning';
-    case 'normal': return 'primary';
-    case 'low': return 'default';
+const statusColor = computed(() => {
+  switch (props.consultation.status) {
+    case 'pending': return 'warning';
+    case 'in_review': return 'primary';
+    case 'responded': return 'success';
+    case 'completed': return 'success';
+    case 'cancelled': return 'error';
     default: return 'default';
   }
 });
@@ -26,7 +31,7 @@ const formattedDate = computed(() => {
   try {
     const date = new Date(props.consultation.created_at);
     if (isNaN(date.getTime())) return 'N/A';
-    return format(date, 'MMM d, yyyy h:mm a');
+    return format(date, 'MMM d, yyyy');
   } catch (e) {
     return 'N/A';
   }
@@ -35,83 +40,123 @@ const formattedDate = computed(() => {
 
 <template>
   <div 
-    class="group relative bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden"
+    class="group relative bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col h-full cursor-pointer"
+    @click="$emit('view', consultation)"
   >
-    <!-- Status Accent Bar -->
-    <div 
-      class="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300"
-      :class="{
-        'bg-yellow-400': consultation.status === 'pending',
-        'bg-blue-500': consultation.status === 'in_review',
-        'bg-green-500': consultation.status === 'responded' || consultation.status === 'completed',
-        'bg-red-500': consultation.status === 'cancelled',
-        'bg-gray-300': !consultation.status
-      }"
-    ></div>
+    <!-- Top Row: ID, Priority, Status -->
+    <div class="flex justify-between items-start mb-4">
+       <div class="flex items-center gap-2">
+         <Badge 
+             size="sm" 
+             class="capitalize !rounded-full !px-3 font-bold shadow-sm"
+             :variant="statusColor"
+          >
+             {{ consultation.status?.replace('_', ' ') || 'Unknown' }}
+          </Badge>
+          <!-- <span class="font-mono text-xs text-gray-400">#{{ consultation.consultation_number }}</span> -->
+       </div>
+       
+       <div :title="`Priority: ${consultation.priority}`" class="flex items-center gap-1 px-2.5 py-1 bg-gray-50 dark:bg-gray-700/50 rounded-full" :class="{
+             'bg-red-50 text-red-600': consultation.priority === 'urgent',
+             'bg-orange-50 text-orange-600': consultation.priority === 'high',
+             'bg-blue-50 text-blue-600': consultation.priority === 'normal',
+             'bg-gray-50 text-gray-600': consultation.priority === 'low'
+          }">
+             <BoltIcon class="w-3.5 h-3.5" />
+             <span class="text-xs font-bold uppercase">{{ consultation.priority }}</span>
+       </div>
+    </div>
 
-    <div class="pl-3">
-      <!-- Header -->
-      <div class="flex justify-between items-start mb-3">
-        <div>
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">#{{ consultation.consultation_number }}</span>
-            <span 
-              class="flex h-2 w-2 rounded-full" 
-              :class="{
-                 'bg-yellow-400': consultation.status === 'pending',
-                 'bg-blue-500': consultation.status === 'in_review',
-                 'bg-green-500': consultation.status === 'responded' || consultation.status === 'completed',
-                 'bg-red-500': consultation.status === 'cancelled',
-                 'bg-gray-300': !consultation.status
-              }"
-            ></span>
-            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize">{{ consultation.status?.replace('_', ' ') || 'Unknown' }}</span>
+    <!-- Main Content: Subject -->
+    <div class="mb-4">
+      <h3 class="font-bold font-mono text-lg text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors mb-2 line-clamp-2" :title="consultation.consultation_type_label || consultation.consultation_type">
+         <!-- {{ consultation.consultation_type ? consultation.consultation_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Consultation' }} -->
+         #{{ consultation.consultation_number }}
+      </h3>
+       <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2">
+         <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-lg">
+           <CalendarIcon class="w-4 h-4" />
+           {{ formattedDate }}
+         </div>
+         
+         <div v-if="consultation.scheduled_at" class="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg">
+           <CalendarIcon class="w-4 h-4" />
+           Scheduled
+         </div>
+
+         <div v-if="consultation.consultation_type" class="px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700 capitalize">
+            {{ consultation.consultation_type.replace('_', ' ') }}
+         </div>
+      </div>
+    </div>
+
+    <!-- Extra Data: Vitals Strip & Counts -->
+    <div class="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700/50 flex items-center justify-between">
+       
+       <!-- Vitals Mini Summary -->
+       <div 
+         v-if="consultation.vitals && Object.values(consultation.vitals).some(v => v)" 
+         class="flex items-center gap-2 overflow-x-auto scrollbar-hide max-w-[65%]"
+       >
+          <!-- BP -->
+          <div v-if="consultation.vitals.blood_pressure_systolic" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Blood Pressure">
+             <span class="text-red-500 font-bold">BP</span>
+             {{ consultation.vitals.blood_pressure_systolic }}/{{ consultation.vitals.blood_pressure_diastolic }}
           </div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors line-clamp-1">
-            {{ consultation.subject }}
-          </h3>
-        </div>
-        <Badge :variant="priorityColor" size="sm" class="uppercase text-[10px] tracking-wide">{{ consultation.priority }}</Badge>
-      </div>
+          <!-- Heart Rate -->
+          <div v-if="consultation.vitals.heart_rate" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Heart Rate">
+             <span class="text-blue-500 font-bold">HR</span>
+             {{ consultation.vitals.heart_rate }}
+          </div>
+          <!-- Temp -->
+          <div v-if="consultation.vitals.temperature" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Temperature">
+             <span class="text-orange-500 font-bold">T</span>
+             {{ consultation.vitals.temperature }}°
+          </div>
+          <!-- O2 -->
+          <div v-if="consultation.vitals.oxygen_saturation" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Oxygen Saturation">
+             <span class="text-cyan-500 font-bold">O₂</span>
+             {{ consultation.vitals.oxygen_saturation }}%
+          </div>
+          <!-- Resp Rate -->
+          <div v-if="consultation.vitals.respiratory_rate" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Respiratory Rate">
+             <span class="text-purple-500 font-bold">RR</span>
+             {{ consultation.vitals.respiratory_rate }}
+          </div>
+          <!-- Weight -->
+          <div v-if="consultation.vitals.weight" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Weight">
+             <span class="text-gray-500 font-bold">Wt</span>
+             {{ consultation.vitals.weight }}kg
+          </div>
+          <!-- Height -->
+          <div v-if="consultation.vitals.height" class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 px-2 py-1 rounded-md" title="Height">
+             <span class="text-gray-500 font-bold">Ht</span>
+             {{ consultation.vitals.height }}cm
+          </div>
+       </div>
+       <div v-else class="text-xs text-gray-400 italic">
+          No vitals recorded
+       </div>
 
-      <!-- Info Grid -->
-      <div class="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600 dark:text-gray-300 mb-5">
-        <div class="flex items-center gap-2">
-          <CalendarIcon class="w-4 h-4 text-gray-400" />
-          <span class="truncate">{{ formattedDate }}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <UserIcon class="w-4 h-4 text-gray-400" />
-          <span class="truncate">{{ consultation.patient_name }}</span>
-        </div>
-        <div class="flex items-center gap-2 col-span-2" v-if="consultation.pharmacy">
-          <BuildingStorefrontIcon class="w-4 h-4 text-gray-400" />
-          <span class="truncate">{{ consultation.pharmacy.name }}</span>
-        </div>
-      </div>
+       <!-- Right Side Metadata -->
+       <div class="flex items-center gap-3">
+          <!-- Diagnoses Count -->
+          <div v-if="consultation.diagnoses?.length" class="flex items-center text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-md" title="Diagnoses">
+              <span class="text-xs font-bold">{{ consultation.diagnoses.length }} DX</span>
+          </div>
 
-      <!-- Actions -->
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-50 dark:border-gray-700/50">
-        <Button 
-          v-if="consultation.status === 'pending'"
-          variant="secondary" 
-          size="small" 
-          @click.stop="$emit('cancel', consultation)"
-          class="!px-3 !py-1.5 text-xs font-medium dark:bg-transparent dark:text-gray-300 dark:border-gray-600 dark:hover:border-gray-400 dark:hover:text-white hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-          title="Cancel Consultation"
-        >
-          Cancel
-        </Button>
-        <Button 
-          variant="primary" 
-          size="small"
-          @click="$emit('view', consultation)"
-          class="!px-4 !py-1.5 text-xs font-medium shadow-none hover:shadow-md"
-          title="View Consultation Details"
-        >
-          View Details
-        </Button>
-      </div>
+          <!-- Attachments Count -->
+          <div v-if="consultation.attachments?.length" class="flex items-center text-gray-400" title="Attachments">
+              <PaperClipIcon class="w-4 h-4" />
+              <span class="text-sm ml-0.5 font-medium">{{ consultation.attachments.length }}</span>
+          </div>
+          
+           <!-- Arrow -->
+           <div class="w-6 h-6 rounded-full bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 group-hover:bg-[#246BFD] group-hover:text-white transition-all duration-300">
+              <ChevronRightIcon class="w-3 h-3" />
+           </div>
+       </div>
+
     </div>
   </div>
 </template>

@@ -6,12 +6,16 @@ import Features from '@/views/Home/landing/Features.vue';
 import HowItWorks from '@/views/Home/landing/HowItWorks.vue';
 import Stats from '@/views/Home/landing/Stats.vue';
 import PharmacyList from '@/views/Home/landing/PharmacyList.vue';
-import Testimonials from '@/views/Home/landing/Testimonials.vue';
+import Testimonials from '@/views/Home/landing/TestimonialsSection.vue';
 import CTA from '@/views/Home/landing/CTA.vue';
 import BlogPosts from '@/views/Home/landing/BlogPosts.vue';
 import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
 
 const isVisible = ref(false);
+
+import PromotionsCarousel from '@/views/Home/landing/PromotionsCarousel.vue';
+import PartnershipBanner from '@/views/Home/landing/PartnershipBanner.vue';
+import AppDownloadBanner from '@/views/Home/landing/AppDownloadBanner.vue';
 
 onMounted(() => {
   isVisible.value = true;
@@ -60,6 +64,14 @@ onMounted(() => {
       <PharmacyList />
     </section>
 
+    <!-- Service Banner -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <PromotionsCarousel />
+    </section>
+
     <!-- Stats Section -->
     <section 
       class="relative overflow-hidden"
@@ -68,12 +80,28 @@ onMounted(() => {
       <Stats />
     </section>
 
+    <!-- Partnership Section -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <PartnershipBanner />
+    </section>
+
     <!-- Testimonials Section -->
     <section 
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
       <Testimonials />
+    </section>
+
+    <!-- App Download Section -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <AppDownloadBanner />
     </section>
 
     <!-- CTA Section -->

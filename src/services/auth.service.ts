@@ -54,6 +54,8 @@ export interface LoginResponse {
 export interface UpdateUserDetailsRequest {
   firstname?: string;
   lastname?: string;
+  dob?: string;
+  gender?: string;
   phone_number?: string;
   address?: string;
 }

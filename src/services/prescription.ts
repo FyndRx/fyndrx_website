@@ -12,11 +12,15 @@ import {
 } from '@/utils/responseTransformers';
 
 export interface MedicationItem {
-  name: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  instructions?: string;
+  drug_id: number;
+  quantity: number;
+  dose?: string; // Changed from dosage to dose
+  frequency?: string;
+  duration?: string;
+  instruction?: string;
+  brand_id?: number;
+  form_id?: number;
+  uom_id?: number;
 }
 
 export interface CreatePrescriptionRequest {
@@ -24,6 +28,8 @@ export interface CreatePrescriptionRequest {
   prescriptionImage?: string | null;
   prescriptionNumber?: string;
   patientName?: string;
+  patient_email?: string; // Added
+  patient_phone?: string; // Added
   doctorName?: string;
   prescriptionDate?: string;
   expiryDate?: string;

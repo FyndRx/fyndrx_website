@@ -22,6 +22,7 @@ export interface UserApiResponse {
   fullname: string | null;
   username: string | null;
   dob: string | null;
+  gender: string | null;
   email: string;
   pharmacy_id: number | null;
   pharmacy_branch_id: number | null;

@@ -7,6 +7,7 @@ import type { CreateConsultationPayload, ConsultationType, ConsultationPriority 
 import Button from '@/components/Button.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
+import Dropdown from '@/components/Dropdown.vue';
 import { 
   CheckCircleIcon, 
   UserIcon,
@@ -14,21 +15,26 @@ import {
   ClockIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-  PaperClipIcon,
-  XMarkIcon
+  HeartIcon as HeartOutlineIcon
 } from '@heroicons/vue/24/outline';
-import { StarIcon, ShieldCheckIcon, HeartIcon, BoltIcon } from '@heroicons/vue/24/solid';
+import { StarIcon, ShieldCheckIcon, HeartIcon, BoltIcon, ChartBarIcon } from '@heroicons/vue/24/solid';
 
 const router = useRouter();
 const currentStep = ref(1);
 const submitting = ref(false);
 const error = ref('');
+const formErrors = reactive({
+  symptoms: '',
+  medical_history: '',
+  current_medications: '',
+  allergies: ''
+});
 
 // Form Data with Defaults
 const form = reactive<CreateConsultationPayload>({
   consultation_type: 'general',
   priority: 'normal',
-  subject: '',
+
   symptoms: '',
   medical_history: '',
   current_medications: '',
@@ -38,10 +44,19 @@ const form = reactive<CreateConsultationPayload>({
   patient_email: '',
   patient_phone: '',
   patient_date_of_birth: '',
-  patient_gender: '' as any,
+  patient_gender: '',
+  vitals: {
+    blood_pressure_systolic: undefined,
+    blood_pressure_diastolic: undefined,
+    heart_rate: undefined,
+    temperature: undefined,
+    oxygen_saturation: undefined,
+    respiratory_rate: undefined,
+    weight: undefined,
+    height: undefined
+  },
   pharmacy_id: 1, // Hardcoded as requested
   source: 'web',
-  attachments: [],
   user_id: 0
 });
 
@@ -53,19 +68,50 @@ const consultationTypes = [
   { value: 'acute_illness', label: 'Acute Illness', icon: BoltIcon, desc: 'Flu, cold, etc.' },
 ];
 
+const genderOptions = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
+
 const steps = [
   { number: 1, title: 'Triage', icon: ClockIcon },
   { number: 2, title: 'Patient', icon: UserIcon },
-  { number: 3, title: 'Clinical', icon: ClipboardDocumentListIcon },
-  { number: 4, title: 'Attachments', icon: PaperClipIcon },
+  { number: 3, title: 'Vitals', icon: HeartOutlineIcon },
+  { number: 4, title: 'Clinical', icon: ClipboardDocumentListIcon },
   { number: 5, title: 'Review', icon: CheckCircleIcon },
 ];
 
 // Navigation Logic
 const nextStep = () => {
-  if (currentStep.value === 3 && !form.subject) { // Clinical is now Step 3
-    alert('Subject is required');
-    return;
+  if (currentStep.value === 4) { // Clinical Step Validation
+    let isValid = true;
+    
+    // Reset errors
+    Object.keys(formErrors).forEach(k => (formErrors as any)[k] = '');
+
+    if (!form.symptoms) {
+      formErrors.symptoms = 'Symptoms description is required';
+      isValid = false;
+    }
+    if (!form.medical_history) {
+      formErrors.medical_history = 'Medical history is required (or type "None")';
+      isValid = false;
+    }
+    if (!form.current_medications) {
+      formErrors.current_medications = 'Current medications is required (or type "None")';
+      isValid = false;
+    }
+    if (!form.allergies) {
+      formErrors.allergies = 'Allergies info is required (or type "None")';
+      isValid = false;
+    }
+
+    if (!isValid) {
+       error.value = 'Please fill in all required clinical context fields.';
+       // Auto-clear error after 3 seconds
+       setTimeout(() => error.value = '', 3000);
+       return;
+    }
   }
   if (currentStep.value < 5) currentStep.value++;
 };
@@ -86,6 +132,15 @@ const submitConsultation = async () => {
     }
 
     console.log(form);
+
+    // Update profile if needed
+    if (isProfileIncomplete.value) {
+      await authService.updateUserDetails({
+        dob: form.patient_date_of_birth,
+        gender: form.patient_gender
+      });
+    }
+
     await consultationService.createConsultation(form);
     router.push('/consultations');
   } catch (err: any) {
@@ -96,26 +151,15 @@ const submitConsultation = async () => {
   }
 };
 
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files) {
-    const newFiles = Array.from(target.files);
-    // Append to existing files (optional, or replace)
-    // Here we'll append
-    if (!form.attachments) form.attachments = [];
-    form.attachments = [...form.attachments, ...newFiles];
-  }
-};
 
-const removeFile = (index: number) => {
-  if (form.attachments) {
-    form.attachments = form.attachments.filter((_, i) => i !== index);
-  }
-};
 
 const stepsProgress = computed(() => {
   return ((currentStep.value - 1) / (steps.length - 1)) * 100;
 });
+
+
+// State to track if profile needs update
+const isProfileIncomplete = ref(false);
 
 onMounted(async () => {
   try {
@@ -125,7 +169,14 @@ onMounted(async () => {
       form.patient_email = user.email || '';
       form.patient_phone = user.phone_number || '';
       form.patient_date_of_birth = user.dob || '';
+      // @ts-ignore
+      form.patient_gender = user.gender || '';
       form.user_id = user.id;
+
+      // Check if profile is incomplete
+      if (!user.dob || !user.gender) {
+        isProfileIncomplete.value = true;
+      }
     }
   } catch (err) {
     console.error('Failed to load user details:', err);
@@ -135,13 +186,13 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-28 pb-12 px-4">
-    <div class="max-w-3xl mx-auto">
+    <div class="max-w-5xl mx-auto">
       
       <!-- Stepper Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-6">New Consultation</h1>
         
-        <div class="relative flex justify-between items-center max-w-lg mx-auto">
+        <div class="relative flex justify-between items-center mx-auto">
           <!-- Progress Bar Background -->
           <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 -z-0 -translate-y-1/2 rounded-full"></div>
           <!-- Active Progress -->
@@ -173,7 +224,7 @@ onMounted(async () => {
       </div>
 
       <!-- Form Content -->
-      <Card class="p-8 min-h-[400px] relative overflow-hidden transition-all duration-500">
+      <Card class="p-8 min-h-[400px] relative transition-all duration-500">
         <Transition name="fade" mode="out-in">
           
           <!-- STEP 1: TRIAGE -->
@@ -242,41 +293,143 @@ onMounted(async () => {
                <TextInput label="Email Address" v-model="form.patient_email" disabled />
                <TextInput label="Phone Number" v-model="form.patient_phone" disabled />
                
-               <TextInput 
-                 label="Date of Birth *" 
-                 type="date" 
-                 v-model="form.patient_date_of_birth" 
-                 required 
-               />
-            </div>
+                <TextInput 
+                  label="Date of Birth" 
+                  type="date" 
+                  v-model="form.patient_date_of_birth" 
+                  :disabled="!isProfileIncomplete"
+                  required 
+                />
+             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gender *</label>
-              <div class="relative">
-                <select 
-                  v-model="form.patient_gender"
-                  class="w-full px-5 py-3 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#246BFD] focus:ring-opacity-50 transition-all font-medium"
-                  required
-                >
-                  <option value="" disabled selected>Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </div>
+              <Dropdown 
+                label="Gender" 
+                :options="genderOptions"
+                v-model="form.patient_gender"
+                placeholder="Select Gender"
+                :disabled="!isProfileIncomplete"
+                required
+              />
             </div>
           </div>
 
-          <!-- STEP 3: CLINICAL -->
+          <!-- STEP 3: VITALS -->
           <div v-else-if="currentStep === 3" key="step3" class="space-y-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Vital Signs (Optional)</h2>
+            <p class="text-sm text-gray-500 -mt-3 mb-6">Providing these helps the doctor assess your condition better.</p>
+
+            <div v-if="form.vitals" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+              <!-- Blood Pressure -->
+              <div class="md:col-span-2 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+                <div class="flex items-center gap-2 mb-3 text-red-700 dark:text-red-400 font-medium">
+                  <HeartIcon class="w-5 h-5" /> Blood Pressure
+                </div>
+                <div class="flex gap-4">
+                  <TextInput 
+                    label="Systolic (mmHg)" 
+                    type="number" 
+                    v-model="form.vitals.blood_pressure_systolic" 
+                    placeholder="120"
+                  />
+                  <TextInput 
+                    label="Diastolic (mmHg)" 
+                    type="number" 
+                    v-model="form.vitals.blood_pressure_diastolic" 
+                    placeholder="80"
+                  />
+                </div>
+              </div>
+
+              <!-- Heart Rate -->
+              <div class="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                 <div class="flex items-center gap-2 mb-3 text-blue-700 dark:text-blue-400 font-medium">
+                  <ChartBarIcon class="w-5 h-5" /> Heart Rate
+                </div>
+                <TextInput 
+                  label="BPM" 
+                  type="number" 
+                  v-model="form.vitals.heart_rate" 
+                  placeholder="72"
+                />
+              </div>
+
+              <!-- Temperature -->
+              <div class="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                 <div class="flex items-center gap-2 mb-3 text-orange-700 dark:text-orange-400 font-medium">
+                  <BoltIcon class="w-5 h-5" /> Temperature
+                </div>
+                <TextInput 
+                  label="Celsius (°C)" 
+                  type="number" 
+                  v-model="form.vitals.temperature" 
+                  placeholder="36.5"
+                  step="0.1"
+                />
+              </div>
+
+              <!-- Oxygen Saturation -->
+              <div class="p-4 bg-cyan-50 dark:bg-cyan-900/10 rounded-xl border border-cyan-100 dark:border-cyan-900/30">
+                 <div class="flex items-center gap-2 mb-3 text-cyan-700 dark:text-cyan-400 font-medium">
+                  <span class="font-bold text-lg">O₂</span> Oxygen Sat
+                </div>
+                <TextInput 
+                  label="Percent (%)" 
+                  type="number" 
+                  v-model="form.vitals.oxygen_saturation" 
+                  placeholder="98"
+                />
+              </div>
+
+               <!-- Respiratory Rate -->
+              <div class="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                 <div class="flex items-center gap-2 mb-3 text-purple-700 dark:text-purple-400 font-medium">
+                   <span class="font-bold text-lg">RR</span> Respiratory Rate
+                </div>
+                <TextInput 
+                  label="Breaths/min" 
+                  type="number" 
+                  v-model="form.vitals.respiratory_rate" 
+                  placeholder="16"
+                />
+              </div>
+
+               <!-- Weight -->
+              <div class="p-4 bg-gray-100 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                 <div class="flex items-center gap-2 mb-3 text-gray-700 dark:text-gray-400 font-medium">
+                   Weight
+                </div>
+                <TextInput 
+                  label="kg" 
+                  type="number" 
+                  v-model="form.vitals.weight" 
+                  placeholder="70"
+                  step="0.1"
+                />
+              </div>
+
+               <!-- Height -->
+              <div class="p-4 bg-gray-100 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
+                 <div class="flex items-center gap-2 mb-3 text-gray-700 dark:text-gray-400 font-medium">
+                   Height
+                </div>
+                <TextInput 
+                  label="cm" 
+                  type="number" 
+                  v-model="form.vitals.height" 
+                  placeholder="175"
+                />
+              </div>
+
+            </div>
+          </div>
+
+          <!-- STEP 4: CLINICAL -->
+          <div v-else-if="currentStep === 4" key="step4" class="space-y-6">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Clinical Context</h2>
             
-            <TextInput label="Subject / Check-in Reason *" v-model="form.subject" placeholder="e.g. Severe Headache" required />
+
             
             <TextInput 
               type="textarea" 
@@ -284,6 +437,8 @@ onMounted(async () => {
               v-model="form.symptoms" 
               placeholder="Describe what you are feeling..." 
               :rows="3" 
+              required
+              :error="formErrors.symptoms"
             />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -291,23 +446,29 @@ onMounted(async () => {
                 type="textarea" 
                 label="Medical History" 
                 v-model="form.medical_history" 
-                placeholder="Past conditions..." 
+                placeholder="Past conditions... (or 'None')" 
                 :rows="2" 
+                required
+                :error="formErrors.medical_history"
               />
               <TextInput 
                 type="textarea" 
                 label="Current Medications" 
                 v-model="form.current_medications" 
-                placeholder="Meds you are taking..." 
+                placeholder="Meds you are taking... (or 'None')" 
                 :rows="2" 
+                required
+                :error="formErrors.current_medications"
               />
               <TextInput 
                 type="textarea" 
                 label="Allergies" 
                 v-model="form.allergies" 
-                placeholder="Any known allergies..." 
+                placeholder="Any known allergies... (or 'None')" 
                 :rows="2"
                 class="md:col-span-2" 
+                required
+                :error="formErrors.allergies"
               />
               <TextInput 
                 type="textarea" 
@@ -320,52 +481,7 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- STEP 4: ATTACHMENTS -->
-          <div v-else-if="currentStep === 4" key="step4" class="space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Attachments</h2>
-            <p class="text-sm text-gray-500 mb-6">Upload any relevant documents, reports, or images.</p>
-            
-            <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center hover:border-[#246BFD] transition-colors bg-gray-50 dark:bg-gray-800/50">
-               <input 
-                 type="file" 
-                 multiple 
-                 class="hidden" 
-                 id="file-upload"
-                 @change="handleFileChange"
-                 accept="image/*,.pdf,.doc,.docx"
-               />
-               <label for="file-upload" class="cursor-pointer flex flex-col items-center justify-center">
-                 <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 text-[#246BFD]">
-                   <PaperClipIcon class="w-8 h-8" />
-                 </div>
-                 <p class="font-medium text-gray-900 dark:text-white">Click to upload files</p>
-                 <p class="text-xs text-gray-500 mt-2">PDF, DOC, JPG, PNG (Max 5MB)</p>
-               </label>
-            </div>
 
-            <!-- File List -->
-            <div v-if="form.attachments && form.attachments.length > 0" class="space-y-2 mt-4">
-              <div 
-                v-for="(file, index) in form.attachments" 
-                :key="index"
-                class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl"
-              >
-                <div class="flex items-center gap-3 overflow-hidden">
-                   <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                     <PaperClipIcon class="w-4 h-4 text-gray-500" />
-                   </div>
-                   <span class="text-sm font-medium truncate text-gray-700 dark:text-gray-300">{{ file.name }}</span>
-                   <span class="text-xs text-gray-400">({{ (file.size / 1024).toFixed(0) }} KB)</span>
-                </div>
-                <button 
-                  @click="removeFile(index)" 
-                  class="p-1 hover:bg-red-50 hover:text-red-500 rounded-lg text-gray-400 transition-colors"
-                >
-                  <XMarkIcon class="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
 
           <!-- STEP 5: REVIEW -->
           <div v-else-if="currentStep === 5" key="step5" class="space-y-6">
@@ -378,8 +494,8 @@ onMounted(async () => {
                <div class="p-8">
                  <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-100 dark:border-gray-700 border-dashed">
                     <div>
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Subject</p>
-                      <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ form.subject }}</h3>
+
+                      <h3 class="text-xl font-bold text-gray-900 dark:text-white capitalize">{{ form.consultation_type.replace(/_/g, ' ') }}</h3>
                     </div>
                     <div class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-mono text-gray-500">
                       Draft
@@ -429,6 +545,32 @@ onMounted(async () => {
                       </div>
                   </div>
 
+                  <div v-if="form.vitals && Object.values(form.vitals).some(v => v)" class="mb-6 pb-6 border-b border-gray-100 dark:border-gray-700 border-dashed">
+                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Vitals</p>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-if="form.vitals.blood_pressure_systolic">
+                          <p class="text-xs text-gray-400">BP</p>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.blood_pressure_systolic }}/{{ form.vitals.blood_pressure_diastolic }} mmHg</p>
+                        </div>
+                        <div v-if="form.vitals.heart_rate">
+                          <p class="text-xs text-gray-400">Heart Rate</p>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.heart_rate }} BPM</p>
+                        </div>
+                        <div v-if="form.vitals.temperature">
+                          <p class="text-xs text-gray-400">Temp</p>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.temperature }} °C</p>
+                        </div>
+                        <div v-if="form.vitals.oxygen_saturation">
+                          <p class="text-xs text-gray-400">O₂ Sat</p>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.oxygen_saturation }}%</p>
+                        </div>
+                         <div v-if="form.vitals.weight">
+                          <p class="text-xs text-gray-400">Weight</p>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.weight }} kg</p>
+                        </div>
+                      </div>
+                  </div>
+
                   <div class="space-y-4">
                     <div v-if="form.symptoms">
                       <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Symptoms</p>
@@ -452,29 +594,20 @@ onMounted(async () => {
                        </div>
                     </div>
 
-                    <div v-if="form.attachments && form.attachments.length > 0" class="pt-4 border-t border-gray-100 dark:border-gray-700 border-dashed">
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Attachments ({{ form.attachments.length }})</p>
-                      <div class="flex flex-wrap gap-2">
-                        <div 
-                          v-for="(file, i) in form.attachments" 
-                          :key="i"
-                          class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
-                        >
-                          <PaperClipIcon class="w-3 h-3 text-gray-400" />
-                          <span class="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[150px]">{{ file.name }}</span>
-                        </div>
-                      </div>
-                    </div>
+
                  </div>
                </div>
             </div>
 
-            <div v-if="error" class="bg-red-50 text-red-600 p-4 rounded-xl text-sm text-center border border-red-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-              </svg>
-              {{ error }}
-            </div>
+            <!-- Floating Error Toast -->
+            <Transition name="toast">
+              <div v-if="error" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium animate-bounce-short">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {{ error }}
+              </div>
+            </Transition>
           </div>
 
         </Transition>
@@ -525,5 +658,16 @@ onMounted(async () => {
 .fade-leave-to {
   opacity: 0;
   transform: translateX(10px);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 20px);
 }
 </style>

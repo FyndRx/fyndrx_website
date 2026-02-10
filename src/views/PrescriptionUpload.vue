@@ -1,44 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
-import { authService } from '@/services/auth.service';
+import { prescriptionService, type CreatePrescriptionRequest } from '@/services/prescription';
 import TextInput from '@/components/TextInput.vue';
+import Button from '@/components/Button.vue';
+import { ArrowLeftIcon, CloudArrowUpIcon, DocumentTextIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 const router = useRouter();
 const notification = useNotification();
 
-const form = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone_number: '',
+const form = ref<CreatePrescriptionRequest>({
+  title: '',
+  doctorName: '',
+  prescriptionDate: new Date().toISOString().split('T')[0],
+  expiryDate: '',
   notes: '',
+  prescription_picture: null
 });
 
 const loading = ref(false);
-const prescriptionFile = ref<File | null>(null);
-
-onMounted(async () => {
-  try {
-    const user = await authService.getUserDetails();
-    if (user) {
-      form.value.first_name = user.firstname || '';
-      form.value.last_name = user.lastname || '';
-      form.value.email = user.email || '';
-      form.value.phone_number = user.phone_number || '';
-    }
-  } catch (error) {
-    console.error('Failed to load user details:', error);
-  }
-});
-
 const prescriptionPreview = ref<string | null>(null);
 const fieldErrors = ref({
-  first_name: '',
-  last_name: '',
-  email: '',
-  phone_number: '',
+  title: '',
+  doctorName: '',
+  prescriptionDate: '',
+  expiryDate: '',
   prescription: ''
 });
 
@@ -55,10 +42,11 @@ const handlePrescriptionUpload = (event: Event) => {
     
     if (file.size > 10 * 1024 * 1024) {
       fieldErrors.value.prescription = 'File size should be less than 10MB';
-      return;
+        return;
     }
     
-    prescriptionFile.value = file;
+    // Assign directly to the form property expected by the service
+    form.value.prescription_picture = file;
     
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -75,7 +63,7 @@ const handlePrescriptionUpload = (event: Event) => {
 };
 
 const removePrescription = () => {
-  prescriptionFile.value = null;
+  form.value.prescription_picture = null;
   prescriptionPreview.value = null;
   
   const fileInput = document.querySelector('#prescription-file') as HTMLInputElement;
@@ -84,87 +72,52 @@ const removePrescription = () => {
   }
 };
 
-const resetForm = () => {
-  form.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
-    notes: '',
-  };
-  removePrescription();
-  fieldErrors.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
-    prescription: ''
-  };
-};
-
 const validateForm = () => {
-  let isValid = true;
-  fieldErrors.value = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
-    prescription: ''
-  };
+    let isValid = true;
+    fieldErrors.value = {
+        title: '',
+        doctorName: '',
+        prescriptionDate: '',
+        expiryDate: '',
+        prescription: ''
+    };
 
-  if (!form.value.first_name.trim()) {
-    fieldErrors.value.first_name = 'First name is required';
-    isValid = false;
-  }
+    if (!form.value.prescription_picture) {
+        fieldErrors.value.prescription = 'Prescription file is required';
+        isValid = false;
+    }
 
-  if (!form.value.last_name.trim()) {
-    fieldErrors.value.last_name = 'Last name is required';
-    isValid = false;
-  }
+    if (form.value.expiryDate && form.value.prescriptionDate) {
+        if (new Date(form.value.expiryDate) < new Date(form.value.prescriptionDate)) {
+            fieldErrors.value.expiryDate = 'Expiry date cannot be before prescription date';
+            isValid = false;
+        }
+    }
 
-  if (!form.value.email.trim()) {
-    fieldErrors.value.email = 'Email is required';
-    isValid = false;
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    fieldErrors.value.email = 'Please enter a valid email';
-    isValid = false;
-  }
-
-  if (!form.value.phone_number.trim()) {
-    fieldErrors.value.phone_number = 'Phone number is required';
-    isValid = false;
-  }
-
-  if (!prescriptionFile.value) {
-    fieldErrors.value.prescription = 'Prescription file is required';
-    isValid = false;
-  }
-
-  return isValid;
+    return isValid;
 };
 
 const handleSubmit = async () => {
   if (!validateForm()) {
-    notification.warning('Validation Error', 'Please fill in all required fields');
+    notification.warning('Validation Error', 'Please check the form for errors');
     return;
   }
 
   try {
     loading.value = true;
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await prescriptionService.createPrescription(form.value);
     
     notification.success(
       'Prescription Uploaded Successfully!',
-      'We will review your prescription and contact you shortly.'
+      'Your prescription has been securely saved.'
     );
-    
-    resetForm();
     
     setTimeout(() => {
       router.push({ name: 'prescriptions' });
-    }, 2000);
+    }, 1500);
   } catch (err: any) {
+    console.error(err);
     notification.error(
       'Upload Failed',
       err.message || 'Failed to upload prescription. Please try again.'
@@ -173,66 +126,84 @@ const handleSubmit = async () => {
     loading.value = false;
   }
 };
+
+const goBack = () => router.push({ name: 'prescriptions' });
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
-    <div class="px-4 mx-auto max-w-4xl sm:px-6 lg:px-8">
+  <div class="min-h-screen pt-28 pb-20 bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4 max-w-3xl">
+      <!-- Header -->
       <div class="mb-8">
-        <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+        <button 
+          @click="goBack" 
+          class="flex items-center text-gray-500 hover:text-[#246BFD] transition-colors mb-6 group font-medium"
+        >
+          <ArrowLeftIcon class="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back to Prescriptions
+        </button>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Upload Prescription
         </h1>
-        <p class="text-gray-600 dark:text-gray-300">
-          Upload your prescription and we'll help you find the best prices for your medications
+        <p class="text-gray-600 dark:text-gray-400">
+          Upload your prescription to securely store it and order medications.
         </p>
       </div>
       
-      <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl md:p-8">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Personal Information -->
-          <div>
-            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Personal Information</h2>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <TextInput
-                v-model="form.first_name"
-                label="First Name"
-                type="text"
-                placeholder="Enter your first name"
-                required
-                :error="fieldErrors.first_name"
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
+        <form @submit.prevent="handleSubmit" class="space-y-8">
+            
+          <!-- Prescription Details (Moved to Top) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <TextInput
+                v-model="form.title"
+                label="Prescription Title (Optional)"
+                placeholder="e.g., Monthly Medication"
+                :error="fieldErrors.title"
               />
+              
               <TextInput
-                v-model="form.last_name"
-                label="Last Name"
-                type="text"
-                placeholder="Enter your last name"
-                required
-                :error="fieldErrors.last_name"
+                v-model="form.doctorName"
+                label="Doctor's Name (Optional)"
+                placeholder="Dr. Smith"
+                :error="fieldErrors.doctorName"
               />
+
               <TextInput
-                v-model="form.email"
-                label="Email Address"
-                type="email"
-                placeholder="your.email@example.com"
-                required
-                :error="fieldErrors.email"
+                v-model="form.prescriptionDate"
+                type="date"
+                label="Prescription Date"
+                :error="fieldErrors.prescriptionDate"
               />
+
               <TextInput
-                v-model="form.phone_number"
-                label="Phone Number"
-                type="tel"
-                placeholder="+233 XX XXX XXXX"
-                required
-                :error="fieldErrors.phone_number"
+                v-model="form.expiryDate"
+                type="date"
+                label="Expiry Date (Optional)"
+                :error="fieldErrors.expiryDate"
               />
-            </div>
           </div>
 
-          <!-- Prescription Upload -->
+          <!-- Notes (Middle) -->
           <div>
-            <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Prescription Document</h2>
+            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+              Notes (Optional)
+            </label>
+            <textarea
+              v-model="form.notes"
+              rows="3"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
+              placeholder="Any additional notes..."
+            ></textarea>
+          </div>
+
+          <!-- File Upload Section (Moved to Bottom) -->
+          <div>
+            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+              Prescription Document <span class="text-red-500">*</span>
+            </label>
             
-            <div v-if="!prescriptionFile" class="relative">
+            <div v-if="!form.prescription_picture" class="relative">
               <input
                 id="prescription-file"
                 type="file"
@@ -242,136 +213,82 @@ const handleSubmit = async () => {
               />
               <label
                 for="prescription-file"
-                class="flex flex-col items-center justify-center w-full p-8 transition-all duration-300 border-2 border-dashed rounded-xl cursor-pointer hover:border-[#246BFD] hover:bg-blue-50 dark:hover:bg-blue-900/10"
+                class="flex flex-col items-center justify-center w-full h-64 transition-all duration-300 border-2 border-dashed rounded-2xl cursor-pointer hover:border-[#246BFD] hover:bg-blue-50 dark:hover:bg-blue-900/10 group"
                 :class="[
                   fieldErrors.prescription
                     ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10'
-                    : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50'
+                    : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30'
                 ]"
               >
-                <svg class="w-12 h-12 mb-3" :class="fieldErrors.prescription ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                </svg>
-                <p class="mb-2 text-sm font-medium" :class="fieldErrors.prescription ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'">
-                  <span class="text-[#246BFD]">Click to upload</span> or drag and drop
+                <div class="p-4 bg-white dark:bg-gray-800 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                    <CloudArrowUpIcon class="w-8 h-8 text-[#246BFD]" />
+                </div>
+                <p class="mb-2 text-lg font-medium text-gray-900 dark:text-white">
+                  Click to upload or drag and drop
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                   PDF, PNG, JPG or JPEG (max. 10MB)
                 </p>
               </label>
-              <p v-if="fieldErrors.prescription" class="mt-2 text-sm text-red-600 dark:text-red-400">
+              <p v-if="fieldErrors.prescription" class="mt-2 text-sm text-red-600 dark:text-red-400 font-medium">
                 {{ fieldErrors.prescription }}
               </p>
             </div>
 
-            <!-- Preview -->
-            <div v-else class="p-4 border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 rounded-xl">
-              <div class="flex items-start gap-4">
-                <div v-if="prescriptionPreview === 'pdf'" class="flex-shrink-0">
-                  <div class="flex items-center justify-center w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                    <svg class="w-10 h-10 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                </div>
-                <div v-else class="flex-shrink-0">
-                  <img
-                    :src="prescriptionPreview || ''"
-                    alt="Prescription preview"
-                    class="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+            <!-- Preview Section -->
+            <div v-else class="p-4 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30 rounded-2xl flex items-center gap-4">
+              <div class="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                 <img
+                    v-if="prescriptionPreview && prescriptionPreview !== 'pdf'"
+                    :src="prescriptionPreview"
+                    alt="Preview"
+                    class="w-full h-full object-cover"
                   />
-                </div>
-                
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {{ prescriptionFile.name }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {{ (prescriptionFile.size / 1024 / 1024).toFixed(2) }} MB
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      @click="removePrescription"
-                      class="flex-shrink-0 p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                      title="Remove file"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="mt-2 flex items-center gap-2">
-                    <div class="flex-1 bg-green-200 dark:bg-green-800 rounded-full h-1.5">
-                      <div class="bg-green-600 dark:bg-green-400 h-1.5 rounded-full" style="width: 100%"></div>
-                    </div>
-                    <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                </div>
+                  <DocumentTextIcon v-else class="w-10 h-10 text-gray-400" />
               </div>
+              
+              <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold text-gray-900 dark:text-white truncate">
+                    {{ (form.prescription_picture as File).name }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {{ ((form.prescription_picture as File).size / 1024 / 1024).toFixed(2) }} MB
+                  </p>
+              </div>
+
+              <button
+                type="button"
+                @click="removePrescription"
+                class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                title="Remove file"
+              >
+                <XMarkIcon class="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <!-- Additional Notes -->
-          <div>
-            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Additional Notes (Optional)
-            </label>
-            <textarea
-              v-model="form.notes"
-              rows="3"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all"
-              placeholder="Any additional information about your prescription..."
-            ></textarea>
-          </div>
-
-          <!-- Info Banner -->
-          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-            <div class="flex gap-3">
-              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-              </svg>
-              <div class="text-sm text-blue-800 dark:text-blue-200">
-                <p class="font-medium mb-1">What happens next?</p>
-                <ul class="space-y-1 list-disc list-inside">
-                  <li>Our pharmacists will review your prescription</li>
-                  <li>We'll find the best prices across multiple pharmacies</li>
-                  <li>You'll receive a call/email within 24 hours</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- Submit Button -->
-          <div class="flex gap-3">
-            <button
+          <!-- Actions -->
+          <div class="flex gap-4 pt-4">
+            <Button
+              variant="secondary"
               type="button"
-              @click="router.push({ name: 'prescriptions' })"
-              class="px-6 py-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              @click="goBack"
+              class="flex-1"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="submit"
-              class="flex-1 px-6 py-3 bg-[#246BFD] text-white font-medium rounded-full hover:bg-[#5089FF] transition-all duration-300 shadow-lg hover:shadow-[#246BFD]/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              :disabled="loading"
+              class="flex-1"
+              :loading="loading"
             >
-              <svg v-if="!loading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-              <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>{{ loading ? 'Uploading...' : 'Upload Prescription' }}</span>
-            </button>
+              Upload Prescription
+            </Button>
           </div>
+
         </form>
       </div>
     </div>
   </div>
-</template> 
+</template>

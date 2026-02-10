@@ -5,6 +5,7 @@ export type User = {
   fullname: string | null;
   username: string | null;
   dob: string | null;
+  gender: string | null;
   email: string;
   pharmacy_id: number | null;
   pharmacy_branch_id: number | null;
@@ -28,6 +29,7 @@ export type UserProfile = {
   lastname?: string;
   username?: string;
   dob?: string;
+  gender?: string;
   phone_number?: string;
   address?: string;
   profile_picture?: string;

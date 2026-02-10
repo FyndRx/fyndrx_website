@@ -35,13 +35,19 @@ export const consultationService = {
             Object.entries(payload).forEach(([key, value]) => {
                 if (key === 'attachments') {
                     (value as File[]).forEach(file => formData.append('attachments[]', file));
+                } else if (key === 'vitals' && value) {
+                    // Handle nested vitals object
+                    Object.entries(value).forEach(([vitalKey, vitalValue]) => {
+                        if (vitalValue !== undefined && vitalValue !== null && vitalValue !== '') {
+                            formData.append(`vitals[${vitalKey}]`, String(vitalValue));
+                        }
+                    });
                 } else if (value !== undefined && value !== null && value !== '') {
                     // Convert boolean/numbers to string, explicit check to avoid "undefined" string
                     formData.append(key, String(value));
                 }
             });
-            // Debugging payload
-            // for (let pair of formData.entries()) { console.log(pair[0]+ ', ' + pair[1]); }
+            
             const response = await api.postAuth<Consultation>('/consultations', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -50,6 +56,8 @@ export const consultationService = {
             return response;
         }
 
+        // For non-multipart requests, we can just pass the payload directly
+        // The API should handle the JSON structure for vitals
         const response = await api.postAuth<Consultation>('/consultations', payload);
         return response;
     },

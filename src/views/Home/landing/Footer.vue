@@ -50,7 +50,6 @@ const socialLinks = [
 const quickLinks = [
   { name: 'Home', path: '/' },
   { name: 'Blog', path: '/blog' },
-  { name: 'Consultations', path: '/consultations' },
   { name: 'About', path: '/about' },
   { name: 'Contact', path: '/contact' }
 ];
@@ -85,7 +84,7 @@ export default {
 </script>
 
 <template>
-  <footer class="relative bg-gradient-to-b from-[#1A2233] to-[#0F172A] text-white pt-16 pb-8">
+  <footer class="print:hidden relative bg-gradient-to-b from-[#1A2233] to-[#0F172A] text-white pt-16 pb-8">
     <!-- Decorative elements -->
     <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#246BFD] via-[#FE9615] to-[#246BFD]"></div>
     
@@ -134,10 +133,21 @@ export default {
             <li v-for="link in quickLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
+                custom
+                v-slot="{ href, navigate, isActive }"
               >
-                {{ link.name }}
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
+                <a 
+                  :href="href" 
+                  @click="navigate"
+                  class="relative transition-colors duration-300 group flex items-center"
+                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
+                >
+                  <span 
+                    v-if="isActive" 
+                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
+                  ></span>
+                  {{ link.name }}
+                </a>
               </router-link>
             </li>
           </ul>
@@ -150,10 +160,21 @@ export default {
             <li v-for="link in supportLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
+                custom
+                v-slot="{ href, navigate, isActive }"
               >
-                {{ link.name }}
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
+                <a 
+                  :href="href" 
+                  @click="navigate"
+                  class="relative transition-colors duration-300 group flex items-center"
+                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
+                >
+                  <span 
+                    v-if="isActive" 
+                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
+                  ></span>
+                  {{ link.name }}
+                </a>
               </router-link>
             </li>
           </ul>
@@ -166,10 +187,21 @@ export default {
             <li v-for="link in informationLinks" :key="link.name">
               <router-link 
                 :to="link.path"
-                class="relative text-gray-400 transition-colors duration-300 hover:text-white group"
+                custom
+                v-slot="{ href, navigate, isActive }"
               >
-                {{ link.name }}
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#FE9615] transition-all duration-300 group-hover:w-full"></span>
+                <a 
+                  :href="href" 
+                  @click="navigate"
+                  class="relative transition-colors duration-300 group flex items-center"
+                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
+                >
+                  <span 
+                    v-if="isActive" 
+                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
+                  ></span>
+                  {{ link.name }}
+                </a>
               </router-link>
             </li>
           </ul>

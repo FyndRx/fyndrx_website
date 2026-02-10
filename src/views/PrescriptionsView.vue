@@ -4,57 +4,35 @@ import { useRouter } from 'vue-router';
 import { prescriptionService } from '@/services/prescription';
 import LazyImage from '@/components/LazyImage.vue';
 
-interface Medication {
-  name: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  instructions: string;
-}
-
-interface Prescription {
-  id: number;
-  userId: number;
-  prescriptionNumber: string;
-  patientName: string;
-  doctorName: string;
-  prescriptionDate: string;
-  expiryDate: string;
-  status: 'active' | 'expired' | 'pending_approval';
-  medications: Medication[];
-  prescriptionImage: string;
-  notes: string;
-  createdAt: string;
-}
+import type { Prescription } from '@/models/Prescription';
 
 const router = useRouter();
 const prescriptions = ref<Prescription[]>([]);
-const selectedFilter = ref<'all' | 'active' | 'expired' | 'pending'>('all');
+const selectedFilter = ref<'all' | 'active' | 'expired' | 'completed' | 'cancelled'>('all');
 const selectedPrescription = ref<Prescription | null>(null);
 const showDetailModal = ref(false);
 const loading = ref(true);
 
-const statusColors = {
+const statusColors: Record<string, { bg: string; text: string; border: string }> = {
   active: { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-800 dark:text-green-200', border: 'border-green-200 dark:border-green-800' },
   expired: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', border: 'border-gray-200 dark:border-gray-600' },
-  pending_approval: { bg: 'bg-yellow-100 dark:bg-yellow-900/20', text: 'text-yellow-800 dark:text-yellow-200', border: 'border-yellow-200 dark:border-yellow-800' }
+  completed: { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-800 dark:text-blue-200', border: 'border-blue-200 dark:border-blue-800' },
+  cancelled: { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-800 dark:text-red-200', border: 'border-red-200 dark:border-red-800' }
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   active: 'Active',
   expired: 'Expired',
-  pending_approval: 'Pending Approval'
+  completed: 'Completed',
+  cancelled: 'Cancelled'
 };
 
 const filteredPrescriptions = computed(() => {
-  if (selectedFilter.value === 'all') return prescriptions.value;
-  if (selectedFilter.value === 'pending') {
-    return prescriptions.value.filter(p => p.status === 'pending_approval');
-  }
   return prescriptions.value.filter(p => p.status === selectedFilter.value);
 });
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'N/A';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -63,7 +41,8 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const isExpiringSoon = (expiryDate: string) => {
+const isExpiringSoon = (expiryDate?: string) => {
+  if (!expiryDate) return false;
   const expiry = new Date(expiryDate);
   const today = new Date();
   const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -88,11 +67,9 @@ const loadPrescriptions = async () => {
   loading.value = true;
   try {
     const data = await prescriptionService.getPrescriptions();
-    // Assuming data needs to be compatible with local view usage which expects fields like prescriptionNumber
-    // which might not be in the strict Prescription model. Casting to any to allow build.
-    prescriptions.value = data.sort((a: any, b: any) => 
-      new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime()
-    ) as any;
+    prescriptions.value = data.sort((a, b) => 
+      new Date(b.created_at || new Date()).getTime() - new Date(a.created_at || new Date()).getTime()
+    );
   } catch (err) {
     console.error('Error loading prescriptions:', err);
     prescriptions.value = [];
@@ -161,15 +138,26 @@ onMounted(() => {
             Expired ({{ prescriptions.filter(p => p.status === 'expired').length }})
           </button>
           <button
-            @click="selectedFilter = 'pending'"
+            @click="selectedFilter = 'cancelled'"
             :class="[
               'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'pending'
+              selectedFilter === 'cancelled'
                 ? 'bg-[#246BFD] text-white'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Pending ({{ prescriptions.filter(p => p.status === 'pending_approval').length }})
+            Cancelled ({{ prescriptions.filter(p => p.status === 'cancelled').length }})
+          </button>
+          <button
+            @click="selectedFilter = 'completed'"
+            :class="[
+              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
+              selectedFilter === 'completed'
+                ? 'bg-[#246BFD] text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ]"
+          >
+            Completed ({{ prescriptions.filter(p => p.status === 'completed').length }})
           </button>
         </div>
       </div>
@@ -203,8 +191,8 @@ onMounted(() => {
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-lg">
               <LazyImage
-                :src="prescription.prescriptionImage"
-                :alt="`Prescription ${prescription.prescriptionNumber}`"
+                :src="prescription.prescription_picture || '/placeholder-rx.png'"
+                :alt="`Prescription ${prescription.prescription_number}`"
                 aspectRatio="square"
                 className="w-full h-full object-cover"
               />
@@ -214,9 +202,9 @@ onMounted(() => {
               <div class="flex items-start justify-between mb-2">
                 <div>
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ prescription.prescriptionNumber }}
+                    {{ prescription.prescription_number }}
                   </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Dr. {{ prescription.doctorName }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Dr. {{ prescription.doctor_name }}</p>
                 </div>
                 <span
                   :class="[
@@ -233,31 +221,31 @@ onMounted(() => {
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medications:</p>
                 <div class="flex flex-wrap gap-2">
                   <span
-                    v-for="(med, index) in prescription.medications.slice(0, 2)"
+                    v-for="(drug, index) in prescription.drugs.slice(0, 2)"
                     :key="index"
                     class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
                   >
-                    {{ med.name }} {{ med.dosage }}
+                    {{ drug.drug_name }} {{ drug.dose }}
                   </span>
                   <span
-                    v-if="prescription.medications.length > 2"
+                    v-if="prescription.drugs.length > 2"
                     class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full"
                   >
-                    +{{ prescription.medications.length - 2 }} more
+                    +{{ prescription.drugs.length - 2 }} more
                   </span>
                 </div>
               </div>
 
               <div class="flex items-center justify-between text-sm">
                 <div class="text-gray-600 dark:text-gray-400">
-                  <span class="font-medium">Issued:</span> {{ formatDate(prescription.prescriptionDate) }}
+                  <span class="font-medium">Issued:</span> {{ formatDate(prescription.prescription_date) }}
                 </div>
                 <div class="text-gray-600 dark:text-gray-400">
-                  <span class="font-medium">Expires:</span> {{ formatDate(prescription.expiryDate) }}
+                  <span class="font-medium">Expires:</span> {{ formatDate(prescription.expiry_date) }}
                 </div>
               </div>
 
-              <div v-if="isExpiringSoon(prescription.expiryDate) && prescription.status === 'active'" class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div v-if="isExpiringSoon(prescription.expiry_date) && prescription.status === 'active'" class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <p class="text-xs text-yellow-800 dark:text-yellow-200 flex items-center gap-1">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -280,8 +268,8 @@ onMounted(() => {
       <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
         <div class="sticky top-0 z-10 flex items-center justify-between p-6 bg-gradient-to-r from-[#246BFD] to-[#5089FF]">
           <div>
-            <h2 class="text-2xl font-bold text-white">{{ selectedPrescription.prescriptionNumber }}</h2>
-            <p class="text-white/80">Dr. {{ selectedPrescription.doctorName }}</p>
+            <h2 class="text-2xl font-bold text-white">{{ selectedPrescription.prescription_number }}</h2>
+            <p class="text-white/80">Dr. {{ selectedPrescription.doctor_name }}</p>
           </div>
           <button
             @click="closeModal"
@@ -297,8 +285,8 @@ onMounted(() => {
           <!-- Prescription Image -->
           <div class="overflow-hidden rounded-xl">
             <LazyImage
-              :src="selectedPrescription.prescriptionImage"
-              :alt="`Prescription ${selectedPrescription.prescriptionNumber}`"
+              :src="selectedPrescription.prescription_picture || '/placeholder-rx.png'"
+              :alt="`Prescription ${selectedPrescription.prescription_number}`"
               aspectRatio="landscape"
               className="w-full object-cover"
             />
@@ -320,15 +308,15 @@ onMounted(() => {
             </div>
             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Issued Date</p>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.prescriptionDate) }}</p>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.prescription_date) }}</p>
             </div>
             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Expiry Date</p>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.expiryDate) }}</p>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.expiry_date) }}</p>
             </div>
             <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Patient</p>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ selectedPrescription.patientName }}</p>
+              <p class="font-semibold text-gray-900 dark:text-white">ID: {{ selectedPrescription.user_id }}</p>
             </div>
           </div>
 
@@ -337,29 +325,29 @@ onMounted(() => {
             <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Prescribed Medications</h3>
             <div class="space-y-3">
               <div
-                v-for="(med, index) in selectedPrescription.medications"
+                v-for="(drug, index) in selectedPrescription.drugs"
                 :key="index"
                 class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
               >
                 <div class="flex items-start justify-between mb-2">
-                  <h4 class="font-semibold text-blue-900 dark:text-blue-100">{{ med.name }}</h4>
+                  <h4 class="font-semibold text-blue-900 dark:text-blue-100">{{ drug.drug_name }}</h4>
                   <span class="px-2 py-1 text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 rounded-full">
-                    {{ med.dosage }}
+                    {{ drug.dose }}
                   </span>
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span class="text-gray-600 dark:text-gray-400">Frequency:</span>
-                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ med.frequency }}</span>
+                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ drug.frequency }}</span>
                   </div>
                   <div>
                     <span class="text-gray-600 dark:text-gray-400">Duration:</span>
-                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ med.duration }}</span>
+                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ drug.duration }}</span>
                   </div>
                 </div>
                 <div class="mt-2 text-sm">
                   <span class="text-gray-600 dark:text-gray-400">Instructions:</span>
-                  <p class="mt-1 text-gray-900 dark:text-white">{{ med.instructions }}</p>
+                  <p class="mt-1 text-gray-900 dark:text-white">{{ drug.instruction }}</p>
                 </div>
               </div>
             </div>
