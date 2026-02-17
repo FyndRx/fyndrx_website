@@ -84,34 +84,7 @@ const steps = [
 // Navigation Logic
 const nextStep = () => {
   if (currentStep.value === 4) { // Clinical Step Validation
-    let isValid = true;
-    
-    // Reset errors
-    Object.keys(formErrors).forEach(k => (formErrors as any)[k] = '');
-
-    if (!form.symptoms) {
-      formErrors.symptoms = 'Symptoms description is required';
-      isValid = false;
-    }
-    if (!form.medical_history) {
-      formErrors.medical_history = 'Medical history is required (or type "None")';
-      isValid = false;
-    }
-    if (!form.current_medications) {
-      formErrors.current_medications = 'Current medications is required (or type "None")';
-      isValid = false;
-    }
-    if (!form.allergies) {
-      formErrors.allergies = 'Allergies info is required (or type "None")';
-      isValid = false;
-    }
-
-    if (!isValid) {
-       error.value = 'Please fill in all required clinical context fields.';
-       // Auto-clear error after 3 seconds
-       setTimeout(() => error.value = '', 3000);
-       return;
-    }
+    // Validation removed as per request - fields are optional
   }
   if (currentStep.value < 5) currentStep.value++;
 };
@@ -433,41 +406,37 @@ onMounted(async () => {
             
             <TextInput 
               type="textarea" 
-              label="Symptoms" 
+              label="Symptoms (Optional)" 
               v-model="form.symptoms" 
               placeholder="Describe what you are feeling..." 
               :rows="3" 
-              required
               :error="formErrors.symptoms"
             />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextInput 
                 type="textarea" 
-                label="Medical History" 
+                label="Medical History (Optional)" 
                 v-model="form.medical_history" 
-                placeholder="Past conditions... (or 'None')" 
+                placeholder="Past conditions..." 
                 :rows="2" 
-                required
                 :error="formErrors.medical_history"
               />
               <TextInput 
                 type="textarea" 
-                label="Current Medications" 
+                label="Current Medications (Optional)" 
                 v-model="form.current_medications" 
-                placeholder="Meds you are taking... (or 'None')" 
+                placeholder="Meds you are taking..." 
                 :rows="2" 
-                required
                 :error="formErrors.current_medications"
               />
               <TextInput 
                 type="textarea" 
-                label="Allergies" 
+                label="Allergies (Optional)" 
                 v-model="form.allergies" 
-                placeholder="Any known allergies... (or 'None')" 
+                placeholder="Any known allergies..." 
                 :rows="2"
                 class="md:col-span-2" 
-                required
                 :error="formErrors.allergies"
               />
               <TextInput 

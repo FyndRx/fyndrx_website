@@ -67,7 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         error.value = apiError.message || 'Invalid email/phone or password';
       }
-      throw err;
+      throw new Error(error.value || 'An error occurred');
     } finally {
       loading.value = false;
     }

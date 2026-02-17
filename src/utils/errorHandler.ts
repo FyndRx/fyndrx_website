@@ -33,6 +33,11 @@ export function handleApiError(error: unknown): ApiError {
     };
   }
 
+  // Handle plain object errors (like from Axios interceptors)
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return error as ApiError;
+  }
+
   // Fallback for unknown errors
   return {
     message: 'An unexpected error occurred',
