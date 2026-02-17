@@ -3,12 +3,12 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const activeTab = ref<'medication' | 'pharmacy'>('medication');
+const activeTab = ref<'medication' | 'pharmacy' | 'consultation'>('medication');
 const medicationQuery = ref('');
 const pharmacyQuery = ref('');
 const location = ref('');
 
-const switchTab = (tab: 'medication' | 'pharmacy') => {
+const switchTab = (tab: 'medication' | 'pharmacy' | 'consultation') => {
   activeTab.value = tab;
 };
 
@@ -73,6 +73,20 @@ export default {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
               </svg>
               <span>Find Pharmacy</span>
+            </button>
+            <button
+              @click="switchTab('consultation')"
+              :class="[
+                'flex-1 px-6 py-4 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
+                activeTab === 'consultation'
+                  ? 'bg-white dark:bg-gray-900 text-[#FE9615] border-b-4 border-[#FE9615]'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ]"
+            >
+               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              <span>Consultation</span>
             </button>
           </div>
 
@@ -151,7 +165,7 @@ export default {
               </div>
             </div>
 
-            <div v-else class="space-y-6">
+            <div v-else-if="activeTab === 'pharmacy'" class="space-y-6">
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -225,17 +239,82 @@ export default {
                 </div>
               </div>
             </div>
+
+            <div v-else-if="activeTab === 'consultation'" class="space-y-6">
+              <div class="flex flex-col items-center justify-center py-4 text-center">
+                <div class="p-4 mb-4 rounded-full bg-[#FE9615]/10">
+                  <svg class="w-12 h-12 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <h3 class="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">Speak with a Licensed Doctor</h3>
+                <p class="max-w-md mx-auto mb-8 text-lg text-gray-600 dark:text-gray-300">
+                  Get professional medical advice, prescriptions, and follow-ups from the comfort of your home.
+                </p>
+                <button
+                  @click="router.push('/consultations/new')"
+                  class="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FE9615] text-white font-semibold text-lg hover:bg-[#e88813] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover-lift"
+                >
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <span>Book Consultation Now</span>
+                </button>
+              </div>
+
+               <div class="grid grid-cols-1 gap-4 pt-4 md:grid-cols-3">
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[#FE9615]/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 dark:text-white">24/7 Access</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Doctors available anytime</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[#FE9615]/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 dark:text-white">Prescriptions</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Digital prescriptions sent instantly</p>
+                  </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-[#FE9615]/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-medium text-gray-900 dark:text-white">Secure Chat</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Private and encrypted</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="mt-8 text-center">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
             Need help? 
-            <router-link to="/upload-prescription" class="text-[#246BFD] hover:underline font-medium">
-              Upload your prescription
-            </router-link>
+            <div class="inline-flex flex-wrap justify-center gap-1">
+              <router-link to="/upload-prescription" class="text-[#246BFD] hover:underline font-medium">
+                Upload your prescription
+              </router-link>
+              <span>or</span>
+              <router-link to="/consultations/new" class="text-[#FE9615] hover:underline font-medium">
+                Book a consultation
+              </router-link>
+            </div>
             and we'll help you find what you need
-          </p>
+          </div>
         </div>
       </div>
     </div>

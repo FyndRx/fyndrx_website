@@ -210,10 +210,11 @@ onMounted(() => {
             
             <div class="flex flex-wrap items-center gap-6 text-gray-600 dark:text-gray-400">
               <div class="flex items-center gap-3">
-                <img 
-                  :src="post.author.avatar" 
-                  :alt="post.author.name" 
-                  class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
+                <LazyImage
+                  :src="post.author.avatar"
+                  :alt="post.author.name"
+                  aspectRatio="square"
+                  className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-gray-700"
                 />
                 <div>
                   <p class="font-semibold text-gray-900 dark:text-white">{{ post.author.name }}</p>
@@ -226,7 +227,7 @@ onMounted(() => {
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
-                  <span>{{ formatDate(post.date) }}</span>
+                  <span>{{ formatDate(post.date, 'MMM dd, yyyy • h:mm a') }}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,7 +360,12 @@ onMounted(() => {
             <div v-for="comment in comments" :key="comment.id" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6">
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
-                  <img :src="comment.author.avatar" :alt="comment.author.name" class="w-10 h-10 rounded-full object-cover" />
+                  <LazyImage
+                    :src="comment.author.avatar"
+                    :alt="comment.author.name"
+                    aspectRatio="square"
+                    className="w-10 h-10 rounded-full"
+                  />
                   <div>
                     <p class="font-semibold text-gray-900 dark:text-white">{{ comment.author.name }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(comment.date) }}</p>
@@ -415,7 +421,12 @@ onMounted(() => {
                 <div v-for="reply in comment.replies" :key="reply.id" class="bg-white dark:bg-gray-800 rounded-lg p-4">
                   <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-3">
-                      <img :src="reply.author.avatar" :alt="reply.author.name" class="w-8 h-8 rounded-full object-cover" />
+                      <LazyImage
+                        :src="reply.author.avatar"
+                        :alt="reply.author.name"
+                        aspectRatio="square"
+                        className="w-8 h-8 rounded-full"
+                      />
                       <div>
                         <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ reply.author.name }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(reply.date) }}</p>

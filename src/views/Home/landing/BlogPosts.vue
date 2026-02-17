@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { blogService } from '@/services/blogService';
 import type { BlogPost } from '@/types/blog';
+import { formatDate } from '@/utils/date';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
@@ -89,7 +90,7 @@ export default {};
           
           <div class="p-6">
             <div class="flex items-center gap-3 mb-3 text-sm text-gray-500 dark:text-gray-400">
-              <span>{{ new Date(post.date).toLocaleDateString() }}</span>
+              <span>{{ formatDate(post.date) }}</span>
               <span>•</span>
               <span>{{ post.readTime }} min read</span>
             </div>
@@ -104,10 +105,11 @@ export default {};
 
             <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div class="flex items-center gap-2">
-                <img 
-                  :src="post.author.avatar" 
-                  :alt="post.author.name" 
-                  class="w-8 h-8 rounded-full object-cover"
+                <LazyImage
+                  :src="post.author.avatar"
+                  :alt="post.author.name"
+                  aspectRatio="square"
+                  className="w-8 h-8 rounded-full"
                 />
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ post.author.name }}

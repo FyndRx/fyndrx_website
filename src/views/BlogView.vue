@@ -33,7 +33,10 @@ onMounted(async () => {
       blogService.getTags()
     ]);
     
-    categories.value = [{ label: 'All Categories', value: 'All' }, ...cats.map((c: string) => ({ label: c, value: c }))];
+    categories.value = [{ label: 'All Categories', value: 'All' }, ...cats.map((c) => ({ 
+      label: `${c.category} (${c.count})`, 
+      value: c.category 
+    }))];
     allTags.value = [{ label: 'All Tags', value: 'All' }, ...tags.map((t: string) => ({ label: t, value: t }))];
 
     const categoryParam = route.query.category as string;
@@ -214,10 +217,11 @@ watch(currentPage, () => {
             </p>
             <div class="flex items-center gap-6 text-white/90 text-sm">
               <div class="flex items-center gap-2">
-                <img 
-                  :src="featuredPost.author.avatar" 
-                  :alt="featuredPost.author.name" 
-                  class="w-10 h-10 rounded-full ring-2 ring-white/30"
+                <LazyImage
+                  :src="featuredPost.author.avatar"
+                  :alt="featuredPost.author.name"
+                  aspectRatio="square"
+                  className="w-10 h-10 rounded-full ring-2 ring-white/30"
                 />
                 <span class="font-medium">{{ featuredPost.author.name }}</span>
               </div>
@@ -376,10 +380,11 @@ watch(currentPage, () => {
 
             <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div class="flex items-center gap-2">
-                <img 
-                  :src="post.author.avatar" 
-                  :alt="post.author.name" 
-                  class="w-8 h-8 rounded-full object-cover"
+                <LazyImage
+                  :src="post.author.avatar"
+                  :alt="post.author.name"
+                  aspectRatio="square"
+                  className="w-8 h-8 rounded-full"
                 />
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ post.author.name }}

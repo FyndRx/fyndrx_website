@@ -215,6 +215,16 @@ const router = createRouter({
       }
     },
     {
+      path: '/telehealth',
+      name: 'telehealth',
+      component: () => import('../views/ConsultationLayout/ConsultationLanding.vue'),
+      meta: {
+        title: 'Telehealth Services | FyndRX',
+        description: 'Quality healthcare from home. Connect with licensed doctors for online consultations and prescriptions.',
+        requiresAuth: false
+      }
+    },
+    {
       path: '/consultations',
       name: 'consultations',
       component: () => import('@/views/ConsultationsView.vue'),

@@ -1,5 +1,11 @@
-import type { BlogPost, Comment } from '@/types/blog';
+import type { BlogPost, Comment, BlogCategory } from '@/types/blog';
 import { apiService } from './api';
+import { 
+  unwrapApiResponse, 
+  unwrapArrayResponse,
+  transformBlogPost, 
+  transformBlogPosts
+} from '@/utils/responseTransformers';
 
 export const blogService = {
   async getPosts(
@@ -15,27 +21,65 @@ export const blogService = {
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
-    return await apiService.get<{ posts: BlogPost[]; total: number }>(url);
+
+    // The API likely returns a Laravel paginated response { data: [...], meta: { total: ... } }
+    // but the component expects { posts: [...], total: ... }
+    const response = await apiService.get<any>(url);
+
+    // Check if it's a paginated response
+    if (response.data && Array.isArray(response.data)) {
+      return {
+        posts: transformBlogPosts(response.data),
+        total: response.meta?.total || response.total || response.data.length
+      };
+    }
+
+    // Fallback for direct array or other structures
+    if (Array.isArray(response)) {
+      return {
+        posts: transformBlogPosts(response),
+        total: response.length
+      };
+    }
+
+    // If it matches the expected structure already (unlikely for Laravel but possible)
+    if (response.posts) {
+      return {
+        posts: transformBlogPosts(response.posts),
+        total: response.total || response.posts.length
+      };
+    }
+
+    return { posts: [], total: 0 };
   },
 
   async getPost(slug: string): Promise<BlogPost> {
-    return await apiService.get<BlogPost>(`/blog/posts/${slug}`);
+    const response = await apiService.get<BlogPost>(`/blog/posts/${slug}`);
+    return transformBlogPost(unwrapApiResponse(response));
   },
 
-  async getRelatedPosts(postId: number, limit = 3): Promise<BlogPost[]> {
-    return await apiService.get<BlogPost[]>(`/blog/posts/${postId}/related?limit=${limit}`);
+  async getRelatedPosts(slugOrId: string | number, limit?: number): Promise<BlogPost[]> {
+    let url = `/blog/posts/${slugOrId}/related`;
+    if (limit) {
+      url += `?limit=${limit}`;
+    }
+    const response = await apiService.get<BlogPost[]>(url);
+    return transformBlogPosts(unwrapArrayResponse(response));
   },
 
-  async getCategories(): Promise<string[]> {
-    return await apiService.get<string[]>('/blog/categories');
+  async getCategories(): Promise<BlogCategory[]> {
+    const response = await apiService.get<BlogCategory[]>('/blog/categories');
+    return unwrapArrayResponse(response);
   },
 
   async getTags(): Promise<string[]> {
-    return await apiService.get<string[]>('/blog/tags');
+    const response = await apiService.get<string[]>('/blog/tags');
+    return unwrapArrayResponse(response);
   },
 
   async getComments(postId: number): Promise<Comment[]> {
-    return await apiService.get<Comment[]>(`/blog/posts/${postId}/comments`);
+    const response = await apiService.get<Comment[]>(`/blog/posts/${postId}/comments`);
+    return unwrapArrayResponse(response);
   },
 
   async likePost(postId: number): Promise<void> {
@@ -43,7 +87,8 @@ export const blogService = {
   },
 
   async commentOnPost(postId: number, comment: string): Promise<Comment> {
-    return await apiService.postAuth<Comment>(`/blog/posts/${postId}/comments`, { comment });
+    const response = await apiService.postAuth<Comment>(`/blog/posts/${postId}/comments`, { comment });
+    return unwrapApiResponse(response);
   },
 
   getAllPosts(): BlogPost[] {

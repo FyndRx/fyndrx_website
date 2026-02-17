@@ -35,8 +35,10 @@ const goToMedications = () => {
   router.push({ name: 'medications' });
 };
 
-const goToUploadPrescription = () => {
-  router.push({ name: 'upload-prescription' });
+
+
+const goToConsultation = () => {
+  router.push({ name: 'create-consultation' });
 };
 
 onMounted(() => {
@@ -97,18 +99,18 @@ onUnmounted(() => {
           <p class="text-lg font-light text-gray-600 sm:text-xl delay-200 dark:text-gray-300 scroll-animate slide-in-left">
             Order medications online with ease. Search for drugs, upload prescriptions, compare prices across pharmacies, and get your medications delivered to your doorstep.
           </p>
-          <div class="flex flex-col gap-4 delay-300 sm:flex-row scroll-animate slide-in-left">
+          <div class="flex flex-col gap-4 delay-300 sm:flex-row scroll-animate slide-in-left flex-wrap">
             <button 
               @click="goToMedications"
-              class="px-8 py-4 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg hover:shadow-[#246BFD]/20 hover-lift"
+              class="px-8 py-4 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg hover:shadow-[#246BFD]/20 hover-lift flex-grow sm:flex-grow-0 text-center"
             >
               Shop Medications
             </button>
             <button 
-              @click="goToUploadPrescription"
-              class="px-8 py-4 rounded-full bg-white text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 hover-lift"
+              @click="goToConsultation"
+              class="px-8 py-4 rounded-full bg-white text-[#FE9615] font-medium border-2 border-[#FE9615] hover:bg-[#FE9615] hover:text-white transition-all duration-300 hover-lift flex-grow sm:flex-grow-0 text-center"
             >
-              Upload Prescription
+              Book Consultation
             </button>
           </div>
 

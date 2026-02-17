@@ -11,6 +11,7 @@ import type { Cart, CartItem } from '@/models/Cart';
 import type { Order, OrderItem, OrderTracking } from '@/models/Order';
 import type { Review, ReviewStats } from '@/models/Review';
 import type { Prescription } from '@/models/Prescription';
+import type { BlogPost, Comment } from '@/types/blog';
 
 import type {
   UserApiResponse,
@@ -575,4 +576,49 @@ export function transformPrescription(apiPrescription: PrescriptionApiResponse):
 export function transformPrescriptions(apiPrescriptions: PrescriptionApiResponse[]): Prescription[] {
   return apiPrescriptions.map(transformPrescription);
 }
+
+/**
+ * Blog Transformers
+ */
+export function transformBlogPost(apiPost: any): BlogPost {
+  return {
+    id: apiPost.id,
+    title: apiPost.title,
+    slug: apiPost.slug,
+    excerpt: apiPost.excerpt || apiPost.summary || '',
+    content: apiPost.content || apiPost.body || '',
+    coverImage: apiPost.cover_image || apiPost.coverImage || apiPost.image || '',
+    category: apiPost.category?.name || apiPost.category || 'Uncategorized',
+    date: apiPost.date || apiPost.created_at || apiPost.createdAt || new Date().toISOString(),
+    author: {
+      name: apiPost.author?.name || apiPost.user?.name || 'Anonymous',
+      avatar: apiPost.author?.avatar || apiPost.user?.avatar || apiPost.author?.profile_picture || '',
+      bio: apiPost.author?.bio || ''
+    },
+    tags: apiPost.tags || [],
+    readTime: apiPost.read_time || apiPost.readTime || 5, // Default to 5 min if missing
+    likes: apiPost.likes || apiPost.likes_count || 0,
+    views: apiPost.views || apiPost.views_count || 0,
+    comments: Array.isArray(apiPost.comments) ? apiPost.comments.map(transformComment) : []
+  };
+}
+
+export function transformBlogPosts(apiPosts: any[]): BlogPost[] {
+  return apiPosts.map(transformBlogPost);
+}
+
+export function transformComment(apiComment: any): Comment {
+  return {
+    id: apiComment.id,
+    author: {
+      name: apiComment.author?.name || apiComment.user?.name || 'Anonymous',
+      avatar: apiComment.author?.avatar || apiComment.user?.avatar || '',
+    },
+    content: apiComment.content || apiComment.body || '',
+    date: apiComment.date || apiComment.created_at || new Date().toISOString(),
+    likes: apiComment.likes || 0,
+    replies: Array.isArray(apiComment.replies) ? apiComment.replies.map(transformComment) : []
+  };
+}
+
 

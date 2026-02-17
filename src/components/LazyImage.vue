@@ -6,11 +6,13 @@ interface Props {
   alt: string;
   aspectRatio?: 'square' | 'landscape';
   className?: string;
+  placeholder?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   aspectRatio: 'landscape',
   className: '',
+  placeholder: '',
 });
 
 const imageLoaded = ref(false);
@@ -18,6 +20,7 @@ const imageError = ref(false);
 const imageRef = ref<HTMLImageElement | null>(null);
 
 const placeholderSrc = computed(() => {
+  if (props.placeholder) return props.placeholder;
   return new URL(`../assets/placeholder/${props.aspectRatio}.png`, import.meta.url).href;
 });
 

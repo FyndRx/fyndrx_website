@@ -29,3 +29,8 @@ export interface Comment {
   likes?: number;
   replies?: Comment[];
 }
+
+export interface BlogCategory {
+  category: string;
+  count: number;
+}

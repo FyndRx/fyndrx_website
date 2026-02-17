@@ -10,6 +10,7 @@ import Testimonials from '@/views/Home/landing/TestimonialsSection.vue';
 import CTA from '@/views/Home/landing/CTA.vue';
 import BlogPosts from '@/views/Home/landing/BlogPosts.vue';
 import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
+import ConsultationSection from '@/views/Home/landing/ConsultationSection.vue';
 
 const isVisible = ref(false);
 
@@ -53,6 +54,14 @@ onMounted(() => {
     >
       <div class="absolute inset-0 bg-[#FE9615]/5"></div>
       <HowItWorks />
+    </section>
+
+    <!-- Consultation Section -->
+    <section 
+      class="relative"
+      :class="{ 'animate-fade-in': isVisible }"
+    >
+      <ConsultationSection />
     </section>
 
     <!-- Pharmacy List -->
