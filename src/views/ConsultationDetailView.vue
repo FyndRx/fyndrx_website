@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { format } from 'date-fns';
 import { consultationService } from '@/services/consultationService';
@@ -26,7 +26,6 @@ import {
   PrinterIcon
 } from '@heroicons/vue/24/solid';
 import { StarIcon as StarIconOutline } from '@heroicons/vue/24/outline';
-import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -136,8 +135,19 @@ const formatDate = (dateStr?: string | null) => {
 
 const goBack = () => router.push('/consultations');
 
+const printUrl = ref('');
+
 const printConsultation = () => {
-    window.print();
+    const routeData = router.resolve({ name: 'consultation-print', params: { id: route.params.id } });
+    if (printUrl.value === routeData.href) {
+        // Force reload if same URL
+        printUrl.value = '';
+        setTimeout(() => {
+            printUrl.value = routeData.href;
+        }, 100);
+    } else {
+        printUrl.value = routeData.href;
+    }
 };
 
 const formatDrugDisplay = (drug: any) => {
@@ -151,42 +161,19 @@ const formatDrugDisplay = (drug: any) => {
   return parts.filter(p => p && p.toString().trim() !== '').join(' • ').toUpperCase();
 };
 
-const wasDarkMode = ref(false);
-
-const handleBeforePrint = () => {
-  if (document.documentElement.classList.contains('dark')) {
-    wasDarkMode.value = true;
-    document.documentElement.classList.remove('dark');
-  } else {
-    wasDarkMode.value = false;
-  }
-};
-
-const handleAfterPrint = () => {
-  if (wasDarkMode.value) {
-    document.documentElement.classList.add('dark');
-  }
-};
-
 onMounted(() => {
   fetchConsultation();
-  window.addEventListener('beforeprint', handleBeforePrint);
-  window.addEventListener('afterprint', handleAfterPrint);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('beforeprint', handleBeforePrint);
-  window.removeEventListener('afterprint', handleAfterPrint);
 });
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50/50 dark:bg-gray-900 pt-28 pb-20">
-    <div class="container mx-auto px-4 max-w-7xl print:pb-32">
+    <iframe v-if="printUrl" :src="printUrl" class="hidden" title="Print Frame"></iframe>
+    <div class="container mx-auto px-4 max-w-7xl">
       <!-- Back Navigation -->
       <button 
         @click="goBack" 
-        class="print:hidden flex items-center text-gray-500 hover:text-[#246BFD] transition-colors mb-8 group font-medium"
+        class="flex items-center text-gray-500 hover:text-[#246BFD] transition-colors mb-8 group font-medium"
       >
         <ArrowLeftIcon class="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
         Back to Consultations
@@ -205,63 +192,15 @@ onUnmounted(() => {
             <DocumentTextIcon class="w-10 h-10 text-red-500" />
         </div>
         <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">{{ error || 'Consultation not found' }}</h3>
-        <div class="print:hidden mt-4">
+        <div class="mt-4">
            <Button variant="secondary" @click="goBack">Return to List</Button>
         </div>
       </div>
 
       <div v-else class="space-y-8">
         
-        <!-- Print Header (Visible only in print) -->
-        <div class="hidden print:block mb-8">
-           <!-- Top Bar -->
-           <div class="flex justify-between items-center border-b-2 border-[#FE9615] pb-6 mb-6">
-              <img :src="logoBlueOrange" alt="FyndRx" class="h-12 w-auto object-contain" />
-              <div class="text-right">
-                 <h1 class="text-3xl font-bold text-[#1A2233]">Consultation Report</h1>
-                 <p class="text-sm text-gray-500 mt-1">Generated on {{ format(new Date(), 'PPP') }}</p>
-              </div>
-           </div>
-
-           <!-- Meta Grid -->
-           <!-- Meta Box -->
-           <div class="flex justify-between items-start bg-gray-50 p-6 rounded-xl border border-gray-100">
-              <div>
-                 <h1 class="text-3xl font-bold font-mono text-gray-900 mb-4">
-                  #{{ consultation?.consultation_number }}
-                </h1>
-                
-                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
-                  <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-gray-100 rounded-full">
-                      <CalendarIcon class="w-4 h-4" />
-                    </div>
-                    <span>{{ formatDate(consultation.created_at) }}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-gray-100 rounded-full">
-                      <UserCircleIcon class="w-4 h-4" />
-                    </div>
-                    <span class="capitalize">{{ consultation?.patient_gender || 'N/A' }} <span class="text-gray-300 mx-1">|</span> {{ consultation?.patient_date_of_birth || 'N/A' }}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-gray-100 rounded-full">
-                      <ClockIcon class="w-4 h-4" />
-                    </div>
-                    <span>Priority: <span class="uppercase font-bold text-gray-700">{{ consultation?.priority }}</span></span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="flex flex-col items-end">
-                 <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Status</p>
-                 <Badge :variant="statusColor" size="lg" class="capitalize">{{ consultation?.status?.replace('_', ' ') }}</Badge>
-              </div>
-           </div>
-        </div>
-
         <!-- Premium Header Area -->
-        <div class="print:hidden bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           
           <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -270,11 +209,9 @@ onUnmounted(() => {
                  <Badge :variant="statusColor" size="lg" class="capitalize !rounded-full !px-4 shadow-sm">
                   {{ consultation.status?.replace('_', ' ') }}
                  </Badge>
-                 <!-- <span class="text-sm text-gray-400 font-mono tracking-wide">#{{ consultation.consultation_number }}</span> -->
               </div>
               <h1 class="text-3xl md:text-4xl font-bold font-mono text-gray-900 dark:text-white mb-4 leading-tight">
                 #{{ consultation?.consultation_number }}
-                <!-- {{ consultation.consultation_type ? consultation.consultation_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Consultation' }} -->
               </h1>
               
               <div class="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
@@ -296,19 +233,16 @@ onUnmounted(() => {
             <!-- Print Button (Header) -->
             <button 
                @click="printConsultation"
-               class="hidden md:flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-5 py-3 rounded-xl transition-all font-medium border border-gray-100 dark:border-gray-600 print:hidden shadow-sm"
+               class="hidden md:flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-5 py-3 rounded-xl transition-all font-medium border border-gray-100 dark:border-gray-600 shadow-sm"
             >
                <PrinterIcon class="w-5 h-5" />
                <span>Print Report</span>
             </button>
-
-
           </div>
         </div>
 
         <!-- Timeline / Metadata Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-
            <!-- Scheduled -->
            <div v-if="consultation?.scheduled_at" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
@@ -346,10 +280,7 @@ onUnmounted(() => {
                  </p>
               </div>
            </div>
-
-
         </div>
-
 
         <!-- Vitals Section (Standalone Grid) -->
         <div 
@@ -360,14 +291,12 @@ onUnmounted(() => {
                 <HeartIcon class="w-4 h-4" />
                 Vitals & Measurements
             </h4>
-            <div class="grid grid-cols-2 lg:grid-cols-4 print:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <template v-for="(value, key) in consultation?.vitals" :key="key">
-                  <!-- Exclude diastolic since it's combined with systolic, but ensure we render if needed -->
                   <div 
                     v-if="value && key !== 'blood_pressure_diastolic'" 
                     class="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-2xl flex items-center gap-4 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
                   >
-                      <!-- Icons based on key -->
                       <div 
                         class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
                         :class="{
@@ -415,13 +344,13 @@ onUnmounted(() => {
         <!-- Diagnoses Section (Standalone Grid) -->
         <div 
            v-if="consultation.diagnoses && consultation.diagnoses.length > 0" 
-           class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700 print:hidden"
+           class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700"
         >
             <h4 class="text-xs uppercase font-bold text-gray-400 mb-4 tracking-wider flex items-center gap-2">
                 <ClipboardDocumentCheckIcon class="w-4 h-4" />
                 Medical Diagnoses
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div 
                    v-for="diagnosis in consultation?.diagnoses" 
                    :key="diagnosis.id"
@@ -446,49 +375,13 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- Print: Diagnoses List -->
-        <div 
-            v-if="consultation.diagnoses && consultation.diagnoses.length > 0" 
-            class="hidden print:block mt-8 mb-6 break-inside-avoid"
-        >
-            <h4 class="text-xs uppercase font-bold text-gray-400 mb-4 tracking-wider flex items-center gap-2 border-b-2 border-gray-100 pb-2">
-                <ClipboardDocumentCheckIcon class="w-4 h-4" />
-                Medical Diagnoses
-            </h4>
-            
-            <div class="flex flex-col">
-                <div 
-                    v-for="diagnosis in consultation?.diagnoses" 
-                    :key="diagnosis.id"
-                    class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 break-inside-avoid"
-                >
-                    <div class="flex items-center gap-4">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded bg-fuchsia-50 text-xs font-bold text-fuchsia-700 font-mono border border-fuchsia-100">
-                            {{ diagnosis.icd_code || 'DX' }}
-                        </span>
-                        <div>
-                            <h3 class="font-bold text-gray-900 text-sm leading-tight mb-0.5">
-                                {{ diagnosis.name }}
-                            </h3>
-                            <p class="text-xs text-gray-500">{{ diagnosis.category }}</p>
-                        </div>
-                    </div>
-                    <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                        {{ diagnosis.type }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 print:block">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
           
           <!-- LEFT COLUMN: Main Clinical Info -->
           <div class="xl:col-span-2 space-y-8">
             
-
-
             <!-- Web: Clinical Details Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Symptoms</h4>
                   <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ consultation?.symptoms || 'No symptoms recorded.' }}</p>
@@ -505,26 +398,6 @@ onUnmounted(() => {
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Medications</h4>
                   <p class="text-gray-700 dark:text-gray-300">{{ consultation?.current_medications || 'None.' }}</p>
                </Card>
-            </div>
-
-            <!-- Print: Clinical Details Grid -->
-            <div class="hidden print:grid grid-cols-2 gap-x-12 gap-y-8 mb-8 break-inside-avoid">
-               <div class="break-inside-avoid">
-                  <h4 class="text-[10px] uppercase font-bold text-gray-400 mb-2 border-b border-gray-100 pb-1">Symptoms</h4>
-                  <p class="text-sm text-gray-900 leading-relaxed">{{ consultation?.symptoms || 'No symptoms recorded.' }}</p>
-               </div>
-               <div class="break-inside-avoid">
-                  <h4 class="text-[10px] uppercase font-bold text-gray-400 mb-2 border-b border-gray-100 pb-1">Medical History</h4>
-                  <div class="text-sm text-gray-900 leading-relaxed" v-html="consultation?.medical_history || 'None recorded.'"></div>
-               </div>
-               <div class="break-inside-avoid">
-                  <h4 class="text-[10px] uppercase font-bold text-gray-400 mb-2 border-b border-gray-100 pb-1">Allergies</h4>
-                  <p class="text-sm text-red-600 font-medium leading-relaxed" v-html="consultation?.allergies || 'No known allergies.'"></p>
-               </div>
-               <div class="break-inside-avoid">
-                   <h4 class="text-[10px] uppercase font-bold text-gray-400 mb-2 border-b border-gray-100 pb-1">Current Medications</h4>
-                   <p class="text-sm text-gray-900 leading-relaxed">{{ consultation?.current_medications || 'None.' }}</p>
-               </div>
             </div>
 
             <!-- Pharmacist Response & Treatment Plan -->
@@ -548,7 +421,7 @@ onUnmounted(() => {
             </div>
             
             <!-- Prescription Section (Single Object) -->
-             <div v-if="consultation?.prescription" class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[2rem] p-6 border border-indigo-100 dark:border-indigo-800/30 print:hidden">
+             <div v-if="consultation?.prescription" class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-[2rem] p-6 border border-indigo-100 dark:border-indigo-800/30">
                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                   <div>
                     <h3 class="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
@@ -595,49 +468,10 @@ onUnmounted(() => {
                </div>
                </div>
 
-             <!-- Print: Prescription Table -->
-             <div v-if="consultation?.prescription" class="hidden print:block mt-6 break-inside-avoid">
-                 <h3 class="text-sm font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4 flex justify-between items-center bg-gray-50 p-2 rounded-t">
-                    <span class="flex items-center gap-2">
-                        <BeakerIcon class="w-4 h-4 text-gray-500" />
-                        Prescription #{{ consultation?.prescription?.prescription_number }}
-                    </span>
-                    <span class="text-xs font-normal text-gray-500">Issued: {{ formatDate(consultation?.prescription?.created_at) }}</span>
-                 </h3>
-                 <div class="overflow-hidden border-x border-b border-gray-200 rounded-b">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
-                            <tr>
-                                <th class="py-2 px-4 w-2/3">Medication Details</th>
-                                <th class="py-2 px-4">Instructions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="drug in consultation?.prescription?.drugs" :key="drug.id" class="break-inside-avoid shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
-                                <td class="py-3 px-4 align-top">
-                                    <div class="font-bold text-gray-900 text-sm mb-1 leading-snug">
-                                        {{ formatDrugDisplay(drug) }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 font-mono">
-                                        QTY: {{ drug.quantity }} {{ drug.uom }} • {{ drug.frequency }} • {{ drug.duration }}
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4 align-top">
-                                    <div v-if="drug.instruction" class="text-xs italic text-gray-600">
-                                        "{{ drug.instruction }}"
-                                    </div>
-                                    <span v-else class="text-xs text-gray-400 italic">None</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                 </div>
-             </div>
-
           </div>
 
           <!-- RIGHT COLUMN: Patient, Pharmacy, Meta -->
-          <div class="space-y-6 print:hidden">
+          <div class="space-y-6">
             
             <!-- Patient Mini Card -->
             <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -770,24 +604,9 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- Print Footer -->
-    <div class="hidden print:flex fixed bottom-0 left-0 right-0 border-t-2 border-[#246BFD] bg-white p-8 flex-col gap-4 text-xs text-gray-500">
-      <div class="flex justify-between items-start">
-         <div class="space-y-1">
-            <p class="font-bold text-[#1A2233] text-sm mb-2">FyndRx Healthcare</p>
-            <p>Mayflower Building, Community 10</p>
-            <p>Tema, Greater Accra</p>
-         </div>
-         <div class="space-y-1 text-right">
-            <p>info@fyndrx.com</p>
-            <p>+233 24 399 6999</p>
-            <p class="font-medium text-[#FE9615]">www.fyndrx.com</p>
-         </div>
-      </div>
-      <div class="text-center pt-4 border-t border-gray-100">
-         <p>&copy; {{ new Date().getFullYear() }} FyndRx. Confidential Medical Record.</p>
-      </div>
-    </div>
   </div>
 </template>
+
+<style scoped>
+/* No print styles needed */
+</style>

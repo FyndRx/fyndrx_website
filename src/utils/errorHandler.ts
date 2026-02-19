@@ -4,6 +4,7 @@ export interface ApiError {
   message: string;
   code?: string;
   status?: number;
+  errors?: Record<string, string[]>;
 }
 
 export function handleApiError(error: unknown): ApiError {
@@ -16,6 +17,7 @@ export function handleApiError(error: unknown): ApiError {
         message: response.data?.message || 'An error occurred',
         code: response.data?.code,
         status: response.status,
+        errors: response.data?.errors,
       };
     } else if (error.request) {
       // Request was made but no response received

@@ -74,16 +74,52 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const register = async (credentials: RegisterCredentials) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      // We don't save the token here anymore as registration might not return it directly or we want to login separately
+      // But based on previous code it seems register returns a token. 
+      // If the backend flow is: Register -> Token, then we keep it. 
+      // If flow is Verify OTP -> Register -> Token, then we keep it.
+      const response = await authService.register(credentials);
+      if (response.access_token) {
+        setToken(response.access_token);
+        await fetchUserDetails();
+      }
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const sendOTP = async (credentials: { email: string; phone_number: string }) => {
     try {
       loading.value = true;
       error.value = null;
-      await authService.register(credentials);
+      await authService.sendOTP(credentials);
     } catch (err) {
       const apiError = handleApiError(err);
       if (isNetworkError(err)) {
         error.value = 'Network error. Please check your internet connection.';
       } else {
-        error.value = apiError.message || 'Registration failed. Please try again.';
+        error.value = apiError.message || 'Failed to send OTP.';
+      }
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const verifyOTP = async (credentials: { email: string; otp: string }) => {
+     try {
+      loading.value = true;
+      error.value = null;
+      await authService.verifyOTP(credentials);
+    } catch (err) {
+      const apiError = handleApiError(err);
+      if (isNetworkError(err)) {
+        error.value = 'Network error. Please check your internet connection.';
+      } else {
+        error.value = apiError.message || 'Invalid OTP.';
       }
       throw err;
     } finally {
@@ -131,6 +167,8 @@ export const useAuthStore = defineStore('auth', () => {
     userInitials,
     login,
     register,
+    sendOTP,
+    verifyOTP,
     logout,
     checkAuth,
     fetchUserDetails,

@@ -253,6 +253,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/consultations/:id/print',
+      name: 'consultation-print',
+      component: () => import('@/views/ConsultationPrintView.vue'),
+      meta: {
+        title: 'Print Consultation | FyndRX',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/orders',
       name: 'orders',
       component: () => import('@/views/OrdersView.vue'),
