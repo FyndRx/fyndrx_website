@@ -3710,6 +3710,91 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Consultations",
+            "description": "Public and Authenticated endpoints for managing consultations.",
+            "item": [
+                {
+                    "name": "Create Consultation (Public)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "json",
+                            "raw": "{\n  \"consultation_type\": \"general\",\n  \"symptoms\": \"Headache and fever\",\n  \"patient_name\": \"Guest User\",\n  \"patient_email\": \"guest@example.com\",\n  \"patient_phone\": \"0241234567\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/consultations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "consultations"
+                            ]
+                        },
+                        "description": "Create a new consultation. \n\n**For Guests:**\n- `patient_name`, `patient_email`, and `patient_phone` are **REQUIRED**.\n\n**For Authenticated Users:**\n- `patient_name`, `patient_email`, and `patient_phone` are optional (will use user profile if omitted).\n- Include `Authorization: Bearer <token>` header."
+                    }
+                },
+                {
+                     "name": "Search Consultation (Public)",
+                     "request": {
+                         "method": "GET",
+                         "header": [
+                             {
+                                 "key": "X-API-Key",
+                                 "value": "{{api_key}}",
+                                 "type": "text"
+                             },
+                             {
+                                 "key": "Accept",
+                                 "value": "application/json",
+                                 "type": "text"
+                             }
+                         ],
+                         "url": {
+                             "raw": "{{base_url}}/consultations/search?consultation_number=CONS-2026-1234&patient_phone=0241234567",
+                             "host": [
+                                 "{{base_url}}"
+                             ],
+                             "path": [
+                                 "consultations",
+                                 "search"
+                             ],
+                             "query": [
+                                 {
+                                     "key": "consultation_number",
+                                     "value": "CONS-2026-1234",
+                                     "description": "The consultation number to search for."
+                                 },
+                                 {
+                                     "key": "patient_phone",
+                                     "value": "0241234567",
+                                     "description": "Required for verification (or patient_email)."
+                                 },
+                                 {
+                                     "key": "patient_email",
+                                     "value": "guest@example.com",
+                                     "description": "Required for verification (or patient_phone).",
+                                     "disabled": true
+                                 }
+                             ]
+                         },
+                         "description": "Search for a consultation by its number.\n\n**Security Requirement:**\nTo prevent enumeration, you **MUST** provide either `patient_phone` or `patient_email` that matches the record associated with the consultation number."
+                     }
+                 }
+            ]
         }
     ]
 }

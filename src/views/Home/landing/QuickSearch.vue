@@ -252,7 +252,7 @@ export default {
                   Get professional medical advice, prescriptions, and follow-ups from the comfort of your home.
                 </p>
                 <button
-                  @click="router.push('/consultations/new')"
+                  @click="router.push({ name: 'public-create-consultation' })"
                   class="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FE9615] text-white font-semibold text-lg hover:bg-[#e88813] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover-lift"
                 >
                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,7 +309,7 @@ export default {
                 Upload your prescription
               </router-link>
               <span>or</span>
-              <router-link to="/consultations/new" class="text-[#FE9615] hover:underline font-medium">
+              <router-link :to="{ name: 'public-create-consultation' }" class="text-[#FE9615] hover:underline font-medium">
                 Book a consultation
               </router-link>
             </div>

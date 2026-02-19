@@ -3,7 +3,8 @@ import type {
     Consultation,
     ConsultationStats,
     CreateConsultationPayload,
-    ConsultationFilters
+    ConsultationFilters,
+    PublicConsultationSearchResponse
 } from '@/types/consultation';
 
 export const consultationService = {
@@ -75,5 +76,34 @@ export const consultationService = {
     async rateConsultation(id: number, rating: number, feedback?: string) {
         const response = await api.postAuth<Consultation>(`/consultations/${id}/rate`, { rating, feedback });
         return response;
+    },
+
+    async createPublicConsultation(payload: CreateConsultationPayload) {
+        if (payload.attachments && payload.attachments.length > 0) {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => {
+                if (key === 'attachments') {
+                    (value as File[]).forEach(file => formData.append('attachments[]', file));
+                } else if (key === 'vitals' && value) {
+                    Object.entries(value).forEach(([vitalKey, vitalValue]) => {
+                        if (vitalValue !== undefined && vitalValue !== null && vitalValue !== '') {
+                            formData.append(`vitals[${vitalKey}]`, String(vitalValue));
+                        }
+                    });
+                } else if (value !== undefined && value !== null && value !== '') {
+                    formData.append(key, String(value));
+                }
+            });
+            
+            // Use base api (no auth header, but has API Key)
+            return await api.post<Consultation>('/consultations', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
+        return await api.post<Consultation>('/consultations', payload);
+    },
+
+    async searchPublicConsultation(params: { consultation_number: string; patient_phone?: string; patient_email?: string }) {
+        return await api.get<PublicConsultationSearchResponse>('/consultations/search', { params });
     }
 };

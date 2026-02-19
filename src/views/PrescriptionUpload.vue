@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
 import { prescriptionService, type CreatePrescriptionRequest } from '@/services/prescription';
-import TextInput from '@/components/TextInput.vue';
+import DateTimePicker from '@/components/DateTimePicker.vue';
 import Button from '@/components/Button.vue';
 import { ArrowLeftIcon, CloudArrowUpIcon, DocumentTextIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
@@ -169,17 +169,19 @@ const goBack = () => router.push({ name: 'prescriptions' });
                 :error="fieldErrors.doctorName"
               />
 
-              <TextInput
+              <DateTimePicker
                 v-model="form.prescriptionDate"
-                type="date"
+                format="date"
                 label="Prescription Date"
+                :max-date="new Date().toISOString()"
                 :error="fieldErrors.prescriptionDate"
               />
 
-              <TextInput
+              <DateTimePicker
                 v-model="form.expiryDate"
-                type="date"
+                format="date"
                 label="Expiry Date (Optional)"
+                :min-date="new Date().toISOString()"
                 :error="fieldErrors.expiryDate"
               />
           </div>

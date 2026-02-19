@@ -55,6 +55,18 @@ const steps = [
   }
 ];
 
+const activeTab = ref<'new' | 'track'>('new');
+const quickTrackNumber = ref('');
+
+const handleQuickTrack = () => {
+    if (quickTrackNumber.value) {
+        router.push({ 
+            name: 'public-consultation-search', 
+            query: { consultation_number: quickTrackNumber.value } 
+        });
+    }
+};
+
 onMounted(() => {
     const elements = document.querySelectorAll('.scroll-animate');
     elements.forEach((element) => registerElement(element as HTMLElement));
@@ -72,34 +84,98 @@ onMounted(() => {
       </div>
       
       <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center max-w-3xl mx-auto scroll-animate slide-in-top">
-          <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold text-[#246BFD] bg-[#246BFD]/10 rounded-full">
-            FyndRX Telehealth
-          </span>
-          <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white mb-6">
-            Healthcare Reimagined <br />
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#60a5fa]">
-              Simple, Secure, Smart.
-            </span>
-          </h1>
-          <p class="text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
-            Get expert medical advice, diagnoses, and prescriptions by simply filling out a health assessment. Convenient, confidential, and no appointments needed.
-          </p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              @click="router.push({ name: 'create-consultation' })"
-              class="w-full sm:w-auto px-8 py-4 text-lg font-bold text-white transition-all duration-300 bg-[#246BFD] rounded-full shadow-lg hover:bg-[#1a55db] hover:shadow-xl hover:-translate-y-1"
-            >
-              Book First Consultation
-            </button>
-            <button
-              @click="router.push('/about')"
-              class="w-full sm:w-auto px-8 py-4 text-lg font-bold text-gray-700 dark:text-white transition-all duration-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-1"
-            >
-              Learn More About Us
-            </button>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div class="text-left scroll-animate slide-in-left">
+             <span class="inline-block px-4 py-1.5 mb-6 text-sm font-semibold text-[#246BFD] bg-[#246BFD]/10 rounded-full">
+                FyndRX Telehealth
+             </span>
+             <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white mb-6">
+                Healthcare Reimagined <br />
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#246BFD] to-[#60a5fa]">
+                  Simple, Secure, Smart.
+                </span>
+             </h1>
+             <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+                Get expert medical advice, diagnoses, and prescriptions by simply filling out a health assessment. Convenient, confidential, and no appointments needed.
+             </p>
+             <div class="flex flex-col sm:flex-row gap-4">
+                 <button
+                   @click="router.push('/about')"
+                   class="px-8 py-4 text-lg font-bold text-gray-700 dark:text-white transition-all duration-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 hover:-translate-y-1"
+                 >
+                   Learn More
+                 </button>
+             </div>
           </div>
-        </div>
+
+          <!-- Right Column: Action Card -->
+          <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-2 border border-gray-100 dark:border-gray-700 scroll-animate slide-in-right">
+             <!-- Tabs -->
+             <div class="flex p-1 bg-gray-100 dark:bg-gray-700/50 rounded-2xl mb-6">
+                <button 
+                  @click="activeTab = 'new'"
+                  class="flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300"
+                  :class="activeTab === 'new' ? 'bg-white dark:bg-gray-800 text-[#246BFD] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                >
+                  New Consultation
+                </button>
+                <button 
+                  @click="activeTab = 'track'"
+                  class="flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300"
+                  :class="activeTab === 'track' ? 'bg-white dark:bg-gray-800 text-[#246BFD] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                >
+                  Track Status
+                </button>
+             </div>
+
+             <!-- New Consultation Content -->
+             <div v-if="activeTab === 'new'" class="p-4 sm:p-6">
+                <div class="mb-6">
+                   <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Start your journey</h3>
+                   <p class="text-gray-600 dark:text-gray-400">Fill out a simple assessment and get connected with a doctor in minutes.</p>
+                </div>
+                
+                 <button
+                   @click="router.push({ name: 'public-create-consultation' })"
+                   class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-[#246BFD] rounded-xl shadow-lg hover:bg-[#1a55db] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
+                 >
+                   Start Assessment
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                 </button>
+
+                 <p class="mt-4 text-xs text-center text-gray-400">
+                    Already have an account? <router-link to="/login" class="text-[#246BFD] hover:underline">Login here</router-link>
+                 </p>
+             </div>
+
+             <!-- Track Status Content -->
+             <div v-else class="p-4 sm:p-6">
+                <div class="mb-6">
+                   <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Check your status</h3>
+                   <p class="text-gray-600 dark:text-gray-400">Enter your consultation number to see updates.</p>
+                </div>
+                
+                <form @submit.prevent="handleQuickTrack" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Consultation Number</label>
+                        <input 
+                            v-model="quickTrackNumber"
+                            type="text" 
+                            placeholder="e.g. CONS-2026-XXXX"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all"
+                            required
+                        >
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-gray-900 dark:bg-gray-700 rounded-xl shadow-lg hover:bg-black dark:hover:bg-gray-600 hover:-translate-y-1 flex items-center justify-center gap-2"
+                    >
+                        Track Status
+                    </button>
+                </form>
+             </div>
+          </div>
+       </div>
       </div>
     </section>
 
@@ -190,7 +266,7 @@ onMounted(() => {
              Join thousands of patients who trust FyndRX for their medical needs. Start your journey to better health today.
            </p>
            <button
-            @click="router.push({ name: 'create-consultation' })"
+            @click="router.push({ name: 'public-create-consultation' })"
             class="px-10 py-4 text-lg font-bold text-[#246BFD] bg-white rounded-full shadow-lg hover:bg-gray-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative z-10"
            >
              Book Consultation Now

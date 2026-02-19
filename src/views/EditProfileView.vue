@@ -3,6 +3,8 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
+import DateTimePicker from '@/components/DateTimePicker.vue';
+import Dropdown from '@/components/Dropdown.vue';
 import { VueCropper } from 'vue-cropper';
 import 'vue-cropper/dist/index.css';
 
@@ -15,7 +17,14 @@ const form = ref({
   lastname: user.value?.lastname || '',
   email: user.value?.email || '',
   phone_number: user.value?.phone_number || '',
+  dob: user.value?.dob || '',
+  gender: user.value?.gender || '',
 });
+
+const genderOptions = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
 
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -73,19 +82,20 @@ const handleSubmit = async () => {
     error.value = null;
     success.value = null;
 
-    // Create FormData for multipart/form-data
-    const formData = new FormData();
-    formData.append('firstname', form.value.firstname);
-    formData.append('lastname', form.value.lastname);
-    formData.append('email', form.value.email);
-    formData.append('phone_number', form.value.phone_number);
-    
+    const updateData = {
+      firstname: form.value.firstname,
+      lastname: form.value.lastname,
+      email: form.value.email,
+      phone_number: form.value.phone_number,
+      dob: form.value.dob,
+      gender: form.value.gender
+    };
+
     if (selectedFile.value) {
-      formData.append('profile_picture', selectedFile.value);
+       await authStore.uploadProfilePicture(selectedFile.value);
     }
 
-    // TODO: Implement the API call to update profile
-    // await authService.updateProfile(formData);
+    await authStore.updateUserDetails(updateData);
     
     success.value = 'Profile updated successfully!';
     setTimeout(() => {
@@ -218,6 +228,18 @@ const handleSubmit = async () => {
               v-model="form.phone_number"
               label="Phone Number"
               type="tel"
+            />
+            <DateTimePicker
+              v-model="form.dob"
+              label="Date of Birth"
+              format="date"
+              :max-date="new Date().toISOString()"
+            />
+            <Dropdown
+              v-model="form.gender"
+              label="Gender"
+              :options="genderOptions"
+              placeholder="Select Gender"
             />
           </div>
 

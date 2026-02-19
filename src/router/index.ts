@@ -225,6 +225,30 @@ const router = createRouter({
       }
     },
     {
+      path: '/consultations/public',
+      component: () => import('@/views/ConsultationLayout/PublicConsultationLayout.vue'),
+      children: [
+        {
+          path: 'search',
+          name: 'public-consultation-search',
+          component: () => import('@/views/Public/PublicConsultationSearch.vue'),
+          meta: {
+            title: 'Track Consultation | FyndRX',
+            requiresAuth: false
+          }
+        },
+        {
+          path: 'new',
+          name: 'public-create-consultation',
+          component: () => import('@/views/Public/PublicCreateConsultationView.vue'),
+          meta: {
+            title: 'New Consultation | FyndRX',
+            requiresAuth: false
+          }
+        }
+      ]
+    },
+    {
       path: '/consultations',
       name: 'consultations',
       component: () => import('@/views/ConsultationsView.vue'),

@@ -144,6 +144,55 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const updateUserDetails = async (data: any) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const updatedUser = await authService.updateUserDetails(data);
+      // Update local user state
+      user.value = updatedUser;
+      return updatedUser;
+    } catch (err) {
+       const apiError = handleApiError(err);
+       if (isNetworkError(err)) {
+        error.value = 'Network error. Please check your internet connection.';
+       } else {
+        error.value = apiError.message || 'Failed to update profile.';
+       }
+       throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const uploadProfilePicture = async (file: File) => {
+      try {
+        loading.value = true;
+        error.value = null;
+        // Use updateProfilePicture as it seems to be the one for updates, or uploadProfilePicture if it's for initial
+        // The service has both, let's use uploadProfilePicture as requested by the view, but maybe check if we should leverage update
+        // The view calls uploadProfilePicture.
+        const response = await authService.uploadProfilePicture(file);
+        
+        // Update user profile picture in state
+        if (user.value) {
+            user.value = { ...user.value, profile_picture: response.profile_picture };
+        }
+        
+        return response;
+      } catch (err) {
+        const apiError = handleApiError(err);
+       if (isNetworkError(err)) {
+        error.value = 'Network error. Please check your internet connection.';
+       } else {
+        error.value = apiError.message || 'Failed to upload profile picture.';
+       }
+       throw err;
+      } finally {
+        loading.value = false;
+      }
+  };
+
   const checkAuth = async () => {
     if (!accessToken.value || !isAuthenticated.value) {
       clearAuth();
@@ -173,5 +222,7 @@ export const useAuthStore = defineStore('auth', () => {
     checkAuth,
     fetchUserDetails,
     setToken,
+    updateUserDetails,
+    uploadProfilePicture,
   };
 });

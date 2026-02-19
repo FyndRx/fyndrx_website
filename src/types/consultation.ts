@@ -164,3 +164,20 @@ export interface ConsultationFilters {
     page?: number;
     per_page?: number;
 }
+
+export interface PublicConsultationSearchResponse {
+    id: number;
+    consultation_number: string;
+    patient_name: string;
+    status: ConsultationStatus;
+    status_label: string;
+    created_at: string;
+    scheduled_at?: string;
+    pharmacy?: {
+        id: number;
+        name: string;
+    };
+    doctor?: {
+        name: string;
+    };
+}

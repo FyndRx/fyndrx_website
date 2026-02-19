@@ -8,6 +8,7 @@ import Button from '@/components/Button.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
 import Dropdown from '@/components/Dropdown.vue';
+import DateTimePicker from '@/components/DateTimePicker.vue';
 import { 
   CheckCircleIcon, 
   UserIcon,
@@ -138,23 +139,57 @@ onMounted(async () => {
   try {
     const user = await authService.getUserDetails();
     if (user) {
-      form.patient_name = user.fullname || `${user.firstname || ''} ${user.lastname || ''}`.trim();
-      form.patient_email = user.email || '';
-      form.patient_phone = user.phone_number || '';
-      form.patient_date_of_birth = user.dob || '';
-      // @ts-ignore
-      form.patient_gender = user.gender || '';
-      form.user_id = user.id;
-
-      // Check if profile is incomplete
-      if (!user.dob || !user.gender) {
-        isProfileIncomplete.value = true;
-      }
+      currentUser.value = user;
+      setPatientToSelf();
     }
   } catch (err) {
     console.error('Failed to load user details:', err);
   }
 });
+
+const currentUser = ref<any>(null);
+const consultationFor = ref<'myself' | 'someone_else'>('myself');
+
+const setPatientToSelf = () => {
+    if (!currentUser.value) return;
+    const user = currentUser.value;
+    form.patient_name = user.fullname || `${user.firstname || ''} ${user.lastname || ''}`.trim();
+    form.patient_email = user.email || '';
+    form.patient_phone = user.phone_number || '';
+    form.patient_date_of_birth = user.dob || '';
+    // @ts-ignore
+    form.patient_gender = user.gender || '';
+    form.user_id = user.id;
+
+    // Check if profile is incomplete
+    if (!user.dob || !user.gender) {
+        isProfileIncomplete.value = true;
+    } else {
+        isProfileIncomplete.value = false;
+    }
+};
+
+const setPatientToOther = () => {
+    form.patient_name = '';
+    form.patient_email = '';
+    form.patient_phone = '';
+    form.patient_date_of_birth = '';
+    form.patient_gender = '';
+    // user_id stays as auth user, as they are the creator
+    if (currentUser.value) {
+        form.user_id = currentUser.value.id;
+    }
+    isProfileIncomplete.value = false; // Not updating profile for others
+};
+
+const handleConsultationForChange = (val: 'myself' | 'someone_else') => {
+    consultationFor.value = val;
+    if (val === 'myself') {
+        setPatientToSelf();
+    } else {
+        setPatientToOther();
+    }
+};
 </script>
 
 <template>
@@ -259,17 +294,35 @@ onMounted(async () => {
 
           <!-- STEP 2: PATIENT PROFILE -->
           <div v-else-if="currentStep === 2" key="step2" class="space-y-6">
+            
+            <!-- Who is this for? -->
+            <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Who is this consultation for?</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="consultationFor" value="myself" :checked="consultationFor === 'myself'" @change="handleConsultationForChange('myself')" class="text-blue-600 focus:ring-blue-500">
+                        <span class="text-gray-900 dark:text-white font-medium">Myself</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="consultationFor" value="someone_else" :checked="consultationFor === 'someone_else'" @change="handleConsultationForChange('someone_else')" class="text-blue-600 focus:ring-blue-500">
+                        <span class="text-gray-900 dark:text-white font-medium">Someone else</span>
+                    </label>
+                </div>
+            </div>
+
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Patient Details</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <TextInput label="Full Name" v-model="form.patient_name" disabled />
-               <TextInput label="Email Address" v-model="form.patient_email" disabled />
-               <TextInput label="Phone Number" v-model="form.patient_phone" disabled />
+               <TextInput label="Full Name" v-model="form.patient_name" :disabled="consultationFor === 'myself'" placeholder="Patient's Full Name" />
+               <TextInput label="Email Address" v-model="form.patient_email" :disabled="consultationFor === 'myself'" placeholder="Patient's Email (Optional)" />
+               <TextInput label="Phone Number" v-model="form.patient_phone" :disabled="consultationFor === 'myself'" placeholder="Patient's Phone Number" />
                
-                <TextInput 
+                <DateTimePicker 
                   label="Date of Birth" 
-                  type="date" 
-                  v-model="form.patient_date_of_birth" 
+                  format="date" 
+                  :model-value="form.patient_date_of_birth || ''"
+                  @update:model-value="(val) => form.patient_date_of_birth = val"
+                  :max-date="new Date().toISOString()"
                   :disabled="!isProfileIncomplete"
                   required 
                 />
@@ -281,7 +334,7 @@ onMounted(async () => {
                 :options="genderOptions"
                 v-model="form.patient_gender"
                 placeholder="Select Gender"
-                :disabled="!isProfileIncomplete"
+                :disabled="consultationFor === 'myself' && !isProfileIncomplete"
                 required
               />
             </div>

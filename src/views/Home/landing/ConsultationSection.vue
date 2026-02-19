@@ -103,7 +103,7 @@ export default {
 
           <div class="flex flex-col sm:flex-row gap-4">
             <button
-              @click="router.push({ name: 'create-consultation' })"
+              @click="router.push({ name: 'public-create-consultation' })"
               class="px-8 py-4 text-lg font-semibold text-white transition-all duration-300 bg-[#FE9615] rounded-full shadow-lg hover:bg-[#e88813] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center space-x-2"
             >
               <span>Book Consultation</span>

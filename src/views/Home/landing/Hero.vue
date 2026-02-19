@@ -38,7 +38,7 @@ const goToMedications = () => {
 
 
 const goToConsultation = () => {
-  router.push({ name: 'create-consultation' });
+  router.push({ name: 'public-create-consultation' });
 };
 
 onMounted(() => {
