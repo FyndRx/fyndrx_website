@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
 import { prescriptionService, type CreatePrescriptionRequest } from '@/services/prescription';
 import DateTimePicker from '@/components/DateTimePicker.vue';
 import Button from '@/components/Button.vue';
 import { ArrowLeftIcon, CloudArrowUpIcon, DocumentTextIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import TextInput from '@/components/TextInput.vue';
 
 const router = useRouter();
 const notification = useNotification();
@@ -128,14 +129,28 @@ const handleSubmit = async () => {
 };
 
 const goBack = () => router.push({ name: 'prescriptions' });
+
+const showBackButton = ref(false);
+
+onMounted(() => {
+  // Check if we navigated from prescriptions page
+  if (window.history.state && window.history.state.back) {
+    // Determine if previous path was prescriptions
+    // This is a simple check, usually suffices
+    if (window.history.state.back.includes('prescriptions')) {
+      showBackButton.value = true;
+    }
+  }
+});
 </script>
 
 <template>
-  <div class="min-h-screen pt-28 pb-20 bg-gray-50 dark:bg-gray-900">
-    <div class="container mx-auto px-4 max-w-3xl">
+  <div class="min-h-screen pt-28 pb-20 bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
         <button 
+          v-if="showBackButton"
           @click="goBack" 
           class="flex items-center text-gray-500 hover:text-[#246BFD] transition-colors mb-6 group font-medium"
         >
@@ -186,18 +201,14 @@ const goBack = () => router.push({ name: 'prescriptions' });
               />
           </div>
 
-          <!-- Notes (Middle) -->
-          <div>
-            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-              Notes (Optional)
-            </label>
-            <textarea
-              v-model="form.notes"
-              rows="3"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
-              placeholder="Any additional notes..."
-            ></textarea>
-          </div>
+          <!-- Notes -->
+          <TextInput
+            v-model="form.notes"
+            type="textarea"
+            label="Notes (Optional)"
+            :rows="3"
+            placeholder="Any additional notes..."
+          />
 
           <!-- File Upload Section (Moved to Bottom) -->
           <div>
@@ -270,19 +281,11 @@ const goBack = () => router.push({ name: 'prescriptions' });
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-4 pt-4">
-            <Button
-              variant="secondary"
-              type="button"
-              @click="goBack"
-              class="flex-1"
-            >
-              Cancel
-            </Button>
+          <div class="pt-4">
             <Button
               variant="primary"
               type="submit"
-              class="flex-1"
+              block
               :loading="loading"
             >
               Upload Prescription

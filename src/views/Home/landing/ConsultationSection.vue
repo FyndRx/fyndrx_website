@@ -2,9 +2,11 @@
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import { useAuthStore } from '@/store/auth';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const { registerElement } = useScrollAnimation();
 
 const doctorImage = 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=2670&auto=format&fit=crop';
@@ -103,7 +105,7 @@ export default {
 
           <div class="flex flex-col sm:flex-row gap-4">
             <button
-              @click="router.push({ name: 'public-create-consultation' })"
+              @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
               class="px-8 py-4 text-lg font-semibold text-white transition-all duration-300 bg-[#FE9615] rounded-full shadow-lg hover:bg-[#e88813] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center space-x-2"
             >
               <span>Book Consultation</span>

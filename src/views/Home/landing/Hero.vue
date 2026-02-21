@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import { useAuthStore } from '@/store/auth';
 import LazyImage from '@/components/LazyImage.vue';
 
 const router = useRouter();
@@ -37,8 +38,10 @@ const goToMedications = () => {
 
 
 
+const authStore = useAuthStore();
+
 const goToConsultation = () => {
-  router.push({ name: 'public-create-consultation' });
+  router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' });
 };
 
 onMounted(() => {

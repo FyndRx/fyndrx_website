@@ -168,16 +168,40 @@ export interface ConsultationFilters {
 export interface PublicConsultationSearchResponse {
     id: number;
     consultation_number: string;
+    user: { id: number; name: string; email: string } | null;
     patient_name: string;
+    patient_email: string | null;
+    patient_phone: string | null;
+    patient_date_of_birth: string | null;
+    patient_gender: string | null;
+    vitals: Vitals[] | Vitals | null;
+    consultation_type: ConsultationType;
+    consultation_type_label: string;
+    symptoms: string | null;
+    medical_history: string | null;
+    current_medications: string | null;
+    allergies: string | null;
+    diagnoses: Diagnosis[];
+    consultation_notes: string | null;
+    pharmacist_notes: string | null;
+    recommendations: string | null;
+    prescription: Prescription | null;
     status: ConsultationStatus;
     status_label: string;
+    priority: ConsultationPriority;
+    priority_label: string;
+    responded_at: string | null;
+    completed_at: string | null;
+    scheduled_at: string | null;
+    response_time_minutes: number | null;
+    requires_followup: boolean;
+    followup_date: string | null;
+    followup_notes: string | null;
+    rating: number | null;
+    feedback: string | null;
+    rated_at: string | null;
+    attachments: string[] | null;
+    source: string;
     created_at: string;
-    scheduled_at?: string;
-    pharmacy?: {
-        id: number;
-        name: string;
-    };
-    doctor?: {
-        name: string;
-    };
+    updated_at: string;
 }

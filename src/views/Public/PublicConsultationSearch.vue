@@ -122,18 +122,40 @@ const getStatusIcon = (status: string) => {
                     </div>
 
                     <div class="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                        <div class="flex justified-between">
-                             <div class="w-1/3 text-sm text-gray-500">Patient</div>
-                             <div class="w-2/3 text-sm font-medium text-gray-900 dark:text-white text-right">{{ searchResult.patient_name }}</div>
+                        <div class="flex justify-between">
+                             <div class="text-sm text-gray-500">Patient</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ searchResult.patient_name }}</div>
                         </div>
-                         <div class="flex justified-between">
-                             <div class="w-1/3 text-sm text-gray-500">Created</div>
-                             <div class="w-2/3 text-sm font-medium text-gray-900 dark:text-white text-right">{{ new Date(searchResult.created_at).toLocaleDateString() }}</div>
+                        <div class="flex justify-between">
+                             <div class="text-sm text-gray-500">Type</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ searchResult.consultation_type_label }}</div>
                         </div>
-                        <div v-if="searchResult.doctor" class="flex justified-between">
-                             <div class="w-1/3 text-sm text-gray-500">Assigned To</div>
-                             <div class="w-2/3 text-sm font-medium text-gray-900 dark:text-white text-right">{{ searchResult.doctor.name }}</div>
+                        <div class="flex justify-between">
+                             <div class="text-sm text-gray-500">Priority</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ searchResult.priority_label }}</div>
                         </div>
+                        <div v-if="searchResult.symptoms" class="flex justify-between">
+                             <div class="text-sm text-gray-500">Symptoms</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">{{ searchResult.symptoms }}</div>
+                        </div>
+                        <div class="flex justify-between">
+                             <div class="text-sm text-gray-500">Created</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ new Date(searchResult.created_at).toLocaleDateString() }}</div>
+                        </div>
+                        <div v-if="searchResult.responded_at" class="flex justify-between">
+                             <div class="text-sm text-gray-500">Responded</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ new Date(searchResult.responded_at).toLocaleDateString() }}</div>
+                        </div>
+                        <div v-if="searchResult.completed_at" class="flex justify-between">
+                             <div class="text-sm text-gray-500">Completed</div>
+                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ new Date(searchResult.completed_at).toLocaleDateString() }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations Section -->
+                    <div v-if="searchResult.recommendations" class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Recommendations</p>
+                        <p class="text-sm text-gray-900 dark:text-white">{{ searchResult.recommendations }}</p>
                     </div>
                 </Card>
             </Transition>

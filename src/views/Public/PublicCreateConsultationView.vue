@@ -41,7 +41,7 @@ const form = reactive<CreateConsultationPayload>({
     height: undefined
   },
   pharmacy_id: 1, // Default
-  source: 'web_public',
+  source: 'web',
   user_id: 0 // No user
 });
 

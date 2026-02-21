@@ -2,8 +2,10 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import { useAuthStore } from '@/store/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const { registerElement } = useScrollAnimation();
 
 // FAQ Data
@@ -136,7 +138,7 @@ onMounted(() => {
                 </div>
                 
                  <button
-                   @click="router.push({ name: 'public-create-consultation' })"
+                   @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
                    class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-[#246BFD] rounded-xl shadow-lg hover:bg-[#1a55db] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
                  >
                    Start Assessment
@@ -266,7 +268,7 @@ onMounted(() => {
              Join thousands of patients who trust FyndRX for their medical needs. Start your journey to better health today.
            </p>
            <button
-            @click="router.push({ name: 'public-create-consultation' })"
+            @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
             class="px-10 py-4 text-lg font-bold text-[#246BFD] bg-white rounded-full shadow-lg hover:bg-gray-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative z-10"
            >
              Book Consultation Now

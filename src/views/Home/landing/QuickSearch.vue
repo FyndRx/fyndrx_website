@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const activeTab = ref<'medication' | 'pharmacy' | 'consultation'>('medication');
 const medicationQuery = ref('');
 const pharmacyQuery = ref('');
@@ -252,7 +254,7 @@ export default {
                   Get professional medical advice, prescriptions, and follow-ups from the comfort of your home.
                 </p>
                 <button
-                  @click="router.push({ name: 'public-create-consultation' })"
+                   @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
                   class="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FE9615] text-white font-semibold text-lg hover:bg-[#e88813] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover-lift"
                 >
                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

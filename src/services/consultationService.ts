@@ -104,6 +104,7 @@ export const consultationService = {
     },
 
     async searchPublicConsultation(params: { consultation_number: string; patient_phone?: string; patient_email?: string }) {
-        return await api.get<PublicConsultationSearchResponse>('/consultations/search', { params });
+        const response = await api.get<{ data: PublicConsultationSearchResponse }>('/consultations/search', { params });
+        return response.data;
     }
 };
