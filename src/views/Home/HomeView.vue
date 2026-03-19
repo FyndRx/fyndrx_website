@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 import Hero from '@/views/Home/landing/Hero.vue';
 import QuickSearch from '@/views/Home/landing/QuickSearch.vue';
 import Features from '@/views/Home/landing/Features.vue';
@@ -20,6 +21,13 @@ import AppDownloadBanner from '@/views/Home/landing/AppDownloadBanner.vue';
 
 onMounted(() => {
   isVisible.value = true;
+});
+
+useSeoMeta({
+  title: 'FYNDRX | SAFEST AND MOST CONVENIENT ONLINE PHARMACY IN GHANA',
+  description: 'Order your prescription medicine the most convenient way and have them delivered to your doorstep. Get online prescriptions through our free online consultation service and buy medicines at anytime and from anywhere you are in need. Search for medicines, upload prescriptions and find pharmacies near you. With multiple price options and flexible payments, there are no limits for you.',
+  keywords: 'order medicines online, online pharmacy Ghana, ePharmacy, upload prescription, pharmacist consultation, find pharmacy, medicine delivery, FyndRx, Ghana',
+  ogType: 'website',
 });
 </script>
 

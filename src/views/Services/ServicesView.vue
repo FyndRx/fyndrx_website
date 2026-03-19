@@ -1,5 +1,12 @@
 <script setup lang="ts">
-// Component logic can be added here if needed
+import { useSeoMeta } from '@/composables/useSeoMeta';
+
+useSeoMeta({
+  title: 'Our Services | FyndRx',
+  description: 'Explore FyndRx services: online medicine ordering, prescription uploads, pharmacist consultations, pharmacy finder, telehealth, and secure health records.',
+  keywords: 'FyndRx services, online pharmacy services, prescription management, telehealth, pharmacy finder, health records, medicine comparison',
+  ogType: 'website',
+});
 </script>
 
 <template>

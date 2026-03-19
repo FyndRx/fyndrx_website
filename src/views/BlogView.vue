@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { formatDate } from '@/utils/date';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 import type { BlogPost } from '@/types/blog';
 import { blogService } from '@/services/blogService';
 import LazyImage from '@/components/LazyImage.vue';
@@ -11,6 +12,14 @@ import EmptyState from '@/components/EmptyState.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+useSeoMeta({
+  title: 'Health Blog | FyndRx',
+  description: 'Read expert health insights, medication guides, and the latest healthcare news from FyndRx. Stay informed about health, wellness, and pharmacy updates.',
+  keywords: 'health blog, FyndRx blog, medication guides, healthcare news, wellness articles, pharmacy updates',
+  ogType: 'website',
+});
+
 const isLoading = ref(true);
 const featuredPost = ref<BlogPost | null>(null);
 const posts = ref<BlogPost[]>([]);

@@ -21,7 +21,8 @@ const router = createRouter({
       name: 'home',
       component: () => import('../views/Home/HomeView.vue'),
       meta: {
-        title: 'Home | FyndRX',
+        title: 'FYNDRX | SAFEST AND MOST CONVENIENT ONLINE PHARMACY IN GHANA',
+        description: 'Order your prescription medicine the most convenient way and have them delivered to your doorstep. Get online prescriptions through our free online consultation service and buy medicines at anytime and from anywhere you are in need. Search for medicines, upload prescriptions and find pharmacies near you. With multiple price options and flexible payments, there are no limits for you.',
       },
     },
     {
@@ -29,7 +30,8 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/About/AboutView.vue'),
       meta: {
-        title: 'About Us | FyndRX',
+        title: 'About FyndRx | Safest and Most Convenient Online Pharmacy in Ghana',
+        description: 'Learn about FyndRx, Ghana\'s safest and most convenient online pharmacy. Order prescriptions, consult pharmacists, and get medicine delivered to your doorstep. Discover our mission to make healthcare accessible to all.',
       },
     },
     {
@@ -37,7 +39,8 @@ const router = createRouter({
       name: 'services',
       component: () => import('../views/Services/ServicesView.vue'),
       meta: {
-        title: 'Our Services | FyndRX',
+        title: 'Our Services | FyndRx',
+        description: 'Explore FyndRx services: online medicine ordering, prescription uploads, pharmacist consultations, pharmacy finder, telehealth, and secure health records.',
       },
     },
     {
@@ -45,7 +48,8 @@ const router = createRouter({
       name: 'contact',
       component: () => import('../views/Contact/ContactView.vue'),
       meta: {
-        title: 'Contact Us | FyndRX',
+        title: 'Contact Us | FyndRx',
+        description: 'Get in touch with FyndRx. Visit our offices in Tema and Tamale, send us an email, or call us. We are here to help with your healthcare needs.',
       },
     },
     {
@@ -53,7 +57,8 @@ const router = createRouter({
       name: 'upload-prescription',
       component: () => import('../views/PrescriptionUpload.vue'),
       meta: {
-        title: 'Upload Prescription | FyndRX',
+        title: 'Upload Prescription | FyndRx',
+        description: 'Upload your prescription securely and let FyndRx help you find the best prices across partner pharmacies.',
       },
     },
     {
@@ -61,7 +66,8 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/Auth/LoginView.vue'),
       meta: {
-        title: 'Login | FyndRX',
+        title: 'Login | FyndRx',
+        description: 'Sign in to your FyndRx account to manage orders, prescriptions, and consultations.',
         requiresGuest: true,
       },
     },
@@ -70,7 +76,8 @@ const router = createRouter({
       name: 'register',
       component: () => import('../views/Auth/RegisterView.vue'),
       meta: {
-        title: 'Register | FyndRX',
+        title: 'Create Account | FyndRx',
+        description: 'Create your free FyndRx account to order medicines online, upload prescriptions, and access affordable healthcare.',
         requiresGuest: true,
       },
     },
@@ -79,7 +86,8 @@ const router = createRouter({
       name: 'forgot-password',
       component: () => import('../views/Auth/ForgotPasswordView.vue'),
       meta: {
-        title: 'Forgot Password | FyndRX',
+        title: 'Forgot Password | FyndRx',
+        description: 'Reset your FyndRx password. Enter your email to receive a password reset link.',
         requiresGuest: true,
       },
     },
@@ -88,7 +96,8 @@ const router = createRouter({
       name: 'reset-password',
       component: () => import('../views/Auth/ResetPasswordView.vue'),
       meta: {
-        title: 'Reset Password | FyndRX',
+        title: 'Reset Password | FyndRx',
+        description: 'Set a new password for your FyndRx account.',
         requiresGuest: true,
       },
     },
@@ -97,7 +106,8 @@ const router = createRouter({
       name: 'dashboard',
       component: () => import('../views/Dashboard/DashboardView.vue'),
       meta: {
-        title: 'Dashboard | FyndRX',
+        title: 'Dashboard | FyndRx',
+        description: 'Your FyndRx dashboard. View orders, prescriptions, consultations, and manage your healthcare.',
         requiresAuth: true,
       },
     },
@@ -106,7 +116,8 @@ const router = createRouter({
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
       meta: {
-        title: 'Profile | FyndRX',
+        title: 'My Profile | FyndRx',
+        description: 'View and manage your FyndRx profile information.',
         requiresAuth: true,
       },
     },
@@ -115,7 +126,8 @@ const router = createRouter({
       name: 'edit-profile',
       component: () => import('../views/EditProfileView.vue'),
       meta: {
-        title: 'Edit Profile | FyndRX',
+        title: 'Edit Profile | FyndRx',
+        description: 'Update your FyndRx profile, personal details, and preferences.',
         requiresAuth: true,
       },
     },
@@ -390,11 +402,21 @@ const router = createRouter({
       }
     },
     {
+      path: '/email-templates',
+      name: 'email-templates',
+      component: () => import('../views/EmailTemplatesView.vue'),
+      meta: {
+        title: 'Email Templates | FyndRx',
+        description: 'FyndRx email templates for system communications.',
+      },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound/NotFoundView.vue'),
       meta: {
-        title: '404 Not Found | FyndRX',
+        title: 'Page Not Found | FyndRx',
+        description: 'The page you are looking for could not be found. Return to FyndRx home page.',
       },
     },
   ],
@@ -403,7 +425,19 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach(async (to, _, next) => {
   // Update page title
-  document.title = (to.meta.title as string) || 'FyndRX';
+  document.title = (to.meta.title as string) || 'FyndRx';
+
+  // Update meta description
+  const description = to.meta.description as string;
+  if (description) {
+    let metaDesc = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = 'description';
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = description;
+  }
 
   const authStore = useAuthStore();
 

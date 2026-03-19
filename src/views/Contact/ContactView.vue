@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, defineAsyncComponent } from 'vue';
 import { useGoogleMaps } from '@/composables/useGoogleMaps';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 import TextInput from '@/components/TextInput.vue';
+
+useSeoMeta({
+  title: 'Contact Us | FyndRx',
+  description: 'Get in touch with the FyndRx team. Reach us via phone, email, or visit our office. We are here to help with any questions about our online pharmacy platform.',
+  keywords: 'contact FyndRx, support, customer service, online pharmacy contact, help, phone, email',
+  ogType: 'website',
+});
 
 const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
 
@@ -82,7 +90,7 @@ const contactInfo = {
   tamaleAddress: 'Behind Nahda Basic School. Nyohini-Yepala',
   tamaleCity: 'Tamale, Northern Region',
   email: 'info@fyndrx.com',
-  phone: '+233 24 399 6999',
+  phone: '+233 53 051 0839',
   hours: 'Monday - Friday: 9:00 AM - 6:00 PM',
 };
 

@@ -65,7 +65,8 @@ const informationLinks = [
   { name: 'Terms of Service', path: '/terms' },
   { name: 'Privacy Policy', path: '/privacy' },
   { name: 'Cookie Policy', path: '/cookies' },
-  { name: 'Accessibility', path: '/accessibility' }
+  { name: 'Accessibility', path: '/accessibility' },
+  { name: 'Email Templates', path: '/email-templates' }
 ];
 
 const contactInfo = {
@@ -73,7 +74,7 @@ const contactInfo = {
   district: 'Tema',
   city: 'Greater Accra',
   email: 'info@fyndrx.com',
-  phone: '+233 24 399 6999'
+  phone: '+233 53 051 0839'
 };
 </script>
 

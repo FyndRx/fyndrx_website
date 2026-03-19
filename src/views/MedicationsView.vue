@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 import { storeToRefs } from 'pinia';
 import { useMedicationsStore } from '@/store/medications';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
@@ -14,6 +15,13 @@ import MedicationQuickViewModal from '@/components/MedicationQuickViewModal.vue'
 import MedicationComparison from '@/components/MedicationComparison.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import Pagination from '@/components/Pagination.vue';
+
+useSeoMeta({
+  title: 'Browse Medications | FyndRx',
+  description: 'Search and compare medication prices across pharmacies. Browse by category, brand, or form. Upload prescriptions and order medicines online with FyndRx.',
+  keywords: 'browse medications, medicine prices, compare pharmacies, prescription drugs, OTC medicines, FyndRx medications',
+  ogType: 'website',
+});
 
 const router = useRouter();
 const route = useRoute();

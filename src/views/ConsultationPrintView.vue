@@ -344,7 +344,7 @@ onUnmounted(() => {
                   <p>Mayflower Building, Community 10, Tema</p>
               </div>
               <div class="space-y-0.5 text-right">
-                  <p>info@fyndrx.com | +233 24 399 6999</p>
+                  <p>info@fyndrx.com | +233 53 051 0839</p>
                   <p class="font-medium text-[#FE9615]">www.fyndrx.com</p>
               </div>
             </div>

@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
 import { reviewService } from '@/services/reviewService';
 import { pharmacyService } from '@/services/pharmacyService';
@@ -17,6 +18,13 @@ import CustomCheckbox from '@/components/CustomCheckbox.vue';
 
 const route = useRoute();
 const dataCache = useDataCacheStore();
+
+useSeoMeta({
+  title: 'Find Pharmacies Near You | FyndRx',
+  description: 'Locate verified pharmacies near you. Compare prices, check services and operating hours. Find the best pharmacy for your medications with FyndRx.',
+  keywords: 'find pharmacy, pharmacy near me, compare pharmacy prices, verified pharmacies, pharmacy services, FyndRx pharmacies',
+  ogType: 'website',
+});
 
 const { registerElement } = useScrollAnimation();
 const pharmacies = ref<Pharmacy[]>([]);

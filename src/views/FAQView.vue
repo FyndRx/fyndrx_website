@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
-
+import { useSeoMeta } from '@/composables/useSeoMeta';
 const { registerElement } = useScrollAnimation();
+
+useSeoMeta({
+  title: 'Frequently Asked Questions | FyndRx',
+  description: 'Find answers to common questions about FyndRx — how it works, ordering, prescriptions, delivery, payments, and more. We are here to help.',
+  keywords: 'FyndRx FAQ, frequently asked questions, online pharmacy help, how does FyndRx work, prescription upload help, delivery questions',
+  ogType: 'website',
+});
 
 onMounted(() => {
   const elements = document.querySelectorAll('.scroll-animate');

@@ -125,7 +125,7 @@ const filteredFaqs = computed(() => {
             </div>
             <div>
               <h3 class="text-lg font-medium text-gray-900 dark:text-white">Phone Support</h3>
-              <p class="text-gray-600 dark:text-gray-300">+233 24 399 6999</p>
+              <p class="text-gray-600 dark:text-gray-300">+233 53 051 0839</p>
             </div>
           </div>
         </div>
