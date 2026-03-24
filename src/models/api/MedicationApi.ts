@@ -30,7 +30,7 @@ export interface DrugFormApiResponse {
 
 export interface MedicationApiResponse {
   id: number;
-  drug_name: string;
+  name: string;
   description?: string | null;
   category?: string | string[];
   image?: string | null;
@@ -40,6 +40,9 @@ export interface MedicationApiResponse {
   predefinedQuantities?: number[];
   brands?: DrugBrandApiResponse[];
   forms?: DrugFormApiResponse[];
+  pharmacy_count?: number;
+  price?: number;
+  discount_price?: number;
   created_at?: string;
   updated_at?: string;
 }

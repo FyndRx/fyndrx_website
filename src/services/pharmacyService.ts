@@ -208,7 +208,7 @@ export const pharmacyService = {
 
         return {
           id: drug.drug_id,
-          drug_name: drug.drug?.drug_name || '',
+          name: drug.drug?.name || '',
           description: drug.drug?.description || '',
           brands,
           forms,

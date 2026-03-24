@@ -23,7 +23,7 @@ export interface MedicationForm {
 
 export interface Medication {
   id: number;
-  drug_name: string;
+  name: string;
   description: string;
   brands: MedicationBrand[];
   forms: MedicationForm[];
@@ -31,6 +31,9 @@ export interface Medication {
   predefinedQuantities: number[];
   category: string | string[]; // Can be string (legacy) or array of strings
   requiresPrescription: boolean;
+  pharmacy_count?: number;
+  price?: number;
+  discount_price?: number;
 }
 
 export interface PharmacyMedicationPrice {

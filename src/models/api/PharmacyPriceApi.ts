@@ -53,7 +53,7 @@ export interface PharmacyPriceApiResponse {
   inStock?: boolean;
 
   // New fields from confirmed API response
-  drug_name?: string;
+  name?: string;
   drugName?: string;
   drug_image?: string;
   drugImage?: string;

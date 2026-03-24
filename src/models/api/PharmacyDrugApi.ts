@@ -22,7 +22,7 @@ export interface PharmacyDrugApiResponse {
   drug_id: number;
   drug: {
     id: number;
-    drug_name: string;
+    name: string;
     description: string | null;
     image: string | null;
     requires_prescription: boolean;

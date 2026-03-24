@@ -103,7 +103,7 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
 
   return {
     id: apiMed.id,
-    drug_name: apiMed.drug_name,
+    name: apiMed.name,
     description: apiMed.description ?? '',
     brands: brands,
     forms: apiMed.forms ?? [],
@@ -111,6 +111,9 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
     predefinedQuantities: apiMed.predefined_quantities ?? apiMed.predefinedQuantities ?? [],
     category: apiMed.category ?? (apiMed as any).categories ?? '',
     requiresPrescription: apiMed.requires_prescription ?? apiMed.requiresPrescription ?? false,
+    pharmacy_count: apiMed.pharmacy_count ?? (apiMed as any).pharmacies_count ?? (apiMed as any).available_pharmacies_count,
+    price: apiMed.price,
+    discount_price: apiMed.discount_price,
   };
 }
 
@@ -217,7 +220,7 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     rating: apiPrice.rating,
 
     // Map optional fields (handling potential snake_case vs camelCase)
-    drug_name: apiPrice.drug_name || apiPrice.drugName,
+    name: apiPrice.name || apiPrice.drugName,
     drug_image: apiPrice.drug_image || apiPrice.drugImage,
     brand_name: apiPrice.brand_name || apiPrice.brandName,
     form_name: apiPrice.form_name || apiPrice.formName,
@@ -264,7 +267,7 @@ export function transformCartItem(apiItem: CartItemApiResponse): CartItem {
   return {
     id: String(apiItem.id),
     medicationId: apiItem.drug_id,
-    medicationName: getValue(apiItem.drug_name, medication, 'drug_name'),
+    medicationName: getValue(apiItem.name, medication, 'name'),
     pharmacyId: apiItem.pharmacy_id || pharmacy?.id || 0,
     pharmacyName: pharmacy?.name || '',
     pharmacyLogo: pharmacy?.logo,
@@ -347,7 +350,7 @@ export function transformOrderItem(apiItem: OrderItemApiResponse): OrderItem {
   return {
     id: String(apiItem.id || `item-${apiItem.drug_id}-${Math.random()}`),
     medicationId: apiItem.drug_id,
-    medicationName: medication?.drug_name || findProp(apiItem, ['drug_name', 'medication_name', 'name', 'drugName']) || '',
+    medicationName: medication?.name || findProp(apiItem, ['name', 'name', 'medication_name', 'drugName']) || '',
     brandId: apiItem.drug_brand_id,
     brandName: brand?.name || 
                (apiItem as any).drug_brand?.brand?.brand_name || 
@@ -553,7 +556,7 @@ export function transformPrescription(apiPrescription: PrescriptionApiResponse):
       id: drug.id,
       prescription_id: drug.prescription_id,
       drug_id: drug.drug_id,
-      drug_name: drug.drug_name,
+      name: drug.name,
       brand_id: drug.brand_id,
       brand_name: drug.brand_name,
       form_id: drug.form_id,

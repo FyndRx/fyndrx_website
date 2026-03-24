@@ -1,7 +1,6 @@
 import type { Medication } from '@/models/Medication';
 import { apiService } from './api';
 import type {
-  LiveSearchApiResponse,
   MedicationDetailApiResponse,
   MultipleMedicationsApiResponse,
   MedicationApiResponse
@@ -44,72 +43,118 @@ export const medicationService = {
       const query = filters.query?.trim() || '';
 
       const searchParams = new URLSearchParams();
-      // Only add query param if it's not empty, otherwise API should return all medications
       if (query.length > 0) {
         searchParams.set('q', query);
       }
 
-      if (filters.page && filters.page > 0) {
-        searchParams.set('page', String(filters.page));
-      }
+      // Preserve existing filters if the new API supports them
+      if (filters.page && filters.page > 0) searchParams.set('page', String(filters.page));
+      if (filters.perPage && filters.perPage > 0) searchParams.set('per_page', String(filters.perPage));
+      if (filters.category && filters.category !== 'all') searchParams.set('category', filters.category);
+      if (filters.brand && filters.brand !== 'all') searchParams.set('brand', filters.brand);
 
-      if (filters.perPage && filters.perPage > 0) {
-        searchParams.set('per_page', String(filters.perPage));
-      }
+      const queryString = searchParams.toString();
+      const url = `/search/smart${queryString ? `?${queryString}` : ''}`;
+      console.log('Fetching from Smart Search URL:', url);
 
-      if (filters.category && filters.category !== 'all') {
-        searchParams.set('category', filters.category);
-      }
-
-      if (filters.form && filters.form !== 'all') {
-        searchParams.set('form', filters.form);
-      }
-
-      if (filters.brand && filters.brand !== 'all') {
-        searchParams.set('brand', filters.brand);
-      }
-
-      if (filters.requiresPrescription) {
-        searchParams.set('requires_prescription', filters.requiresPrescription);
-      }
-
-      if (filters.sort) {
-        searchParams.set('sort_by', filters.sort);
-      }
-
-      const url = `/drug/live-search?${searchParams.toString()}`;
-      console.log('Fetching from URL:', url);
-
-      const response = await apiService.get<LiveSearchApiResponse>(url);
+      const response = await apiService.get<any>(url);
       console.log('Raw API response:', response);
 
-      const apiMeds = unwrapArrayResponse(response);
-      const meta = !Array.isArray(response) && 'meta' in response ? response.meta : undefined;
+      let medications: Medication[] = [];
+      const meta = response.meta;
 
-      const transformed = transformMedications(apiMeds);
-      console.log('Transformed medications:', transformed);
+      // Check if it's the grouped Smart Search structure (typically when q is present)
+      if (response && response.results) {
+        console.log('Processing as grouped Smart Search results');
+        const products = response.results.products || [];
+        const generics = response.results.generics || [];
+        
+        medications = [
+          ...products.map((p: any) => transformMedication({
+            id: p.id,
+            name: p.name,
+            description: p.detail || p.description || '',
+            image: p.image || '',
+            pharmacy_count: p.pharmacy_count || p.pharmacies_count,
+            price: p.price,
+            discount_price: p.discount_price,
+            brands: p.brand ? [{ id: p.brand_id, name: p.brand }] : [],
+          } as any)),
+          ...transformMedications(generics)
+        ];
+      } else {
+        // Standard paginated list structure (typically when no q is present)
+        console.log('Processing as standard paginated list');
+        const apiMeds = unwrapArrayResponse(response) as any[];
+        medications = transformMedications(apiMeds);
+      }
 
       return {
-        medications: transformed,
-        meta,
+        medications,
+        meta: meta || {
+          current_page: filters.page || 1,
+          per_page: filters.perPage || 15,
+          total: medications.length,
+          last_page: 1
+        },
       };
     } catch (error) {
-      console.error('Error in medicationService.liveSearch:', error);
+      console.error('Error in medicationService.liveSearch (using smart search):', error);
       throw error;
     }
   },
 
   async smartSearch(query: string): Promise<SmartSearchResponse> {
+    const trimmedQuery = query?.trim() || '';
     try {
-      const response = await apiService.get<SmartSearchResponse>('/search/smart', {
-        params: { q: query }
-      });
-      return response;
+      const searchParams = new URLSearchParams();
+      if (trimmedQuery) {
+        searchParams.set('q', trimmedQuery);
+      }
+      
+      const url = `/search/smart${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      const response = await apiService.get<any>(url);
+
+      // If it's already in grouped format, return as is
+      if (response && response.results) {
+        return response as SmartSearchResponse;
+      }
+
+      // If it's a flat list, wrap it into the SmartSearchResponse structure
+      const apiMeds = unwrapArrayResponse(response) as any[];
+      return {
+        query: trimmedQuery,
+        results: {
+          products: apiMeds.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            detail: p.detail || p.description || '',
+            brand: p.brand || '',
+            brand_id: p.brand_id || 0,
+            drug: p.drug || '',
+            form: p.form || '',
+            form_id: p.form_id || 0,
+            strength: p.strength || '',
+            strength_id: p.strength_id || 0,
+            uom: p.uom || '',
+            uom_id: p.uom_id || 0,
+            image: p.image || null,
+            requires_prescription: p.requires_prescription ?? false,
+            pharmacy_count: p.pharmacy_count || p.pharmacies_count || 0,
+            url: p.url || `/medication/${p.id}`,
+            price: p.price,
+            discount_price: p.discount_price
+          })),
+          brands: [],
+          generics: [],
+          categories: []
+        },
+        suggestions: []
+      };
     } catch (error) {
       console.error('Error in smartSearch:', error);
-      // Fallback to empty response to prevent UI crash
       return {
-        query,
+        query: trimmedQuery,
         results: { products: [], brands: [], generics: [], categories: [] },
         suggestions: []
       };
