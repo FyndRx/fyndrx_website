@@ -125,25 +125,37 @@ const handleSelection = (result: { type: string; item: any }) => {
     if (match.action === 'navigate') {
        router.push(match.target);
     } else {
-       // fallback if top match is just info
-       if (match.type === 'product') {
-         // Should have a link in data or construct it
-         const link = match.data?.url || `/medication/${match.data?.id}`;
-         router.push(link);
+       if (match.type === 'product' && match.data) {
+         router.push({
+           path: `/medication/${match.data.id || match.data.drug_id}`,
+           query: {
+             brand_id: match.data.brand_id,
+             form_id: match.data.form_id,
+             strength_id: match.data.strength_id,
+             uom_id: match.data.uom_id
+           }
+         });
+       } else if (match.type === 'drug' && match.data) {
+         router.push(`/medication/${match.data.id}`);
        }
     }
   } else if (result.type === 'product') {
     const item = result.item;
-    const link = item.url || `/medication/${item.id}`;
-    router.push(link);
+    router.push({
+      path: `/medication/${item.id || item.drug_id}`,
+      query: {
+        brand_id: item.brand_id,
+        form_id: item.form_id,
+        strength_id: item.strength_id,
+        uom_id: item.uom_id
+      }
+    });
   } else if (result.type === 'pharmacy') {
      router.push({ name: 'pharmacy', params: { id: result.item.id } });
   } else if (result.type === 'suggestion') {
-     // If suggestion is clicked, maybe just update search or search for it?
-     // Usually specific suggestions map to products or brands
      searchQuery.value = result.item.text;
      emit('search', result.item.text);
-     return; // Don't clear search yet
+     return;
   }
   
   clearSearch();

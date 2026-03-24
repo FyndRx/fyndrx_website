@@ -5,15 +5,13 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
-import { PharmacyPrice, pharmacyService } from '@/services/pharmacyService';
-import type { MedicationPricingHierarchy } from '@/services/pharmacyService'; // Import new type
+import { pharmacyService } from '@/services/pharmacyService';
 import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
 import Pagination from '@/components/Pagination.vue';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
 
 import type { Medication } from '@/models/Medication';
 import LazyImage from '@/components/LazyImage.vue';
-import Dropdown from '@/components/Dropdown.vue';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
@@ -53,17 +51,30 @@ interface Pharmacy {
     branch_name?: string; // Branch Name
   };
   pharmacy_name?: string; // Fallback for pharmacy name
+  branch_id?: number; // Branch ID
   branch_name?: string; // Branch Name
+  latitude?: number;
+  longitude?: number;
 }
 
 // State
 const medication = ref<Medication | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const pharmacies = ref<(Pharmacy & { isPreferredBrand?: boolean })[]>([]);
-const allPrices = ref<PharmacyPrice[]>([]); // Master list of all prices
-const hierarchy = ref<MedicationPricingHierarchy['hierarchy'] | null>(null); // New Hierarchy State
 const loadingPharmacies = ref(false);
+const exactMatch = ref<any>(null);
+const relatedDrugs = ref<any[]>([]);
+const dummyDescription = `
+  <div class="space-y-4">
+    <p>This medication is primarily used to treat various bacterial infections. It works by stopping the growth of bacteria.</p>
+    <ul class="list-disc pl-5 space-y-2">
+      <li><strong>Effective against:</strong> Ear infections, pneumonia, skin infections, and urinary tract infections.</li>
+      <li><strong>Dosage:</strong> Typically taken every 8 to 12 hours as prescribed by your doctor.</li>
+      <li><strong>Precautions:</strong> Inform your doctor if you have allergies to penicillin or cephalosporin antibiotics.</li>
+    </ul>
+    <p class="text-sm italic text-gray-500">Note: This is a sample medical description for demonstration purposes.</p>
+  </div>
+`;
 
 
 // Pharmacy Filtering State
@@ -75,125 +86,52 @@ const currentPage = ref(1);
 const itemsPerPage = ref(9);
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
 
-const selectedBrand = ref<number | null>(null);
-const selectedVariant = ref<string>(''); // Combined Form + Strength
-const selectedForm = ref<string | number>('');
-const selectedStrength = ref<string | number>('');
-const selectedUom = ref<string | number>('');
-
 const customQuantities = ref<Map<number, number>>(new Map());
 
 const filteredPharmacies = computed(() => {
-  // 0. Base Filter: Start with the master list and filter by Brand & Variant locally
-  // This replaces the old 'pharmacies' ref which was populated by API calls
-  
-  // A. Filter by Brand
-  let pricesToProcess = allPrices.value;
-  if (selectedBrand.value) {
-      pricesToProcess = pricesToProcess.filter(p => p.drug_brand_id === selectedBrand.value);
-  }
-  
-  // B. Filter by Variant (Form/Strength/UOM)
-  // Only apply if a specific variant is selected
-  // The selectedVariant string contains "formId_strengthId_uomId"
-  if (selectedVariant.value) {
-      const parts = selectedVariant.value.split('_');
-      // We can strict filter because selectedVariant MUST exist in the hierarchy which is derived from prices
-      const fId = Number(parts[0]);
-      const sId = Number(parts[1]);
-      const uId = Number(parts[2]);
-      
-      pricesToProcess = pricesToProcess.filter(p => {
-          // Use flexible matching for form_id as per service logic
-          const pFormId = p.drug_brand_form_id || (p as any).form_id;
-          const pStrengthId = p.dosage_id || p.strength_id; // Check both legacy/new fields
-          const pUomId = p.strength_uom_id || p.uom_id;
-          
-          return pFormId === fId && pStrengthId === sId && pUomId === uId;
-      });
-  }
+  if (!exactMatch.value || !exactMatch.value.pharmacies) return [];
 
-  // C. Deduplicate Pharamcies (same logic as before: prioritize brand, lowest price)
-  const pharmacyMap = new Map<number, any>();
-  const preferredBrandId = selectedBrand.value;
-
-  pricesToProcess.forEach(price => {
-      const pharmacyId = price.pharmacy_id;
-      const existing = pharmacyMap.get(pharmacyId);
-      
-      const isPreferred = preferredBrandId && price.drug_brand_id === preferredBrandId;
-      const existingIsPreferred = existing && preferredBrandId && existing.drug_brand_id === preferredBrandId;
-      
-      if (!existing) {
-        pharmacyMap.set(pharmacyId, price);
-      } else if (isPreferred && !existingIsPreferred) {
-        pharmacyMap.set(pharmacyId, price);
-      } else if (isPreferred === existingIsPreferred) {
-         if (price.price < existing.price) {
-           pharmacyMap.set(pharmacyId, price);
-         }
-      }
-  });
-
-  // Convert to View Models
-  let result = Array.from(pharmacyMap.values()).map(price => ({
-      id: price.pharmacy_id,
-      name: price.pharmacy_name || price.pharmacy?.name || 'Unknown Pharmacy',
-      logo: price.pharmacy_logo || price.pharmacy?.logo || '',
-      price: price.price,
-      discountPrice: price.discount_price,
-      inStock: price.in_stock ?? false,
-      distance: price.distance || price.pharmacy?.distance,
-      rating: price.rating || price.pharmacy?.rating,
-      priceId: price.id,
-      pharmacyBranchId: price.pharmacy_branch_id,
-      formId: price.drug_brand_form_id,
-      strengthId: price.dosage_id,
-      uomId: price.strength_uom_id,
-      
-      // Map medication details
-      medication_name: price.name,
-      brand_name: price.brand_name,
-      form_name: price.form_name,
-      strength: price.strength,
-      uom: price.uom,
-
-      isPreferredBrand: preferredBrandId ? price.drug_brand_id === preferredBrandId : false,
-      
-      // Pass the pharmacy object for filtering
-      pharmacy: price.pharmacy || {
-        name: price.pharmacy_name || '',
-        logo: price.pharmacy_logo || '',
-        rating: price.rating,
-        is_open: true, // Default to true if unknown
-        branch_name: price.branch_name
-      },
-      pharmacy_name: price.pharmacy_name,
-      branch_name: price.branch_name
+  let result = exactMatch.value.pharmacies.map((p: any) => ({
+    id: p.pharmacy_id,
+    name: p.pharmacy_name,
+    logo: p.logo || '', // Exact match pharmacy has no logo in sample, but we keep it
+    price: p.price,
+    discountPrice: p.discount_price,
+    inStock: p.in_stock ?? true,
+    branch_id: p.branch_id,
+    branch_name: p.branch_name,
+    
+    // For compatibility with cart/filtering
+    pharmacy: {
+      name: p.pharmacy_name,
+      logo: p.logoPath || '',
+      is_open: p.is_open,
+      branch_name: p.branch_name,
+      latitude: p.latitude,
+      longitude: p.longitude
+    }
   }));
-
 
   // 1. Search
   if (pharmacySearch.value) {
     const query = pharmacySearch.value.toLowerCase();
-    result = result.filter(p => 
-      (p.pharmacy?.name || '').toLowerCase().includes(query) ||
-      (p.pharmacy_name || '').toLowerCase().includes(query)
+    result = result.filter((p: any) => 
+      p.name.toLowerCase().includes(query)
     );
   }
 
-  // 2. Filter: Open Now
+  // 2. Filter: Open Now (Legacy, exactMatch pharmacies don't have is_open yet, but we keep the logic)
   if (showOpenOnly.value) {
-    result = result.filter(p => p.pharmacy?.is_open);
+    result = result.filter((p: any) => p.pharmacy?.is_open);
   }
 
   // 3. Filter: In Stock
   if (showInStockOnly.value) {
-    result = result.filter(p => p.inStock); // Use p.inStock from the Pharmacy interface
+    result = result.filter((p: any) => p.inStock);
   }
 
   // 4. Sort
-  result.sort((a, b) => {
+  result.sort((a: any, b: any) => {
     switch (pharmacySort.value) {
       case 'price_asc':
         return a.price - b.price;
@@ -201,17 +139,7 @@ const filteredPharmacies = computed(() => {
         return b.price - a.price;
       case 'rating_desc':
         return (b.rating || 0) - (a.rating || 0);
-      case 'distance_asc': {
-        // Sort by numeric distance if available (from location search), otherwise string parsing
-        const distA = (a as any).distanceValue ?? parseFloat(a.distance || '0');
-        const distB = (b as any).distanceValue ?? parseFloat(b.distance || '0');
-        return distA - distB;
-      }
       default:
-        // Default sort: Preferred Brand first, then Price Ascending
-        if (a.isPreferredBrand !== b.isPreferredBrand) {
-          return a.isPreferredBrand ? -1 : 1;
-        }
         return a.price - b.price;
     }
   });
@@ -236,87 +164,9 @@ const handlePageChange = (page: number) => {
   }
 };
 
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
-};
+// Legacy location logic kept for potential future use or removed if fully replaced
 
-const deg2rad = (deg: number): number => {
-  return deg * (Math.PI / 180);
-};
-
-const handleLocationSearch = () => {
-  if (!navigator.geolocation) {
-    notification.error('Error', 'Geolocation is not supported by your browser');
-    return;
-  }
-
-  loadingPharmacies.value = true;
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      userLocation.value = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      };
-
-      // Update pharmacies with distance
-      pharmacies.value = pharmacies.value.map(p => {
-        // Assuming pharmacy object has location { lat, lng } or similar
-        // If not available in current data, we might need to fetch it or use mock data
-        // Checking pharmacy.pharmacy.location or similar
-        const pLat = (p.pharmacy as any)?.location?.lat || (p.pharmacy as any)?.latitude;
-        const pLng = (p.pharmacy as any)?.location?.lng || (p.pharmacy as any)?.longitude;
-
-        if (pLat && pLng) {
-          const dist = calculateDistance(userLocation.value!.lat, userLocation.value!.lng, pLat, pLng);
-          return {
-            ...p,
-            distance: `${dist.toFixed(1)} km`,
-            distanceValue: dist // Store numeric value for sorting
-          };
-        }
-        return p;
-      });
-
-      pharmacySort.value = 'distance_asc';
-      loadingPharmacies.value = false;
-      notification.success('Location Updated', 'Pharmacies sorted by distance to your location');
-    },
-    (error) => {
-      console.error('Geolocation error:', error);
-      loadingPharmacies.value = false;
-      notification.error('Error', 'Unable to retrieve your location');
-    }
-  );
-};
-
-const variantOptions = computed(() => {
-  if (!hierarchy.value || !selectedBrand.value) return [];
-  
-  const brandNode = hierarchy.value.brands.find(b => b.id === selectedBrand.value);
-  if (!brandNode) return [];
-
-  const options: { label: string; value: string }[] = [];
-  
-  brandNode.forms.forEach(form => {
-    form.variants.forEach(variant => {
-      options.push({
-        label: variant.label,
-        value: variant.value
-      });
-    });
-  });
-  
-  return options;
-});
+// All variant/hierarchy selectors removed
 
 
 const loadMedicationData = async (medicationId: number) => {
@@ -324,72 +174,32 @@ const loadMedicationData = async (medicationId: number) => {
   error.value = null;
   
   try {
-    const data = await pharmacyService.getMedicationDetailsWithPrices(medicationId);
+    // Get filters from URL query if present (brand_id, form_id, strength_id, uom_id)
+    const filters = {
+      brand_id: route.query.brand_id ? String(route.query.brand_id) : undefined,
+      form_id: route.query.form_id ? String(route.query.form_id) : undefined,
+      strength_id: route.query.strength_id ? String(route.query.strength_id) : undefined,
+      uom_id: route.query.uom_id ? String(route.query.uom_id) : undefined,
+      include_pharmacy: true,
+      lat: userLocation.value?.lat,
+      lng: userLocation.value?.lng
+    };
+
+    const data = await pharmacyService.getMedicationDetailsWithPrices(medicationId, filters);
     
     medication.value = data.medication;
-    allPrices.value = data.pricing;
-    hierarchy.value = data.hierarchy;
-    
-    // Initial State Setup
-    if (data.hierarchy.brands.length > 0) {
-      // 1. Deteimine Brand to Select
-      let brandToSelect = data.hierarchy.brands[0].id; // Default to first
-      const queryBrandId = route.query.brand ? Number(route.query.brand) : null;
-
-      // If query brand exists and is valid in hierarchy, use it
-      if (queryBrandId && data.hierarchy.brands.find(b => b.id === queryBrandId)) {
-        brandToSelect = queryBrandId;
-      }
-      
-      selectedBrand.value = brandToSelect;
-      
-      // 2. Determine Variant to Select
-      const brandNode = data.hierarchy.brands.find(b => b.id === brandToSelect);
-      if (brandNode && brandNode.forms.length > 0) {
-        
-        // Strategy A: Construct Variant from Query Params (e.g. ?form=1&strength=2&uom=3)
-        const qForm = route.query.form;
-        const qStrength = route.query.strength;
-        const qUom = route.query.uom;
-        
-        let variantToSelect = '';
-
-        if (qForm && qStrength && qUom) {
-             // Construct the variant key: formId_strengthId_uomId
-             // Note: In filteredPharmacies logic, we split by '_'. 
-             // We need to ensure this matches the `value` property in variantOptions.
-             // Usually variant.value is "formId_strengthId_uomId"
-             const candidate = `${qForm}_${qStrength}_${qUom}`;
-             
-             // Check if this specific variant exists for the selected brand
-             const exists = brandNode.forms.some(f => 
-                 f.variants.some(v => v.value === candidate)
-             );
-             
-             if (exists) {
-                 variantToSelect = candidate;
-             }
-        }
-
-        // Strategy B: Fallback to first available variant if query is missing or invalid
-        if (!variantToSelect && brandNode.forms.length > 0 && brandNode.forms[0].variants.length > 0) {
-           // We might want to be smarter here? 
-           // If we have a queryBrandId but no variant, maybe we should pick the *most popular*?
-           // For now, first available is safe.
-           variantToSelect = brandNode.forms[0].variants[0].value;
-        }
-
-        if (variantToSelect) {
-            selectedVariant.value = variantToSelect;
-        }
-      }
-    }
+    // allPrices removed as it's no longer used in the new UI flow
+    // Store exact match and related drugs directly from the response if we were using it,
+    // but getMedicationDetailsWithPrices returns transformed data.
+    // For this refactor, let's also fetch the raw structured response for explicit exactMatch/relatedDrugs
+    const rawResponse = await pharmacyService.getPricesByDrug(medicationId, filters);
+    exactMatch.value = rawResponse.exact_match;
+    relatedDrugs.value = rawResponse.related_drugs || [];
     
     if (medication.value && authStore.isAuthenticated) {
         await recentlyViewedService.addToRecentlyViewed(medication.value.id);
     }
 
-    
   } catch (err) {
     console.error('Error loading medication data:', err);
     error.value = 'Failed to load medication details';
@@ -402,34 +212,7 @@ const loadMedicationData = async (medicationId: number) => {
 
 // Watchers
 
-// Watch for Variant changes to update Form, Strength, and UOM
-watch(selectedVariant, (newVal) => {
-  if (newVal) {
-    const parts = newVal.split('_');
-    const formId = Number(parts[0]);
-    const strengthId = Number(parts[1]);
-    const uomId = Number(parts[2]);
-    
-    selectedForm.value = formId;
-    selectedStrength.value = strengthId;
-    selectedUom.value = uomId;
-  }
-});
-
-
-const handleBrandSelect = (brandId: number) => {
-  selectedBrand.value = brandId;
-  
-  // Auto-select first variant for the new brand
-  if (hierarchy.value) {
-    const brandNode = hierarchy.value.brands.find(b => b.id === brandId);
-    if (brandNode && brandNode.forms.length > 0 && brandNode.forms[0].variants.length > 0) {
-      selectedVariant.value = brandNode.forms[0].variants[0].value;
-    } else {
-        selectedVariant.value = ''; // Reset if no options
-    }
-  }
-};
+// Legacy selection logic removed
 
 
 const getCustomQuantity = (pharmacyId: number): number => {
@@ -445,9 +228,8 @@ const setCustomQuantity = (pharmacyId: number, quantity: number) => {
 const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
   if (!medication.value) return;
   
-  // Validation: Ensure the pharmacy object has the necessary details
-  // Since our filtering logic guarantees these are set for filtered items, this is a safety check.
-  if (!pharmacy.formId || !pharmacy.strengthId || !pharmacy.uomId) {
+  // Validation: Ensure we have exactMatch data
+  if (!exactMatch.value) {
     notification.warning(
       'Cart Error',
       'Missing product details. Please try refreshing the page.'
@@ -455,8 +237,8 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     return;
   }
 
-  // Use pharmacy_branch_id from the price response if available
-  const pharmacyBranchId = pharmacy.pharmacyBranchId || pharmacy.id;
+  // Use branch_id from the pharmacy item if available
+  const cartBranchId = pharmacy.branch_id || pharmacy.id;
 
   cartStore.addItem({
     medicationId: medication.value.id,
@@ -465,12 +247,12 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     pharmacyName: pharmacy.name,
     pharmacyLogo: pharmacy.logo,
 
-    formId: pharmacy.formId,
-    formName: pharmacy.form_name || '',
-    strengthId: pharmacy.strengthId,
-    strength: pharmacy.strength || '',
-    uomId: pharmacy.uomId,
-    uom: pharmacy.uom || '',
+    formId: exactMatch.value.form_id,
+    formName: exactMatch.value.form || '',
+    strengthId: exactMatch.value.strength_id,
+    strength: exactMatch.value.strength || '',
+    uomId: exactMatch.value.uom_id || 0,
+    uom: exactMatch.value.uom || '',
     quantity: quantity,
     price: pharmacy.price,
     discountPrice: pharmacy.discountPrice,
@@ -478,7 +260,7 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     inStock: pharmacy.inStock,
     requiresPrescription: medication.value.requiresPrescription,
     // Store pharmacy_branch_id for API calls
-    pharmacyBranchId: pharmacyBranchId,
+    pharmacyBranchId: cartBranchId,
     pharmacyDrugPriceId: pharmacy.priceId // Added for API compatibility
   });
 
@@ -511,7 +293,6 @@ watch(
   <div class="min-h-screen pt-10 bg-gray-50 dark:bg-gray-900">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
-
       <!-- Loading State -->
       <div v-if="loading" class="py-12 text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
@@ -520,105 +301,67 @@ watch(
 
       <!-- Medication Details -->
       <div v-else-if="medication" class="py-12 space-y-8">
-        <!-- Header with Form inside -->
-        <div class="overflow-visible bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+        <!-- Header Section with Exact Match Data -->
+        <div class="overflow-visible bg-white shadow-xl dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
           <div class="p-8">
-            <div class="flex flex-col gap-8 md:flex-row">
-              <!-- Image -->
+            <div class="flex flex-col gap-10 md:flex-row">
+              <!-- Image Section -->
               <div class="w-full md:w-1/3">
-                <div class="relative overflow-hidden aspect-w-4 aspect-h-3 rounded-xl">
+                <div class="relative overflow-hidden aspect-square rounded-2xl shadow-inner group">
                   <LazyImage
-                    :src="medication.image || '/images/medications/default.jpg'"
+                    :src="exactMatch?.image || medication.image || '/images/medications/default.jpg'"
                     :alt="medication.name"
-                    aspectRatio="landscape"
-                    className="w-full h-full object-cover"
+                    aspectRatio="square"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div class="absolute top-4 right-4">
+                  <div class="absolute top-4 right-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
                     <FavoriteButton
                       type="medication"
                       :item-id="medication.id"
                       size="large"
                     />
                   </div>
+                  <div v-if="exactMatch?.requires_prescription ?? medication.requiresPrescription" class="absolute bottom-4 left-4">
+                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-orange-500 text-white shadow-lg">
+                       Rx Required
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Info and Form -->
-              <div class="flex flex-col justify-between flex-1">
-                <div>
-                  <div class="flex items-center gap-3 mb-4">
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                      {{ medication.name }}
+              <!-- Info Section -->
+              <div class="flex flex-col flex-1">
+                <div class="mb-6">
+                  <div class="flex flex-wrap items-baseline gap-3 mb-2">
+                    <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white uppercase">
+                      {{ exactMatch?.name || medication.name }}
                     </h1>
-                    <span v-if="medication.requiresPrescription" class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                      </svg>
-                      Requires Prescription
-                    </span>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-4 mb-4">
-                    <div
-                      v-if="medication.pharmacy_count !== undefined"
-                      class="inline-flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-full"
-                    >
-                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      Available at {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'branch' : 'branches' }}
-                    </div>
-
-                    <div v-if="medication.price" class="flex items-center gap-2">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Starting from</span>
-                      <span class="text-xl font-bold text-[#246BFD]">
-                        Ghc{{ (medication.discount_price || medication.price).toFixed(2) }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p v-if="medication.description" class="mb-6 text-gray-600 dark:text-gray-300">
-                    {{ medication.description }}
-                  </p>
-                </div>
-                <!-- Selection Form (horizontal) -->
-                <div class="mt-4">
-                  <!-- Brand Selection -->
-                  <div class="mb-4">
-                    <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Select Brand
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        v-for="brand in medication.brands"
-                        :key="brand.id"
-                        @click="handleBrandSelect(brand.id)"
-                        class="px-4 py-2 transition-all duration-200 rounded-full"
-                        :class="[
-                          selectedBrand === brand.id
-                            ? 'bg-[#246BFD] text-white shadow-md'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        ]"
-                      >
-                        {{ brand.name }}
-                      </button>
-                    </div>
                   </div>
                   
-                  <!-- Horizontal Form Fields -->
-                  <div class="flex flex-wrap gap-4">
-                    <!-- Variant Selection (Merged Form + Strength + UOM) -->
-                    <div class="flex-1 min-w-[300px]">
-                      <Dropdown
-                        v-model="selectedVariant"
-                        :options="variantOptions"
-                        label="Select Option"
-                        placeholder="Select Option"
-                        required
-                        searchable
-                        class="w-full"
-                      />
-                    </div>
+                  <div v-if="exactMatch" class="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-500 dark:text-gray-400 mb-6">
+                    <span v-if="exactMatch.generic_name" class="flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+                      Generic: {{ exactMatch.generic_name }}
+                    </span>
+                    <span class="flex items-center text-[#246BFD]">
+                      {{ exactMatch.brand }} • {{ exactMatch.strength }} {{ exactMatch.uom }}
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                    <span class="flex items-center">
+                      <svg class="w-4 h-4 mr-1 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {{ exactMatch.form }}
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                    <span class="flex items-center">
+                      <svg class="w-4 h-4 mr-1 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      {{ exactMatch.pharmacies?.length || 0 }} Pharmacies
+                    </span>
                   </div>
+                  
+                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="exactMatch.description || dummyDescription"></div>
                 </div>
               </div>
             </div>
@@ -626,211 +369,211 @@ watch(
         </div>
 
         <!-- Available Pharmacies -->
-        <div id="pharmacy-list" class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-          <div class="p-8 overflow-visible">
-            <div class="mb-6">
-              <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                  Available at Pharmacies
+        <div id="pharmacy-list" class="bg-white shadow-xl dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div class="bg-gray-50 dark:bg-gray-900/50 px-8 py-6 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white">
+                  Available Pharmacies
                 </h2>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ filteredPharmacies.length }} {{ filteredPharmacies.length === 1 ? 'pharmacy' : 'pharmacies' }} available
+                <p class="text-sm text-gray-500 font-medium">
+                  Showing {{ filteredPharmacies.length }} verified price listings
                 </p>
               </div>
-
-              <!-- Search and Filters -->
               <PharmacySearchFilter
                 v-model="pharmacySearch"
                 v-model:sort-by="pharmacySort"
                 v-model:show-open-only="showOpenOnly"
                 v-model:show-in-stock-only="showInStockOnly"
-                @use-location="handleLocationSearch"
+                class="scale-90 origin-right"
               />
-
-              <div v-if="selectedVariant" class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
-                <p class="text-sm text-blue-800 dark:text-blue-300">
-                  <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                  </svg>
-                  Prices shown are for your selected option. Change your selection above to see different options and prices.
-                </p>
-              </div>
             </div>
-            
-            <div v-if="loadingPharmacies" class="py-12 text-center">
+          </div>
+
+          <div class="p-8">
+            <div v-if="loadingPharmacies" class="py-20 text-center">
               <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-              <p class="mt-4 text-gray-600 dark:text-gray-300">Loading pharmacy prices...</p>
+              <p class="mt-4 text-gray-600 dark:text-gray-300 font-medium tracking-tight">Updating local pharmacy prices...</p>
             </div>
 
-            <div v-else-if="paginatedPharmacies.length === 0" class="py-12 text-center">
-              <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-              </svg>
-              <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No Pharmacies Found</h3>
-              <p class="text-gray-600 dark:text-gray-300">No pharmacies match your current search or filters.</p>
-              <button 
-                @click="pharmacySearch = ''; showOpenOnly = false; showInStockOnly = false"
-                class="mt-4 text-[#246BFD] font-medium hover:underline"
-              >
-                Clear all filters
-              </button>
+            <div v-else-if="paginatedPharmacies.length === 0" class="py-20 text-center">
+              <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Variations Matched</h3>
+              <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">We couldn't find pharmacies matching your current search criteria.</p>
             </div>
 
-            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div v-else class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
               <div
-                v-for="(pharmacy, index) in paginatedPharmacies"
+                v-for="(pharmacyItem, index) in paginatedPharmacies"
                 :key="index"
-                class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all"
+                class="group bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:border-[#246BFD] hover:shadow-2xl hover:shadow-[#246BFD]/5 transition-all duration-300"
               >
-                  <div class="flex items-start justify-between mb-4">
-                    <router-link 
-                      :to="{ name: 'pharmacy', params: { id: pharmacy.id } }"
-                      class="flex items-center gap-3 group"
-                    >
-                      <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-2 shadow-sm group-hover:shadow-md transition-all">
-                        <img
-                          v-if="pharmacy.logo"
-                          :src="pharmacy.logo"
-                          :alt="pharmacy.name"
-                          class="w-full h-full object-contain"
-                          @error="($event.target as HTMLImageElement).style.display='none'"
-                        />
-                        <svg v-else class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h3 class="font-medium text-gray-900 dark:text-white truncate">
-                      {{ pharmacy.name }}
-                    </h3>
+                <div class="flex items-center gap-4 mb-6">
+                  <div class="w-14 h-14 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-center p-3 shadow-sm group-hover:bg-white dark:group-hover:bg-gray-800 transition-colors">
+                    <LazyImage
+                      v-if="pharmacyItem.pharmacy?.logo"
+                      :src="pharmacyItem.pharmacy.logo"
+                      :alt="pharmacyItem.name"
+                      aspectRatio="square"
+                      className="w-full h-full object-contain"
+                    />
+                    <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
                   </div>
-                  <p v-if="pharmacy.branch_name" class="text-xs font-medium text-[#246BFD] mb-1">
-                      {{ pharmacy.branch_name }}
-                  </p>
-                  <!-- Medication Details (Brand, Strength, Form) -->
-                  <div class="mb-3 text-sm text-gray-600 dark:text-gray-300">
-                    <p class="font-medium text-gray-900 dark:text-white">
-                      {{ pharmacy.brand_name || pharmacy.name }}
-                    </p>
-                    <p>
-                   {{ pharmacy.strength }} {{ pharmacy.uom }} • {{ pharmacy.form_name }}
-                    </p>
-                  </div>
-
-                  <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span 
-                            class="flex items-center gap-1 font-medium"
-                            :class="pharmacy.pharmacy?.is_open ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                          >
-                            <span class="w-1.5 h-1.5 rounded-full" :class="pharmacy.pharmacy?.is_open ? 'bg-green-500' : 'bg-red-500'"></span>
-                            {{ pharmacy.pharmacy?.is_open ? 'Open' : 'Closed' }}
-                          </span>
-                          <span v-if="pharmacy.distance" class="flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            {{ pharmacy.distance }}
-                          </span>
-                          <span v-if="pharmacy.rating" class="flex items-center gap-1">
-                            <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                            {{ pharmacy.rating }}
-                          </span>
-                          <span 
-                            v-if="pharmacy.isPreferredBrand" 
-                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#246BFD]/10 text-[#246BFD] ml-auto"
-                          >
-                            Preferred Brand
-                          </span>
-                        </div>
-                      </div>
+                  <div class="flex-1 min-w-0">
+                    <router-link :to="`/pharmacy/${pharmacyItem.id}`" class="block font-bold text-gray-900 dark:text-white truncate hover:text-[#246BFD] transition-colors text-lg mb-1">
+                      {{ pharmacyItem.name }}
                     </router-link>
-                  </div>
-
-                <div class="flex items-end justify-between mb-4">
-                  <div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price per unit</p>
-                    <div class="flex items-baseline gap-2">
-                      <span class="text-2xl font-bold text-[#246BFD]">
-                        Ghc{{ (pharmacy.discountPrice || pharmacy.price || 0).toFixed(2) }}
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                      {{ pharmacyItem.branch_name || 'Main Branch' }}
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span 
+                        class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                        :class="pharmacyItem.pharmacy?.is_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                      >
+                        {{ pharmacyItem.pharmacy?.is_open ? 'Open Now' : 'Closed' }}
                       </span>
-                      <span v-if="pharmacy.discountPrice && pharmacy.discountPrice < pharmacy.price" class="text-sm text-gray-400 line-through">
-                        Ghc{{ (pharmacy.price || 0).toFixed(2) }}
+                      <span 
+                        class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                        :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500'"
+                      >
+                        {{ pharmacyItem.inStock ? 'In Stock' : 'Out of Stock' }}
                       </span>
                     </div>
-                  </div>
-                  <div class="text-right">
-                    <span
-                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      :class="pharmacy.inStock ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
-                    >
-                      {{ pharmacy.inStock ? 'In Stock' : 'Out of Stock' }}
-                    </span>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                  <div class="flex-1">
-                    <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-                      <button
-                        @click="setCustomQuantity(pharmacy.id, Math.max(1, getCustomQuantity(pharmacy.id) - 1))"
-                        class="px-3 py-2 text-gray-500 hover:text-[#246BFD] transition-colors"
-                        :disabled="!pharmacy.inStock"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        :value="getCustomQuantity(pharmacy.id)"
-                        @input="(e) => setCustomQuantity(pharmacy.id, parseInt((e.target as HTMLInputElement).value) || 1)"
-                        class="w-full text-center bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-gray-900 dark:text-white"
-                        min="1"
-                        :disabled="!pharmacy.inStock"
-                      />
-                      <button
-                        @click="setCustomQuantity(pharmacy.id, getCustomQuantity(pharmacy.id) + 1)"
-                        class="px-3 py-2 text-gray-500 hover:text-[#246BFD] transition-colors"
-                        :disabled="!pharmacy.inStock"
-                      >
-                        +
-                      </button>
+                <div class="mb-6 flex justify-between items-center bg-gray-50 dark:bg-gray-900/60 rounded-xl p-4">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase mb-1">Price per unit</span>
+                    <div class="flex items-baseline gap-3">
+                       <span class="text-2xl font-black text-[#246BFD]">
+                        Ghc{{ (pharmacyItem.discountPrice || pharmacyItem.price).toFixed(2) }}
+                      </span>
+                      <span v-if="pharmacyItem.discountPrice" class="text-base font-bold text-gray-400 line-through decoration-gray-400/50">
+                        Ghc{{ pharmacyItem.price.toFixed(2) }}
+                      </span>
                     </div>
                   </div>
-                  <button
-                    @click="addToCart(pharmacy, getCustomQuantity(pharmacy.id))"
-                    class="flex-1 px-4 py-2 bg-[#246BFD] text-white rounded-lg font-medium hover:bg-[#5089FF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    :disabled="!pharmacy.inStock"
+                </div>
+
+                <div class="flex gap-2">
+                  <div class="flex-1 flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl px-4 h-12">
+                     <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] p-1">-</button>
+                     <input 
+                       type="number" 
+                       :value="getCustomQuantity(pharmacyItem.id)"
+                       @input="setCustomQuantity(pharmacyItem.id, parseInt(($event.target as HTMLInputElement).value) || 1)"
+                       class="w-full bg-transparent text-center font-bold text-gray-900 dark:text-white border-0 focus:ring-0"
+                     />
+                     <button @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" class="text-gray-500 hover:text-[#246BFD] p-1">+</button>
+                  </div>
+                  <button 
+                    @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
+                    class="h-12 w-32 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-[#246BFD]/10"
                   >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    Add
+                    Buy Now
                   </button>
                 </div>
               </div>
             </div>
 
             <!-- Pagination -->
-            <div v-if="filteredPharmacies.length > itemsPerPage" class="mt-8">
+            <div v-if="totalPages > 1" class="mt-12 flex justify-center">
               <Pagination
-                :current-page="currentPage"
+                v-model:current-page="currentPage"
                 :total-pages="totalPages"
                 :total-items="filteredPharmacies.length"
                 :per-page="itemsPerPage"
-                @update:page="handlePageChange"
-                @update:per-page="(val: number) => itemsPerPage = val"
+                @update:current-page="handlePageChange"
               />
             </div>
           </div>
         </div>
 
+        <!-- Related Drugs Section -->
+        <div v-if="relatedDrugs.length > 0" class="py-12 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">Related Drug Variations</h3>
+            <span class="text-sm font-bold text-[#246BFD] bg-[#246BFD]/5 px-4 py-1.5 rounded-full uppercase tracking-tighter">
+               Explore Similar
+            </span>
+          </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <router-link
+              v-for="drug in relatedDrugs"
+              :key="`${drug.drug_id}_${drug.form_id}_${drug.strength_id}_${drug.uom_id}`"
+              :to="{
+                path: `/medication/${drug.drug_id}`,
+                query: { 
+                  brand_id: drug.brand_id,
+                  form_id: drug.form_id,
+                  strength_id: drug.strength_id,
+                  uom_id: drug.uom_id
+                }
+              }"
+              class="group block bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <div class="flex flex-col h-full">
+                <div class="mb-4 relative rounded-xl overflow-hidden aspect-video bg-gray-50 dark:bg-gray-900/50">
+                  <LazyImage
+                    :src="drug.image || '/images/medications/default.jpg'"
+                    :alt="drug.brand || drug.drug_name"
+                    aspectRatio="landscape"
+                    className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div class="absolute top-2 right-2">
+                    <span 
+                      class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider shadow-sm"
+                      :class="drug.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                    >
+                      {{ drug.in_stock ? 'In Stock' : 'Out' }}
+                    </span>
+                  </div>
+                </div>
 
-  </div>
-  </div>
+                <h4 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors mb-1 truncate">
+                  {{ drug.brand || drug.drug_name }}
+                </h4>
+                <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter mb-4 line-clamp-2 min-h-[30px]">
+                  {{ drug.name }}
+                </p>
+
+                <div class="mt-auto space-y-3">
+                  <div class="flex flex-col bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                    <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Price per unit</span>
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-lg font-black text-[#246BFD]">
+                        Ghc{{ (drug.discount_price || drug.price).toFixed(2) }}
+                      </span>
+                      <span v-if="drug.discount_price" class="text-xs font-bold text-gray-400 line-through decoration-gray-400/50">
+                        Ghc{{ drug.price.toFixed(2) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between text-[10px] font-bold text-[#246BFD] uppercase tracking-widest">
+                    <span>{{ drug.form }}</span>
+                    <div class="w-6 h-6 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center group-hover:bg-[#246BFD] group-hover:text-white transition-all shadow-sm">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

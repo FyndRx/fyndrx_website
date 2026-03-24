@@ -16,7 +16,9 @@ import {
   unwrapArrayResponse,
   transformPharmacy,
   transformPharmacies,
-  transformPharmacyPrices
+  transformPharmacyPrices,
+  transformPharmacyPrice,
+  transformPharmacyDrug
 } from '@/utils/responseTransformers';
 
 export interface DrugSearchQuery {
@@ -128,26 +130,24 @@ export const pharmacyService = {
   async getPricesByDrug(
     drugId: number,
     filters?: {
-      drug_brand_form_id?: number;
-      dosage_id?: number;
-      strength_uom_id?: number;
-      drug_brand_id?: number;
+      brand_id?: number | string;
+      form_id?: number | string;
+      strength_id?: number | string;
+      uom_id?: number | string;
+      include_pharmacy?: boolean;
+      lat?: number;
+      lng?: number;
     }
-  ): Promise<PharmacyPrice[]> {
+  ): Promise<PharmacyPricesByDrugApiResponse['data']> {
     let url = `/pharmacy-prices/drug/${drugId}`;
     const params = new URLSearchParams();
 
-    if (filters?.drug_brand_form_id) {
-      params.append('drug_brand_form_id', filters.drug_brand_form_id.toString());
-    }
-    if (filters?.dosage_id) {
-      params.append('dosage_id', filters.dosage_id.toString());
-    }
-    if (filters?.strength_uom_id) {
-      params.append('strength_uom_id', filters.strength_uom_id.toString());
-    }
-    if (filters?.drug_brand_id) {
-      params.append('drug_brand_id', filters.drug_brand_id.toString());
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString());
+        }
+      });
     }
 
     const queryString = params.toString();
@@ -156,8 +156,8 @@ export const pharmacyService = {
     }
 
     const response = await apiService.get<PharmacyPricesByDrugApiResponse>(url);
-    const apiPrices = unwrapArrayResponse(response);
-    return transformPharmacyPrices(apiPrices);
+    // Return the structured object: { exact_match, related_drugs }
+    return response.data;
   },
 
   /**
@@ -178,46 +178,7 @@ export const pharmacyService = {
       const response = await apiService.get<PharmacyDrugsApiResponse>(url);
       const drugs = unwrapArrayResponse<PharmacyDrugApiResponse>(response);
 
-      // Map pharmacy drug response to Medication model
-      return drugs.map((drug): Medication => {
-        // Parse predefinedQuantities from string array to number array
-        const parsedQuantities: number[] = (drug.predefinedQuantities || []).map(qtyStr => {
-          const num = parseInt(qtyStr.trim(), 10);
-          return isNaN(num) ? 0 : num;
-        }).filter(num => num > 0);
-
-        // Map single brand to array
-        const brands = drug.brand ? [{
-          id: drug.brand.id,
-          name: drug.brand.name,
-        }] : [];
-
-        // Map single form to array
-        const forms = drug.form ? [{
-          id: drug.form.id,
-          form_name: drug.form.form_name,
-          strengths: drug.strength ? [{
-            id: drug.strength.id,
-            strength: drug.strength.strength,
-            uoms: drug.uom ? [{
-              id: drug.uom.id,
-              uom: drug.uom.uom
-            }] : []
-          }] : []
-        }] : [];
-
-        return {
-          id: drug.drug_id,
-          name: drug.drug?.name || '',
-          description: drug.drug?.description || '',
-          brands,
-          forms,
-          image: drug.drug?.image || '',
-          predefinedQuantities: parsedQuantities,
-          category: [], // Category not present in new response structure
-          requiresPrescription: drug.drug?.requires_prescription || false,
-        };
-      });
+      return drugs.map(transformPharmacyDrug);
     } catch (error) {
       console.error('Error in getPharmacyMedications:', error);
       return [];
@@ -235,67 +196,64 @@ export const pharmacyService = {
    * @param drugId - Drug ID
    * @returns Hierarchical data structure
    */
-  async getMedicationDetailsWithPrices(drugId: number): Promise<MedicationPricingHierarchy> {
-    // 1. Fetch data in parallel
-    // We need medicationService here, but since it's a circular dependency if imported at top level,
-    // we can import it inline or assume it's passed. 
-    // Ideally, we move this logic to a higher level or solve circular dep.
-    // For now, let's use the exported instance from the module, checking for circularity.
-    // If circular dependency is an issue, we might need to invoke apiService directly for the medication part
-    // or rely on the caller to pass it. 
-
-    // Better approach: Import medicationService at the top. 
-    // If that fails, we can use the API implementation directly.
-    /* 
-       Note: We are importing medicationService at the top of the file.
-       Runtime circular dependency is usually handled fine by webpack/vite for named exports 
-       as long as we don't use them immediately at module evaluation time. 
-       Since this is an async function called later, it should be fine.
-    */
-
-    const [medication, prices] = await Promise.all([
+  async getMedicationDetailsWithPrices(drugId: number, filters?: any): Promise<MedicationPricingHierarchy> {
+    const [medication, responseData] = await Promise.all([
       import('@/services/medicationService').then(m => m.medicationService.getMedicationById(drugId)),
-      this.getPricesByDrug(drugId)
+      this.getPricesByDrug(drugId, filters)
     ]);
 
-    // 2. Build the Hierarchy from PRICES first (Inventory-driven)
-    // Use an internal map structure that is strictly typed for construction
+    // Construct flat prices list from exact_match
+    const prices: PharmacyPrice[] = [];
+    
+    if (responseData.exact_match) {
+      const match = responseData.exact_match;
+      match.pharmacies.forEach(p => {
+        prices.push(transformPharmacyPrice({
+          ...match,
+          ...p,
+          id: p.pharmacy_id
+        } as any));
+      });
+    }
+
     const hierarchyBrands = new Map<number, {
       id: number;
       name: string;
       forms: Map<number, HierarchyForm>;
     }>();
 
+    // 1. Process exact match into hierarchy
     prices.forEach(price => {
-      // a. Brand
-      const brandId = price.drug_brand_id;
+      const brandId = price.drug_brand_id || (price as any).brand_id;
+      if (!brandId) return;
+
       if (!hierarchyBrands.has(brandId)) {
         hierarchyBrands.set(brandId, {
           id: brandId,
-          name: price.brand_name || 'Unknown Brand',
+          name: price.brand_name || (price as any).brand || 'Unknown Brand',
           forms: new Map()
         });
       }
       const brandNode = hierarchyBrands.get(brandId)!;
 
-      // b. Form 
-      // Use drug_brand_form_id as the reliable key from PharmacyPrice model
-      // Use cast to any for fallback if dynamic API response contains untyped fields, but prefer typed field
       const formId = price.drug_brand_form_id || (price as any).form_id;
+      if (!formId) return;
 
       if (!brandNode.forms.has(formId)) {
         brandNode.forms.set(formId, {
           id: formId,
-          name: price.form_name || 'Unknown Form',
+          name: price.form_name || (price as any).form || 'Unknown Form',
           variants: []
         });
       }
       const formNode = brandNode.forms.get(formId)!;
 
-      // c. Variant (Strength + UOM)
+      const strengthId = price.dosage_id || (price as any).strength_id;
+      const uomId = price.strength_uom_id || (price as any).uom_id;
+
       const existingVariant = formNode.variants.find(v =>
-        v.strengthId === price.dosage_id &&
-        v.uomId === price.strength_uom_id
+        v.strengthId === strengthId &&
+        v.uomId === uomId
       );
 
       if (existingVariant) {
@@ -304,18 +262,62 @@ export const pharmacyService = {
         existingVariant.maxPrice = Math.max(existingVariant.maxPrice, price.price);
       } else {
         formNode.variants.push({
-          strengthId: price.dosage_id,
+          strengthId: strengthId || 0,
           strength: price.strength || '',
-          uomId: price.strength_uom_id,
+          uomId: uomId || 0,
           uom: price.uom || '',
-          label: `${price.form_name} ${price.strength} ${price.uom || ''}`.trim(),
-          value: `${formId}_${price.dosage_id}_${price.strength_uom_id}`, // UI value key
+          label: `${price.form_name || ''} ${price.strength || ''} ${price.uom || ''}`.trim(),
+          value: `${formId}_${strengthId}_${uomId}`,
           pharmacyCount: 1,
           minPrice: price.price,
           maxPrice: price.price
         });
       }
     });
+
+    // 2. Process related drugs into hierarchy (to show all options in dropdowns)
+    if (responseData.related_drugs) {
+      responseData.related_drugs.forEach(related => {
+        const brandId = related.brand_id;
+        if (!hierarchyBrands.has(brandId)) {
+          hierarchyBrands.set(brandId, {
+            id: brandId,
+            name: related.brand || 'Unknown Brand',
+            forms: new Map()
+          });
+        }
+        const brandNode = hierarchyBrands.get(brandId)!;
+
+        const formId = related.form_id;
+        if (!brandNode.forms.has(formId)) {
+          brandNode.forms.set(formId, {
+            id: formId,
+            name: related.form || 'Unknown Form',
+            variants: []
+          });
+        }
+        const formNode = brandNode.forms.get(formId)!;
+
+        const existingVariant = formNode.variants.find(v =>
+          v.strengthId === related.strength_id &&
+          v.uomId === related.uom_id
+        );
+
+        if (!existingVariant) {
+          formNode.variants.push({
+            strengthId: related.strength_id,
+            strength: related.strength || '',
+            uomId: related.uom_id,
+            uom: related.uom || '',
+            label: `${related.form} ${related.strength} ${related.uom || ''}`.trim(),
+            value: `${formId}_${related.strength_id}_${related.uom_id}`,
+            pharmacyCount: 0, // Unknown from summary
+            minPrice: related.starting_price,
+            maxPrice: related.starting_price
+          });
+        }
+      });
+    }
 
     // 3. Convert Maps to Arrays and Sort
     const brands: HierarchyBrand[] = Array.from(hierarchyBrands.values()).map(b => ({

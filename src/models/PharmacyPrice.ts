@@ -3,6 +3,7 @@ export interface PharmacyPrice {
   id: number;
   pharmacy_id: number;
   pharmacy_branch_id?: number;
+  branch_id?: number; // Alias for pharmacy_branch_id or from new exact_match response
   medicationId: number; // Primary field - medication ID from API (camelCase)
   drug_id?: number; // Legacy/fallback field
   drug_brand_id: number;

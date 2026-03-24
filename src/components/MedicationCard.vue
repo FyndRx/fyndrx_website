@@ -24,6 +24,10 @@ interface Props {
     discount_price?: number;
     image?: string;
     pharmacy_count?: number;
+    brand_id?: number;
+    form_id?: number;
+    strength_id?: number;
+    uom_id?: number;
   };
   variant?: 'simple' | 'detailed' | 'coupon';
 }
@@ -61,7 +65,15 @@ const discountPercentage = computed(() => {
 });
 
 const handleClick = () => {
-  router.push(`/medication/${props.medication.id}`);
+  router.push({
+    path: `/medication/${props.medication.id}`,
+    query: {
+      brand_id: props.medication.brand_id,
+      form_id: props.medication.form_id,
+      strength_id: props.medication.strength_id,
+      uom_id: props.medication.uom_id
+    }
+  });
 };
 </script>
 

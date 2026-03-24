@@ -9,6 +9,10 @@ import FavoriteButton from './FavoriteButton.vue';
 interface Props {
   show: boolean;
   medicationId: number | null;
+  brandId?: number | string;
+  formId?: number | string;
+  strengthId?: number | string;
+  uomId?: number | string;
 }
 
 const props = defineProps<Props>();
@@ -39,7 +43,15 @@ const loadMedication = async () => {
 
 const viewFullDetails = () => {
   if (medication.value) {
-    router.push({ name: 'MedicationDetail', params: { id: String(medication.value.id) } });
+    router.push({ 
+      path: `/medication/${medication.value.id}`,
+      query: {
+        brand_id: props.brandId,
+        form_id: props.formId,
+        strength_id: props.strengthId,
+        uom_id: props.uomId
+      }
+    });
     emit('close');
   }
 };

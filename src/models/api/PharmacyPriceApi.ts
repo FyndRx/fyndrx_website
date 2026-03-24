@@ -9,6 +9,7 @@ export interface PharmacyPriceApiResponse {
   id: number;
   pharmacy_id: number;
   pharmacy_branch_id?: number;
+  branch_id?: number | null; // Added for structured response
   branch_name?: string; // Added from updated endpoint
   drug_id?: number; // Legacy field
   medicationId?: number; // Sometimes camelCase
@@ -80,6 +81,64 @@ export type PharmacyPricesApiResponse =
 // Response from /pharmacy-prices/:pharmacyId
 export type PharmacyPricesByPharmacyApiResponse = PharmacyPricesApiResponse;
 
+export interface DrugPriceMatchApiResponse {
+  drug_id: number;
+  name: string;
+  brand: string;
+  brand_id: number;
+  generic_name?: string;
+  form: string;
+  form_id: number;
+  strength: string;
+  strength_id: number;
+  uom: string;
+  uom_id: number;
+  image: string | null;
+  description: string | null;
+  requires_prescription: boolean;
+  pharmacies: Array<{
+    pharmacy_id: number;
+    pharmacy_name: string;
+    logoPath: string | null;
+    is_open: boolean;
+    latitude: number | null;
+    longitude: number | null;
+    branch_id: number | null;
+    branch_name: string | null;
+    price: number;
+    discount_price: number | null;
+    in_stock: boolean;
+  }>;
+}
+
+export interface DrugPriceRelatedApiResponse {
+  drug_id: number;
+  drug_name: string;
+  name: string;
+  brand: string;
+  brand_id: number;
+  form: string;
+  form_id: number;
+  strength: string;
+  strength_id: number;
+  uom: string;
+  uom_id: number;
+  pharmacy_id: number;
+  pharmacy_name: string;
+  logoPath: string | null;
+  is_open: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  price: number;
+  discount_price: number | null;
+  in_stock: boolean;
+}
+
 // Response from /pharmacy-prices/drug/:drugId
-export type PharmacyPricesByDrugApiResponse = PharmacyPricesApiResponse;
+export type PharmacyPricesByDrugApiResponse = {
+  data: {
+    exact_match: DrugPriceMatchApiResponse | null;
+    related_drugs: DrugPriceRelatedApiResponse[];
+  };
+};
 

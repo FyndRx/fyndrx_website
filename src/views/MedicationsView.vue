@@ -226,11 +226,19 @@ const commitSearch = (query: string) => {
   medicationsStore.searchQuery = query;
 };
 
-const viewMedication = (id: number, event?: Event) => {
+const viewMedication = (medication: any, event?: Event) => {
   if (event) {
     event.stopPropagation();
   }
-  router.push({ name: 'MedicationDetail', params: { id: String(id) } });
+  router.push({ 
+    path: `/medication/${medication.id}`,
+    query: {
+      brand_id: medication.brand_id,
+      form_id: medication.form_id,
+      strength_id: medication.strength_id,
+      uom_id: medication.uom_id
+    }
+  });
 };
 
 const openQuickView = (id: number, event: Event) => {
@@ -457,7 +465,7 @@ onMounted(async () => {
         <div
           v-for="medication in filteredMedications"
           :key="`med-${medication.id}-${selectedCategory}-${selectedForm}-${selectedBrand}`"
-          @click="viewMedication(medication.id)"
+          @click="viewMedication(medication)"
           class="relative p-6 bg-white rounded-2xl shadow-lg transition-all duration-300 cursor-pointer dark:bg-gray-800 hover:shadow-2xl hover:-translate-y-2 group"
         >
           <!-- Action Buttons Overlay -->
@@ -535,7 +543,7 @@ onMounted(async () => {
                 </svg>
               </button>
               <button
-                @click="viewMedication(medication.id, $event)"
+                @click="viewMedication(medication, $event)"
                 class="px-4 py-2 rounded-full bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
               >
                 View Details

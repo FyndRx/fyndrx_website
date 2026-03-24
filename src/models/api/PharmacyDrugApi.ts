@@ -17,41 +17,32 @@ export interface PharmacyDrugFormApiResponse {
 
 export interface PharmacyDrugApiResponse {
   id: number;
-  pharmacy_id: number;
-  branch_id: number;
-  drug_id: number;
-  drug: {
+  drugId: number;
+  drug_price_id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  inStock: boolean;
+  stockQuantity: number;
+  category: string[];
+  image: string | null;
+  predefinedQuantities: number[];
+  brands: Array<{
     id: number;
+    brand_id: number;
     name: string;
-    description: string | null;
-    image: string | null;
-    requires_prescription: boolean;
-  };
-  brand: {
+  }>;
+  forms: Array<{
     id: number;
-    name: string;
-  } | null;
-  form: {
-    id: number;
+    form_id: number;
     form_name: string;
-  } | null;
-  strength: {
-    id: number;
-    strength: string;
-  } | null;
-  uom: {
-    id: number;
-    uom: string;
-  } | null;
-  normal_price: number;
-  discounted_price: number;
-  max_discounted_price: string;
-  is_active: number;
-  predefinedQuantities?: string[]; // Optional as it wasn't in the curl output but might be there
+  }>;
+  requiresPrescription: boolean;
 }
 
 // Response from /pharmacy-drugs
-export type PharmacyDrugsApiResponse =
-  | PharmacyDrugApiResponse[]
-  | { data: PharmacyDrugApiResponse[] };
+export type PharmacyDrugsApiResponse = {
+  data: PharmacyDrugApiResponse[];
+  meta?: any;
+};
 

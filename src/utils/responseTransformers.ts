@@ -122,6 +122,41 @@ export function transformMedications(apiMeds: MedicationApiResponse[]): Medicati
 }
 
 /**
+ * Transform Pharmacy Drug (from /pharmacy-drugs)
+ */
+export function transformPharmacyDrug(drug: any): Medication {
+  // Parse predefinedQuantities from string array to number array if needed
+  const parsedQuantities: number[] = (drug.predefinedQuantities || []).map((qty: any) => {
+    if (typeof qty === 'number') return qty;
+    const num = parseInt(String(qty).trim(), 10);
+    return isNaN(num) ? 0 : num;
+  }).filter((num: number) => num > 0);
+
+  return {
+    id: drug.drugId || drug.id,
+    name: drug.name || '',
+    description: drug.description || '',
+    image: drug.image || '',
+    requiresPrescription: drug.requiresPrescription ?? false,
+    predefinedQuantities: parsedQuantities,
+    price: drug.price,
+    pharmacy_count: drug.pharmacy_count,
+    category: Array.isArray(drug.category) ? drug.category : (drug.category ? [drug.category] : []),
+    brands: (drug.brands || []).map((b: any) => ({
+      id: b.id,
+      brand_id: b.brand_id,
+      name: b.name
+    })),
+    forms: (drug.forms || []).map((f: any) => ({
+      id: f.id,
+      form_id: f.form_id,
+      form_name: f.form_name,
+      strengths: [] // Not provided in this flat structure
+    }))
+  };
+}
+
+/**
  * Pharmacy Transformers
  */
 export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
@@ -227,6 +262,9 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     strength: apiPrice.strength || (apiPrice as any).strengthValue,
     // Handle UOM: Check uom_name (new string field), falling back to other possible fields
     uom: typeof apiPrice.uom_name === 'string' ? apiPrice.uom_name : (apiPrice.uom_name as any)?.uom || apiPrice.uom || (apiPrice as any).uomValue,
+    
+    // New fields from exact_match.pharmacies
+    branch_id: apiPrice.branch_id ?? undefined,
   };
 }
 
