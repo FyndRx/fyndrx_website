@@ -38,7 +38,7 @@ interface Pharmacy {
   uomId?: number;
   
   // Medication Details
-  drug_name?: string;
+  medication_name?: string;
   brand_name?: string;
   form_name?: string;
   strength?: string;
@@ -152,7 +152,7 @@ const filteredPharmacies = computed(() => {
       uomId: price.strength_uom_id,
       
       // Map medication details
-      drug_name: price.drug_name,
+      medication_name: price.name,
       brand_name: price.brand_name,
       form_name: price.form_name,
       strength: price.strength,
@@ -460,7 +460,7 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
 
   cartStore.addItem({
     medicationId: medication.value.id,
-    medicationName: medication.value.drug_name,
+    medicationName: medication.value.name,
     pharmacyId: pharmacy.id,
     pharmacyName: pharmacy.name,
     pharmacyLogo: pharmacy.logo,
@@ -484,7 +484,7 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
 
   notification.success(
     'Added to Cart!',
-    `${quantity} x ${medication.value.drug_name} from ${pharmacy.name}`
+    `${quantity} x ${medication.value.name} from ${pharmacy.name}`
   );
 };
 
@@ -529,7 +529,7 @@ watch(
                 <div class="relative overflow-hidden aspect-w-4 aspect-h-3 rounded-xl">
                   <LazyImage
                     :src="medication.image || '/images/medications/default.jpg'"
-                    :alt="medication.drug_name"
+                    :alt="medication.name"
                     aspectRatio="landscape"
                     className="w-full h-full object-cover"
                   />
@@ -548,7 +548,7 @@ watch(
                 <div>
                   <div class="flex items-center gap-3 mb-4">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                      {{ medication.drug_name }}
+                      {{ medication.name }}
                     </h1>
                     <span v-if="medication.requiresPrescription" class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
                       <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -557,6 +557,25 @@ watch(
                       Requires Prescription
                     </span>
                   </div>
+                  <div class="flex flex-wrap items-center gap-4 mb-4">
+                    <div
+                      v-if="medication.pharmacy_count !== undefined"
+                      class="inline-flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-full"
+                    >
+                      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Available at {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'branch' : 'branches' }}
+                    </div>
+
+                    <div v-if="medication.price" class="flex items-center gap-2">
+                      <span class="text-sm text-gray-500 dark:text-gray-400">Starting from</span>
+                      <span class="text-xl font-bold text-[#246BFD]">
+                        Ghc{{ (medication.discount_price || medication.price).toFixed(2) }}
+                      </span>
+                    </div>
+                  </div>
+
                   <p v-if="medication.description" class="mb-6 text-gray-600 dark:text-gray-300">
                     {{ medication.description }}
                   </p>
@@ -692,7 +711,7 @@ watch(
                   <!-- Medication Details (Brand, Strength, Form) -->
                   <div class="mb-3 text-sm text-gray-600 dark:text-gray-300">
                     <p class="font-medium text-gray-900 dark:text-white">
-                      {{ pharmacy.brand_name || pharmacy.drug_name }}
+                      {{ pharmacy.brand_name || pharmacy.name }}
                     </p>
                     <p>
                    {{ pharmacy.strength }} {{ pharmacy.uom }} • {{ pharmacy.form_name }}
@@ -736,10 +755,10 @@ watch(
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Price per unit</p>
                     <div class="flex items-baseline gap-2">
                       <span class="text-2xl font-bold text-[#246BFD]">
-                        GH₵ {{ (pharmacy.discountPrice || pharmacy.price || 0).toFixed(2) }}
+                        Ghc{{ (pharmacy.discountPrice || pharmacy.price || 0).toFixed(2) }}
                       </span>
                       <span v-if="pharmacy.discountPrice && pharmacy.discountPrice < pharmacy.price" class="text-sm text-gray-400 line-through">
-                        GH₵ {{ (pharmacy.price || 0).toFixed(2) }}
+                        Ghc{{ (pharmacy.price || 0).toFixed(2) }}
                       </span>
                     </div>
                   </div>

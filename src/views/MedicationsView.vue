@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { storeToRefs } from 'pinia';
@@ -27,7 +27,7 @@ const router = useRouter();
 const route = useRoute();
 const medicationsStore = useMedicationsStore();
 const {
-  searchQuery,
+  searchQuery: storeSearchQuery, // Rename to avoid conflict
   selectedCategory,
   selectedForm,
   selectedBrand,
@@ -42,6 +42,9 @@ const {
   activeFiltersCount,
   pagination,
 } = storeToRefs(medicationsStore);
+
+// Local query for the search bar only
+const searchBarQuery = ref(storeSearchQuery.value);
 
 const categories = computed(() => {
   const cats = new Set<string>(['all']);
@@ -196,9 +199,9 @@ const filteredMedications = computed(() => {
   
   // 5. Sorting
   if (sortBy.value === 'name') {
-    meds.sort((a, b) => a.drug_name.localeCompare(b.drug_name));
+    meds.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   } else if (sortBy.value === 'name-desc') {
-    meds.sort((a, b) => b.drug_name.localeCompare(a.drug_name));
+    meds.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
   } else if (sortBy.value === 'category') {
     meds.sort((a, b) => {
       const catA = Array.isArray(a.category) ? a.category[0] : a.category;
@@ -216,6 +219,11 @@ const isCategoryActive = (category: string): boolean => {
 
 const handleCategoryClick = (category: string) => {
   selectedCategory.value = category;
+};
+
+// Handle explicit search commit (e.g. on Enter in SearchAutocomplete)
+const commitSearch = (query: string) => {
+  medicationsStore.searchQuery = query;
 };
 
 const viewMedication = (id: number, event?: Event) => {
@@ -300,9 +308,10 @@ onMounted(async () => {
       <!-- Search Bar with Autocomplete -->
       <div class="mb-6">
         <SearchAutocomplete
-          v-model="searchQuery"
+          v-model="searchBarQuery"
           placeholder="Search by name, category, generic name, or condition..."
           search-type="medications"
+          @search="commitSearch"
         />
       </div>
 
@@ -477,7 +486,7 @@ onMounted(async () => {
           <div class="overflow-hidden mb-4 rounded-xl aspect-w-16 aspect-h-9">
             <LazyImage
               :src="medication.image"
-              :alt="medication.drug_name"
+              :alt="medication.name"
               aspectRatio="landscape"
               className="w-full h-48 object-cover"
             />
@@ -499,9 +508,9 @@ onMounted(async () => {
             </span>
           </div>
 
-          <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">
-            {{ medication.drug_name }}
-          </h3>
+          <h4 class="mb-2 text-xl font-sm text-gray-900 dark:text-white">
+            {{ medication.name }}
+          </h4>
 
           <p class="mb-4 text-sm text-gray-600 line-clamp-2 dark:text-gray-300">
             {{ medication.description }}
@@ -511,7 +520,7 @@ onMounted(async () => {
             <div>
               <p class="text-xs text-gray-500 dark:text-gray-400">Available in</p>
               <p class="font-medium text-gray-900 dark:text-white">
-                {{ medication.forms.length }} {{ medication.forms.length === 1 ? 'form' : 'forms' }}
+                {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }}
               </p>
             </div>
             <div class="flex gap-2">

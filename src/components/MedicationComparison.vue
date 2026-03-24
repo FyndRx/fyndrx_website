@@ -57,12 +57,12 @@ const closeComparison = () => {
           >
             <LazyImage
               :src="medication.image"
-              :alt="medication.drug_name"
+              :alt="medication.name"
               aspectRatio="square"
               className="w-10 h-10 rounded object-cover"
             />
             <span class="flex-1 text-sm font-medium text-gray-900 dark:text-white truncate">
-              {{ medication.drug_name }}
+              {{ medication.name }}
             </span>
             <button
               @click="removeFromComparison(medication.id)"
@@ -122,12 +122,12 @@ const closeComparison = () => {
                       <div class="flex flex-col items-center gap-2">
                         <LazyImage
                           :src="medication.image"
-                          :alt="medication.drug_name"
+                          :alt="medication.name"
                           aspectRatio="square"
                           className="w-20 h-20 rounded-lg object-cover"
                         />
                         <span class="font-semibold text-gray-900 dark:text-white">
-                          {{ medication.drug_name }}
+                          {{ medication.name }}
                         </span>
                       </div>
                     </th>
@@ -150,6 +150,42 @@ const closeComparison = () => {
                           {{ cat }}
                         </span>
                       </div>
+                    </td>
+                  </tr>
+
+                  <tr class="border-b border-gray-200 dark:border-gray-700">
+                    <td class="p-4 font-medium text-gray-700 dark:text-gray-300">Pharmacy Availability</td>
+                    <td
+                      v-for="medication in comparisonList"
+                      :key="`avail-${medication.id}`"
+                      class="p-4 text-center"
+                    >
+                      <span
+                        v-if="medication.pharmacy_count !== undefined"
+                        class="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 text-sm font-medium"
+                      >
+                        {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'branch' : 'branches' }}
+                      </span>
+                      <span v-else class="text-gray-400 text-sm">N/A</span>
+                    </td>
+                  </tr>
+
+                  <tr class="border-b border-gray-200 dark:border-gray-700">
+                    <td class="p-4 font-medium text-gray-700 dark:text-gray-300">Starting Price</td>
+                    <td
+                      v-for="medication in comparisonList"
+                      :key="`price-${medication.id}`"
+                      class="p-4 text-center"
+                    >
+                      <div v-if="medication.price" class="flex flex-col items-center">
+                        <span class="text-lg font-bold text-[#246BFD]">
+                          Ghc{{ (medication.discount_price || medication.price).toFixed(2) }}
+                        </span>
+                        <span v-if="medication.discount_price" class="text-xs text-gray-400 line-through">
+                          Ghc{{ medication.price.toFixed(2) }}
+                        </span>
+                      </div>
+                      <span v-else class="text-gray-400 text-sm">Consult branch</span>
                     </td>
                   </tr>
 

@@ -100,7 +100,7 @@ onMounted(() => {
                 <div class="relative mb-4">
                   <LazyImage
                     :src="medication.image"
-                    :alt="medication.drug_name"
+                    :alt="medication.name"
                     aspectRatio="square"
                     className="w-full h-80 object-cover rounded-xl"
                   />
@@ -132,8 +132,35 @@ onMounted(() => {
                 </div>
 
                 <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {{ medication.drug_name }}
+                  {{ medication.name }}
                 </h2>
+
+                <div class="flex items-center gap-3 mb-6 flex-wrap">
+                  <div
+                    v-if="medication.pharmacy_count !== undefined"
+                    class="inline-flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-full"
+                  >
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Available at {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }}
+                  </div>
+
+                  <div v-if="medication.price" class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-[#246BFD]">
+                      Ghc{{ (medication.discount_price || medication.price).toFixed(2) }}
+                    </span>
+                    <span v-if="medication.discount_price" class="text-lg text-gray-400 line-through">
+                      Ghc{{ medication.price.toFixed(2) }}
+                    </span>
+                    <span 
+                      v-if="medication.discount_price" 
+                      class="px-2 py-0.5 text-xs font-bold bg-green-100 text-green-700 rounded"
+                    >
+                      -{{ Math.round((1 - medication.discount_price / medication.price) * 100) }}%
+                    </span>
+                  </div>
+                </div>
 
                 <p class="text-gray-700 dark:text-gray-300 mb-6">
                   {{ medication.description }}

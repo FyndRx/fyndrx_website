@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
+  (e: 'search', value: string): void;
 }>();
 
 const router = useRouter();
@@ -39,11 +40,9 @@ const searching = ref(false);
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const performSearch = async (query: string) => {
-  if (!query || query.trim().length < 2) {
-    smartResponse.value = null;
-    pharmacies.value = [];
-    return;
-  }
+  // We now allow empty query to trigger the "Featured/Default" view from the API
+  const trimmed = query?.trim() || '';
+  console.log('performSearch called with:', trimmed);
 
   searching.value = true;
   try {
@@ -51,7 +50,7 @@ const performSearch = async (query: string) => {
 
     if (props.searchType === 'medications' || props.searchType === 'all') {
       searchPromises.push(
-        medicationService.smartSearch(query.trim()).then(response => {
+        medicationService.smartSearch(trimmed).then(response => {
            smartResponse.value = response;
         }).catch(() => {
            smartResponse.value = null;
@@ -143,7 +142,7 @@ const handleSelection = (result: { type: string; item: any }) => {
      // If suggestion is clicked, maybe just update search or search for it?
      // Usually specific suggestions map to products or brands
      searchQuery.value = result.item.text;
-     performSearch(result.item.text);
+     emit('search', result.item.text);
      return; // Don't clear search yet
   }
   
@@ -175,6 +174,10 @@ const handleKeydown = (event: KeyboardEvent) => {
       } else if (allResults.value.length > 0 && selectedIndex.value === -1) {
          // If nothing selected but Top Match exists, select it
          handleSelection(allResults.value[0]);
+      } else {
+         // No specific selection, just emit the current query
+         emit('search', searchQuery.value);
+         showResults.value = false;
       }
       break;
     case 'Escape':
@@ -191,7 +194,7 @@ const handlePointerDownOutside = (event: PointerEvent) => {
 };
 
 watch(searchQuery, () => {
-  showResults.value = searchQuery.value.length >= 2;
+  showResults.value = true; // Always show dropdown when typing or clearing
   selectedIndex.value = -1;
 });
 
@@ -215,7 +218,7 @@ onBeforeUnmount(() => {
         type="text"
         :placeholder="placeholder"
         @keydown="handleKeydown"
-        @focus="showResults = searchQuery.length >= 2"
+        @focus="showResults = true; performSearch(searchQuery)"
         class="w-full px-6 py-4 pr-12 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
       />
       <!-- Icons -->
@@ -291,6 +294,9 @@ onBeforeUnmount(() => {
                </div>
                <div class="text-xs text-gray-500 truncate">
                  {{ product.detail }}
+                 <span v-if="product.pharmacy_count" class="ml-1 text-[#246BFD] font-medium">
+                   ({{ product.pharmacy_count }} {{ product.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }})
+                 </span>
                </div>
             </div>
           </div>

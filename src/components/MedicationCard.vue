@@ -8,7 +8,7 @@ import { reviewService } from '@/services/reviewService';
 interface Props {
   medication: {
     id: number;
-    drug_name: string;
+    name: string;
     description?: string | null;
     brands?: Array<{ id: number; name: string }>;
     forms?: Array<{
@@ -21,8 +21,9 @@ interface Props {
       }>;
     }>;
     price?: number;
-    discountPrice?: number;
+    discount_price?: number;
     image?: string;
+    pharmacy_count?: number;
   };
   variant?: 'simple' | 'detailed' | 'coupon';
 }
@@ -53,8 +54,8 @@ onMounted(() => {
 });
 
 const discountPercentage = computed(() => {
-  if (props.medication.price && props.medication.discountPrice) {
-    return Math.round((1 - props.medication.discountPrice / props.medication.price) * 100);
+  if (props.medication.price && props.medication.discount_price) {
+    return Math.round((1 - props.medication.discount_price / props.medication.price) * 100);
   }
   return 0;
 });
@@ -78,7 +79,7 @@ export default {
     @click="handleClick"
   >
     <div class="flex gap-2 items-center">
-      <span class="font-medium text-gray-900 dark:text-white">{{ medication.drug_name }}</span>
+      <span class="font-medium text-gray-900 dark:text-white">{{ medication.name }}</span>
       <span v-if="medication.brands?.length" class="text-sm text-gray-500 dark:text-gray-400">
         ({{ medication.brands.map(brand => brand.name).join(', ') }})
       </span>
@@ -98,7 +99,7 @@ export default {
     <div class="relative h-48 bg-gray-100 dark:bg-gray-700">
       <LazyImage
         :src="medication.image || '/images/medications/default.jpg'"
-        :alt="medication.drug_name"
+        :alt="medication.name"
         aspectRatio="landscape"
         className="w-full h-full object-cover"
       />
@@ -112,8 +113,20 @@ export default {
     <!-- Drug Info -->
     <div class="p-6">
       <h4 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">
-        {{ medication.drug_name }}
+        {{ medication.name }}
       </h4>
+      
+      <!-- Pharmacy Availability -->
+      <div v-if="medication.pharmacy_count !== undefined" class="flex items-center mb-3 space-x-2">
+        <div class="flex items-center px-2 py-1 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
+          <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+          </svg>
+          <span class="text-xs font-medium text-green-700 dark:text-green-300">
+            Available at {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }}
+          </span>
+        </div>
+      </div>
       
       <div class="mb-3">
         <RatingStars 
@@ -131,9 +144,9 @@ export default {
       </p>
 
       <!-- Price -->
-      <div v-if="medication.price && medication.discountPrice" class="flex items-center mb-4 space-x-2">
+      <div v-if="medication.price && medication.discount_price" class="flex items-center mb-4 space-x-2">
         <span class="text-2xl font-bold text-[#246BFD]">
-          Ghc{{ medication.discountPrice.toFixed(2) }}
+          Ghc{{ medication.discount_price.toFixed(2) }}
         </span>
         <span class="text-lg text-gray-500 line-through">
           Ghc{{ medication.price.toFixed(2) }}
@@ -195,7 +208,7 @@ export default {
       <div class="flex justify-between items-start mb-4">
         <div>
           <h4 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">
-            {{ medication.drug_name }}
+            {{ medication.name }}
           </h4>
           <p v-if="medication.brands?.length" class="text-sm text-gray-500 dark:text-gray-400">
             {{ medication.brands.map(brand => brand.name).join(', ') }}
@@ -208,9 +221,9 @@ export default {
       </div>
 
       <div class="flex justify-between items-center mb-4">
-        <div v-if="medication.price && medication.discountPrice">
+        <div v-if="medication.price && medication.discount_price">
           <span class="text-lg font-medium text-gray-900 dark:text-white">
-            Ghc{{ medication.discountPrice.toFixed(2) }}
+            Ghc{{ medication.discount_price.toFixed(2) }}
           </span>
           <span class="ml-2 text-sm text-gray-500 line-through">
             Ghc{{ medication.price.toFixed(2) }}
