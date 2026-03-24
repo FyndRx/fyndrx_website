@@ -91,7 +91,7 @@ onMounted(() => {
             <div class="w-full h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
               <LazyImage
                 :src="medication.image"
-                :alt="medication.drug_name"
+                :alt="medication.name"
                 aspectRatio="square"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
@@ -102,7 +102,7 @@ onMounted(() => {
           </div>
           
           <h3 class="font-medium text-sm text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-[#246BFD] transition-colors">
-            {{ medication.drug_name }}
+            {{ medication.name }}
           </h3>
           
           <div class="flex flex-wrap gap-1">

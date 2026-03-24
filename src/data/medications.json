@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "drug_name": "Amoxicillin",
+    "name": "Amoxicillin",
     "description": "Antibiotic used to treat bacterial infections including respiratory tract infections, ear infections, and urinary tract infections.",
     "brands": [
       { "id": 1, "name": "Amoxil" },
@@ -41,7 +41,7 @@
   },
   {
     "id": 2,
-    "drug_name": "Paracetamol",
+    "name": "Paracetamol",
     "description": "Pain reliever and fever reducer used to treat mild to moderate pain and reduce fever.",
     "brands": [
       { "id": 4, "name": "Panadol" },
@@ -81,7 +81,7 @@
   },
   {
     "id": 3,
-    "drug_name": "Ibuprofen",
+    "name": "Ibuprofen",
     "description": "Nonsteroidal anti-inflammatory drug (NSAID) used to reduce fever and treat pain or inflammation.",
     "brands": [
       { "id": 7, "name": "Advil" },
@@ -120,7 +120,7 @@
   },
   {
     "id": 4,
-    "drug_name": "Omeprazole",
+    "name": "Omeprazole",
     "description": "Proton pump inhibitor used to treat gastroesophageal reflux disease (GERD), stomach ulcers, and other conditions involving excess stomach acid.",
     "brands": [
       { "id": 10, "name": "Prilosec" },
@@ -150,7 +150,7 @@
   },
   {
     "id": 5,
-    "drug_name": "Metformin",
+    "name": "Metformin",
     "description": "Oral diabetes medication that helps control blood sugar levels in people with type 2 diabetes.",
     "brands": [
       { "id": 12, "name": "Glucophage" },
@@ -182,7 +182,7 @@
   },
   {
     "id": 6,
-    "drug_name": "Ciprofloxacin",
+    "name": "Ciprofloxacin",
     "description": "Fluoroquinolone antibiotic used to treat various bacterial infections including urinary tract infections, respiratory infections, and skin infections.",
     "brands": [
       { "id": 14, "name": "Cipro" },
@@ -213,7 +213,7 @@
   },
   {
     "id": 7,
-    "drug_name": "Lisinopril",
+    "name": "Lisinopril",
     "description": "ACE inhibitor used to treat high blood pressure (hypertension) and heart failure.",
     "brands": [
       { "id": 16, "name": "Zestril" },
@@ -238,7 +238,7 @@
   },
   {
     "id": 8,
-    "drug_name": "Azithromycin",
+    "name": "Azithromycin",
     "description": "Macrolide antibiotic used to treat various bacterial infections including respiratory infections, skin infections, and sexually transmitted infections.",
     "brands": [
       { "id": 18, "name": "Zithromax" },

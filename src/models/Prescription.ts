@@ -2,7 +2,7 @@ export interface PrescriptionDrug {
   id: number;
   prescription_id: number;
   drug_id: number;
-  drug_name: string;
+  name: string;
   brand_id?: number;
   brand_name?: string;
   form_id: number;

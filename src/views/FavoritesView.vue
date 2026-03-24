@@ -179,7 +179,7 @@ onMounted(() => {
                 <div class="mb-4 overflow-hidden rounded-xl">
                   <LazyImage
                     :src="medication.image"
-                    :alt="medication.drug_name"
+                    :alt="medication.name"
                     aspectRatio="landscape"
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                   />
@@ -199,7 +199,7 @@ onMounted(() => {
                 </div>
 
                 <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">
-                  {{ medication.drug_name }}
+                  {{ medication.name }}
                 </h3>
 
                 <p class="mb-4 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">

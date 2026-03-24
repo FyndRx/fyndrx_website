@@ -47,7 +47,7 @@ export interface PharmacyPrice {
   branch_name?: string; // Flattened branch name
 
   // Optional drug details for display
-  drug_name?: string;
+  name?: string;
   drug_image?: string;
   brand_name?: string;
   form_name?: string;

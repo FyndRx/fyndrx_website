@@ -200,12 +200,12 @@ onMounted(() => {
             >
               <LazyImage
                 :src="medication.image"
-                :alt="medication.drug_name"
+                :alt="medication.name"
                 aspectRatio="square"
                 className="w-12 h-12 rounded-lg object-cover"
               />
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-900 dark:text-white truncate">{{ medication.drug_name }}</p>
+                <p class="font-medium text-gray-900 dark:text-white truncate">{{ medication.name }}</p>
                 <div class="flex flex-wrap gap-1">
                   <span 
                     v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 1) : [medication.category])"
@@ -285,11 +285,11 @@ onMounted(() => {
             >
               <LazyImage
                 :src="medication.image"
-                :alt="medication.drug_name"
+                :alt="medication.name"
                 aspectRatio="square"
                 className="w-full h-20 rounded-lg object-cover mb-2"
               />
-              <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ medication.drug_name }}</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ medication.name }}</p>
               <div class="flex flex-wrap gap-1">
                 <span 
                   v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category.slice(0, 1) : [medication.category])"

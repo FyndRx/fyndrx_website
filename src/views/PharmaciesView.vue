@@ -32,6 +32,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 const searchQuery = ref('');
+const searchBarQuery = ref('');
 const selectedServices = ref<string[]>([]);
 const sortBy = ref<string>('distance');
 const isOpenNow = ref(false);
@@ -138,10 +139,15 @@ const handleOpenNowFilter = () => {
 
 const clearAllFilters = () => {
   searchQuery.value = '';
+  searchBarQuery.value = '';
   selectedServices.value = [];
   isOpenNow.value = false;
   sortBy.value = 'distance';
   loadPharmacies();
+};
+
+const commitSearch = (query: string) => {
+  searchQuery.value = query;
 };
 
 const hasActiveFilters = computed(() => {
@@ -223,9 +229,10 @@ onMounted(async () => {
         <!-- Search Bar -->
         <div class="delay-200 scroll-animate slide-up">
           <SearchAutocomplete
-            v-model="searchQuery"
+            v-model="searchBarQuery"
             placeholder="Search pharmacies by name, location, or services..."
             search-type="pharmacies"
+            @search="commitSearch"
           />
           <div class="flex flex-col gap-4 md:flex-row mt-4">
             <div class="flex gap-2">

@@ -225,7 +225,7 @@ onMounted(() => {
                     :key="index"
                     class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
                   >
-                    {{ drug.drug_name }} {{ drug.dose }}
+                    {{ drug.name }} {{ drug.dose }}
                   </span>
                   <span
                     v-if="prescription.drugs.length > 2"
@@ -330,7 +330,7 @@ onMounted(() => {
                 class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
               >
                 <div class="flex items-start justify-between mb-2">
-                  <h4 class="font-semibold text-blue-900 dark:text-blue-100">{{ drug.drug_name }}</h4>
+                  <h4 class="font-semibold text-blue-900 dark:text-blue-100">{{ drug.name }}</h4>
                   <span class="px-2 py-1 text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 rounded-full">
                     {{ drug.dose }}
                   </span>

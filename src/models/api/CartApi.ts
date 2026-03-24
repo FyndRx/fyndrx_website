@@ -20,7 +20,7 @@ export interface CartItemApiResponse {
   updated_at?: string;
 
   // Flattened fields from CartController@index
-  drug_name?: string;
+  name?: string;
   brand_name?: string;
   form_name?: string;
   strength?: string | { strength: string }; // Handle both string and object
@@ -38,7 +38,7 @@ export interface CartItemApiResponse {
   // Optional nested medication data
   medication?: {
     id: number;
-    drug_name: string;
+    name: string;
     image?: string;
     requires_prescription?: boolean;
   };

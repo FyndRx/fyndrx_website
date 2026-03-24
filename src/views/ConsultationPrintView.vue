@@ -58,7 +58,7 @@ const formatDate = (dateStr?: string | null) => {
 
 const formatDrugDisplay = (drug: any) => {
   const parts = [
-    drug.drug_name,
+    drug.name,
     drug.brand_name,
     drug.form_name,
     drug.dose,

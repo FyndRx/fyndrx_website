@@ -23,7 +23,7 @@ export const dataService = {
     
     const searchTerm = query.toLowerCase();
     return medications.filter(med =>
-      med.drug_name.toLowerCase().includes(searchTerm) ||
+      med.name.toLowerCase().includes(searchTerm) ||
       med.description.toLowerCase().includes(searchTerm) ||
       (Array.isArray(med.category) 
         ? med.category.some(cat => cat.toLowerCase().includes(searchTerm))

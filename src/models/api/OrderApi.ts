@@ -19,7 +19,7 @@ export interface OrderItemApiResponse {
   // Optional nested medication data
   medication?: {
     id: number;
-    drug_name: string;
+    name: string;
     image?: string;
   };
   brand?: {

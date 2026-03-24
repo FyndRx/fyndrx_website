@@ -46,7 +46,7 @@ const filteredPrices = computed(() => {
   
   const query = medicationSearch.value.toLowerCase();
   return pharmacyPrices.value.filter(price =>
-    (price.drug_name || '').toLowerCase().includes(query) ||
+    (price.name || '').toLowerCase().includes(query) ||
     (price.brand_name || '').toLowerCase().includes(query)
   );
 });
@@ -267,7 +267,7 @@ const addToCart = (price: PharmacyPrice) => {
   
   cartStore.addItem({
     medicationId: price.drug_id || (price as any).medicationId, // mapping might needed based on API
-    medicationName: price.drug_name || '',
+    medicationName: price.name || '',
     pharmacyId: pharmacy.value.id,
     pharmacyName: pharmacy.value.name,
     pharmacyLogo: pharmacy.value.image, // Check mapping
@@ -291,7 +291,7 @@ const addToCart = (price: PharmacyPrice) => {
 
   notification.success(
     'Added to Cart!',
-    `1 x ${price.drug_name} (${price.strength} ${price.uom})`
+    `1 x ${price.name} (${price.strength} ${price.uom})`
   );
 };
 
@@ -651,7 +651,7 @@ onMounted(() => {
                        <div class="flex-shrink-0 w-16 h-16 overflow-hidden bg-white dark:bg-gray-700 rounded-lg">
                          <LazyImage
                            :src="price.drug_image || ''"
-                           :alt="price.drug_name || ''"
+                           :alt="price.name || ''"
                            aspectRatio="square"
                            className="w-full h-full object-cover"
                          />
@@ -660,7 +660,7 @@ onMounted(() => {
                        <div class="flex-1 min-w-0">
                          <div class="flex items-center gap-2 mb-1">
                             <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors cursor-pointer" @click="viewMedicationDetails(price.drug_id || (price as any).medicationId)">
-                              {{ price.drug_name }}
+                              {{ price.name }}
                             </h4>
                             <span v-if="(price as any).requires_prescription" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-300 rounded-full">
                               Rx
