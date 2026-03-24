@@ -129,6 +129,8 @@ export interface DrugPriceRelatedApiResponse {
   is_open: boolean;
   latitude: number | null;
   longitude: number | null;
+  branch_id: number | null;
+  branch_name: string | null;
   price: number;
   discount_price: number | null;
   in_stock: boolean;

@@ -312,8 +312,8 @@ export const pharmacyService = {
             label: `${related.form} ${related.strength} ${related.uom || ''}`.trim(),
             value: `${formId}_${related.strength_id}_${related.uom_id}`,
             pharmacyCount: 0, // Unknown from summary
-            minPrice: related.starting_price,
-            maxPrice: related.starting_price
+            minPrice: related.price,
+            maxPrice: related.price
           });
         }
       });
