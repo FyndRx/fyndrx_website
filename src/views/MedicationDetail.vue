@@ -290,7 +290,7 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen pt-10 bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen pt-10 bg-gray-50 dark:bg-[#0d1117]">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
       <!-- Loading State -->
@@ -302,7 +302,7 @@ watch(
       <!-- Medication Details -->
       <div v-else-if="medication" class="py-12 space-y-8">
         <!-- Header Section with Exact Match Data -->
-        <div class="overflow-visible bg-white shadow-xl dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+        <div class="overflow-visible bg-white shadow-xl dark:bg-[#161c2c] rounded-2xl border border-gray-100 dark:border-gray-700/60">
           <div class="p-8">
             <div class="flex flex-col gap-10 md:flex-row">
               <!-- Image Section -->
@@ -337,30 +337,6 @@ watch(
                       {{ exactMatch?.name || medication.name }}
                     </h1>
                   </div>
-                  
-                  <div v-if="exactMatch" class="flex flex-wrap items-center gap-4 text-sm font-semibold text-gray-500 dark:text-gray-400 mb-6">
-                    <span v-if="exactMatch.generic_name" class="flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
-                      Generic: {{ exactMatch.generic_name }}
-                    </span>
-                    <span class="flex items-center text-[#246BFD]">
-                      {{ exactMatch.brand }} • {{ exactMatch.strength }} {{ exactMatch.uom }}
-                    </span>
-                    <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                    <span class="flex items-center">
-                      <svg class="w-4 h-4 mr-1 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {{ exactMatch.form }}
-                    </span>
-                    <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                    <span class="flex items-center">
-                      <svg class="w-4 h-4 mr-1 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      {{ exactMatch.pharmacies?.length || 0 }} Pharmacies
-                    </span>
-                  </div>
-                  
                   <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="exactMatch.description || dummyDescription"></div>
                 </div>
               </div>
@@ -369,8 +345,8 @@ watch(
         </div>
 
         <!-- Available Pharmacies -->
-        <div id="pharmacy-list" class="bg-white shadow-xl dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-gray-900/50 px-8 py-6 border-b border-gray-100 dark:border-gray-700">
+        <div id="pharmacy-list" class="bg-white shadow-xl dark:bg-[#161c2c] rounded-2xl border border-gray-100 dark:border-gray-700/60 overflow-hidden">
+          <div class="bg-gray-50 dark:bg-[#0d1420] px-8 py-6 border-b border-gray-100 dark:border-gray-700/60">
             <div class="flex items-center justify-between">
               <div>
                 <h2 class="text-2xl font-black text-gray-900 dark:text-white">
@@ -410,76 +386,103 @@ watch(
               <div
                 v-for="(pharmacyItem, index) in paginatedPharmacies"
                 :key="index"
-                class="group bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:border-[#246BFD] hover:shadow-2xl hover:shadow-[#246BFD]/5 transition-all duration-300"
+                class="group flex flex-col h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-[#1a2235] rounded-2xl hover:shadow-2xl hover:-translate-y-2"
               >
-                <div class="flex items-center gap-4 mb-6">
-                  <div class="w-14 h-14 bg-gray-50 dark:bg-gray-700 rounded-xl flex items-center justify-center p-3 shadow-sm group-hover:bg-white dark:group-hover:bg-gray-800 transition-colors">
+                <!-- Image & Overlay Section -->
+                <div class="p-4 pb-0">
+                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
                     <LazyImage
-                      v-if="pharmacyItem.pharmacy?.logo"
-                      :src="pharmacyItem.pharmacy.logo"
+                      :src="pharmacyItem.pharmacy?.logo || '/images/pharmacies/default-pharmacy.jpg'"
                       :alt="pharmacyItem.name"
-                      aspectRatio="square"
-                      className="w-full h-full object-contain"
+                      aspectRatio="landscape"
+                      className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
                     />
-                    <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <router-link :to="`/pharmacy/${pharmacyItem.id}`" class="block font-bold text-gray-900 dark:text-white truncate hover:text-[#246BFD] transition-colors text-lg mb-1">
-                      {{ pharmacyItem.name }}
-                    </router-link>
-                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                      {{ pharmacyItem.branch_name || 'Main Branch' }}
-                    </div>
-                    <div class="flex flex-wrap gap-2">
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 rounded-2xl bg-[#246BFD]/0 group-hover:bg-[#246BFD]/10 transition-all duration-500 ease-out"></div>
+                    <!-- Badges Layer -->
+                    <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
                       <span 
-                        class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                        :class="pharmacyItem.pharmacy?.is_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-lg backdrop-blur-md transition-all"
+                        :class="pharmacyItem.pharmacy?.is_open ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-red-500 text-white shadow-red-500/20'"
                       >
-                        {{ pharmacyItem.pharmacy?.is_open ? 'Open Now' : 'Closed' }}
+                        <span class="w-1.5 h-1.5 mr-2 rounded-full animate-pulse bg-white"></span>
+                        {{ pharmacyItem.pharmacy?.is_open ? 'Open' : 'Closed' }}
                       </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Text & Actions Section -->
+                <div class="p-6 flex-1 flex flex-col pt-4">
+
+                  <!-- Pharmacy Info Header with Logo -->
+                  <div class="flex items-center gap-3 mb-4 mt-auto">
+                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700">
+                      <LazyImage
+                        v-if="pharmacyItem.pharmacy?.logo"
+                        :src="pharmacyItem.pharmacy.logo"
+                        :alt="pharmacyItem.name"
+                        aspectRatio="square"
+                        className="w-full h-full object-cover rounded"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center bg-[#246BFD]/10 text-[#246BFD] text-sm font-medium">
+                        {{ pharmacyItem.name.charAt(0) }}
+                      </div>
+                    </div>
+                    <div class="flex flex-col flex-1 min-w-0">
+                      <h3 class="text-xl font-medium text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors">
+                        <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
+                      </h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {{ pharmacyItem.branch_name || 'Main Branch' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Pricing & Add to Cart Block -->
+                  <div class="pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price per unit</span>
+                    <div class="flex items-center justify-between mb-4">
+                      <div class="flex items-baseline gap-2">
+                        <span class="text-xl font-bold text-[#246BFD]">
+                          Ghc{{ (pharmacyItem.discountPrice || pharmacyItem.price).toFixed(2) }}
+                        </span>
+                        <span v-if="pharmacyItem.discountPrice" class="text-xs text-gray-400 line-through">
+                          Ghc{{ pharmacyItem.price.toFixed(2) }}
+                        </span>
+                      </div>
                       <span 
-                        class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                        :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500'"
+                        class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
+                        :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
                       >
+                        <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
                         {{ pharmacyItem.inStock ? 'In Stock' : 'Out of Stock' }}
                       </span>
                     </div>
-                  </div>
-                </div>
 
-                <div class="mb-6 flex justify-between items-center bg-gray-50 dark:bg-gray-900/60 rounded-xl p-4">
-                  <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase mb-1">Price per unit</span>
-                    <div class="flex items-baseline gap-3">
-                       <span class="text-2xl font-black text-[#246BFD]">
-                        Ghc{{ (pharmacyItem.discountPrice || pharmacyItem.price).toFixed(2) }}
-                      </span>
-                      <span v-if="pharmacyItem.discountPrice" class="text-base font-bold text-gray-400 line-through decoration-gray-400/50">
-                        Ghc{{ pharmacyItem.price.toFixed(2) }}
-                      </span>
+                    <!-- Actions -->
+                    <div class="flex gap-2">
+                      <div class="bg-gray-50 dark:bg-gray-900 rounded-xl flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
+                         <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
+                         <input 
+                           type="number" 
+                           :value="getCustomQuantity(pharmacyItem.id)"
+                           @input="setCustomQuantity(pharmacyItem.id, parseInt(($event.target as HTMLInputElement).value) || 1)"
+                           class="w-full bg-transparent text-center font-bold text-gray-900 dark:text-white border-0 focus:ring-0 p-0"
+                         />
+                         <button @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">+</button>
+                      </div>
+                      <button 
+                        @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
+                        class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-medium rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Buy
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                <div class="flex gap-2">
-                  <div class="flex-1 flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl px-4 h-12">
-                     <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] p-1">-</button>
-                     <input 
-                       type="number" 
-                       :value="getCustomQuantity(pharmacyItem.id)"
-                       @input="setCustomQuantity(pharmacyItem.id, parseInt(($event.target as HTMLInputElement).value) || 1)"
-                       class="w-full bg-transparent text-center font-bold text-gray-900 dark:text-white border-0 focus:ring-0"
-                     />
-                     <button @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" class="text-gray-500 hover:text-[#246BFD] p-1">+</button>
-                  </div>
-                  <button 
-                    @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
-                    class="h-12 w-32 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-[#246BFD]/10"
-                  >
-                    Buy Now
-                  </button>
                 </div>
               </div>
             </div>
@@ -500,13 +503,13 @@ watch(
         <!-- Related Drugs Section -->
         <div v-if="relatedDrugs.length > 0" class="py-12 border-t border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between mb-8">
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white">Related Drug Variations</h3>
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">Related Drug</h3>
             <span class="text-sm font-bold text-[#246BFD] bg-[#246BFD]/5 px-4 py-1.5 rounded-full uppercase tracking-tighter">
                Explore Similar
             </span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <router-link
               v-for="drug in relatedDrugs"
               :key="`${drug.drug_id}_${drug.form_id}_${drug.strength_id}_${drug.uom_id}`"
@@ -519,52 +522,86 @@ watch(
                   uom_id: drug.uom_id
                 }
               }"
-              class="group block bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              class="group block h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-[#1a2235] rounded-2xl hover:shadow-2xl hover:-translate-y-2"
             >
               <div class="flex flex-col h-full">
-                <div class="mb-4 relative rounded-xl overflow-hidden aspect-video bg-gray-50 dark:bg-gray-900/50">
-                  <LazyImage
-                    :src="drug.image || '/images/medications/default.jpg'"
-                    :alt="drug.brand || drug.drug_name"
-                    aspectRatio="landscape"
-                    className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div class="absolute top-2 right-2">
-                    <span 
-                      class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider shadow-sm"
-                      :class="drug.in_stock ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
-                    >
-                      {{ drug.in_stock ? 'In Stock' : 'Out' }}
-                    </span>
+                <!-- Image & Overlay Section -->
+                <div class="p-4 pb-0">
+                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
+                    <LazyImage
+                      :src="drug.image || '/images/medications/default.jpg'"
+                      :alt="drug.name"
+                      aspectRatio="landscape"
+                      className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 rounded-2xl bg-[#246BFD]/0 group-hover:bg-[#246BFD]/10 transition-all duration-500 ease-out"></div>
+                    <!-- Badges Layer -->
+                    <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
+                      <span 
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-lg backdrop-blur-md transition-all"
+                        :class="drug.is_open ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-red-500 text-white shadow-red-500/20'"
+                      >
+                        <span class="w-1.5 h-1.5 mr-2 rounded-full animate-pulse bg-white"></span>
+                        {{ drug.is_open ? 'Open' : 'Closed' }}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <h4 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors mb-1 truncate">
-                  {{ drug.brand || drug.drug_name }}
-                </h4>
-                <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter mb-4 line-clamp-2 min-h-[30px]">
-                  {{ drug.name }}
-                </p>
+                <!-- Text & Metadata Section -->
+                <div class="p-6 flex-1 flex flex-col pt-4">
+                  <!-- Title -->
+                  <h3 
+                    class="mb-4 text-base font-bold text-gray-900 dark:text-white line-clamp-3 leading-snug group-hover:text-[#246BFD] transition-colors"
+                    :title="drug.name"
+                  >
+                    {{ drug.name }}
+                  </h3>
 
-                <div class="mt-auto space-y-3">
-                  <div class="flex flex-col bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
-                    <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Price per unit</span>
-                    <div class="flex items-baseline gap-2">
-                      <span class="text-lg font-black text-[#246BFD]">
-                        Ghc{{ (drug.discount_price || drug.price).toFixed(2) }}
+                  <!-- Pharmacy Info Section -->
+                  <div v-if="drug.pharmacy_name" class="flex items-center gap-3 mb-4 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700">
+                      <LazyImage
+                        v-if="drug.logoPath"
+                        :src="drug.logoPath"
+                        :alt="drug.pharmacy_name"
+                        aspectRatio="square"
+                        className="w-full h-full object-cover"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center bg-[#246BFD]/10 text-[#246BFD] text-sm font-medium">
+                        {{ drug.pharmacy_name.charAt(0) }}
+                      </div>
+                    </div>
+                    <div class="flex flex-col flex-1 min-w-0">
+                      <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {{ drug.pharmacy_name }}
                       </span>
-                      <span v-if="drug.discount_price" class="text-xs font-bold text-gray-400 line-through decoration-gray-400/50">
-                        Ghc{{ drug.price.toFixed(2) }}
+                      <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {{ drug.branch_name || 'Main Branch' }}
                       </span>
                     </div>
                   </div>
 
-                  <div class="flex items-center justify-between text-[10px] font-bold text-[#246BFD] uppercase tracking-widest">
-                    <span>{{ drug.form }}</span>
-                    <div class="w-6 h-6 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center group-hover:bg-[#246BFD] group-hover:text-white transition-all shadow-sm">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
+                  <!-- Pricing Block -->
+                  <div class="mt-auto pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price per unit</span>
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-[#246BFD]">
+                          Ghc{{ (drug.discount_price || drug.price).toFixed(2) }}
+                        </span>
+                        <span v-if="drug.discount_price" class="text-sm text-gray-400 line-through">
+                          Ghc{{ drug.price.toFixed(2) }}
+                        </span>
+                      </div>
+                      <span 
+                        class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
+                        :class="drug.in_stock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+                      >
+                        <span v-if="drug.in_stock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
+                        {{ drug.in_stock ? 'In Stock' : 'Out of Stock' }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -593,11 +630,8 @@ watch(
   left: 0;
 }
 
-/* Remove overflow:hidden/auto from parent containers if present */
-.bg-white,
-.dark\:bg-gray-800,
-.rounded-2xl,
-.shadow-lg {
+/* Allow dropdowns to overflow only on the top-level card wrappers, not image containers */
+.group > .overflow-visible-card {
   overflow: visible !important;
 }
 
