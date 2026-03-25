@@ -104,12 +104,15 @@ export const medicationService = {
     }
   },
 
-  async smartSearch(query: string): Promise<SmartSearchResponse> {
+  async smartSearch(query: string, track: boolean = false): Promise<SmartSearchResponse> {
     const trimmedQuery = query?.trim() || '';
     try {
       const searchParams = new URLSearchParams();
       if (trimmedQuery) {
         searchParams.set('q', trimmedQuery);
+      }
+      if (track) {
+        searchParams.set('track', '1');
       }
       
       const url = `/search/smart${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
@@ -203,6 +206,47 @@ export const medicationService = {
     }
 
     return transformMedications(apiMeds);
+  },
+
+  /**
+   * Manually track a search event or selection
+   */
+  async trackSearch(query: string, matchType?: string, matchId?: number): Promise<void> {
+    try {
+      await apiService.post('/search/track', {
+        query,
+        match_type: matchType,
+        match_id: matchId
+      });
+    } catch (error) {
+      console.error('Error tracking search:', error);
+    }
+  },
+
+  /**
+   * Get recent searches for the authenticated user
+   */
+  async getRecentSearches(): Promise<any[]> {
+    try {
+      const response = await apiService.get<any>('/recent-searches');
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching recent searches:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get global top searches
+   */
+  async getTopSearches(): Promise<any[]> {
+    try {
+      const response = await apiService.get<any>('/top-searches');
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching top searches:', error);
+      return [];
+    }
   }
 };
 

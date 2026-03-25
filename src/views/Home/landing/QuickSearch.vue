@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { medicationService } from '@/services/medicationService';
+import SearchAutocomplete from '@/components/SearchAutocomplete.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -9,14 +11,27 @@ const activeTab = ref<'medication' | 'pharmacy' | 'consultation'>('medication');
 const medicationQuery = ref('');
 const pharmacyQuery = ref('');
 const location = ref('');
+const popularSearches = ref<string[]>([]);
+
+onMounted(async () => {
+  const topSearches = await medicationService.getTopSearches();
+  if (topSearches && topSearches.length > 0) {
+    // Map to query strings and take the top 4
+    popularSearches.value = topSearches.slice(0, 4).map((item: any) => item.query);
+  } else {
+    // Fallback if API returns empty
+    popularSearches.value = ['Paracetamol', 'Amoxicillin', 'Ibuprofen', 'Omeprazole'];
+  }
+});
 
 const switchTab = (tab: 'medication' | 'pharmacy' | 'consultation') => {
   activeTab.value = tab;
 };
 
-const searchMedication = () => {
-  if (medicationQuery.value.trim()) {
-    router.push(`/medications?search=${medicationQuery.value}`);
+const searchMedication = (query?: string) => {
+  const finalQuery = typeof query === 'string' ? query : medicationQuery.value;
+  if (finalQuery.trim()) {
+    router.push(`/medications?search=${encodeURIComponent(finalQuery.trim())}`);
   }
 };
 
@@ -46,7 +61,7 @@ export default {
           </p>
         </div>
 
-        <div class="overflow-hidden bg-gray-50 rounded-3xl shadow-2xl dark:bg-gray-800">
+        <div class="bg-gray-50 rounded-3xl shadow-2xl dark:bg-gray-800">
           <div class="flex border-b border-gray-200 dark:border-gray-700">
             <button
               @click="switchTab('medication')"
@@ -99,32 +114,23 @@ export default {
                   Search by drug name, brand, or condition
                 </label>
                 <div class="relative">
-                  <input
+                  <SearchAutocomplete
                     v-model="medicationQuery"
-                    type="text"
                     placeholder="e.g., Amoxicillin, Paracetamol, or Diabetes"
-                    class="w-full px-6 py-4 pr-32 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
-                    @keyup.enter="searchMedication"
+                    search-type="medications"
+                    @search="searchMedication"
+                    inputClass="bg-gray-50 dark:bg-gray-800 pr-12"
                   />
-                  <button
-                    @click="searchMedication"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 rounded-lg bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 flex items-center space-x-2"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <span>Search</span>
-                  </button>
                 </div>
               </div>
 
-              <div class="flex flex-wrap gap-2">
+              <div v-if="popularSearches.length > 0" class="flex flex-wrap gap-2">
                 <span class="text-sm text-gray-600 dark:text-gray-400">Popular searches:</span>
                 <button
-                  v-for="term in ['Paracetamol', 'Amoxicillin', 'Ibuprofen', 'Omeprazole']"
+                  v-for="term in popularSearches"
                   :key="term"
-                  @click="medicationQuery = term; searchMedication()"
-                  class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-[#246BFD] hover:text-white transition-all duration-200"
+                  @click="medicationQuery = term; searchMedication(term)"
+                  class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-[#246BFD] hover:text-white transition-all duration-200 capitalize"
                 >
                   {{ term }}
                 </button>

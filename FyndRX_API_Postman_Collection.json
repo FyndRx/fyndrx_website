@@ -428,7 +428,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/search/smart?q=paracetamol",
+                            "raw": "{{base_url}}/search/smart?q=paracetamol&track=1",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -441,10 +441,44 @@
                                     "key": "q",
                                     "value": "paracetamol",
                                     "description": "Search query for drugs, brands, categories"
+                                },
+                                {
+                                    "key": "track",
+                                    "value": "1",
+                                    "description": "Set to 1 to track this search. Logs query + match_type + match_id to recent_searches. Works for authenticated users or anonymous.",
+                                    "disabled": false
                                 }
                             ]
                         },
-                        "description": "Hybrid smart search returning nav matches, products, brands, etc."
+                        "description": "# 🔍 Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
+                    }
+                },
+                {
+                    "name": "Track Search (Manual)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "json",
+                            "raw": "{\n  \"query\": \"paracetamol\",\n  \"match_type\": \"drug\",\n  \"match_id\": 1,\n  \"user_id\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/search/track",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "search",
+                                "track"
+                            ]
+                        },
+                        "description": "# 📊 Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
                     }
                 }
             ]
@@ -1080,7 +1114,7 @@
                                     }
                                 ],
                                 "cookie": [],
-                                "body": "{\n  \"data\": {\n    \"exact_match\": {\n      \"drug_id\": 5,\n      \"name\": \"ACNAVEEN \u2022 FLUTAMIDE \u2022 1000MG \u2022 GENERAL ORAL SOLID \u2022 Vial(s)\",\n      \"brand\": \"ACNAVEEN\",\n      \"brand_id\": 20,\n      \"generic_name\": \"FLUTAMIDE\",\n      \"form\": \"GENERAL ORAL SOLID\",\n      \"form_id\": 19,\n      \"strength\": \"1000MG\",\n      \"strength_id\": 21,\n      \"uom\": \"VIAL(S)\",\n      \"uom_id\": 11,\n      \"image\": null,\n      \"requires_prescription\": false,\n      \"pharmacies\": [\n        {\n          \"pharmacy_id\": 2,\n          \"pharmacy_name\": \"MEDICARE PHARMACY\",\n          \"branch_id\": null,\n          \"branch_name\": null,\n          \"price\": 126.06,\n          \"discount_price\": null,\n          \"in_stock\": true\n        }\n      ]\n    },\n    \"related_drugs\": [\n      {\n        \"drug_id\": 5,\n        \"name\": \"ACNAVEEN \u2022 FLUTAMIDE \u2022 400MG \u2022 DENTAL POWDER + LIQUID \u2022 Gum(s)\",\n        \"brand\": \"ACNAVEEN\",\n        \"brand_id\": 20,\n        \"form\": \"DENTAL POWDER + LIQUID\",\n        \"form_id\": 20,\n        \"strength\": \"400MG\",\n        \"strength_id\": 13,\n        \"uom\": \"GUM(S)\",\n        \"uom_id\": 2,\n        \"starting_price\": 91.93\n      }\n    ]\n  }\n}"
+                                "body": "{\n  \"data\": {\n    \"exact_match\": {\n      \"drug_id\": 5,\n      \"name\": \"ACNAVEEN \u2022 FLUTAMIDE \u2022 1000MG \u2022 GENERAL ORAL SOLID \u2022 Vial(s)\",\n      \"description\": \"Drug description here\",\n      \"brand\": \"ACNAVEEN\",\n      \"brand_id\": 20,\n      \"generic_name\": \"FLUTAMIDE\",\n      \"form\": \"GENERAL ORAL SOLID\",\n      \"form_id\": 19,\n      \"strength\": \"1000MG\",\n      \"strength_id\": 21,\n      \"uom\": \"VIAL(S)\",\n      \"uom_id\": 11,\n      \"image\": null,\n      \"requires_prescription\": false,\n      \"pharmacies\": [\n        {\n          \"pharmacy_id\": 2,\n          \"pharmacy_name\": \"MEDICARE PHARMACY\",\n          \"logoPath\": \"http://example.com/storage/logo.png\",\n          \"is_open\": true,\n          \"latitude\": 5.6352,\n          \"longitude\": -0.0695,\n          \"location\": {\n            \"lat\": 5.6352,\n            \"lng\": -0.0695\n          },\n          \"branch_id\": null,\n          \"branch_name\": null,\n          \"price\": 126.06,\n          \"discount_price\": null,\n          \"in_stock\": true\n        }\n      ]\n    },\n    \"related_drugs\": [\n      {\n        \"drug_id\": 5,\n        \"drug_name\": \"FLUTAMIDE\",\n        \"name\": \"ACNAVEEN \u2022 FLUTAMIDE \u2022 400MG \u2022 DENTAL POWDER + LIQUID \u2022 Gum(s)\",\n        \"brand\": \"ACNAVEEN\",\n        \"brand_id\": 20,\n        \"form\": \"DENTAL POWDER + LIQUID\",\n        \"form_id\": 20,\n        \"strength\": \"400MG\",\n        \"strength_id\": 13,\n        \"uom\": \"GUM(S)\",\n        \"uom_id\": 2,\n        \"pharmacy_id\": 2,\n        \"pharmacy_name\": \"MEDICARE PHARMACY\",\n        \"logoPath\": \"http://example.com/storage/logo.png\",\n        \"is_open\": true,\n        \"latitude\": 5.6352,\n        \"longitude\": -0.0695,\n        \"location\": {\n          \"lat\": 5.6352,\n          \"lng\": -0.0695\n        },\n        \"branch_id\": null,\n        \"branch_name\": null,\n        \"price\": 91.93,\n        \"discount_price\": 80.9,\n        \"in_stock\": true\n      }\n    ]\n  }\n}"
                             }
                         ]
                     }
@@ -3680,18 +3714,19 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/recent-drugs",
+                            "raw": "{{base_url}}/recent-searches",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
-                                "recent-drugs"
+                                "recent-searches"
                             ]
-                        }
+                        },
+                        "description": "# \ud83d\udd0e Recent Search History\n\nReturns the authenticated user's last 10 search queries. Useful for displaying a \"Recent Searches\" list in the UI."
                     }
                 },
                 {
-                    "name": "Top Searched Drugs",
+                    "name": "Top Searches",
                     "request": {
                         "method": "GET",
                         "header": [
@@ -3702,15 +3737,15 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/top-searched-drugs",
+                            "raw": "{{base_url}}/top-searches",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
-                                "top-searched-drugs"
+                                "top-searches"
                             ]
                         },
-                        "description": "Note: Route path inferred from controller method name `topSearchedDrugs` and standard conventions, but checked `routes/api.php` it likely maps to specific route. Wait, checking file... Actually let's trust the common patterns or use the one from route file if visible. In absence of explicit `top-searched-drugs` route seen in grep, I will assume it might be missing or named differently. Use `/recent-drugs` as confirmed."
+                        "description": "# \ud83c\udfc6 Top Searches\n\nReturns the most popular search queries across the entire platform, aggregated by unique query text."
                     }
                 },
                 {
@@ -3735,7 +3770,7 @@
                                 ":brandId"
                             ]
                         },
-                        "description": "Legacy endpoint using GET to store recent search."
+                        "description": "# 🗂️ Store Recent Search (Legacy)\n\nLegacy GET endpoint to log a drug search. Internally now writes to the new `recent_searches` table with `match_type = 'drug'` and `match_id = drugId`. Use the Smart Search `track=1` param or POST `/search/track` for new integrations."
                     }
                 },
                 {
@@ -3790,6 +3825,159 @@
                                 "recently-viewed"
                             ]
                         }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Stats & Analytics",
+            "description": "Platform-wide statistics and analytics. All endpoints require an API key. Support `period` filter (today, week, month, year, last_7_days, last_30_days, last_90_days, all) or custom `from`/`to` date range (YYYY-MM-DD).",
+            "item": [
+                {
+                    "name": "Platform Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/platform?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "platform"],
+                            "query": [
+                                { "key": "period", "value": "month", "description": "today|week|month|year|last_7_days|last_30_days|last_90_days|all" },
+                                { "key": "from", "value": "2026-01-01", "disabled": true },
+                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                            ]
+                        },
+                        "description": "# \ud83d\udcca Platform Overview\n\nHigh-level metrics: users, orders, revenue, searches, views, consultations.\n\n### Search Metrics (Updated Schema)\nThe `searches` object now reports:\n- `total` - SUM of `search_count` across all match types\n- `unique_drugs` - Count of distinct `match_id` where `match_type IN (drug, product)`"
+                    }
+                },
+                {
+                    "name": "Search Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/search-analytics?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "search-analytics"],
+                            "query": [
+                                { "key": "period", "value": "month" },
+                                { "key": "from", "value": "2026-01-01", "disabled": true },
+                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                            ]
+                        },
+                        "description": "# \ud83d\udd0e Search Analytics\n\nDetailed breakdown of search activity.\n\n### Updated Response Fields\n- `top_searches` - Aggregated by **query text** (not drug_id), reflecting actual user search terms.\n- `trending_drugs` - Computed by comparing recent vs. previous 7-day search volume for `match_type IN (drug, product)`.\n- `recent_searches` - Returns last N records, each with `query`, `match_type`, `match_id`, and resolved `drug_name`."
+                    }
+                },
+                {
+                    "name": "User Behavior",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/user-behavior?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "user-behavior"],
+                            "query": [
+                                { "key": "period", "value": "month" }
+                            ]
+                        },
+                        "description": "# \ud83d\udc64 User Behavior\n\nUser engagement metrics: searches per user, most active users, session patterns."
+                    }
+                },
+                {
+                    "name": "Revenue",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/revenue?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "revenue"],
+                            "query": [
+                                { "key": "period", "value": "month" },
+                                { "key": "from", "value": "2026-01-01", "disabled": true },
+                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                            ]
+                        },
+                        "description": "# \ud83d\udcb0 Revenue Stats\n\nOrder revenue breakdown by period, payment method, and pharmacy."
+                    }
+                },
+                {
+                    "name": "Content",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/content?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "content"],
+                            "query": [
+                                { "key": "period", "value": "month" }
+                            ]
+                        },
+                        "description": "# \ud83d\udcdd Content Stats\n\nBlog post views, most viewed drugs, and content engagement metrics."
+                    }
+                },
+                {
+                    "name": "Pharmacy Performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/pharmacy-performance?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "pharmacy-performance"],
+                            "query": [
+                                { "key": "period", "value": "month" }
+                            ]
+                        },
+                        "description": "# \ud83c\udfe5 Pharmacy Performance\n\nRankings by orders, revenue, and drug availability across all registered pharmacies."
+                    }
+                },
+                {
+                    "name": "Drug Performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/drug-performance?period=month",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "drug-performance"],
+                            "query": [
+                                { "key": "period", "value": "month" }
+                            ]
+                        },
+                        "description": "# \ud83d\udc8a Drug Performance\n\nTop searched and top ordered drugs. Search ranking is aggregated from `recent_searches` filtered by `match_type IN (drug, product)` and grouped by `match_id`."
+                    }
+                },
+                {
+                    "name": "Real-Time Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/stats/realtime",
+                            "host": ["{{base_url}}"],
+                            "path": ["stats", "realtime"]
+                        },
+                        "description": "# \u26a1 Real-Time Stats\n\nLive metrics for the last 24 hours: active users, orders in progress, searches, and unique drugs searched (scoped to `match_type IN (drug, product)`)."
                     }
                 }
             ]

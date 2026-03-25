@@ -32,3 +32,4 @@ dist-ssr
 /cypress/screenshots/
 
 *.tsbuildinfo
+.temp/

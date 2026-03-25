@@ -41,7 +41,7 @@ useSeoMeta({
 
     <!-- Quick Search Section -->
     <section 
-      class="relative"
+      class="relative z-10"
       :class="{ 'animate-fade-in': isVisible }"
     >
       <QuickSearch />
