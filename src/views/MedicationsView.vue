@@ -51,9 +51,13 @@ const categories = computed(() => {
   allMedications.value.forEach(med => {
     if (med.category) {
       if (Array.isArray(med.category)) {
-        med.category.forEach(cat => cats.add(cat));
+        med.category.forEach(cat => {
+          const name = typeof cat === 'string' ? cat : cat.name;
+          cats.add(name);
+        });
       } else {
-        cats.add(med.category);
+        const name = typeof med.category === 'string' ? med.category : (med.category as any).name;
+        cats.add(name);
       }
     }
   });
@@ -69,9 +73,13 @@ const categoryOptions = computed(() => {
   baseFilteredMedications.value.forEach(med => {
     if (med.category) {
       if (Array.isArray(med.category)) {
-        med.category.forEach(cat => cats.add(cat));
+        med.category.forEach(cat => {
+          const name = typeof cat === 'string' ? cat : cat.name;
+          cats.add(name);
+        });
       } else {
-        cats.add(med.category);
+        const name = typeof med.category === 'string' ? med.category : (med.category as any).name;
+        cats.add(name);
       }
     }
   });
@@ -88,9 +96,9 @@ const formOptions = computed(() => {
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
       if (Array.isArray(med.category)) {
-        return med.category.includes(selectedCategory.value);
+        return (med.category as any[]).some(cat => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
       }
-      return med.category === selectedCategory.value;
+      return (typeof med.category === 'string' ? med.category : (med.category as any)?.name) === selectedCategory.value;
     });
   }
   
@@ -115,9 +123,9 @@ const brandOptions = computed(() => {
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
       if (Array.isArray(med.category)) {
-        return med.category.includes(selectedCategory.value);
+        return (med.category as any[]).some(cat => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
       }
-      return med.category === selectedCategory.value;
+      return (typeof med.category === 'string' ? med.category : (med.category as any)?.name) === selectedCategory.value;
     });
   }
   
@@ -171,9 +179,10 @@ const filteredMedications = computed(() => {
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
       if (Array.isArray(med.category)) {
-        return med.category.includes(selectedCategory.value);
+        return med.category.some((cat: any) => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
       }
-      return med.category === selectedCategory.value;
+      const name = typeof med.category === 'string' ? med.category : (med.category as any)?.name;
+      return name === selectedCategory.value;
     });
   }
   
@@ -204,9 +213,12 @@ const filteredMedications = computed(() => {
     meds.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
   } else if (sortBy.value === 'category') {
     meds.sort((a, b) => {
-      const catA = Array.isArray(a.category) ? a.category[0] : a.category;
-      const catB = Array.isArray(b.category) ? b.category[0] : b.category;
-      return (catA || '').localeCompare(catB || '');
+      const getCatName = (c: any) => {
+        if (!c) return '';
+        if (Array.isArray(c)) return typeof c[0] === 'string' ? c[0] : c[0].name;
+        return typeof c === 'string' ? c : c.name;
+      };
+      return getCatName(a.category).localeCompare(getCatName(b.category));
     });
   }
   
@@ -230,6 +242,11 @@ const viewMedication = (medication: any, event?: Event) => {
   if (event) {
     event.stopPropagation();
   }
+  console.log(`MEDICATION DRUG ID: ${medication.id}`);
+  console.log(`MEDICATION BRAND ID: ${medication.brand_id}`);
+  console.log(`MEDICATION FORM ID: ${medication.form_id}`);
+  console.log(`MEDICATION STRENGTH ID: ${medication.strength_id}`);
+  console.log(`MEDICATION UOM ID: ${medication.uom_id}`);
   router.push({ 
     path: `/medication/${medication.id}`,
     query: {
@@ -506,7 +523,7 @@ onMounted(async () => {
               :key="index"
               class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]"
             >
-              {{ cat }}
+              {{ typeof cat === 'string' ? cat : cat.name }}
             </span>
             <span v-if="medication.requiresPrescription" class="inline-flex items-center px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-100 rounded-full dark:bg-orange-900 dark:text-orange-200">
               <svg class="mr-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

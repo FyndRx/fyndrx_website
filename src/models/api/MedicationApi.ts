@@ -33,6 +33,11 @@ export interface MedicationApiResponse {
   name: string;
   description?: string | null;
   category?: string | string[];
+  categories?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+  }>;
   image?: string | null;
   requires_prescription?: boolean;
   requiresPrescription?: boolean;

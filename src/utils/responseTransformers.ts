@@ -109,11 +109,15 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
     forms: apiMed.forms ?? [],
     image: mainImage,
     predefinedQuantities: apiMed.predefined_quantities ?? apiMed.predefinedQuantities ?? [],
-    category: apiMed.category ?? (apiMed as any).categories ?? '',
+    category: apiMed.categories ?? apiMed.category ?? '',
     requiresPrescription: apiMed.requires_prescription ?? apiMed.requiresPrescription ?? false,
     pharmacy_count: apiMed.pharmacy_count ?? (apiMed as any).pharmacies_count ?? (apiMed as any).available_pharmacies_count,
     price: apiMed.price,
     discount_price: apiMed.discount_price,
+    brand_id: (apiMed as any).brand_id,
+    form_id: (apiMed as any).form_id,
+    strength_id: (apiMed as any).strength_id,
+    uom_id: (apiMed as any).uom_id
   };
 }
 

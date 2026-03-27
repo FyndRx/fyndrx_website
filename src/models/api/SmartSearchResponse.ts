@@ -19,6 +19,11 @@ export interface SmartSearchProduct {
     url: string;
     price?: number;
     discount_price?: number;
+    categories?: Array<{
+        id: number;
+        name: string;
+        slug: string;
+    }>;
 }
 
 export interface SmartSearchGeneric {

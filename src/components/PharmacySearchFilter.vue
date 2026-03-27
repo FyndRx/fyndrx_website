@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import Dropdown from '@/components/Dropdown.vue';
 
-defineProps<{
+withDefaults(defineProps<{
   modelValue: string;
   sortBy: string;
-  showOpenOnly: boolean;
-  showInStockOnly: boolean;
-}>();
+  showOpenOnly?: boolean;
+  showInStockOnly?: boolean;
+  placeholder?: string;
+  showLocation?: boolean;
+  showToggles?: boolean;
+}>(), {
+  showOpenOnly: false,
+  showInStockOnly: false,
+  placeholder: 'Search pharmacies...',
+  showLocation: true,
+  showToggles: true
+});
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
@@ -34,7 +43,7 @@ const sortOptions = [
             :value="modelValue"
             @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             type="text"
-            placeholder="Search pharmacies..."
+            :placeholder="placeholder"
             class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] transition-all"
           />
           <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,40 +64,43 @@ const sortOptions = [
     </div>
 
     <!-- Filter Toggles -->
-    <div class="flex flex-wrap gap-2">
-      <button
-        @click="emit('update:showOpenOnly', !showOpenOnly)"
-        :class="[
-          'px-4 py-2 rounded-full text-sm font-medium transition-all border',
-          showOpenOnly
-            ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300'
-            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
-        ]"
-      >
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full" :class="showOpenOnly ? 'bg-green-500' : 'bg-gray-300'"></span>
-          Open Now
-        </div>
-      </button>
+    <div v-if="showToggles || showLocation" class="flex flex-wrap gap-2">
+      <template v-if="showToggles">
+        <button
+          @click="emit('update:showOpenOnly', !showOpenOnly)"
+          :class="[
+            'px-4 py-2 rounded-full text-sm font-medium transition-all border',
+            showOpenOnly
+              ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300'
+              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
+          ]"
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" :class="showOpenOnly ? 'bg-green-500' : 'bg-gray-300'"></span>
+            Open Now
+          </div>
+        </button>
+
+        <button
+          @click="emit('update:showInStockOnly', !showInStockOnly)"
+          :class="[
+            'px-4 py-2 rounded-full text-sm font-medium transition-all border',
+            showInStockOnly
+              ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300'
+              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
+          ]"
+        >
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            In Stock Only
+          </div>
+        </button>
+      </template>
 
       <button
-        @click="emit('update:showInStockOnly', !showInStockOnly)"
-        :class="[
-          'px-4 py-2 rounded-full text-sm font-medium transition-all border',
-          showInStockOnly
-            ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300'
-            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
-        ]"
-      >
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-          In Stock Only
-        </div>
-      </button>
-
-      <button
+        v-if="showLocation"
         @click="emit('use-location')"
         class="px-4 py-2 rounded-full text-sm font-medium transition-all border bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
       >

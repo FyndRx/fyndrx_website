@@ -9,6 +9,12 @@ export interface MedicationUOM {
   uom: string;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export interface MedicationStrength {
   id: number;
   strength: string;
@@ -29,11 +35,15 @@ export interface Medication {
   forms: MedicationForm[];
   image: string;
   predefinedQuantities: number[];
-  category: string | string[]; // Can be string (legacy) or array of strings
+  category: Category[] | string[] | string; // Can be Category objects, string array, or legacy single string
   requiresPrescription: boolean;
   pharmacy_count?: number;
   price?: number;
   discount_price?: number;
+  brand_id?: number;
+  form_id?: number;
+  strength_id?: number;
+  uom_id?: number;
 }
 
 export interface PharmacyMedicationPrice {

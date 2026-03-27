@@ -4,6 +4,7 @@
  */
 
 import type { PharmacyApiResponse, PharmacyBranchApiResponse } from './PharmacyApi';
+import type { PaginationMeta } from './ApiResponse';
 
 export interface PharmacyPriceApiResponse {
   id: number;
@@ -96,19 +97,27 @@ export interface DrugPriceMatchApiResponse {
   image: string | null;
   description: string | null;
   requires_prescription: boolean;
-  pharmacies: Array<{
-    pharmacy_id: number;
-    pharmacy_name: string;
-    logoPath: string | null;
-    is_open: boolean;
-    latitude: number | null;
-    longitude: number | null;
-    branch_id: number | null;
-    branch_name: string | null;
-    price: number;
-    discount_price: number | null;
-    in_stock: boolean;
+  categories?: Array<{
+    id: number;
+    name: string;
+    slug: string;
   }>;
+  pharmacies: {
+    data: Array<{
+      pharmacy_id: number;
+      pharmacy_name: string;
+      logoPath: string | null;
+      is_open: boolean;
+      latitude: number | null;
+      longitude: number | null;
+      branch_id: number | null;
+      branch_name: string | null;
+      price: number;
+      discount_price: number | null;
+      in_stock: boolean;
+    }>;
+    meta: PaginationMeta;
+  };
 }
 
 export interface DrugPriceRelatedApiResponse {
@@ -136,11 +145,17 @@ export interface DrugPriceRelatedApiResponse {
   in_stock: boolean;
 }
 
-// Response from /pharmacy-prices/drug/:drugId
+// Response from /api/v1/drugs/:id/related
+export interface PaginatedRelatedDrugsResponse {
+  data: DrugPriceRelatedApiResponse[];
+  meta: PaginationMeta;
+}
+
+// Response from /api/v1/prices (formerly /pharmacy-prices/drug/:drugId)
 export type PharmacyPricesByDrugApiResponse = {
   data: {
     exact_match: DrugPriceMatchApiResponse | null;
-    related_drugs: DrugPriceRelatedApiResponse[];
+    related_drugs?: DrugPriceRelatedApiResponse[]; // legacy or merged
   };
 };
 

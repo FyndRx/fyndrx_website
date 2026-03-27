@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
 import { pharmacyService } from '@/services/pharmacyService';
+import { medicationService } from '@/services/medicationService';
 import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
 import Pagination from '@/components/Pagination.vue';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
@@ -62,8 +63,11 @@ const medication = ref<Medication | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const loadingPharmacies = ref(false);
+const loadingRelated = ref(false);
 const exactMatch = ref<any>(null);
 const relatedDrugs = ref<any[]>([]);
+const pharmacyMeta = ref<any>(null);
+const relatedMeta = ref<any>(null);
 const dummyDescription = `
   <div class="space-y-4">
     <p>This medication is primarily used to treat various bacterial infections. It works by stopping the growth of bacteria.</p>
@@ -82,19 +86,31 @@ const pharmacySearch = ref('');
 const pharmacySort = ref('price_asc');
 const showOpenOnly = ref(false);
 const showInStockOnly = ref(false);
-const currentPage = ref(1);
-const itemsPerPage = ref(9);
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
+const pharmacyPage = ref(1);
+const relatedPage = ref(1);
+const relatedSearch = ref('');
+const relatedSort = ref('price');
+const relatedShowOpenOnly = ref(false);
+const relatedShowInStockOnly = ref(false);
+const itemsPerPage = ref(9);
 
 const customQuantities = ref<Map<number, number>>(new Map());
 
-const filteredPharmacies = computed(() => {
+const paginatedPharmacies = computed(() => {
   if (!exactMatch.value || !exactMatch.value.pharmacies) return [];
-
-  let result = exactMatch.value.pharmacies.map((p: any) => ({
+  
+  // New structure: exactMatch.pharmacies.data
+  let rawData = exactMatch.value.pharmacies.data || [];
+  
+  // Client-side filtering as fallback/augmentation
+  if (showOpenOnly.value) rawData = rawData.filter((p: any) => p.is_open);
+  if (showInStockOnly.value) rawData = rawData.filter((p: any) => p.in_stock);
+  
+  return rawData.map((p: any) => ({
     id: p.pharmacy_id,
     name: p.pharmacy_name,
-    logo: p.logo || '', // Exact match pharmacy has no logo in sample, but we keep it
+    logo: p.logoPath || '',
     price: p.price,
     discountPrice: p.discount_price,
     inStock: p.in_stock ?? true,
@@ -111,52 +127,14 @@ const filteredPharmacies = computed(() => {
       longitude: p.longitude
     }
   }));
-
-  // 1. Search
-  if (pharmacySearch.value) {
-    const query = pharmacySearch.value.toLowerCase();
-    result = result.filter((p: any) => 
-      p.name.toLowerCase().includes(query)
-    );
-  }
-
-  // 2. Filter: Open Now (Legacy, exactMatch pharmacies don't have is_open yet, but we keep the logic)
-  if (showOpenOnly.value) {
-    result = result.filter((p: any) => p.pharmacy?.is_open);
-  }
-
-  // 3. Filter: In Stock
-  if (showInStockOnly.value) {
-    result = result.filter((p: any) => p.inStock);
-  }
-
-  // 4. Sort
-  result.sort((a: any, b: any) => {
-    switch (pharmacySort.value) {
-      case 'price_asc':
-        return a.price - b.price;
-      case 'price_desc':
-        return b.price - a.price;
-      case 'rating_desc':
-        return (b.rating || 0) - (a.rating || 0);
-      default:
-        return a.price - b.price;
-    }
-  });
-
-  return result;
 });
 
-const paginatedPharmacies = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredPharmacies.value.slice(start, end);
-});
+const totalPharmacyPages = computed(() => pharmacyMeta.value?.last_page || 1);
+const totalRelatedPages = computed(() => relatedMeta.value?.last_page || 1);
 
-const totalPages = computed(() => Math.ceil(filteredPharmacies.value.length / itemsPerPage.value));
-
-const handlePageChange = (page: number) => {
-  currentPage.value = page;
+const handlePharmacyPageChange = async (page: number) => {
+  pharmacyPage.value = page;
+  await loadPharmacies();
   // Scroll to top of pharmacy list
   const pharmacySection = document.getElementById('pharmacy-list');
   if (pharmacySection) {
@@ -164,37 +142,82 @@ const handlePageChange = (page: number) => {
   }
 };
 
+const handleRelatedPageChange = async (page: number) => {
+  relatedPage.value = page;
+  await loadRelatedDrugs();
+};
+
 // Legacy location logic kept for potential future use or removed if fully replaced
 
 // All variant/hierarchy selectors removed
 
 
-const loadMedicationData = async (medicationId: number) => {
-  loading.value = true;
-  error.value = null;
-  
+const loadPharmacies = async () => {
+  if (!medication.value) return;
+  loadingPharmacies.value = true;
   try {
-    // Get filters from URL query if present (brand_id, form_id, strength_id, uom_id)
     const filters = {
       brand_id: route.query.brand_id ? String(route.query.brand_id) : undefined,
       form_id: route.query.form_id ? String(route.query.form_id) : undefined,
       strength_id: route.query.strength_id ? String(route.query.strength_id) : undefined,
       uom_id: route.query.uom_id ? String(route.query.uom_id) : undefined,
       include_pharmacy: true,
+      q: pharmacySearch.value || undefined,
+      sort: pharmacySort.value === 'price_asc' ? 'price' : (pharmacySort.value === 'distance' ? 'distance' : undefined),
       lat: userLocation.value?.lat,
-      lng: userLocation.value?.lng
+      lng: userLocation.value?.lng,
+      page: pharmacyPage.value,
+      per_page: itemsPerPage.value,
+      is_open: showOpenOnly.value ? 1 : undefined,
+      in_stock: showInStockOnly.value ? 1 : undefined
     };
-
-    const data = await pharmacyService.getMedicationDetailsWithPrices(medicationId, filters);
-    
-    medication.value = data.medication;
-    // allPrices removed as it's no longer used in the new UI flow
-    // Store exact match and related drugs directly from the response if we were using it,
-    // but getMedicationDetailsWithPrices returns transformed data.
-    // For this refactor, let's also fetch the raw structured response for explicit exactMatch/relatedDrugs
-    const rawResponse = await pharmacyService.getPricesByDrug(medicationId, filters);
+    const rawResponse = await pharmacyService.getPricesByDrug(medication.value.id, filters as any);
     exactMatch.value = rawResponse.exact_match;
-    relatedDrugs.value = rawResponse.related_drugs || [];
+    pharmacyMeta.value = rawResponse.exact_match?.pharmacies?.meta;
+  } catch (err) {
+    console.error('Error loading pharmacies:', err);
+  } finally {
+    loadingPharmacies.value = false;
+  }
+};
+
+const loadRelatedDrugs = async () => {
+  if (!medication.value) return;
+  loadingRelated.value = true;
+  try {
+    const filters = {
+      brand_id: route.query.brand_id ? String(route.query.brand_id) : undefined,
+      form_id: route.query.form_id ? String(route.query.form_id) : undefined,
+      strength_id: route.query.strength_id ? String(route.query.strength_id) : undefined,
+      uom_id: route.query.uom_id ? String(route.query.uom_id) : undefined,
+      q: relatedSearch.value || undefined,
+      sort: relatedSort.value.includes('price') ? 'price' : (relatedSort.value.includes('distance') ? 'distance' : undefined),
+      page: relatedPage.value,
+      per_page: itemsPerPage.value
+    };
+    const response = await pharmacyService.getRelatedDrugs(medication.value.id, filters as any);
+    relatedDrugs.value = response.data || [];
+    relatedMeta.value = response.meta;
+  } catch (err) {
+    console.error('Error loading related drugs:', err);
+  } finally {
+    loadingRelated.value = false;
+  }
+};
+
+const loadMedicationData = async (medicationId: number) => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    // 1. Get basic medication details
+    medication.value = await medicationService.getMedicationById(medicationId);
+    
+    // 2. Load pharmacies and related drugs in parallel
+    await Promise.all([
+      loadPharmacies(),
+      loadRelatedDrugs()
+    ]);
     
     if (medication.value && authStore.isAuthenticated) {
         await recentlyViewedService.addToRecentlyViewed(medication.value.id);
@@ -212,7 +235,16 @@ const loadMedicationData = async (medicationId: number) => {
 
 // Watchers
 
-// Legacy selection logic removed
+// Watchers for filtering and sorting
+watch([pharmacySearch, pharmacySort, showOpenOnly, showInStockOnly], () => {
+  pharmacyPage.value = 1;
+  loadPharmacies();
+});
+
+watch([relatedSearch, relatedSort, relatedShowOpenOnly, relatedShowInStockOnly], () => {
+  relatedPage.value = 1;
+  loadRelatedDrugs();
+});
 
 
 const getCustomQuantity = (pharmacyId: number): number => {
@@ -337,7 +369,27 @@ watch(
                       {{ exactMatch?.name || medication.name }}
                     </h1>
                   </div>
-                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="exactMatch.description || dummyDescription"></div>
+                  
+                  <!-- Categories -->
+                  <div v-if="exactMatch?.categories?.length || medication.category?.length" class="flex flex-wrap gap-2 mb-4">
+                    <template v-if="exactMatch?.categories">
+                      <span v-for="cat in exactMatch.categories" :key="cat.id" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                        {{ cat.name }}
+                      </span>
+                    </template>
+                    <template v-else-if="Array.isArray(medication.category)">
+                      <span v-for="cat in medication.category" :key="String(cat)" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                        {{ typeof cat === 'string' ? cat : (cat as any).name }}
+                      </span>
+                    </template>
+                    <template v-else-if="medication.category">
+                      <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                        {{ medication.category }}
+                      </span>
+                    </template>
+                  </div>
+
+                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="exactMatch?.description || medication.description || dummyDescription"></div>
                 </div>
               </div>
             </div>
@@ -346,23 +398,27 @@ watch(
 
         <!-- Available Pharmacies -->
         <div id="pharmacy-list" class="bg-white shadow-xl dark:bg-[#161c2c] rounded-2xl border border-gray-100 dark:border-gray-700/60 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-[#0d1420] px-8 py-6 border-b border-gray-100 dark:border-gray-700/60">
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-2xl font-black text-gray-900 dark:text-white">
-                  Available Pharmacies
-                </h2>
-                <p class="text-sm text-gray-500 font-medium">
-                  Showing {{ filteredPharmacies.length }} verified price listings
+          <div class="bg-gray-50 dark:bg-[#0d1420] px-8 py-8 border-b border-gray-100 dark:border-gray-700/60">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Available Pharmacies</h2>
+                  <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-black rounded uppercase">Verified</span>
+                </div>
+                <p class="text-sm text-gray-500 font-medium tracking-tight">
+                  Comparing {{ pharmacyMeta?.total || paginatedPharmacies.length }} live price listings from vetted pharmacies
                 </p>
               </div>
-              <PharmacySearchFilter
-                v-model="pharmacySearch"
-                v-model:sort-by="pharmacySort"
-                v-model:show-open-only="showOpenOnly"
-                v-model:show-in-stock-only="showInStockOnly"
-                class="scale-90 origin-right"
-              />
+
+              <div class="flex-1 w-full max-w-2xl">
+                <PharmacySearchFilter
+                  v-model="pharmacySearch"
+                  v-model:sort-by="pharmacySort"
+                  v-model:show-open-only="showOpenOnly"
+                  v-model:show-in-stock-only="showInStockOnly"
+                  class="scale-90 origin-right transition-all hover:scale-100 focus-within:scale-100"
+                />
+              </div>
             </div>
           </div>
 
@@ -415,25 +471,17 @@ watch(
                 <!-- Text & Actions Section -->
                 <div class="p-6 flex-1 flex flex-col pt-4">
 
-                  <!-- Pharmacy Info Header with Logo -->
-                  <div class="flex items-center gap-3 mb-4 mt-auto">
-                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700">
-                      <LazyImage
-                        v-if="pharmacyItem.pharmacy?.logo"
-                        :src="pharmacyItem.pharmacy.logo"
-                        :alt="pharmacyItem.name"
-                        aspectRatio="square"
-                        className="w-full h-full object-cover rounded"
-                      />
-                      <div v-else class="w-full h-full flex items-center justify-center bg-[#246BFD]/10 text-[#246BFD] text-sm font-medium">
-                        {{ pharmacyItem.name.charAt(0) }}
-                      </div>
-                    </div>
-                    <div class="flex flex-col flex-1 min-w-0">
-                      <h3 class="text-xl font-medium text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors">
-                        <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
-                      </h3>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  <!-- Pharmacy Info Header -->
+                  <div class="flex flex-col mb-4">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors leading-tight">
+                      <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1">
+                      <svg class="w-3.5 h-3.5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
                         {{ pharmacyItem.branch_name || 'Main Branch' }}
                       </p>
                     </div>
@@ -487,26 +535,64 @@ watch(
               </div>
             </div>
 
-            <!-- Pagination -->
-            <div v-if="totalPages > 1" class="mt-12 flex justify-center">
+            <!-- Pharmacy Pagination -->
+            <div v-if="totalPharmacyPages > 1" class="mt-12 flex justify-center">
               <Pagination
-                v-model:current-page="currentPage"
-                :total-pages="totalPages"
-                :total-items="filteredPharmacies.length"
+                v-model:current-page="pharmacyPage"
+                :total-pages="totalPharmacyPages"
+                :total-items="pharmacyMeta?.total || 0"
                 :per-page="itemsPerPage"
-                @update:current-page="handlePageChange"
+                @update:current-page="handlePharmacyPageChange"
               />
             </div>
           </div>
         </div>
 
         <!-- Related Drugs Section -->
-        <div v-if="relatedDrugs.length > 0" class="py-12 border-t border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between mb-8">
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white">Related Drug</h3>
-            <span class="text-sm font-bold text-[#246BFD] bg-[#246BFD]/5 px-4 py-1.5 rounded-full uppercase tracking-tighter">
-               Explore Similar
-            </span>
+        <div v-if="relatedDrugs.length > 0 || relatedSearch" class="py-12 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Related Drugs</h3>
+                <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black rounded uppercase">Verified</span>
+              </div>
+              <p class="text-sm text-gray-500 font-medium tracking-tight">Discover variations, strengths, and smart alternatives</p>
+              
+              <div class="flex flex-wrap gap-2 mt-3 pt-4 border-t border-gray-100 dark:border-gray-800 transition-all">
+                <button 
+                  @click="relatedSort = ''; relatedSearch = ''"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  :class="relatedSort === '' && !relatedSearch ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-lg shadow-[#246BFD]/20' : 'bg-[#246BFD]/5 border-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD]/10'"
+                >
+                  🔥 Best Match
+                </button>
+                <button 
+                  @click="relatedSort = 'price_asc'"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  :class="relatedSort === 'price_asc' ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-green-500/5 border-green-500/10 text-green-600 hover:bg-green-500/10'"
+                >
+                  💰 Cheapest
+                </button>
+                <button 
+                  @click="relatedSort = 'distance_asc'"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  :class="relatedSort === 'distance_asc' ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-amber-500/5 border-amber-500/10 text-amber-600 hover:bg-amber-500/10'"
+                >
+                  ⚡ Fast Delivery
+                </button>
+              </div>
+            </div>
+            
+            <div class="flex-1 w-full max-w-2xl">
+              <PharmacySearchFilter
+                v-model="relatedSearch"
+                v-model:sort-by="relatedSort"
+                placeholder="Search brands, forms, or strengths..."
+                :show-location="false"
+                :show-toggles="false"
+                class="scale-90 origin-right transition-all hover:scale-100 focus-within:scale-100"
+              />
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -607,6 +693,17 @@ watch(
                 </div>
               </div>
             </router-link>
+          </div>
+
+          <!-- Related Drugs Pagination -->
+          <div v-if="totalRelatedPages > 1" class="mt-12 flex justify-center">
+            <Pagination
+              v-model:current-page="relatedPage"
+              :total-pages="totalRelatedPages"
+              :total-items="relatedMeta?.total || 0"
+              :per-page="itemsPerPage"
+              @update:current-page="handleRelatedPageChange"
+            />
           </div>
         </div>
       </div>

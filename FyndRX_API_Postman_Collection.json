@@ -450,7 +450,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🔍 Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
+                        "description": "# 🔍 Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Category Support\nSearching by category name (e.g., \"Antibiotics\") will now return products in that category in the `results.products` array. Each product also includes its associated categories.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
                     }
                 },
                 {
@@ -479,6 +479,69 @@
                             ]
                         },
                         "description": "# 📊 Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Categories",
+            "description": "Management and discovery of drug categories.",
+            "item": [
+                {
+                    "name": "List All Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "categories"
+                            ]
+                        },
+                        "description": "List all active drug categories with drug counts."
+                    }
+                },
+                {
+                    "name": "Get Category Details & Drugs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/categories/antibiotics?page=1&per_page=15",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "categories",
+                                "antibiotics"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
+                            ]
+                        },
+                        "description": "Get category metadata and a paginated list of drugs belonging to it."
                     }
                 }
             ]
@@ -700,6 +763,107 @@
                         },
                         "description": "Public endpoint - requires API key. List drugs for a specific pharmacy. Supports pagination."
                     }
+                },
+                {
+                    "name": "Prices",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/prices?drug_id=1&brand_id=1&form_id=1&strength_id=1&uom_id=1&q=medicare&sort=price",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "prices"
+                            ],
+                            "query": [
+                                {
+                                    "key": "drug_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "brand_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "form_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "strength_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "uom_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "q",
+                                    "value": "medicare",
+                                    "description": "Search by pharmacy name"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "price",
+                                    "description": "Sort by price or distance"
+                                }
+                            ]
+                        },
+                        "description": "Returns exact drug variant prices. All variant IDs are mandatory."
+                    }
+                },
+                {
+                    "name": "Get Related Drugs (Other Variants)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/drugs/1/related?brand_id=1&form_id=1&strength_id=1&uom_id=1&q=tablet&sort=price",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "drugs",
+                                "1",
+                                "related"
+                            ],
+                            "query": [
+                                {
+                                    "key": "brand_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "form_id",
+                                    "value": "1",
+                                    "description": "Optional: Form ID of the exact match variant to exclude."
+                                },
+                                {
+                                    "key": "strength_id",
+                                    "value": "1",
+                                    "description": "Optional: Strength ID of the exact match variant to exclude."
+                                },
+                                {
+                                    "key": "uom_id",
+                                    "value": "",
+                                    "description": "Optional: UOM ID of the exact match variant to exclude."
+                                }
+                            ]
+                        },
+                        "description": "Returns pricing data for other variants (brand, form, strength) of the same drug, matching the exact format from the legacy related_drugs response, but fully paginated."
+                    }
                 }
             ]
         },
@@ -911,6 +1075,67 @@
                             ]
                         },
                         "description": "Public endpoint - requires API key. Search pharmacies that have specific drugs. Pass drugs as JSON string in query parameter."
+                    }
+                },
+                {
+                    "name": "Unified Price Search",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/prices?drug_id=1&category=antibiotics&lat=5.6037&lng=-0.1870&sort=price&order=asc",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "prices"
+                            ],
+                            "query": [
+                                {
+                                    "key": "drug_id",
+                                    "value": "1",
+                                    "description": "Filter by Drug ID"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "antibiotics",
+                                    "description": "Filter by Category Slug"
+                                },
+                                {
+                                    "key": "lat",
+                                    "value": "5.6037",
+                                    "description": "Latitude for near-me search"
+                                },
+                                {
+                                    "key": "lng",
+                                    "value": "-0.1870",
+                                    "description": "Longitude for near-me search"
+                                },
+                                {
+                                    "key": "radius",
+                                    "value": "50",
+                                    "description": "Search radius in KM",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "price",
+                                    "description": "price or distance"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Highly filterable endpoint for pharmacy drug prices. Replaces the legacy /pharmacy-prices/drug/{id} logic with proper pagination and geolocation support."
                     }
                 },
                 {

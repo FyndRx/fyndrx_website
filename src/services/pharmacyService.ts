@@ -9,7 +9,8 @@ import type {
   PharmacyPricesByPharmacyApiResponse,
   PharmacyPricesByDrugApiResponse,
   PharmacyDrugsApiResponse,
-  PharmacyDrugApiResponse
+  PharmacyDrugApiResponse,
+  PaginatedRelatedDrugsResponse
 } from '@/models/api';
 import {
   unwrapApiResponse,
@@ -134,13 +135,20 @@ export const pharmacyService = {
       form_id?: number | string;
       strength_id?: number | string;
       uom_id?: number | string;
+      q?: string;
+      sort?: string;
       include_pharmacy?: boolean;
       lat?: number;
       lng?: number;
+      page?: number;
+      per_page?: number;
     }
   ): Promise<PharmacyPricesByDrugApiResponse['data']> {
-    let url = `/pharmacy-prices/drug/${drugId}`;
+    let url = `/prices`; // NEW ENDPOINT
     const params = new URLSearchParams();
+    
+    // Ensure drug_id is always passed
+    params.append('drug_id', drugId.toString());
 
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
@@ -156,8 +164,47 @@ export const pharmacyService = {
     }
 
     const response = await apiService.get<PharmacyPricesByDrugApiResponse>(url);
-    // Return the structured object: { exact_match, related_drugs }
+    // Return the structured object: { exact_match, related_drugs? }
     return response.data;
+  },
+
+  /**
+   * Get related variants/substitutes for a drug
+   * @param drugId - Drug ID
+   * @param filters - Same filters as prices to find alternatives
+   * @returns Paginated related drugs
+   */
+  async getRelatedDrugs(
+    drugId: number,
+    filters?: {
+      brand_id?: number | string;
+      form_id?: number | string;
+      strength_id?: number | string;
+      uom_id?: number | string;
+      q?: string;
+      sort?: string;
+      page?: number;
+      per_page?: number;
+    }
+  ): Promise<PaginatedRelatedDrugsResponse> {
+    let url = `/drugs/${drugId}/related`;
+    const params = new URLSearchParams();
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString());
+        }
+      });
+    }
+
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+
+    const response = await apiService.get<PaginatedRelatedDrugsResponse>(url);
+    return response;
   },
 
   /**
@@ -207,7 +254,12 @@ export const pharmacyService = {
     
     if (responseData.exact_match) {
       const match = responseData.exact_match;
-      match.pharmacies.forEach(p => {
+      // Handle structure where pharmacies is an object with { data, meta }
+      const pharmaciesList = Array.isArray(match.pharmacies) 
+        ? match.pharmacies 
+        : (match.pharmacies as any).data || [];
+
+      pharmaciesList.forEach((p: any) => {
         prices.push(transformPharmacyPrice({
           ...match,
           ...p,

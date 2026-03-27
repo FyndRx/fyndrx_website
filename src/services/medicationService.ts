@@ -79,6 +79,11 @@ export const medicationService = {
             price: p.price,
             discount_price: p.discount_price,
             brands: p.brand ? [{ id: p.brand_id, name: p.brand }] : [],
+            categories: p.categories || [],
+            brand_id: p.brand_id,
+            form_id: p.form_id,
+            strength_id: p.strength_id,
+            uom_id: p.uom_id
           } as any)),
           ...transformMedications(generics)
         ];
@@ -146,7 +151,8 @@ export const medicationService = {
             pharmacy_count: p.pharmacy_count || p.pharmacies_count || 0,
             url: p.url || `/medication/${p.id}`,
             price: p.price,
-            discount_price: p.discount_price
+            discount_price: p.discount_price,
+            categories: p.categories || []
           })),
           brands: [],
           generics: [],
