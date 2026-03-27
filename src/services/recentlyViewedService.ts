@@ -8,6 +8,10 @@ export interface RecentlyViewedDrug {
   drug_id: number;
   user_id: number;
   viewed_at: string;
+  drug?: Medication;
+}
+
+interface RecentlyViewedDrugApiResponse extends Omit<RecentlyViewedDrug, 'drug'> {
   drug?: MedicationApiResponse;
 }
 
@@ -17,13 +21,13 @@ export const recentlyViewedService = {
    * @returns Array of recently viewed drugs
    */
   async getRecentlyViewed(): Promise<RecentlyViewedDrug[]> {
-    const response = await apiService.getAuth<RecentlyViewedDrug[]>('/recently-viewed');
+    const response = await apiService.getAuth<RecentlyViewedDrugApiResponse[]>('/recently-viewed');
     // Transform nested drug if present
     if (Array.isArray(response)) {
       return response.map(item => ({
         ...item,
         drug: item.drug ? transformMedication(item.drug) : undefined
-      }));
+      } as RecentlyViewedDrug));
     }
     return [];
   },

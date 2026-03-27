@@ -22,12 +22,19 @@ export const dataService = {
     if (!query) return medications;
     
     const searchTerm = query.toLowerCase();
+    
+    const getCategoryName = (cat: string | any): string => {
+      if (typeof cat === 'string') return cat;
+      if (cat && typeof cat === 'object' && 'name' in cat) return cat.name;
+      return '';
+    };
+
     return medications.filter(med =>
       med.name.toLowerCase().includes(searchTerm) ||
       med.description.toLowerCase().includes(searchTerm) ||
       (Array.isArray(med.category) 
-        ? med.category.some(cat => cat.toLowerCase().includes(searchTerm))
-        : med.category.toLowerCase().includes(searchTerm)) ||
+        ? med.category.some(cat => getCategoryName(cat).toLowerCase().includes(searchTerm))
+        : getCategoryName(med.category).toLowerCase().includes(searchTerm)) ||
       med.brands.some(brand => brand.name.toLowerCase().includes(searchTerm))
     );
   },
@@ -35,11 +42,18 @@ export const dataService = {
   getMedicationsByCategory(category: string): Medication[] {
     const medications = medicationsData as Medication[];
     if (!category || category === 'all') return medications;
+    
+    const getCategoryName = (cat: string | any): string => {
+      if (typeof cat === 'string') return cat;
+      if (cat && typeof cat === 'object' && 'name' in cat) return cat.name;
+      return '';
+    };
+
     return medications.filter(med => {
       if (Array.isArray(med.category)) {
-        return med.category.includes(category);
+        return med.category.some(cat => getCategoryName(cat) === category);
       }
-      return med.category === category;
+      return getCategoryName(med.category) === category;
     });
   },
 

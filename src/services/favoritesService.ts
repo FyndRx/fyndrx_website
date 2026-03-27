@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 import { apiService } from './api';
+import type { Medication } from '@/models/Medication';
 import type { MedicationApiResponse } from '@/models/api';
 import { transformMedication } from '@/utils/responseTransformers';
 
@@ -9,8 +10,12 @@ export interface SavedDrug {
   brand_id: number;
   user_id: number;
   created_at: string;
-  drug?: MedicationApiResponse;
+  drug?: Medication;
   brand?: any;
+}
+
+interface SavedDrugApiResponse extends Omit<SavedDrug, 'drug'> {
+  drug?: MedicationApiResponse;
 }
 
 // Reactive state for favorites
@@ -44,13 +49,13 @@ export const favoritesService = {
    * @returns Array of saved drugs
    */
   async getSavedDrugs(): Promise<SavedDrug[]> {
-    const response = await apiService.getAuth<SavedDrug[]>('/user-saved-drugs');
+    const response = await apiService.getAuth<SavedDrugApiResponse[]>('/user-saved-drugs');
     // Transform nested drug if present
     if (Array.isArray(response)) {
       return response.map(item => ({
         ...item,
         drug: item.drug ? transformMedication(item.drug) : undefined
-      }));
+      } as SavedDrug));
     }
     return [];
   },
