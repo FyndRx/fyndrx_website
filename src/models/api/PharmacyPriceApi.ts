@@ -115,6 +115,7 @@ export interface DrugPriceMatchApiResponse {
       price: number;
       discount_price: number | null;
       in_stock: boolean;
+      stock_quantity?: number;
     }>;
     meta: PaginationMeta;
   };

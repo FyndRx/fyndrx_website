@@ -221,22 +221,23 @@ const selectQuery = (query: string) => {
 const handleSelection = (result: { type: string; item: any }) => {
   if (result.type === 'top_match') {
     const match = result.item as SmartSearchMatch;
-    if (match.action === 'navigate') {
+    // We ignore match.action and match.target and always use match.data 
+    // to ensure all required variant IDs are passed correctly.
+    if (match.type === 'product' && match.data) {
+      router.push({
+        path: `/medication/${match.data.id || match.data.drug_id}`,
+        query: {
+          brand_id: match.data.brand_id,
+          form_id: match.data.form_id,
+          strength_id: match.data.strength_id,
+          uom_id: match.data.uom_id
+        }
+      });
+    } else if (match.type === 'drug' && match.data) {
+      router.push(`/medication/${match.data.id || match.data.drug_id}`);
+    } else if (match.action === 'navigate' && match.target) {
+       // Fallback for non-medication types if still using target
        router.push(match.target);
-    } else {
-       if (match.type === 'product' && match.data) {
-         router.push({
-           path: `/medication/${match.data.id || match.data.drug_id}`,
-           query: {
-             brand_id: match.data.brand_id,
-             form_id: match.data.form_id,
-             strength_id: match.data.strength_id,
-             uom_id: match.data.uom_id
-           }
-         });
-       } else if (match.type === 'drug' && match.data) {
-         router.push(`/medication/${match.data.id}`);
-       }
     }
   } else if (result.type === 'product') {
     const item = result.item;
@@ -261,11 +262,20 @@ const handleSelection = (result: { type: string; item: any }) => {
   }
   
   // Track selection if it's a specific product/brand/category
-  if (result.type === 'product' || result.type === 'top_match') {
+  if (result.type === 'product' || result.type === 'top_match' || result.type === 'pharmacy') {
     const item = result.type === 'top_match' ? result.item.data : result.item;
-    const type = result.type === 'top_match' ? result.item.type : 'product';
+    const type = result.type === 'top_match' ? result.item.type : result.type;
+    
+    // Determine the most specific name to track
+    let trackName = searchQuery.value;
+    if (item && item.name) {
+      trackName = item.name;
+    } else if (item && item.text) { // for suggestions
+      trackName = item.text;
+    }
+
     if (item && (item.id || item.drug_id)) {
-      medicationService.trackSearch(searchQuery.value, type, item.id || item.drug_id);
+      medicationService.trackSearch(trackName, type, item.id || item.drug_id);
     }
   }
 

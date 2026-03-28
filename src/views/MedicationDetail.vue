@@ -26,6 +26,7 @@ interface Pharmacy {
   price: number;
   discountPrice?: number;
   inStock: boolean;
+  stockQuantity?: number;
   distance?: string;
   rating?: number;
   // Additional fields for cart operations
@@ -114,6 +115,7 @@ const paginatedPharmacies = computed(() => {
     price: p.price,
     discountPrice: p.discount_price,
     inStock: p.in_stock ?? true,
+    stockQuantity: p.stock_quantity,
     branch_id: p.branch_id,
     branch_name: p.branch_name,
     
@@ -208,6 +210,16 @@ const loadRelatedDrugs = async () => {
 const loadMedicationData = async (medicationId: number) => {
   loading.value = true;
   error.value = null;
+  // Reset pagination and clear previous results for a fresh start
+  pharmacyPage.value = 1;
+  relatedPage.value = 1;
+  exactMatch.value = null;
+  relatedDrugs.value = [];
+  pharmacyMeta.value = null;
+  relatedMeta.value = null;
+  
+  // Scroll to top when loading new medication/variant
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   
   try {
     // 1. Get basic medication details
@@ -310,14 +322,16 @@ onMounted(async () => {
   await loadMedicationData(medicationId);
 });
 
-// Watch for route changes to reload medication when navigating between different medications
+// Watch for route changes (both ID and query params/variants) 
+// to reload medication when navigating between different medications or variants
 watch(
-  () => route.params.id,
-  async (newId) => {
+  () => [route.params.id, route.query.brand_id, route.query.form_id, route.query.strength_id, route.query.uom_id],
+  async ([newId]) => {
     if (newId) {
       await loadMedicationData(parseInt(newId as string));
     }
-  }
+  },
+  { deep: true }
 );
 </script>
 
@@ -504,31 +518,51 @@ watch(
                         :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
                       >
                         <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
-                        {{ pharmacyItem.inStock ? 'In Stock' : 'Out of Stock' }}
+                        {{ pharmacyItem.inStock ? (pharmacyItem.stockQuantity !== undefined ? `In Stock: ${pharmacyItem.stockQuantity}` : 'In Stock') : 'Out of Stock' }}
                       </span>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex gap-2">
-                      <div class="bg-gray-50 dark:bg-gray-900 rounded-xl flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
-                         <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
-                         <input 
-                           type="number" 
-                           :value="getCustomQuantity(pharmacyItem.id)"
-                           @input="setCustomQuantity(pharmacyItem.id, parseInt(($event.target as HTMLInputElement).value) || 1)"
-                           class="w-full bg-transparent text-center font-bold text-gray-900 dark:text-white border-0 focus:ring-0 p-0"
-                         />
-                         <button @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">+</button>
+                    <div class="flex flex-col gap-1 mt-auto">
+                      <div class="flex gap-2">
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
+                           <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
+                           <input 
+                             type="number" 
+                             :value="getCustomQuantity(pharmacyItem.id)"
+                             @input="setCustomQuantity(pharmacyItem.id, Math.max(1, parseInt(($event.target as HTMLInputElement).value) || 1))"
+                             :max="pharmacyItem.stockQuantity"
+                             min="1"
+                             class="w-full bg-transparent text-center font-bold text-gray-900 dark:text-white border-0 focus:ring-0 p-0 hover:appearance-none focus:appearance-none"
+                           />
+                           <button 
+                             @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" 
+                             class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform"
+                           >+</button>
+                        </div>
+                        <button 
+                          @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
+                          :disabled="!pharmacyItem.inStock || (pharmacyItem.stockQuantity !== undefined && getCustomQuantity(pharmacyItem.id) > pharmacyItem.stockQuantity)"
+                          class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-medium rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#246BFD] active:scale-95 disabled:active:scale-100"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          </svg>
+                          Buy
+                        </button>
                       </div>
-                      <button 
-                        @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
-                        class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-medium rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"
+                      <p 
+                        v-if="pharmacyItem.stockQuantity !== undefined && getCustomQuantity(pharmacyItem.id) > pharmacyItem.stockQuantity"
+                        class="text-xs text-red-500 font-medium px-1 mt-1"
                       >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        Buy
-                      </button>
+                        Only {{ pharmacyItem.stockQuantity }} available in stock
+                      </p>
+                      <p 
+                        v-else-if="!pharmacyItem.inStock"
+                        class="text-xs text-red-500 font-medium px-1 mt-1"
+                      >
+                        Currently out of stock
+                      </p>
                     </div>
                   </div>
                 </div>
