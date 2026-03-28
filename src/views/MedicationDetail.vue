@@ -10,6 +10,7 @@ import { medicationService } from '@/services/medicationService';
 import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
 import Pagination from '@/components/Pagination.vue';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
+import { formatCurrency } from '@/utils/currency';
 
 import type { Medication } from '@/models/Medication';
 import LazyImage from '@/components/LazyImage.vue';
@@ -87,6 +88,7 @@ const pharmacySearch = ref('');
 const pharmacySort = ref('price_asc');
 const showOpenOnly = ref(false);
 const showInStockOnly = ref(false);
+const selectedServices = ref<string[]>([]);
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
 const pharmacyPage = ref(1);
 const relatedPage = ref(1);
@@ -94,7 +96,7 @@ const relatedSearch = ref('');
 const relatedSort = ref('price');
 const relatedShowOpenOnly = ref(false);
 const relatedShowInStockOnly = ref(false);
-const itemsPerPage = ref(9);
+const itemsPerPage = ref(12);
 
 const customQuantities = ref<Map<number, number>>(new Map());
 
@@ -111,7 +113,7 @@ const paginatedPharmacies = computed(() => {
   return rawData.map((p: any) => ({
     id: p.pharmacy_id,
     name: p.pharmacy_name,
-    logo: p.logoPath || '',
+    logo: p.logoPath,
     price: p.price,
     discountPrice: p.discount_price,
     inStock: p.in_stock ?? true,
@@ -122,9 +124,10 @@ const paginatedPharmacies = computed(() => {
     // For compatibility with cart/filtering
     pharmacy: {
       name: p.pharmacy_name,
-      logo: p.logoPath || '',
+      logo: p.logoPath,
       is_open: p.is_open,
       branch_name: p.branch_name,
+      pharmacy_image: p.pharmacy_image,
       latitude: p.latitude,
       longitude: p.longitude
     }
@@ -171,7 +174,8 @@ const loadPharmacies = async () => {
       page: pharmacyPage.value,
       per_page: itemsPerPage.value,
       is_open: showOpenOnly.value ? 1 : undefined,
-      in_stock: showInStockOnly.value ? 1 : undefined
+      in_stock: showInStockOnly.value ? 1 : undefined,
+      services: selectedServices.value.length > 0 ? selectedServices.value : undefined
     };
     const rawResponse = await pharmacyService.getPricesByDrug(medication.value.id, filters as any);
     exactMatch.value = rawResponse.exact_match;
@@ -248,7 +252,7 @@ const loadMedicationData = async (medicationId: number) => {
 // Watchers
 
 // Watchers for filtering and sorting
-watch([pharmacySearch, pharmacySort, showOpenOnly, showInStockOnly], () => {
+watch([pharmacySearch, pharmacySort, showOpenOnly, showInStockOnly, selectedServices], () => {
   pharmacyPage.value = 1;
   loadPharmacies();
 });
@@ -430,6 +434,7 @@ watch(
                   v-model:sort-by="pharmacySort"
                   v-model:show-open-only="showOpenOnly"
                   v-model:show-in-stock-only="showInStockOnly"
+                  v-model:selected-services="selectedServices"
                   class="scale-90 origin-right transition-all hover:scale-100 focus-within:scale-100"
                 />
               </div>
@@ -462,7 +467,7 @@ watch(
                 <div class="p-4 pb-0">
                   <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
                     <LazyImage
-                      :src="pharmacyItem.pharmacy?.logo || '/images/pharmacies/default-pharmacy.jpg'"
+                      :src="pharmacyItem.pharmacy?.pharmacy_image || '/images/pharmacies/default-pharmacy.jpg'"
                       :alt="pharmacyItem.name"
                       aspectRatio="landscape"
                       className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
@@ -486,18 +491,34 @@ watch(
                 <div class="p-6 flex-1 flex flex-col pt-4">
 
                   <!-- Pharmacy Info Header -->
-                  <div class="flex flex-col mb-4">
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors leading-tight">
-                      <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
-                    </h3>
-                    <div class="flex items-center gap-2 mt-1">
-                      <svg class="w-3.5 h-3.5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
-                        {{ pharmacyItem.branch_name || 'Main Branch' }}
-                      </p>
+                  <div class="flex items-center gap-3 mb-4">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm">
+                      <LazyImage
+                        v-if="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image"
+                        :src="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image"
+                        :alt="pharmacyItem.name"
+                        aspectRatio="square"
+                        className="w-full h-full object-contain"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                      </div>
+                    </div>
+                    <!-- Name + Branch -->
+                    <div class="min-w-0 flex-1">
+                      <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors leading-tight">
+                        <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
+                      </h3>
+                      <div class="flex items-center gap-2 mt-1">
+                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                          {{ pharmacyItem.branch_name || 'Main Branch' }}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -507,10 +528,10 @@ watch(
                     <div class="flex items-center justify-between mb-4">
                       <div class="flex items-baseline gap-2">
                         <span class="text-xl font-bold text-[#246BFD]">
-                          Ghc{{ (pharmacyItem.discountPrice || pharmacyItem.price).toFixed(2) }}
+                          {{ formatCurrency(pharmacyItem.discountPrice || pharmacyItem.price) }}
                         </span>
                         <span v-if="pharmacyItem.discountPrice" class="text-xs text-gray-400 line-through">
-                          Ghc{{ pharmacyItem.price.toFixed(2) }}
+                          {{ formatCurrency(pharmacyItem.price) }}
                         </span>
                       </div>
                       <span 
@@ -709,10 +730,10 @@ watch(
                     <div class="flex items-center justify-between">
                       <div class="flex items-baseline gap-2">
                         <span class="text-2xl font-bold text-[#246BFD]">
-                          Ghc{{ (drug.discount_price || drug.price).toFixed(2) }}
+                          {{ formatCurrency(drug.discount_price || drug.price) }}
                         </span>
                         <span v-if="drug.discount_price" class="text-sm text-gray-400 line-through">
-                          Ghc{{ drug.price.toFixed(2) }}
+                          {{ formatCurrency(drug.price) }}
                         </span>
                       </div>
                       <span 

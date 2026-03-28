@@ -71,6 +71,7 @@ export interface PharmacyPriceApiResponse {
   // Confirmed fields from investigation
   brand_id?: number;
   uom_name?: string | { id: number; uom: string }; // Handle both old object and new string format just in case
+  image?: string | null;
 }
 
 // Response from /pharmacy-prices

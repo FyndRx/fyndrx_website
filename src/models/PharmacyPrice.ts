@@ -4,13 +4,9 @@ export interface PharmacyPrice {
   pharmacy_id: number;
   pharmacy_branch_id?: number;
   branch_id?: number; // Alias for pharmacy_branch_id or from new exact_match response
-  medicationId: number; // Primary field - medication ID from API (camelCase)
-  drug_id?: number; // Legacy/fallback field
-  drug_brand_id: number;
-  drug_brand_form_id: number;
-  dosage_id: number;
+  drug_id: number; // Legacy/fallback field
+  brand_id: number;
   strength_id?: number;
-  strength_uom_id: number;
   uom_id?: number;
   price: number;
   discount_price?: number;
@@ -47,12 +43,17 @@ export interface PharmacyPrice {
   rating?: number;
   branch_name?: string; // Flattened branch name
 
-  // Optional drug details for display
+  // Display and metadata fields
   name?: string;
   drug_image?: string;
+  medication_image?: string; // Additional alias for consistency
   brand_name?: string;
   form_name?: string;
   strength?: string;
   uom?: string;
+  requires_prescription?: boolean;
+  price_id?: number;
+  form_id?: number;
+  image?: string;
 }
 

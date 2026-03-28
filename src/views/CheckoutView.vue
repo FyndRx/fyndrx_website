@@ -6,6 +6,7 @@ import { useNotification } from '@/composables/useNotification';
 import { cartService } from '@/services/cartService';
 import { orderService } from '@/services/orderService';
 import { paymentService } from '@/services/paymentService';
+import { formatCurrency } from '@/utils/currency';
 import type { CartPharmacyGroup } from '@/models/Cart';
 import LazyImage from '@/components/LazyImage.vue';
 
@@ -35,7 +36,7 @@ const deliveryFee = computed(() => {
   let fee = 0;
   deliveryMethods.value.forEach((method) => {
     if (method === 'delivery') {
-      fee += 5; // 5 GHS per delivery order
+      fee += 5; // 5 GH₵ per delivery order
     }
   });
   return fee;
@@ -331,7 +332,7 @@ const payNow = async (orderId: string) => {
             
             <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4">
               <span class="text-gray-600 dark:text-gray-300">Total Amount</span>
-              <span class="text-xl font-bold text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</span>
+              <span class="text-xl font-bold text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
             </div>
 
             <!-- Pay Now Button for Platform Orders -->
@@ -438,7 +439,7 @@ const payNow = async (orderId: string) => {
                 </div>
                 <div class="text-right">
                   <p class="text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
-                  <p class="text-lg font-medium text-[#246BFD]">GHS {{ pharmacy.subtotal.toFixed(2) }}</p>
+                  <p class="text-lg font-medium text-[#246BFD]">{{ formatCurrency(pharmacy.subtotal) }}</p>
                 </div>
               </div>
 
@@ -471,7 +472,7 @@ const payNow = async (orderId: string) => {
                     </div>
                   </div>
                   <span class="text-sm font-medium text-gray-900 dark:text-white">
-                    GHS {{ ((item.discountPrice || item.price) * item.quantity).toFixed(2) }}
+                    {{ formatCurrency((item.discountPrice || item.price) * item.quantity) }}
                   </span>
                 </div>
               </div>
@@ -556,7 +557,7 @@ const payNow = async (orderId: string) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
                       </svg>
                       <span class="text-sm font-medium" :class="deliveryMethods.get(pharmacy.pharmacyId) === 'delivery' ? 'text-[#246BFD]' : 'text-gray-600 dark:text-gray-300'">
-                        Delivery (+5 GHS)
+                        Delivery (+{{ formatCurrency(5) }})
                       </span>
                     </div>
                   </button>
@@ -659,16 +660,16 @@ const payNow = async (orderId: string) => {
                 <!-- ... Totals ... -->
                  <div class="flex justify-between text-gray-600 dark:text-gray-300">
                   <span>Subtotal</span>
-                  <span>GHS {{ totalAmount.toFixed(2) }}</span>
+                  <span>{{ formatCurrency(totalAmount) }}</span>
                 </div>
                 <div class="flex justify-between text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
-                  <span>GHS {{ deliveryFee.toFixed(2) }}</span>
+                  <span>{{ formatCurrency(deliveryFee) }}</span>
                 </div>
                 <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">
                     <span>Total</span>
-                    <span class="text-[#246BFD]">GHS {{ grandTotal.toFixed(2) }}</span>
+                    <span class="text-[#246BFD]">{{ formatCurrency(grandTotal) }}</span>
                   </div>
                 </div>
               </div>

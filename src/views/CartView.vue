@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useNotification } from '@/composables/useNotification';
+import { formatCurrency } from '@/utils/currency';
 import LazyImage from '@/components/LazyImage.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
 
@@ -227,10 +228,10 @@ const startShopping = () => {
 
                       <div class="text-right">
                         <div class="text-lg font-medium text-[#246BFD]">
-                          GHS {{ ((item.discountPrice || item.price) * item.quantity).toFixed(2) }}
+                          {{ formatCurrency((item.discountPrice || item.price) * item.quantity) }}
                         </div>
                         <div v-if="item.discountPrice && item.discountPrice < item.price" class="text-sm text-gray-500 line-through">
-                          GHS {{ (item.price * item.quantity).toFixed(2) }}
+                          {{ formatCurrency(item.price * item.quantity) }}
                         </div>
                       </div>
 
@@ -253,7 +254,7 @@ const startShopping = () => {
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Pharmacy Subtotal</span>
                 <span class="text-lg font-medium text-gray-900 dark:text-white">
-                  GHS {{ pharmacy.subtotal.toFixed(2) }}
+                  {{ formatCurrency(pharmacy.subtotal) }}
                 </span>
               </div>
             </div>
@@ -267,20 +268,20 @@ const startShopping = () => {
             <div class="space-y-4 mb-6">
               <div class="flex justify-between text-gray-600 dark:text-gray-300">
                 <span>Subtotal</span>
-                <span>GHS {{ cartStore.subtotal.toFixed(2) }}</span>
+                <span>{{ formatCurrency(cartStore.subtotal) }}</span>
               </div>
               <div v-if="cartStore.discount > 0" class="flex justify-between text-green-600 dark:text-green-400">
                 <span>Discount</span>
-                <span>-GHS {{ cartStore.discount.toFixed(2) }}</span>
+                <span>-{{ formatCurrency(cartStore.discount) }}</span>
               </div>
               <div v-if="selectedPharmacies.size > 0" class="flex justify-between text-gray-600 dark:text-gray-300">
                 <span>Selected Items</span>
-                <span>GHS {{ selectedTotal.toFixed(2) }}</span>
+                <span>{{ formatCurrency(selectedTotal) }}</span>
               </div>
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">
                   <span>Total</span>
-                  <span class="text-[#246BFD]">GHS {{ (selectedPharmacies.size > 0 ? selectedTotal : cartStore.total).toFixed(2) }}</span>
+                  <span class="text-[#246BFD]">{{ formatCurrency(selectedPharmacies.size > 0 ? selectedTotal : cartStore.total) }}</span>
                 </div>
               </div>
             </div>

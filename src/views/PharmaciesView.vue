@@ -37,15 +37,25 @@ const selectedServices = ref<string[]>([]);
 const sortBy = ref<string>('distance');
 const isOpenNow = ref(false);
 
-const availableServices = [
-  'Prescription Delivery',
-  '24/7 Service',
-  'Online Ordering',
-  'Vaccination',
-  'Health Consultations',
-  'Home Delivery',
-  'Emergency Service'
+const STANDARD_SERVICES = [
+  "consultation",
+  "delivery",
+  "maternal",
+  "vaccination",
+  "diagnostic",
+  "insurance",
+  "24/7"
 ];
+
+const SERVICE_LABELS: Record<string, string> = {
+  consultation: 'Consultation',
+  delivery: 'Medicine Delivery',
+  maternal: 'Maternal Care',
+  vaccination: 'Vaccination',
+  diagnostic: 'Diagnostic Services',
+  insurance: 'Insurance Accepted',
+  '24/7': '24/7 Service',
+};
 
 const sortOptions = [
   { label: 'Distance', value: 'distance' },
@@ -287,11 +297,11 @@ onMounted(async () => {
               <h4 class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Services</h4>
               <div class="space-y-3">
                 <CustomCheckbox
-                  v-for="service in availableServices"
+                  v-for="service in STANDARD_SERVICES"
                   :key="service"
                   v-model="selectedServices"
                   :value="service"
-                  :label="service"
+                  :label="SERVICE_LABELS[service] || service"
                   size="small"
                   @update:model-value="handleServiceFilter"
                 />
@@ -320,7 +330,7 @@ onMounted(async () => {
                   Open Now
                 </span>
                 <span v-for="service in selectedServices" :key="service" class="inline-flex items-center px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
-                  {{ service }}
+                  {{ SERVICE_LABELS[service] || service }}
                 </span>
               </div>
             </div>

@@ -180,9 +180,12 @@ export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
     name: apiPharmacy.name,
     address: apiPharmacy.address,
     rating: apiPharmacy.rating || 0,
+    totalReviews: apiPharmacy.total_reviews || 0,
     reviews: [],
     image: apiPharmacy.image || apiPharmacy.logo || '',
+    logo: apiPharmacy.logo || apiPharmacy.image || '',
     isOpen: apiPharmacy.is_open ?? apiPharmacy.isOpen ?? true,
+    isActive: apiPharmacy.is_active ?? true,
     distance: apiPharmacy.distance || '',
     services: apiPharmacy.services || [],
     workingHours,
@@ -190,7 +193,27 @@ export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
     email: apiPharmacy.email || '',
     website: apiPharmacy.website || '',
     description: apiPharmacy.description || '',
-    location: apiPharmacy.location || { lat: 0, lng: 0 },
+    location: apiPharmacy.location || {
+      lat: (apiPharmacy as any).latitude || 0,
+      lng: (apiPharmacy as any).longitude || 0
+    },
+    licenseNumber: apiPharmacy.license_number,
+    license: apiPharmacy.license,
+    branchesCount: apiPharmacy.branches_count || 0,
+    branches: (apiPharmacy.branches || []).map((branch: any) => ({
+      id: branch.id,
+      pharmacyId: branch.pharmacy_id,
+      branchName: branch.branch_name,
+      phone: branch.phone,
+      address: branch.address,
+      latitude: branch.latitude,
+      longitude: branch.longitude,
+      licenseNumber: branch.license_number,
+      managerName: branch.manager_name,
+      managerPhone: branch.manager_phone,
+      managerEmail: branch.manager_email,
+      digitalAddress: branch.digital_address,
+    })),
     medications: [],
   };
 }
@@ -203,9 +226,6 @@ export function transformPharmacies(apiPharmacies: PharmacyApiResponse[]): Pharm
  * Pharmacy Price Transformers
  */
 export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): PharmacyPrice {
-  // Get medication ID (handle both snake_case and camelCase)
-  const medicationId = apiPrice.medicationId || apiPrice.drug_id || 0;
-
   const pharmacyInfo = apiPrice.pharmacy;
   const branchInfo = apiPrice.pharmacy_branch;
 
@@ -237,12 +257,11 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     id: apiPrice.id,
     pharmacy_id: apiPrice.pharmacy_id || apiPrice.pharmacyId || 0,
     pharmacy_branch_id: apiPrice.pharmacy_branch_id,
-    medicationId,
     drug_id: apiPrice.drug_id || apiPrice.drugId || 0,
-    drug_brand_id: apiPrice.brand_id || 0, // Changed from apiPrice.drug_brand_id to apiPrice.brand_id as per user instruction
-    drug_brand_form_id: apiPrice.drug_brand_form_id || apiPrice.formId || apiPrice.form_id || 0,
-    dosage_id: apiPrice.dosage_id || apiPrice.strengthId || apiPrice.strength_id || 0,
-    strength_uom_id: apiPrice.strength_uom_id || apiPrice.uomId || apiPrice.uom_id || 0,
+    brand_id: apiPrice.brand_id || 0,
+    form_id: apiPrice.form_id || apiPrice.formId || apiPrice.drug_brand_form_id || 0,
+    strength_id: apiPrice.strength_id || apiPrice.strengthId || apiPrice.dosage_id || 0,
+    uom_id: apiPrice.uom_id || apiPrice.uomId || apiPrice.strength_uom_id || 0,
     price: apiPrice.price || apiPrice.normal_price || 0,
     discount_price: apiPrice.discount_price || apiPrice.discounted_price || apiPrice.discountPrice,
     stock_quantity: apiPrice.stock_quantity,
@@ -269,6 +288,7 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     
     // New fields from exact_match.pharmacies
     branch_id: apiPrice.branch_id ?? undefined,
+    image: apiPrice.image ?? undefined,
   };
 }
 

@@ -4,12 +4,14 @@ import Dropdown from '@/components/Dropdown.vue';
 withDefaults(defineProps<{
   modelValue: string;
   sortBy: string;
+  selectedServices?: string[];
   showOpenOnly?: boolean;
   showInStockOnly?: boolean;
   placeholder?: string;
   showLocation?: boolean;
   showToggles?: boolean;
 }>(), {
+  selectedServices: () => [],
   showOpenOnly: false,
   showInStockOnly: false,
   placeholder: 'Search pharmacies...',
@@ -20,10 +22,32 @@ withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
   (e: 'update:sortBy', value: string): void;
+  (e: 'update:selectedServices', value: string[]): void;
   (e: 'update:showOpenOnly', value: boolean): void;
   (e: 'update:showInStockOnly', value: boolean): void;
   (e: 'use-location'): void;
 }>();
+
+const STANDARD_SERVICES = [
+  "consultation",
+  "delivery",
+  "maternal",
+  "vaccination",
+  "diagnostic",
+  "insurance",
+  "24/7"
+];
+
+const SERVICE_LABELS: Record<string, string> = {
+  consultation: 'Consultation',
+  delivery: 'Medicine Delivery',
+  maternal: 'Maternal Care',
+  vaccination: 'Vaccination',
+  diagnostic: 'Diagnostic Services',
+  insurance: 'Insurance Accepted',
+  '24/7': '24/7 Service',
+};
+
 
 const sortOptions = [
   { label: 'Price: Low to High', value: 'price_asc' },
@@ -31,6 +55,11 @@ const sortOptions = [
   { label: 'Rating: High to Low', value: 'rating_desc' },
   { label: 'Distance: Nearest', value: 'distance_asc' },
 ];
+
+const serviceOptions = STANDARD_SERVICES.map(service => ({
+  label: SERVICE_LABELS[service] || service,
+  value: service,
+}));
 </script>
 
 <template>
@@ -52,13 +81,29 @@ const sortOptions = [
         </div>
       </div>
 
+    </div>
+
+    <!-- Sort + Services Row -->
+    <div class="flex flex-col gap-3 sm:flex-row">
       <!-- Sort Dropdown -->
-      <div class="w-full md:w-48">
+      <div class="w-full sm:w-52">
         <Dropdown
           :model-value="sortBy"
           @update:model-value="(val) => emit('update:sortBy', val as string)"
           :options="sortOptions"
           placeholder="Sort by"
+        />
+      </div>
+
+      <!-- Services Multi-select Dropdown -->
+      <div v-if="showToggles" class="flex-1">
+        <Dropdown
+          :model-value="selectedServices"
+          @update:model-value="(val) => emit('update:selectedServices', val as string[])"
+          :options="serviceOptions"
+          placeholder="Filter by service"
+          multiple
+          clearable
         />
       </div>
     </div>

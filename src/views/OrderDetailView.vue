@@ -8,6 +8,7 @@ import LazyImage from '@/components/LazyImage.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import { orderService } from '@/services/orderService';
 import { paymentService, type Transaction } from '@/services/paymentService';
+import { formatCurrency } from '@/utils/currency';
 
 const route = useRoute();
 const router = useRouter();
@@ -321,10 +322,10 @@ onMounted(() => {
 
                   <div class="text-right">
                     <p class="font-medium text-gray-900 dark:text-white">
-                      GHS {{ ((item.discountPrice || item.price) * item.quantity).toFixed(2) }}
+                      {{ formatCurrency((item.discountPrice || item.price) * item.quantity) }}
                     </p>
                     <p v-if="item.discountPrice" class="text-sm text-gray-500 line-through">
-                      GHS {{ (item.price * item.quantity).toFixed(2) }}
+                      {{ formatCurrency(item.price * item.quantity) }}
                     </p>
                   </div>
                 </div>
@@ -390,16 +391,16 @@ onMounted(() => {
               <div class="space-y-3 mb-4">
                 <div class="flex justify-between text-gray-600 dark:text-gray-300">
                   <span>Subtotal</span>
-                  <span>GHS {{ order.subtotal.toFixed(2) }}</span>
+                  <span>{{ formatCurrency(order.subtotal) }}</span>
                 </div>
                 <div class="flex justify-between text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
-                  <span>GHS {{ order.deliveryFee.toFixed(2) }}</span>
+                  <span>{{ formatCurrency(order.deliveryFee) }}</span>
                 </div>
                 <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     <span>Total</span>
-                    <span class="text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</span>
+                    <span class="text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
                   </div>
                   
                   <button 

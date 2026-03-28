@@ -10,6 +10,7 @@ import type { Medication } from '@/models/Medication';
 import type { Pharmacy } from '@/models/Pharmacy';
 import { orderService } from '@/services/orderService';
 import LazyImage from '@/components/LazyImage.vue';
+import { formatCurrency } from '@/utils/currency';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -146,7 +147,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
-              <p class="mt-2 text-3xl font-bold text-[#246BFD]">GHS {{ totalSpent.toFixed(2) }}</p>
+              <p class="mt-2 text-3xl font-bold text-[#246BFD]">{{ formatCurrency(totalSpent) }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-[#246BFD]/10">
               <svg class="w-6 h-6 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +364,7 @@ onMounted(() => {
                 </div>
 
                 <div class="text-right">
-                  <p class="font-semibold text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</p>
+                  <p class="font-semibold text-[#246BFD]">{{ formatCurrency(order.total) }}</p>
                   <span
                     :class="[
                       'inline-block px-2 py-1 text-xs font-medium rounded-full',

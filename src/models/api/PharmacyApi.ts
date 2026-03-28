@@ -27,13 +27,17 @@ export interface PharmacyApiResponse {
   phone?: string;
   email?: string;
   website?: string;
+  license_number?: string | null;
+  license?: string | null;
   logo?: string;
   image?: string;
   description?: string;
   rating?: number;
+  total_reviews?: number;
   distance?: string;
   is_open?: boolean;
   isOpen?: boolean; // Sometimes camelCase
+  is_active?: boolean;
   services?: string[];
   working_hours?: Record<string, string>;
   workingHours?: Record<string, string>; // Sometimes camelCase
@@ -41,6 +45,8 @@ export interface PharmacyApiResponse {
   pharmacy_branch_id?: number;
   branch_name?: string;
   branch_address?: string;
+  branches_count?: number;
+  branches?: PharmacyBranchApiResponse[];
   created_at?: string;
   updated_at?: string;
 }

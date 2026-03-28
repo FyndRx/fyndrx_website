@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useNotification } from '@/composables/useNotification';
@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cart';
 import { pharmacyService, type PharmacyPrice } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
 import { useDataCacheStore } from '@/store/dataCache';
+import { formatCurrency } from '@/utils/currency';
 import type { Pharmacy } from '@/models/Pharmacy';
 import type { Review, ReviewStats } from '@/models/Review';
 import LazyImage from '@/components/LazyImage.vue';
@@ -15,15 +16,15 @@ import ReviewCard from '@/components/ReviewCard.vue';
 
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import Pagination from '@/components/Pagination.vue';
+import PharmacyMap from '@/components/PharmacyMap.vue';
 
+
+const route = useRoute();
 const router = useRouter();
 const notification = useNotification();
 const cartStore = useCartStore();
-
-const PharmacyMap = defineAsyncComponent(() => import('@/components/PharmacyMap.vue'));
-
-const route = useRoute();
 const dataCache = useDataCacheStore();
+const customQuantities = ref<Record<number, number>>({});
 const { registerElement } = useScrollAnimation();
 
 const pharmacy = ref<Pharmacy | null>(null);
@@ -33,18 +34,28 @@ const reviewStats = ref<ReviewStats | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const activeTab = ref('overview');
-const medicationSearch = ref('');
+const medicationSearchQuery = ref('');
 const showAddReviewModal = ref(false);
 const reviewsLoading = ref(false);
 
 // Pagination
 const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const itemsPerPage = ref(12);
+
+const SERVICE_LABELS: Record<string, string> = {
+  consultation: 'Consultation',
+  delivery: 'Medicine Delivery',
+  maternal: 'Maternal Care',
+  vaccination: 'Vaccination',
+  diagnostic: 'Diagnostic Services',
+  insurance: 'Insurance Accepted',
+  '24/7': '24/7 Service',
+};
 
 const filteredPrices = computed(() => {
-  if (!medicationSearch.value) return pharmacyPrices.value;
+  if (!medicationSearchQuery.value) return pharmacyPrices.value;
   
-  const query = medicationSearch.value.toLowerCase();
+  const query = medicationSearchQuery.value.toLowerCase();
   return pharmacyPrices.value.filter(price =>
     (price.name || '').toLowerCase().includes(query) ||
     (price.brand_name || '').toLowerCase().includes(query)
@@ -62,11 +73,17 @@ const totalPages = computed(() => Math.ceil(filteredPrices.value.length / itemsP
 const handlePageChange = (page: number) => {
   currentPage.value = page;
   // Scroll to top of medications list
-  const medSection = document.querySelector('.medications-grid');
+  const medSection = document.getElementById('medications-section');
   if (medSection) {
     medSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 };
+
+const setCustomQuantity = (priceId: number, quantity: number) => {
+  customQuantities.value[priceId] = quantity;
+};
+
+// addToCart logic unified below...
 
 const loadPharmacy = async () => {
   loading.value = true;
@@ -262,42 +279,59 @@ const handleReviewNotHelpful = async (reviewId: string | number) => {
   }
 };
 
-const addToCart = (price: PharmacyPrice) => {
+const addToCart = (price: PharmacyPrice, manualQuantity: number = 0) => {
   if (!pharmacy.value) return;
   
+  const quantity = manualQuantity > 0 ? manualQuantity : (customQuantities.value[price.id] || 1);
+  
+  // Validation against stock_quantity
+  if (price.stock_quantity !== undefined && quantity > price.stock_quantity) {
+    notification.error('Stock Limit Exceeded', `Only ${price.stock_quantity} units available in stock.`);
+    return;
+  }
+  
   cartStore.addItem({
-    medicationId: price.drug_id || (price as any).medicationId, // mapping might needed based on API
+    medicationId: price.drug_id,
     medicationName: price.name || '',
     pharmacyId: pharmacy.value.id,
     pharmacyName: pharmacy.value.name,
-    pharmacyLogo: pharmacy.value.image, // Check mapping
+    pharmacyLogo: pharmacy.value.logo || pharmacy.value.image,
 
-    formId: price.drug_brand_form_id,
+    formId: price.form_id || 0,
     formName: price.form_name || '',
-    strengthId: price.dosage_id,
+    strengthId: price.strength_id || 0,
     strength: price.strength || '',
-    uomId: price.strength_uom_id,
+    uomId: price.uom_id || 0,
     uom: price.uom || '',
     
-    quantity: 1,
-    price: price.price,
+    quantity: quantity,
+    price: price.discount_price || price.price,
     discountPrice: price.discount_price,
-    image: (price as any).drug_image || '', // Ensure image is available or fallback
+    image: price.medication_image || (price as any).drug_image || pharmacy.value.image,
     inStock: price.in_stock || false,
-    requiresPrescription: (price as any).requires_prescription || false,
+    requiresPrescription: price.requires_prescription || false,
     pharmacyBranchId: price.pharmacy_branch_id || pharmacy.value.id,
-    branchName: (price as any).branch_name || (price as any).pharmacy_branch?.name || (price as any).pharmacy_branch?.branch_name
+    pharmacyDrugPriceId: (price as any).price_id || (price as any).pharmacyDrugPriceId || 0
   });
 
   notification.success(
     'Added to Cart!',
-    `1 x ${price.name} (${price.strength} ${price.uom})`
+    `${quantity} x ${price.name}`
   );
 };
 
-const viewMedicationDetails = (medicationId: number) => {
-  if (!medicationId) return;
-  router.push({ name: 'MedicationDetail', params: { id: medicationId } });
+const viewMedicationDetails = (price: PharmacyPrice) => {
+  if (!price.drug_id) return;
+  router.push({ 
+    name: 'MedicationDetail', 
+    params: { id: price.drug_id },
+    query: {
+      brand_id: price.brand_id,
+      form_id: price.form_id,
+      strength_id: price.strength_id,
+      uom_id: price.uom_id
+    }
+  });
 };
 
 const switchTab = (tab: string) => {
@@ -360,383 +394,283 @@ onMounted(() => {
       </div>
 
       <!-- Hero Section -->
-      <div class="mb-8 overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-        <!-- Header Image -->
-        <div class="relative h-80">
+      <div class="mb-12 overflow-hidden bg-white shadow-2xl dark:bg-gray-800 rounded-[2rem]">
+        <div class="relative h-[450px]">
           <div class="absolute inset-0">
             <LazyImage
               :src="pharmacy.image"
               :alt="pharmacy.name"
               aspectRatio="landscape"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
           </div>
           
           <!-- Badges Overlay -->
-          <div class="absolute top-6 right-6 flex gap-2">
+          <div class="absolute top-8 right-8 flex gap-3">
             <span
-              class="px-4 py-2 text-sm font-semibold rounded-full backdrop-blur-md border-2"
+              class="px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-full backdrop-blur-md border border-white/20 shadow-xl"
               :class="pharmacy.isOpen 
-                ? 'bg-green-500/90 text-white border-green-400' 
-                : 'bg-red-500/90 text-white border-red-400'"
+                ? 'bg-green-500/90 text-white' 
+                : 'bg-red-500/90 text-white'"
             >
-              {{ pharmacy.isOpen ? '● Open Now' : '● Closed' }}
+              <span class="inline-block w-2 h-2 mr-2 rounded-full animate-pulse bg-white"></span>
+              {{ pharmacy.isOpen ? 'Open Now' : 'Closed' }}
+            </span>
+            <span v-if="pharmacy.services.includes('24/7')" class="px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-full backdrop-blur-md bg-[#246BFD]/90 text-white border border-white/20 shadow-xl">
+               24/7 Service
             </span>
           </div>
 
           <!-- Pharmacy Info Overlay -->
-          <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1">
-                <h1 class="mb-2 text-3xl font-bold md:text-4xl">
-                  {{ pharmacy.name }}
-                </h1>
-                <div class="flex flex-col gap-2 text-sm md:flex-row md:items-center md:gap-4">
-                  <div class="flex items-center gap-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="absolute bottom-0 left-0 right-0 p-10 text-white">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div class="flex-1 space-y-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-16 h-16 rounded-2xl bg-white p-2 shadow-2xl overflow-hidden">
+                    <img :src="pharmacy.logo" :alt="pharmacy.name" class="w-full h-full object-contain" />
+                  </div>
+                  <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+                    {{ pharmacy.name }}
+                  </h1>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-6">
+                  <div class="flex items-center gap-2 text-gray-200">
+                    <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    <span>{{ pharmacy.address }}</span>
+                    <span class="font-medium tracking-tight">{{ pharmacy.address }}</span>
                   </div>
-                  <div class="flex items-center gap-1">
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <span>{{ pharmacy.rating }} ({{ pharmacy.reviews?.length || 0 }} reviews)</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
-                    </svg>
-                    <span>{{ pharmacy.distance }}</span>
+                  
+                  <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl p-2 px-5 border border-white/10 shadow-xl">
+                    <div class="flex items-center gap-1">
+                      <svg v-for="i in 5" :key="i" class="w-5 h-5" :class="i <= Math.round(pharmacy.rating) ? 'text-yellow-400' : 'text-gray-400/50'" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                      </svg>
+                    </div>
+                    <span class="font-black text-xl tracking-tighter">{{ pharmacy.rating.toFixed(1) }}</span>
+                    <span class="text-sm font-bold text-gray-300 border-l border-white/20 pl-4 uppercase tracking-widest">{{ pharmacy.totalReviews || pharmacy.reviews?.length || 0 }} reviews</span>
                   </div>
                 </div>
+              </div>
+              
+              <div class="flex gap-4">
+                 <button 
+                  @click="showAddReviewModal = true"
+                  class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-2xl"
+                >
+                  Rate this Facility
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Quick Actions Bar -->
-        <div class="p-6 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
-          <div class="flex flex-wrap gap-3">
-            <a
-              :href="`tel:${pharmacy.phone}`"
-              class="flex items-center gap-2 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-              </svg>
-              Call Now
-            </a>
-            <a
-              :href="pharmacy.location ? `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}` : '#'"
-              target="_blank"
-              class="flex items-center gap-2 px-6 py-3 rounded-full bg-white dark:bg-gray-800 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-              </svg>
-              Get Directions
-            </a>
-            <button
-              @click="showAddReviewModal = true"
-              class="flex items-center gap-2 px-6 py-3 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium border-2 border-gray-300 dark:border-gray-600 hover:border-[#246BFD] hover:text-[#246BFD] transition-all duration-300"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-              </svg>
-              Write Review
-            </button>
-          </div>
-        </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-12 lg:grid-cols-3">
         <!-- Main Content -->
-        <div class="lg:col-span-2">
-          <!-- Tabs -->
-          <div class="mb-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl tab-content-container">
-            <div class="border-b border-gray-200 dark:border-gray-700">
-              <nav class="flex overflow-x-auto -mb-px">
+        <div class="lg:col-span-2 space-y-12">
+          <!-- Information & Tabs -->
+          <div class="bg-white shadow-2xl dark:bg-gray-800 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-700/50">
+            <div class="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50 px-8">
+              <nav class="flex overflow-x-auto no-scrollbar gap-8">
                 <button
-                  v-for="tab in ['overview', 'medications', 'services', 'reviews']"
+                  v-for="tab in ['overview', 'services', 'branches', 'reviews']"
                   :key="tab"
+                  v-show="tab !== 'branches' || (pharmacy?.branchesCount || 0) > 0"
                   @click="switchTab(tab)"
-                  class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                  class="px-2 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 whitespace-nowrap relative group"
                   :class="[
                     activeTab === tab
                       ? 'border-[#246BFD] text-[#246BFD]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                      : 'border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   ]"
                 >
-                  {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                  <span class="relative z-10">{{ tab }}</span>
+                  <div v-if="activeTab === tab" class="absolute inset-0 bg-[#246BFD]/5 blur-xl -z-0"></div>
                 </button>
               </nav>
             </div>
-
-            <!-- Tab Content -->
-            <div class="p-6">
+            
+            <div class="p-10">
               <!-- Overview Tab -->
-              <div v-if="activeTab === 'overview'" class="space-y-6">
-                <div>
-                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">About</h3>
-                  <p class="text-gray-600 dark:text-gray-300">{{ pharmacy.description }}</p>
+              <div v-if="activeTab === 'overview'" class="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div class="space-y-6">
+                  <div class="flex items-center gap-4">
+                    <div class="w-1.5 h-8 bg-[#246BFD] rounded-full"></div>
+                    <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Facility Profile</h3>
+                  </div>
+                  <div class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-10 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700/50 leading-relaxed font-medium" v-html="pharmacy.description"></div>
                 </div>
 
-                <div>
-                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">Working Hours</h3>
-                  <div class="space-y-2">
-                    <div
-                      v-for="(hours, day) in pharmacy.workingHours"
-                      :key="day"
-                      class="flex justify-between text-gray-600 dark:text-gray-300"
-                    >
-                      <span class="capitalize">{{ day }}</span>
-                      <span>{{ hours }}</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div class="space-y-8">
+                    <div class="flex items-center gap-4">
+                      <div class="w-1.5 h-8 bg-green-500 rounded-full"></div>
+                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Operating Hours</h3>
+                    </div>
+                    <div class="space-y-3 bg-gray-50 dark:bg-gray-900/40 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700/50">
+                      <div
+                        v-for="(hours, day) in pharmacy.workingHours"
+                        :key="day"
+                        class="flex justify-between items-center group"
+                      >
+                        <span class="font-black text-xs uppercase tracking-widest text-gray-400 group-hover:text-[#246BFD] transition-colors">{{ day }}</span>
+                        <div class="h-px flex-1 mx-4 bg-gray-200 dark:bg-gray-700/50 border-dashed border-t"></div>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ hours }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">Contact Information</h3>
-                  <div class="space-y-2">
-                    <p class="text-gray-600 dark:text-gray-300">
-                      <span class="font-medium">Phone:</span> {{ pharmacy.phone }}
-                    </p>
-                    <p class="text-gray-600 dark:text-gray-300">
-                      <span class="font-medium">Email:</span> {{ pharmacy.email }}
-                    </p>
-                    <p class="text-gray-600 dark:text-gray-300">
-                      <span class="font-medium">Website:</span>
-                      <a
-                        :href="pharmacy.website"
-                        target="_blank"
-                        class="text-[#246BFD] hover:underline"
-                      >
-                        {{ pharmacy.website }}
+                  <div class="space-y-8">
+                     <div class="flex items-center gap-4">
+                      <div class="w-1.5 h-8 bg-orange-500 rounded-full"></div>
+                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Quick Connect</h3>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                      <a :href="`tel:${pharmacy.phone}`" class="flex items-center gap-4 p-6 rounded-[1.5rem] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                         <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-[#246BFD] flex items-center justify-center group-hover:bg-[#246BFD] group-hover:text-white transition-colors">
+                           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                         </div>
+                         <div>
+                           <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone Support</p>
+                           <p class="font-bold text-gray-900 dark:text-white">{{ pharmacy.phone }}</p>
+                         </div>
                       </a>
-                    </p>
+                      <a :href="`mailto:${pharmacy.email}`" class="flex items-center gap-4 p-6 rounded-[1.5rem] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                         <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                         </div>
+                         <div>
+                           <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Email Address</p>
+                           <p class="font-bold text-gray-900 dark:text-white truncate max-w-[150px] md:max-w-none">{{ pharmacy.email }}</p>
+                         </div>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Services Tab -->
-              <div v-if="activeTab === 'services'" class="space-y-6">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div v-if="activeTab === 'services'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div
+                  v-for="service in pharmacy.services"
+                  :key="service"
+                  class="group p-8 rounded-[2rem] bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
+                >
+                  <div class="flex items-center gap-6">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-[1.5rem] bg-white shadow-xl dark:bg-gray-800 text-[#246BFD] group-hover:bg-[#246BFD] group-hover:text-white transition-all duration-500">
+                      <svg v-if="service === 'delivery'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                      <svg v-else-if="service === '24/7'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                      <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    </div>
+                    <div>
+                      <h4 class="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">{{ SERVICE_LABELS[service] || service }}</h4>
+                      <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Available at this location</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Branches Tab -->
+              <div v-if="activeTab === 'branches'" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div v-if="pharmacy.branches && pharmacy.branches.length > 0" class="grid grid-cols-1 gap-8">
                   <div
-                    v-for="service in pharmacy.services"
-                    :key="service"
-                    class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700"
+                    v-for="branch in pharmacy.branches"
+                    :key="branch.id"
+                    class="p-10 rounded-[2.5rem] bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700/50 hover:shadow-2xl transition-all duration-500 overflow-hidden relative group"
                   >
-                    <h4 class="mb-1 font-medium text-gray-900 dark:text-white">{{ service }}</h4>
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-[#246BFD]/5 rounded-bl-full -z-0"></div>
+                    <div class="flex flex-col md:flex-row justify-between gap-10 relative z-10">
+                      <div class="space-y-6">
+                        <div class="flex items-center gap-4">
+                          <div class="w-14 h-14 rounded-2xl bg-[#246BFD]/10 text-[#246BFD] flex items-center justify-center">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 01-1 1H2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                          </div>
+                          <h4 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">{{ branch.branchName }}</h4>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div class="space-y-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD]">Location</p>
+                            <p class="font-bold text-gray-700 dark:text-gray-300 leading-snug">{{ branch.address }}</p>
+                            <p v-if="branch.digitalAddress" class="text-xs font-black text-gray-400 uppercase mt-2">{{ branch.digitalAddress }}</p>
+                          </div>
+                          <div class="space-y-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD]">Contact</p>
+                            <p class="font-bold text-gray-700 dark:text-gray-300 leading-snug">{{ branch.phone }}</p>
+                            <p v-if="branch.managerName" class="text-xs font-medium text-gray-400 mt-2">Mgr: {{ branch.managerName }}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex flex-col gap-3 min-w-[180px]">
+                        <a :href="`tel:${branch.phone}`" class="px-6 py-4 rounded-[1rem] bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest text-center shadow-lg shadow-blue-500/30 hover:shadow-[#246BFD]/50 hover:-translate-y-1 transition-all">Call Branch</a>
+                        <a v-if="branch.latitude && branch.longitude" :href="`https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`" target="_blank" class="px-6 py-4 rounded-[1rem] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-xs font-black uppercase tracking-widest text-center hover:bg-gray-100 transition-all border border-gray-100 dark:border-gray-700">Get Directions</a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Reviews Tab -->
-              <div v-if="activeTab === 'reviews'" class="space-y-6">
-                <div v-if="reviewsLoading" class="py-12 text-center">
-                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-                  <p class="mt-4 text-gray-600 dark:text-gray-300">Loading reviews...</p>
+              <div v-if="activeTab === 'reviews'" class="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div v-if="reviewsLoading" class="py-20 text-center">
+                  <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#246BFD] mx-auto"></div>
+                  <p class="mt-6 text-xs font-black uppercase tracking-widest text-gray-400">Syncing Testimonials...</p>
                 </div>
 
-                <div v-else>
-                  <div v-if="reviewStats" class="p-6 mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <div class="flex items-center gap-3 mb-2">
-                          <span class="text-5xl font-bold text-gray-900 dark:text-white">
-                            {{ (reviewStats?.averageRating || 0).toFixed(1) }}
+                <div v-else class="space-y-12">
+                   <!-- Statistics Summary -->
+                  <div v-if="reviewStats" class="p-10 bg-gray-50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-gray-700/50">
+                    <div class="flex flex-col gap-12 lg:flex-row lg:items-center">
+                      <div class="text-center lg:text-left">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD] mb-2">Aggregate Rating</p>
+                        <div class="flex items-center justify-center lg:justify-start gap-4">
+                          <span class="text-7xl font-black tracking-tighter text-gray-900 dark:text-white">
+                            {{ (reviewStats.averageRating || 0).toFixed(1) }}
                           </span>
-                          <div>
-                            <RatingStars :rating="reviewStats?.averageRating || 0" size="lg" />
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Based on {{ reviewStats?.totalReviews || 0 }} review{{ (reviewStats?.totalReviews || 0) !== 1 ? 's' : '' }}
+                          <div class="text-left">
+                            <RatingStars :rating="reviewStats.averageRating || 0" size="lg" />
+                            <p class="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                              From {{ reviewStats.totalReviews || 0 }} Experience{{ (reviewStats.totalReviews || 0) !== 1 ? 's' : '' }}
                             </p>
                           </div>
                         </div>
                       </div>
                       
-                      <div class="flex-1 max-w-md space-y-2">
-                        <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-2">
-                          <span class="text-sm text-gray-600 dark:text-gray-400 w-3">{{ rating }}</span>
-                          <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                          </svg>
-                          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              class="h-full bg-yellow-400"
-                              :style="{ width: `${reviewStats?.totalReviews ? (((reviewStats.ratingDistribution as any)?.[rating] || 0) / reviewStats.totalReviews) * 100 : 0}%` }"
-                            ></div>
+                      <div class="flex-1 space-y-3">
+                        <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-4">
+                          <span class="text-[10px] font-black text-gray-400 w-4">{{ rating }}</span>
+                          <div class="flex-1 h-2.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-400 rounded-full transition-all duration-1000" :style="{ width: `${reviewStats.totalReviews ? (((reviewStats.ratingDistribution as any)?.[rating] || 0) / reviewStats.totalReviews) * 100 : 0}%` }"></div>
                           </div>
-                          <span class="text-sm text-gray-600 dark:text-gray-400 w-8 text-right">
-                            {{ (reviewStats?.ratingDistribution as any)?.[rating] || 0 }}
-                          </span>
+                          <span class="text-[10px] font-black text-gray-400 w-8 text-right">{{ (reviewStats.ratingDistribution as any)?.[rating] || 0 }}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                      Customer Reviews
-                    </h3>
-                    <button
-                      @click="showAddReviewModal = true"
-                      class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all flex items-center gap-2"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                      </svg>
-                      Write a Review
-                    </button>
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                      <div class="w-1.5 h-8 bg-[#246BFD] rounded-full"></div>
+                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Verified Testimonials</h3>
+                    </div>
+                    <button @click="showAddReviewModal = true" class="px-8 py-4 bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 transition-all">Submit Review</button>
                   </div>
 
-                  <div v-if="reviews.length > 0" class="space-y-4">
+                  <div v-if="reviews.length > 0" class="grid grid-cols-1 gap-8">
                     <ReviewCard
                       v-for="review in reviews"
                       :key="review.id"
                       :review="review"
+                      class="!rounded-[2.5rem] !bg-white dark:!bg-gray-800 !p-10 !shadow-xl !border !border-gray-50 dark:!border-gray-700/50"
                       @helpful="handleReviewHelpful"
                       @not-helpful="handleReviewNotHelpful"
                     />
                   </div>
-
-                  <div v-else class="py-12 text-center">
-                    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                    </svg>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No reviews yet</h3>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">Be the first to review this pharmacy!</p>
-                    <button
-                      @click="showAddReviewModal = true"
-                      class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all"
-                    >
-                      Write the First Review
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Medications Tab -->
-              <div v-if="activeTab === 'medications'" class="space-y-6">
-                <!-- Search Bar -->
-                <div class="mb-6">
-                  <div class="relative">
-                              <input
-                      v-model="medicationSearch"
-                      type="text"
-                      placeholder="Search medications at this pharmacy..."
-                      class="w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                    />
-                    <svg class="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 right-4 top-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                  </div>
-                  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Showing {{ paginatedPrices.length }} of {{ filteredPrices.length }} medications
-                  </p>
-                </div>
-
-                <!-- Medications List -->
-                <div v-if="paginatedPrices.length > 0" class="space-y-4">
-                  <div
-                    v-for="price in paginatedPrices"
-                    :key="price.id"
-                    class="p-4 transition-all duration-300 bg-white border border-gray-100 dark:border-gray-700 dark:bg-gray-800 rounded-xl hover:shadow-md group"
-                  >
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                       <!-- Image (placeholder available) -->
-                       <div class="flex-shrink-0 w-16 h-16 overflow-hidden bg-white dark:bg-gray-700 rounded-lg">
-                         <LazyImage
-                           :src="price.drug_image || ''"
-                           :alt="price.name || ''"
-                           aspectRatio="square"
-                           className="w-full h-full object-cover"
-                         />
-                       </div>
-                       
-                       <div class="flex-1 min-w-0">
-                         <div class="flex items-center gap-2 mb-1">
-                            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors cursor-pointer" @click="viewMedicationDetails(price.drug_id || (price as any).medicationId)">
-                              {{ price.name }}
-                            </h4>
-                            <span v-if="(price as any).requires_prescription" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-300 rounded-full">
-                              Rx
-                            </span>
-                         </div>
-                         
-                         <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            <span v-if="(price as any).branch_name || (price as any).pharmacy_branch?.name" class="block text-xs font-medium text-[#246BFD] mb-0.5">
-                              {{ (price as any).branch_name || (price as any).pharmacy_branch?.name }}
-                            </span>
-                            {{ price.brand_name }} • {{ price.form_name }} • {{ price.strength }} {{ price.uom }}
-                         </p>
-                         
-                         <div class="flex items-center gap-2">
-                           <span 
-                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                             :class="price.in_stock ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'"
-                           >
-                             <span class="w-1.5 h-1.5 rounded-full" :class="price.in_stock ? 'bg-green-500' : 'bg-red-500'"></span>
-                             {{ price.in_stock ? 'In Stock' : 'Out of Stock' }}
-                           </span>
-                         </div>
-                       </div>
-                       
-                       <!-- Price & Action -->
-                       <div class="flex flex-row items-center justify-between gap-4 pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 sm:flex-col sm:items-end sm:justify-center sm:pt-0 sm:mt-0 sm:border-0">
-                          <div class="text-right">
-                            <div class="flex items-baseline gap-2 justify-end">
-                              <span class="text-lg font-bold text-gray-900 dark:text-white">
-                                GH₵ {{ (price.discount_price || price.price).toFixed(2) }}
-                              </span>
-                              <span v-if="price.discount_price && price.discount_price < price.price" class="text-xs text-gray-400 line-through">
-                                GH₵ {{ price.price.toFixed(2) }}
-                              </span>
-                            </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">per unit</p>
-                          </div>
-                          
-                          <div class="flex gap-2">
-                             <button 
-                               @click="viewMedicationDetails(price.drug_id || (price as any).medicationId)"
-                               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                             >
-                               Details
-                             </button>
-                             <button
-                               @click="addToCart(price)"
-                               :disabled="!price.in_stock"
-                               class="px-4 py-2 text-sm font-medium text-white bg-[#246BFD] rounded-lg hover:bg-[#1a5cff] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                             >
-                               Add
-                             </button>
-                          </div>
-                       </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Pagination -->
-                  <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <Pagination
-                      :current-page="currentPage"
-                      :total-pages="totalPages"
-                      :total-items="filteredPrices.length"
-                      :per-page="itemsPerPage"
-                      @update:page="handlePageChange"
-                      @update:per-page="(val) => itemsPerPage = val"
-                    />
-                  </div>
-                </div>
-
-                <!-- Empty State -->
-                <div v-else class="py-12 text-center">
-                  <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <p class="text-gray-600 dark:text-gray-300">No medications found matching your search.</p>
                 </div>
               </div>
             </div>
@@ -744,103 +678,288 @@ onMounted(() => {
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
-          <!-- Google Maps Card -->
-          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl overflow-hidden">
-            <div class="p-6">
-              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                </svg>
-                Location
-              </h3>
-              <div class="h-64 mb-4 overflow-hidden rounded-xl">
-                <PharmacyMap
-                  :location="pharmacy.location || { lat: 0, lng: 0 }"
-                  :pharmacy-name="pharmacy.name"
-                />
-              </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ pharmacy.address }}</p>
-            </div>
+        <div class="space-y-12">
+          <!-- Compliance & Trust -->
+          <div class="bg-gray-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+             <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
+             <h3 class="text-xl font-black uppercase tracking-widest mb-8 relative z-10">Facility Trust</h3>
+             
+             <div class="space-y-8 relative z-10">
+               <div v-if="pharmacy.licenseNumber" class="flex items-start gap-4">
+                 <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-green-400">
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                 </div>
+                 <div>
+                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">License Verified</p>
+                   <p class="font-bold tracking-tight">{{ pharmacy.licenseNumber }}</p>
+                 </div>
+               </div>
+
+               <div class="flex items-start gap-4">
+                 <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#246BFD]">
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 01-1 1H2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                 </div>
+                 <div>
+                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Branch Network</p>
+                   <p class="font-bold tracking-tight">{{ pharmacy.branchesCount || 1 }} Active Locations</p>
+                 </div>
+               </div>
+
+               <div class="pt-6 border-t border-white/10">
+                 <p class="text-[10px] font-medium text-gray-500 leading-relaxed uppercase tracking-widest">Ensuring you receive only genuine, certified medications through our verified pharmacy network.</p>
+               </div>
+             </div>
           </div>
 
-          <!-- Contact Card -->
-          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-            <div class="p-6">
-              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h3>
-              <div class="space-y-3">
-                <a 
-                  :href="`tel:${pharmacy.phone}`"
-                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
-                >
-                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-[#246BFD] group-hover:bg-[#246BFD] group-hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Phone</p>
-                    <p class="font-medium text-gray-900 dark:text-white">{{ pharmacy.phone }}</p>
-                  </div>
-                </a>
+          <!-- Help Widget -->
+          <div class="bg-[#246BFD] p-10 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/40">
+             <h3 class="text-xl font-black uppercase tracking-widest mb-4">Need Help?</h3>
+             <p class="text-sm font-medium mb-8 text-blue-100">Our support team is available to assist you with your orders and health inquiries.</p>
+             <button class="w-full py-4 bg-white text-[#246BFD] rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-50 transition-colors">Start Chat</button>
+          </div>
+        </div>
+      </div>
 
-                <a 
-                  :href="`mailto:${pharmacy.email}`"
-                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
-                >
-                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Email</p>
-                    <p class="font-medium text-gray-900 dark:text-white truncate">{{ pharmacy.email }}</p>
-                  </div>
-                </a>
+      <!-- Full Width Location Hub -->
+      <div class="mt-16 bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
+        <div class="grid grid-cols-1 lg:grid-cols-2">
+          <div class="p-12 lg:p-20 space-y-12">
+            <div class="space-y-6">
+              <div class="flex items-center gap-4">
+                <div class="w-1.5 h-10 bg-[#246BFD] rounded-full"></div>
+                <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 dark:text-white leading-none">Presence Hub</h2>
+              </div>
+              <p class="text-xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed">Visit us at our primary location or navigate through our extensive branch network across the region.</p>
+            </div>
 
+            <div class="space-y-8">
+              <div class="flex items-center gap-6 p-8 bg-gray-50 dark:bg-gray-900/40 rounded-[2rem] border border-gray-100 dark:border-gray-700/50">
+                 <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center text-[#246BFD]">
+                   <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                 </div>
+                 <div>
+                   <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD] mb-1">Primary Headquarters</p>
+                   <p class="text-xl font-black text-gray-900 dark:text-white tracking-tight">{{ pharmacy.address }}</p>
+                 </div>
+              </div>
+
+              <div class="flex gap-4">
                 <a 
-                  v-if="pharmacy.website"
-                  :href="pharmacy.website"
+                  :href="pharmacy.location ? `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}` : '#'" 
                   target="_blank"
-                  class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
+                  class="flex-1 py-5 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest text-center shadow-xl hover:-translate-y-1 transition-all"
                 >
-                  <div class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Website</p>
-                    <p class="font-medium text-gray-900 dark:text-white truncate">Visit Website</p>
-                  </div>
+                  Launch Navigation
                 </a>
               </div>
             </div>
           </div>
 
-          <!-- Working Hours Card -->
-          <div class="bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-            <div class="p-6">
-              <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Working Hours
-              </h3>
-              <div class="space-y-2">
-                <div
-                  v-for="(hours, day) in pharmacy.workingHours"
-                  :key="day"
-                  class="flex justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <span class="font-medium text-gray-700 dark:text-gray-300 capitalize">{{ day }}</span>
-                  <span class="text-gray-600 dark:text-gray-400">{{ hours }}</span>
-                </div>
+          <div class="h-[500px] lg:h-auto min-h-[400px] border-l border-gray-100 dark:border-gray-700/50">
+            <PharmacyMap
+              v-if="pharmacy.location && (pharmacy.location.lat || pharmacy.location.lng)"
+              :location="pharmacy.location"
+              :pharmacy-name="pharmacy.name"
+              class="w-full h-full"
+            />
+            <div v-else class="flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-900/40 gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center text-gray-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
               </div>
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400 text-center px-6">Location map not available for this pharmacy.</p>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Full Width Inventory Explorer -->
+      <div id="inventory" class="mt-16 space-y-12 pb-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div class="space-y-4">
+            <div class="flex items-center gap-4">
+              <div class="w-1.5 h-10 bg-[#246BFD] rounded-full shadow-[0_0_15px_rgba(36,107,253,0.5)]"></div>
+              <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 dark:text-white leading-none">Inventory Explorer</h2>
+            </div>
+            <p class="text-xl text-gray-500 font-medium tracking-tight">Browse and secure medications available at this facility.</p>
+          </div>
+
+          <!-- Search & Filter in Inventory -->
+          <div class="flex-1 max-w-xl group">
+            <div class="relative">
+              <input
+                v-model="medicationSearchQuery"
+                type="text"
+                placeholder="Search medications at this facility..."
+                class="w-full h-16 pl-14 pr-6 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-2xl focus:ring-4 focus:ring-[#246BFD]/20 text-lg font-bold transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              />
+              <svg class="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="loading" class="py-32 text-center">
+          <div class="w-20 h-20 border-t-4 border-b-4 border-[#246BFD] rounded-full animate-spin mx-auto shadow-2xl shadow-blue-500/20"></div>
+          <p class="mt-8 text-xs font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">Scanning Inventory Database...</p>
+        </div>
+
+        <div v-else>
+          <div v-if="filteredPrices.length > 0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div
+                v-for="price in paginatedPrices"
+                :key="price.id"
+                @click="viewMedicationDetails(price)"
+                class="group bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-50 dark:border-gray-700/50 hover:-translate-y-2 relative cursor-pointer"
+              >
+               <!-- Stock Badge Overlay -->
+               <div class="absolute top-4 left-4 z-10">
+                 <div 
+                   class="px-3 py-1.5 backdrop-blur-md rounded-xl shadow-xl border flex items-center gap-2"
+                   :class="price.in_stock ? 'bg-green-500/90 border-white/20' : 'bg-red-500/90 border-white/20'"
+                 >
+                    <span class="w-2 h-2 rounded-full animate-pulse bg-white"></span>
+                    <span class="text-[10px] font-black text-white uppercase tracking-widest">
+                      {{ price.in_stock ? 'In Stock' : 'Restocking' }}
+                    </span>
+                 </div>
+               </div>
+
+               <!-- Image Section -->
+               <div class="relative h-64 overflow-hidden bg-gray-100 dark:bg-gray-900">
+                 <LazyImage
+                   :src="price.image || price.medication_image || price.drug_image || '/placeholder-med.png'"
+                   :alt="price.name || ''"
+                   aspectRatio="square"
+                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                 />
+                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+               </div>
+
+               <!-- Content Section -->
+               <div class="p-8 space-y-6">
+                 <div>
+                    <div class="flex items-center gap-2 mb-2">
+                       <h4 class="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">
+                         {{ price.name }}
+                       </h4>
+                       <span v-if="price.requires_prescription" class="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-[#246BFD] bg-blue-50 dark:bg-blue-900/30 rounded-md border border-[#246BFD]/20">Rx</span>
+                    </div>
+                 </div>
+
+                 <!-- Pricing & Stock Hub -->
+                 <div class="pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Price per unit</span>
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-black text-[#246BFD] tracking-tighter">
+                          {{ formatCurrency(price.discount_price || price.price) }}
+                        </span>
+                        <span v-if="price.discount_price" class="text-xs font-bold text-gray-400 line-through">
+                          {{ formatCurrency(price.price) }}
+                        </span>
+                      </div>
+                      
+                      <!-- Inline Stock Indicator -->
+                      <span 
+                        class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border"
+                        :class="price.in_stock ? 'bg-green-50 border-green-100 text-green-700 dark:bg-green-900/10 dark:border-green-800' : 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/10 dark:border-red-800'"
+                      >
+                        {{ price.in_stock ? (price.stock_quantity !== undefined ? `Stock: ${price.stock_quantity}` : 'In Stock') : 'Out of Stock' }}
+                      </span>
+                    </div>
+                 </div>
+
+                 <!-- Buy Control -->
+                 <div class="pt-6 border-t border-gray-50 dark:border-gray-700/50 flex flex-col gap-3">
+                    <div class="flex gap-3">
+                      <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl flex items-center px-1 h-12 w-32 border border-gray-100 dark:border-gray-700">
+                        <button 
+                          @click="setCustomQuantity(price.id, Math.max(1, (customQuantities[price.id] || 1) - 1))"
+                          class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                        </button>
+                        <input 
+                          type="number"
+                          :value="customQuantities[price.id] || 1"
+                          @input="setCustomQuantity(price.id, Math.max(1, parseInt(($event.target as HTMLInputElement).value) || 1))"
+                          class="w-full bg-transparent text-center text-xs font-black text-gray-900 dark:text-white border-none focus:ring-0 p-0"
+                        />
+                        <button 
+                          @click="setCustomQuantity(price.id, (customQuantities[price.id] || 1) + 1)"
+                          class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                        </button>
+                      </div>
+                      
+                      <button 
+                        @click="addToCart(price)"
+                        :disabled="!price.in_stock || (price.stock_quantity !== undefined && (customQuantities[price.id] || 1) > price.stock_quantity)"
+                        class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-30 disabled:translate-y-0 flex items-center justify-center gap-2"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        Buy
+                      </button>
+                    </div>
+
+                    <!-- Stock Error Message -->
+                    <p 
+                      v-if="price.stock_quantity !== undefined && (customQuantities[price.id] || 1) > price.stock_quantity"
+                      class="text-[9px] font-black text-red-500 uppercase tracking-widest animate-pulse"
+                    >
+                      Maximum available: {{ price.stock_quantity }} units
+                    </p>
+                 </div>
+                 </div>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-16 pt-12 border-t border-gray-100 dark:border-gray-700/50">
+              <Pagination
+                :current-page="currentPage"
+                :total-pages="totalPages"
+                :total-items="filteredPrices.length"
+                :per-page="itemsPerPage"
+                @update:page="handlePageChange"
+                @update:per-page="(val) => itemsPerPage = val"
+              />
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl border border-gray-50 dark:border-gray-700/50">
+            <div class="w-24 h-24 bg-[#246BFD]/5 rounded-full flex items-center justify-center mx-auto mb-8">
+              <svg class="w-12 h-12 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+            </div>
+            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-2">No Matching Assets</h3>
+            <p class="text-gray-500 font-medium font-inter uppercase tracking-widest text-[10px]">Adjust your search query to explore other inventory items.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Not Found State -->
+    <div v-else class="flex flex-col items-center justify-center min-h-[60vh]">
+      <div class="p-12 text-center bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-gray-700/50 max-w-lg mx-auto">
+        <div class="w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-8">
+          <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-4">Pharmacy Not Found</h2>
+        <p class="text-gray-500 dark:text-gray-400 font-medium mb-8 leading-relaxed">The pharmacy profile you're looking for might have been moved or removed from our network.</p>
+        <button 
+          @click="router.push({ name: 'pharmacies' })"
+          class="inline-flex items-center gap-2 px-8 py-4 bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 transition-all"
+        >
+          Explore All Pharmacies
+        </button>
       </div>
     </div>
 

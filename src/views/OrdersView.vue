@@ -5,6 +5,7 @@ import type { Order } from '@/models/Order';
 import { orderService } from '@/services/orderService';
 import { paymentService } from '@/services/paymentService';
 import LazyImage from '@/components/LazyImage.vue';
+import { formatCurrency } from '@/utils/currency';
 
 const router = useRouter();
 const orders = ref<Order[]>([]);
@@ -255,7 +256,7 @@ onMounted(() => {
                     </div>
                     <div class="text-right">
                       <p class="text-sm text-gray-500">
-                        {{ item.quantity }} x GHS {{ item.price.toFixed(2) }}
+                        {{ item.quantity }} x {{ formatCurrency(item.price) }}
                       </p>
                     </div>
                   </div>
@@ -297,7 +298,7 @@ onMounted(() => {
 
             <div class="flex flex-col items-end gap-2 md:text-right">
               <div>
-                <p class="text-2xl font-bold text-[#246BFD]">GHS {{ order.total.toFixed(2) }}</p>
+                <p class="text-2xl font-bold text-[#246BFD]">{{ formatCurrency(order.total) }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</p>
               </div>
               <div class="flex gap-2">

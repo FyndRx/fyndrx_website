@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Transaction } from '@/services/paymentService';
 import { paymentService } from '@/services/paymentService';
+import { formatCurrency } from '@/utils/currency';
 
 const router = useRouter();
 const transactions = ref<Transaction[]>([]);
@@ -92,7 +93,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Total Paid</p>
-              <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">GHS {{ totalPaid.toFixed(2) }}</p>
+              <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ formatCurrency(totalPaid) }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20">
               <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +107,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p class="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">GHS {{ totalPending.toFixed(2) }}</p>
+              <p class="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ formatCurrency(totalPending) }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
               <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +253,7 @@ onMounted(() => {
 
             <div class="flex flex-col items-end gap-3 md:text-right">
               <div>
-                <p class="text-2xl font-bold text-[#246BFD]">{{ transaction.currency }} {{ transaction.amount.toFixed(2) }}</p>
+                <p class="text-2xl font-bold text-[#246BFD]">{{ formatCurrency(transaction.amount) }}</p>
                 <p v-if="transaction.paid_at" class="text-xs text-gray-500 dark:text-gray-400">
                   Paid {{ formatDate(transaction.paid_at) }}
                 </p>

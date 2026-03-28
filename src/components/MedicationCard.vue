@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import LazyImage from '@/components/LazyImage.vue';
 import RatingStars from '@/components/RatingStars.vue';
 import { reviewService } from '@/services/reviewService';
+import { formatCurrency } from '@/utils/currency';
 
 interface Props {
   medication: {
@@ -158,10 +159,10 @@ export default {
       <!-- Price -->
       <div v-if="medication.price && medication.discount_price" class="flex items-center mb-4 space-x-2">
         <span class="text-2xl font-bold text-[#246BFD]">
-          Ghc{{ medication.discount_price.toFixed(2) }}
+          {{ formatCurrency(medication.discount_price) }}
         </span>
         <span class="text-lg text-gray-500 line-through">
-          Ghc{{ medication.price.toFixed(2) }}
+          {{ formatCurrency(medication.price) }}
         </span>
       </div>
 
@@ -235,10 +236,10 @@ export default {
       <div class="flex justify-between items-center mb-4">
         <div v-if="medication.price && medication.discount_price">
           <span class="text-lg font-medium text-gray-900 dark:text-white">
-            Ghc{{ medication.discount_price.toFixed(2) }}
+            {{ formatCurrency(medication.discount_price) }}
           </span>
           <span class="ml-2 text-sm text-gray-500 line-through">
-            Ghc{{ medication.price.toFixed(2) }}
+            {{ formatCurrency(medication.price) }}
           </span>
         </div>
         <button 

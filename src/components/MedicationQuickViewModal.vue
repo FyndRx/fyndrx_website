@@ -5,6 +5,7 @@ import { medicationService } from '@/services/medicationService';
 import type { Medication } from '@/models/Medication';
 import LazyImage from './LazyImage.vue';
 import FavoriteButton from './FavoriteButton.vue';
+import { formatCurrency } from '@/utils/currency';
 
 interface Props {
   show: boolean;
@@ -160,10 +161,10 @@ onMounted(() => {
 
                   <div v-if="medication.price" class="flex items-center gap-2">
                     <span class="text-2xl font-bold text-[#246BFD]">
-                      Ghc{{ (medication.discount_price || medication.price).toFixed(2) }}
+                      {{ formatCurrency(medication.discount_price || medication.price) }}
                     </span>
                     <span v-if="medication.discount_price" class="text-lg text-gray-400 line-through">
-                      Ghc{{ medication.price.toFixed(2) }}
+                      {{ formatCurrency(medication.price) }}
                     </span>
                     <span 
                       v-if="medication.discount_price" 

@@ -15,7 +15,6 @@ import MedicationQuickViewModal from '@/components/MedicationQuickViewModal.vue'
 import MedicationComparison from '@/components/MedicationComparison.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import Pagination from '@/components/Pagination.vue';
-import { getImageUrl } from '@/utils/imageUrl';
 
 useSeoMeta({
   title: 'Browse Medications | FyndRx',

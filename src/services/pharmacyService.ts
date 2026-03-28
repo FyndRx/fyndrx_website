@@ -142,6 +142,7 @@ export const pharmacyService = {
       lng?: number;
       page?: number;
       per_page?: number;
+      services?: string[];
     }
   ): Promise<PharmacyPricesByDrugApiResponse['data']> {
     let url = `/prices`; // NEW ENDPOINT
@@ -153,7 +154,11 @@ export const pharmacyService = {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value.toString());
+          if (Array.isArray(value)) {
+            value.forEach(v => params.append(`${key}[]`, v.toString()));
+          } else {
+            params.append(key, value.toString());
+          }
         }
       });
     }

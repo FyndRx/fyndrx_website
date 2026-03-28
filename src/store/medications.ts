@@ -21,7 +21,7 @@ export const useMedicationsStore = defineStore('medications', () => {
   const liveSearchMeta = ref<PaginationMeta | null>(null);
   const pagination = reactive({
     page: 1,
-    perPage: 15,
+    perPage: 12,
     total: 0,
     lastPage: 1,
   });

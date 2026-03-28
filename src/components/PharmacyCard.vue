@@ -30,6 +30,16 @@ const pharmacyRating = computed(() => rating.value);
 onMounted(() => {
   loadRating();
 });
+
+const SERVICE_LABELS: Record<string, string> = {
+  consultation: 'Consultation',
+  delivery: 'Medicine Delivery',
+  maternal: 'Maternal Care',
+  vaccination: 'Vaccination',
+  diagnostic: 'Diagnostic Services',
+  insurance: 'Insurance Accepted',
+  '24/7': '24/7 Service',
+};
 </script>
 
 <script lang="ts">
@@ -49,13 +59,19 @@ export default {
         className="w-full h-full object-cover"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-      <div class="absolute top-4 right-4">
+      <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
         <span
           class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-md backdrop-blur-sm"
           :class="pharmacy.isOpen ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
         >
           <span class="w-2 h-2 mr-1.5 rounded-full animate-pulse bg-white"></span>
           {{ pharmacy.isOpen ? 'Open' : 'Closed' }}
+        </span>
+        <span
+          v-if="pharmacy.services.includes('24/7')"
+          class="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-md bg-amber-500 text-white"
+        >
+          24/7
         </span>
       </div>
     </div>
@@ -65,46 +81,46 @@ export default {
       <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">
         {{ pharmacy.name }}
       </h3>
-      <p class="mb-4 text-gray-600 dark:text-gray-300">{{ pharmacy.address }}</p>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300 line-clamp-2 min-h-[40px]">{{ pharmacy.address }}</p>
       
       <div class="flex items-center mb-4 space-x-4">
         <div class="flex items-center gap-1">
           <RatingStars 
-            v-if="pharmacyRating.count > 0"
-            :rating="pharmacyRating.average" 
-            :count="pharmacyRating.count"
+            v-if="pharmacyRating.count > 0 || pharmacy.totalReviews > 0"
+            :rating="pharmacyRating.average || pharmacy.rating" 
+            :count="pharmacyRating.count || pharmacy.totalReviews"
             :show-count="true"
             size="sm"
           />
           <span v-else class="text-sm text-gray-500 dark:text-gray-400">No reviews yet</span>
         </div>
-        <div class="flex items-center">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="pharmacy.distance" class="flex items-center">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
-          <span class="ml-1 text-gray-600 dark:text-gray-300">
+          <span class="ml-1 text-sm text-gray-600 dark:text-gray-300">
             {{ pharmacy.distance }}
           </span>
         </div>
       </div>
 
       <!-- Services -->
-      <div class="mb-4">
-        <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Services</p>
-        <div class="flex flex-wrap gap-2">
+      <div class="mb-6">
+        <p class="mb-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em]">Available Services</p>
+        <div class="flex flex-wrap gap-1.5">
           <span
-            v-for="service in pharmacy.services.slice(0, 3)"
+            v-for="service in pharmacy.services.slice(0, 4)"
             :key="service"
-            class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-[#246BFD] bg-[#246BFD]/10 rounded-full dark:text-[#5089FF] dark:bg-[#246BFD]/20"
+            class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-[#246BFD] bg-[#246BFD]/5 border border-[#246BFD]/10 rounded-md dark:text-[#5089FF] dark:bg-[#246BFD]/10 dark:border-[#246BFD]/20"
           >
-            {{ service }}
+            {{ SERVICE_LABELS[service] || service }}
           </span>
           <span
-            v-if="pharmacy.services.length > 3"
-            class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full dark:text-gray-400 dark:bg-gray-700"
+            v-if="pharmacy.services.length > 4"
+            class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-md dark:text-gray-400 dark:bg-gray-800 dark:border-gray-700"
           >
-            +{{ pharmacy.services.length - 3 }} more
+            +{{ pharmacy.services.length - 4 }} more
           </span>
         </div>
       </div>

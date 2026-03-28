@@ -7,6 +7,7 @@ import { paymentService, type Transaction } from '@/services/paymentService';
 import { orderService } from '@/services/orderService';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { formatCurrency } from '@/utils/currency';
 
 import fyndRxLogo from '@/assets/logo/logo_blue_orange.png';
 
@@ -307,8 +308,8 @@ onMounted(() => {
                         <tr v-for="(item, index) in receiptData.items" :key="index">
                            <td class="py-4 px-4 text-sm font-medium text-gray-900">{{ item.name }}</td>
                            <td class="py-4 px-4 text-sm text-gray-600 text-center">{{ item.quantity }}</td>
-                           <td class="py-4 px-4 text-sm text-gray-600 text-right">GHS {{ item.unitPrice.toFixed(2) }}</td>
-                           <td class="py-4 px-4 text-sm font-bold text-gray-900 text-right">GHS {{ item.total.toFixed(2) }}</td>
+                           <td class="py-4 px-4 text-sm text-gray-600 text-right">{{ formatCurrency(item.unitPrice) }}</td>
+                           <td class="py-4 px-4 text-sm font-bold text-gray-900 text-right">{{ formatCurrency(item.total) }}</td>
                         </tr>
                      </tbody>
                   </table>
@@ -320,16 +321,16 @@ onMounted(() => {
                <div class="w-full md:w-1/2 lg:w-5/12 space-y-3">
                   <div class="flex justify-between text-sm text-gray-600">
                      <span>Subtotal</span>
-                     <span>GHS {{ receiptData.subtotal.toFixed(2) }}</span>
+                     <span>{{ formatCurrency(receiptData.subtotal) }}</span>
                   </div>
                   <div class="flex justify-between text-sm text-gray-600">
                      <span>Delivery Fee</span>
-                     <span>GHS {{ receiptData.deliveryFee.toFixed(2) }}</span>
+                     <span>{{ formatCurrency(receiptData.deliveryFee) }}</span>
                   </div>
                   <div class="my-3 border-b-2 border-dashed border-gray-200"></div>
                   <div class="flex justify-between items-end">
                      <span class="text-base font-bold text-gray-900">Total Amount</span>
-                     <span class="text-2xl font-extrabold text-[#246BFD]">GHS {{ receiptData.total.toFixed(2) }}</span>
+                     <span class="text-2xl font-extrabold text-[#246BFD]">{{ formatCurrency(receiptData.total) }}</span>
                   </div>
                   
                   <div class="mt-6 p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
@@ -337,7 +338,7 @@ onMounted(() => {
                         <div class="w-2 h-2 rounded-full bg-green-500"></div>
                         <span class="text-xs font-bold text-gray-600 uppercase">Paid via {{ receiptData.paymentMethod.includes('Paystack') ? 'Paystack' : 'Pharmacy' }}</span>
                      </div>
-                     <span class="font-mono text-sm font-bold text-gray-900">GHS {{ receiptData.amountPaid.toFixed(2) }}</span>
+                     <span class="font-mono text-sm font-bold text-gray-900">{{ formatCurrency(receiptData.amountPaid) }}</span>
                   </div>
                </div>
             </div>
