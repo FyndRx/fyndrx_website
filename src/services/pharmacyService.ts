@@ -281,7 +281,7 @@ export const pharmacyService = {
 
     // 1. Process exact match into hierarchy
     prices.forEach(price => {
-      const brandId = price.drug_brand_id || (price as any).brand_id;
+      const brandId = price.brand_id;
       if (!brandId) return;
 
       if (!hierarchyBrands.has(brandId)) {
@@ -293,7 +293,7 @@ export const pharmacyService = {
       }
       const brandNode = hierarchyBrands.get(brandId)!;
 
-      const formId = price.drug_brand_form_id || (price as any).form_id;
+      const formId = price.form_id;
       if (!formId) return;
 
       if (!brandNode.forms.has(formId)) {
@@ -305,8 +305,8 @@ export const pharmacyService = {
       }
       const formNode = brandNode.forms.get(formId)!;
 
-      const strengthId = price.dosage_id || (price as any).strength_id;
-      const uomId = price.strength_uom_id || (price as any).uom_id;
+      const strengthId = price.strength_id;
+      const uomId = price.uom_id;
 
       const existingVariant = formNode.variants.find(v =>
         v.strengthId === strengthId &&
