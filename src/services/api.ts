@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { handleApiError, isAuthError, isNetworkError } from '@/utils/errorHandler';
+import { handleApiError, isAuthError, isNetworkError, isRateLimitError, isMaintenanceError } from '@/utils/errorHandler';
 import serverConfig from '@/config/server';
 
 class ApiService {
@@ -63,6 +63,13 @@ class ApiService {
           // This prevents hard reload loops
           window.dispatchEvent(new CustomEvent('auth:unauthorized'));
         }
+        if (isRateLimitError(error)) {
+          const retryAfter = error.response?.headers?.['retry-after'];
+          window.dispatchEvent(new CustomEvent('api:rate-limit', { detail: { retryAfter } }));
+        }
+        if (isMaintenanceError(error)) {
+          window.dispatchEvent(new CustomEvent('api:maintenance'));
+        }
         return Promise.reject(handleApiError(error));
       }
     );
@@ -71,6 +78,13 @@ class ApiService {
     this.api.interceptors.response.use(
       response => response,
       error => {
+        if (isRateLimitError(error)) {
+          const retryAfter = error.response?.headers?.['retry-after'];
+          window.dispatchEvent(new CustomEvent('api:rate-limit', { detail: { retryAfter } }));
+        }
+        if (isMaintenanceError(error)) {
+          window.dispatchEvent(new CustomEvent('api:maintenance'));
+        }
         return Promise.reject(handleApiError(error));
       }
     );

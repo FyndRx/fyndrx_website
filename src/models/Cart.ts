@@ -22,6 +22,7 @@ export interface CartItem {
   inStock: boolean;
   requiresPrescription?: boolean;
   pharmacyDrugPriceId?: number; // Added for API compatibility
+  acceptedPaymentMethods?: ('platform' | 'direct')[];
 }
 
 export interface Cart {
@@ -39,6 +40,7 @@ export interface CartPharmacyGroup {
   items: CartItem[];
   subtotal: number;
   paymentMethod?: 'platform' | 'direct';
+  acceptedPaymentMethods?: ('platform' | 'direct')[];
 }
 
 export interface CheckoutPaymentOption {

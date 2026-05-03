@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '@/store/cart';
+import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/composables/useNotification';
 import { cartService } from '@/services/cartService';
 import { orderService } from '@/services/orderService';
@@ -13,6 +14,7 @@ import LazyImage from '@/components/LazyImage.vue';
 const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 const notification = useNotification();
 
 const selectedPharmacyIds = ref<number[]>([]);
@@ -92,9 +94,21 @@ onMounted(async () => {
     );
 
     pharmaciesCheckout.value.forEach(pharmacy => {
-      paymentMethods.value.set(pharmacy.pharmacyId, 'platform');
+      // Set default payment method based on what is available
+      const accepted = pharmacy.acceptedPaymentMethods || ['platform', 'direct'];
+      if (accepted.includes('platform')) {
+        paymentMethods.value.set(pharmacy.pharmacyId, 'platform');
+      } else if (accepted.includes('direct')) {
+        paymentMethods.value.set(pharmacy.pharmacyId, 'direct');
+      }
       deliveryMethods.value.set(pharmacy.pharmacyId, 'pickup'); // Default to pickup
     });
+
+    // Pre-populate user details
+    if (authStore.user) {
+      if (!phoneNumber.value) phoneNumber.value = authStore.user.phone_number || '';
+      if (!deliveryAddress.value) deliveryAddress.value = authStore.user.address || '';
+    }
   } else {
     router.push({ name: 'cart' });
   }
@@ -274,9 +288,13 @@ const placeAllOrders = async () => {
     showSuccess.value = true;
     notification.success('Orders Placed Successfully!', `Successfully created ${orders.length} orders.`);
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error placing orders:', err);
-    error.value = 'Failed to place orders. Please try again.';
+    if (err.status === 422) {
+      error.value = err.message || 'One or more of your selected payment methods are not supported by the pharmacy. Please select a valid option.';
+    } else {
+      error.value = err.message || 'Failed to place orders. Please try again.';
+    }
   } finally {
     loading.value = false;
   }
@@ -286,9 +304,13 @@ const payNow = async (orderId: string) => {
   try {
     const paymentResponse = await paymentService.initializePayment(orderId);
     window.location.href = paymentResponse.authorization_url;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Payment initialization failed:', err);
-    notification.error('Payment Error', 'Failed to initialize payment. Please try again.');
+    if (err.status === 403) {
+      notification.error('Payment Disabled', 'Online payment is currently disabled for this pharmacy. Please contact support or switch your payment method.');
+    } else {
+      notification.error('Payment Error', err.message || 'Failed to initialize payment. Please try again.');
+    }
   }
 };
 </script>
@@ -378,10 +400,10 @@ const payNow = async (orderId: string) => {
   
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2 space-y-6">
-            <!-- Contact Info -->
+            <!-- Contact & Delivery Info -->
             <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-              <h2 class="mb-6 text-xl font-medium text-gray-900 dark:text-white">Contact Information</h2>
-              <div class="space-y-4">
+              <h2 class="mb-6 text-xl font-medium text-gray-900 dark:text-white">Contact & Delivery</h2>
+              <div class="space-y-6">
                 <div>
                   <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                     Phone Number <span class="text-red-600">*</span>
@@ -394,19 +416,60 @@ const payNow = async (orderId: string) => {
                     required
                   />
                 </div>
+
+                <div class="space-y-4">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Delivery Options per Pharmacy
+                  </label>
+                  <div class="grid grid-cols-1 gap-4">
+                    <div v-for="pharmacy in pharmaciesCheckout" :key="`del-${pharmacy.pharmacyId}`" 
+                      class="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ pharmacy.pharmacyName }}</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <button
+                          @click="deliveryMethods.set(pharmacy.pharmacyId, 'pickup')"
+                          :class="[
+                            'p-2 rounded-lg border-2 text-xs font-medium transition-all flex items-center justify-center gap-2',
+                            deliveryMethods.get(pharmacy.pharmacyId) === 'pickup'
+                              ? 'border-[#246BFD] bg-[#246BFD]/5 text-[#246BFD]'
+                              : 'border-gray-200 dark:border-gray-600 text-gray-500'
+                          ]"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                          Pickup
+                        </button>
+                        <button
+                          @click="deliveryMethods.set(pharmacy.pharmacyId, 'delivery')"
+                          :class="[
+                            'p-2 rounded-lg border-2 text-xs font-medium transition-all flex items-center justify-center gap-2',
+                            deliveryMethods.get(pharmacy.pharmacyId) === 'delivery'
+                              ? 'border-[#246BFD] bg-[#246BFD]/5 text-[#246BFD]'
+                              : 'border-gray-200 dark:border-gray-600 text-gray-500'
+                          ]"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                          Delivery
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="showDeliveryAddressInput">
+                  <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Delivery Address <span class="text-red-600">*</span>
+                  </label>
+                  <textarea
+                    v-model="deliveryAddress"
+                    rows="3"
+                    placeholder="Enter your full delivery address"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]"
+                    required
+                  ></textarea>
+                </div>
               </div>
-            </div>
-  
-            <!-- Delivery Address (Global) -->
-            <div v-if="showDeliveryAddressInput" class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
-              <h2 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Delivery Address</h2>
-              <textarea
-                v-model="deliveryAddress"
-                rows="3"
-                placeholder="Enter your full delivery address"
-                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]"
-                required
-              ></textarea>
             </div>
   
             <!-- Pharmacies List -->
@@ -481,87 +544,56 @@ const payNow = async (orderId: string) => {
                 <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Payment Method
                 </label>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    @click="paymentMethods.set(pharmacy.pharmacyId, 'platform')"
-                    :class="[
-                      'p-4 rounded-xl border-2 transition-all text-left',
-                      paymentMethods.get(pharmacy.pharmacyId) === 'platform'
-                        ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    ]"
-                  >
-                    <div class="flex items-start space-x-3">
-                       <div class="flex-1">
-                        <p class="font-medium text-gray-900 dark:text-white">Pay Online</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Secure payment through our platform</p>
+                
+                <template v-if="(pharmacy.acceptedPaymentMethods || ['platform', 'direct']).length > 1">
+                  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      v-if="!pharmacy.acceptedPaymentMethods || pharmacy.acceptedPaymentMethods.includes('platform')"
+                      @click="paymentMethods.set(pharmacy.pharmacyId, 'platform')"
+                      :class="[
+                        'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
+                        paymentMethods.get(pharmacy.pharmacyId) === 'platform'
+                          ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      ]"
+                    >
+                      <div class="flex items-start space-x-3">
+                         <div class="flex-1">
+                          <p class="font-medium text-gray-900 dark:text-white">Pay Online</p>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">Secure payment through our platform</p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-  
-                  <button
-                    @click="paymentMethods.set(pharmacy.pharmacyId, 'direct')"
-                    :class="[
-                      'p-4 rounded-xl border-2 transition-all text-left',
-                      paymentMethods.get(pharmacy.pharmacyId) === 'direct'
-                        ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    ]"
-                  >
-                    <div class="flex items-start space-x-3">
-                       <div class="flex-1">
-                        <p class="font-medium text-gray-900 dark:text-white">Pay at Pharmacy</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Pay when you {{ deliveryMethods.get(pharmacy.pharmacyId) === 'pickup' ? 'pickup' : 'receive' }} your order</p>
+                    </button>
+    
+                    <button
+                      v-if="!pharmacy.acceptedPaymentMethods || pharmacy.acceptedPaymentMethods.includes('direct')"
+                      @click="paymentMethods.set(pharmacy.pharmacyId, 'direct')"
+                      :class="[
+                        'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
+                        paymentMethods.get(pharmacy.pharmacyId) === 'direct'
+                          ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      ]"
+                    >
+                      <div class="flex items-start space-x-3">
+                         <div class="flex-1">
+                          <p class="font-medium text-gray-900 dark:text-white">Pay at Pharmacy</p>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">Pay when you {{ deliveryMethods.get(pharmacy.pharmacyId) === 'pickup' ? 'pickup' : 'receive' }} your order</p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Delivery Method For This Pharmacy -->
-              <div class="mb-6">
-                <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Delivery Options
-                </label>
-                <div class="grid grid-cols-2 gap-4">
-                  <button
-                    @click="deliveryMethods.set(pharmacy.pharmacyId, 'pickup')"
-                    :class="[
-                      'p-3 rounded-xl border-2 transition-all',
-                      deliveryMethods.get(pharmacy.pharmacyId) === 'pickup'
-                        ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    ]"
-                  >
-                    <div class="flex flex-col items-center">
-                      <svg class="w-6 h-6 mb-1" :class="deliveryMethods.get(pharmacy.pharmacyId) === 'pickup' ? 'text-[#246BFD]' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                      </svg>
-                      <span class="text-sm font-medium" :class="deliveryMethods.get(pharmacy.pharmacyId) === 'pickup' ? 'text-[#246BFD]' : 'text-gray-600 dark:text-gray-300'">
-                        Pickup (Free)
-                      </span>
-                    </div>
-                  </button>
-
-                  <button
-                    @click="deliveryMethods.set(pharmacy.pharmacyId, 'delivery')"
-                    :class="[
-                      'p-3 rounded-xl border-2 transition-all',
-                      deliveryMethods.get(pharmacy.pharmacyId) === 'delivery'
-                        ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                    ]"
-                  >
-                    <div class="flex flex-col items-center">
-                      <svg class="w-6 h-6 mb-1" :class="deliveryMethods.get(pharmacy.pharmacyId) === 'delivery' ? 'text-[#246BFD]' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
-                      </svg>
-                      <span class="text-sm font-medium" :class="deliveryMethods.get(pharmacy.pharmacyId) === 'delivery' ? 'text-[#246BFD]' : 'text-gray-600 dark:text-gray-300'">
-                        Delivery (+{{ formatCurrency(5) }})
-                      </span>
-                    </div>
-                  </button>
-                </div>
+                    </button>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700">
+                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                      <strong>Payment Note:</strong> This pharmacy only accepts 
+                      <span class="font-bold text-[#246BFD]">
+                        {{ (pharmacy.acceptedPaymentMethods || [])[0] === 'platform' ? 'Online Payment' : 'Payment at Pharmacy' }}
+                      </span>.
+                    </p>
+                  </div>
+                </template>
               </div>
   
               <div v-if="needsPrescription(pharmacy.pharmacyId)" class="mb-6 p-5 rounded-xl border-2 transition-all"

@@ -35,6 +35,42 @@
     ],
     "item": [
         {
+            "name": "\u2699\ufe0f Platform Settings & Status",
+            "description": "Endpoints for retrieving global platform configuration, such as maintenance mode status, application versions, and global delivery fees. \n\n**Note**: These endpoints are heavily cached and highly available, making them safe to poll on application boot.",
+            "item": [
+                {
+                    "name": "Get Platform Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/settings/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "settings",
+                                "status"
+                            ]
+                        },
+                        "description": "### \ud83c\udf10 Platform Status Check\n\nRetrieves the current public configuration for the FyndRX platform. This includes critical flags like `maintenance_mode`.\n\n**Rate Limit**: `120 requests/minute` (api:public throttle group).\n\n#### \ud83d\udca1 Pro-tip for Frontend:\nCall this endpoint when the app boots up. If `maintenance_mode` is `true`, immediately overlay a maintenance screen using the provided `maintenance_message` and block further API calls to save bandwidth."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
             "name": "Authentication",
             "description": "Endpoints for user registration, authentication, and security management.",
             "item": [
@@ -450,7 +486,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🔍 Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Category Support\nSearching by category name (e.g., \"Antibiotics\") will now return products in that category in the `results.products` array. Each product also includes its associated categories.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
+                        "description": "# \ud83d\udd0d Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Category Support\nSearching by category name (e.g., \"Antibiotics\") will now return products in that category in the `results.products` array. Each product also includes its associated categories.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
                     }
                 },
                 {
@@ -478,7 +514,7 @@
                                 "track"
                             ]
                         },
-                        "description": "# 📊 Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
+                        "description": "# \ud83d\udcca Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
                     }
                 }
             ]
@@ -813,6 +849,16 @@
                                     "key": "sort",
                                     "value": "price",
                                     "description": "Sort by price or distance"
+                                },
+                                {
+                                    "key": "lat",
+                                    "value": "",
+                                    "description": "Latitude for distance calculation"
+                                },
+                                {
+                                    "key": "lng",
+                                    "value": "",
+                                    "description": "Longitude for distance calculation"
                                 }
                             ]
                         },
@@ -843,22 +889,53 @@
                             "query": [
                                 {
                                     "key": "brand_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "description": "Current variant Brand ID (to exclude from related list)"
                                 },
                                 {
                                     "key": "form_id",
                                     "value": "1",
-                                    "description": "Optional: Form ID of the exact match variant to exclude."
+                                    "description": "Current variant Form ID (to exclude from related list)"
                                 },
                                 {
                                     "key": "strength_id",
                                     "value": "1",
-                                    "description": "Optional: Strength ID of the exact match variant to exclude."
+                                    "description": "Current variant Strength ID (to exclude from related list)"
                                 },
                                 {
                                     "key": "uom_id",
+                                    "value": "1",
+                                    "description": "Current variant UOM ID (to exclude from related list)"
+                                },
+                                {
+                                    "key": "q",
+                                    "value": "tablet",
+                                    "description": "Search by Brand Name or Form Name"
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "price",
+                                    "description": "Sort by 'price' or 'distance'"
+                                },
+                                {
+                                    "key": "filter_brand_id",
                                     "value": "",
-                                    "description": "Optional: UOM ID of the exact match variant to exclude."
+                                    "description": "Filter results by specific Brand ID"
+                                },
+                                {
+                                    "key": "filter_form_id",
+                                    "value": "",
+                                    "description": "Filter results by specific Form ID"
+                                },
+                                {
+                                    "key": "filter_strength_id",
+                                    "value": "",
+                                    "description": "Filter results by specific Strength ID"
+                                },
+                                {
+                                    "key": "filter_uom_id",
+                                    "value": "",
+                                    "description": "Filter results by specific UOM ID"
                                 }
                             ]
                         },
@@ -1410,7 +1487,7 @@
                                 "cart"
                             ]
                         },
-                        "description": "# \ud83d\uded2 Get Cart\n\nRetrieve current cart items.\n\n### Response Structure\nItems are grouped by pharmacy since orders are processed per-pharmacy.\n\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"HealthPlus\",\n      \"items\": [...],\n      \"subtotal\": 100\n    }\n  ],\n  \"total\": 100,\n  \"total_items\": 2\n}\n```"
+                        "description": "### \ud83d\uded2 Fetch Shopping Cart\n\nRetrieves the user's current shopping cart, grouped intelligently by pharmacy.\n\n**\u2728 New Feature**: The response now includes `accepted_payment_methods` and `accepted_payment_labels` for each pharmacy grouping. The frontend **MUST** use these arrays to determine which payment options to show the user at checkout (e.g. hiding Paystack if the pharmacy only accepts offline payments).\n\n# \ud83d\uded2 Get Cart\n\nRetrieve current cart items.\n\n### Response Structure\nItems are grouped by pharmacy since orders are processed per-pharmacy.\n\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"HealthPlus\",\n      \"items\": [...],\n      \"subtotal\": 100\n    }\n  ],\n  \"total\": 100,\n  \"total_items\": 2\n}\n```"
                     }
                 },
                 {
@@ -1576,7 +1653,7 @@
                                 "orders"
                             ]
                         },
-                        "description": "# \ud83d\udce6 Create Order\n\nCheckout items from the cart.\n\n### Modes\n1.  **Single Branch Checkout**: Provide `pharmacy_branch_id`. Only items from that branch are ordered.\n2.  **Checkout All**: Omit `pharmacy_branch_id`. Creates multiple orders (one per branch).\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | **Required**. |\n| `delivery_method` | enum | `pickup` or `delivery`. |\n| `payment_method` | enum | `platform` (online) or `direct` (cash/POS). |\n| `delivery_address` | string | Required if method is `delivery`. |\n| `delivery_methods` | array | Map of `branch_id` -> method (for multi-checkout). |\n| `payment_methods` | array | Map of `branch_id` -> method (for multi-checkout). |"
+                        "description": "### \ud83d\udce6 Create a New Order\n\nSubmits an order for processing.\n\n**\ud83d\udee1\ufe0f Payment Enforcement Validation**:\nThis endpoint strictly enforces payment mode configurations set by the Super Admin. If you pass a `payment_method` (e.g., `platform` for online, `direct` for offline) that the specific pharmacy does *not* accept, the API will return a `422 Unprocessable Entity` with a clear error message indicating the accepted methods.\n\n**Rate Limit**: `20 requests/minute` (api:orders throttle group).\n\n# \ud83d\udce6 Create Order\n\nCheckout items from the cart.\n\n### Modes\n1.  **Single Branch Checkout**: Provide `pharmacy_branch_id`. Only items from that branch are ordered.\n2.  **Checkout All**: Omit `pharmacy_branch_id`. Creates multiple orders (one per branch).\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | **Required**. |\n| `delivery_method` | enum | `pickup` or `delivery`. |\n| `payment_method` | enum | `platform` (online) or `direct` (cash/POS). |\n| `delivery_address` | string | Required if method is `delivery`. |\n| `delivery_methods` | array | Map of `branch_id` -> method (for multi-checkout). |\n| `payment_methods` | array | Map of `branch_id` -> method (for multi-checkout). |"
                     }
                 },
                 {
@@ -2255,7 +2332,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🗣️ Get Testimonies\n\nFetch a list of active testimonies."
+                        "description": "# \ud83d\udde3\ufe0f Get Testimonies\n\nFetch a list of active testimonies."
                     }
                 },
                 {
@@ -2313,7 +2390,7 @@
                                 "testimonies"
                             ]
                         },
-                        "description": "# 📝 Submit Testimony\n\nSubmit a new testimony for approval."
+                        "description": "# \ud83d\udcdd Submit Testimony\n\nSubmit a new testimony for approval."
                     }
                 }
             ]
@@ -3631,7 +3708,7 @@
                                 "initialize"
                             ]
                         },
-                        "description": "Initialize Paystack transaction for an order."
+                        "description": "### \ud83d\udcb3 Initialize Online Payment\n\nGenerates a Paystack checkout URL for the user to complete their transaction.\n\n**\ud83d\udd12 Security Guard**:\nBefore initializing, this endpoint verifies the target pharmacy's `accepts_online_payment` flag. If the pharmacy has disabled online payments since the order was created, it returns a `403 Forbidden` response preventing the transaction.\n\n**Rate Limit**: `15 requests/minute` (api:payments throttle group - heavily rate-limited for security).\n\nInitialize Paystack transaction for an order."
                     }
                 },
                 {
@@ -3995,7 +4072,7 @@
                                 ":brandId"
                             ]
                         },
-                        "description": "# 🗂️ Store Recent Search (Legacy)\n\nLegacy GET endpoint to log a drug search. Internally now writes to the new `recent_searches` table with `match_type = 'drug'` and `match_id = drugId`. Use the Smart Search `track=1` param or POST `/search/track` for new integrations."
+                        "description": "# \ud83d\uddc2\ufe0f Store Recent Search (Legacy)\n\nLegacy GET endpoint to log a drug search. Internally now writes to the new `recent_searches` table with `match_type = 'drug'` and `match_id = drugId`. Use the Smart Search `track=1` param or POST `/search/track` for new integrations."
                     }
                 },
                 {
@@ -4063,16 +4140,37 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/platform?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "platform"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "platform"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month", "description": "today|week|month|year|last_7_days|last_30_days|last_90_days|all" },
-                                { "key": "from", "value": "2026-01-01", "disabled": true },
-                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                                {
+                                    "key": "period",
+                                    "value": "month",
+                                    "description": "today|week|month|year|last_7_days|last_30_days|last_90_days|all"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-01-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-03-31",
+                                    "disabled": true
+                                }
                             ]
                         },
                         "description": "# \ud83d\udcca Platform Overview\n\nHigh-level metrics: users, orders, revenue, searches, views, consultations.\n\n### Search Metrics (Updated Schema)\nThe `searches` object now reports:\n- `total` - SUM of `search_count` across all match types\n- `unique_drugs` - Count of distinct `match_id` where `match_type IN (drug, product)`"
@@ -4083,16 +4181,36 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/search-analytics?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "search-analytics"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "search-analytics"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" },
-                                { "key": "from", "value": "2026-01-01", "disabled": true },
-                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-01-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-03-31",
+                                    "disabled": true
+                                }
                             ]
                         },
                         "description": "# \ud83d\udd0e Search Analytics\n\nDetailed breakdown of search activity.\n\n### Updated Response Fields\n- `top_searches` - Aggregated by **query text** (not drug_id), reflecting actual user search terms.\n- `trending_drugs` - Computed by comparing recent vs. previous 7-day search volume for `match_type IN (drug, product)`.\n- `recent_searches` - Returns last N records, each with `query`, `match_type`, `match_id`, and resolved `drug_name`."
@@ -4103,14 +4221,26 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/user-behavior?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "user-behavior"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "user-behavior"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
                             ]
                         },
                         "description": "# \ud83d\udc64 User Behavior\n\nUser engagement metrics: searches per user, most active users, session patterns."
@@ -4121,16 +4251,36 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/revenue?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "revenue"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "revenue"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" },
-                                { "key": "from", "value": "2026-01-01", "disabled": true },
-                                { "key": "to", "value": "2026-03-31", "disabled": true }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-01-01",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-03-31",
+                                    "disabled": true
+                                }
                             ]
                         },
                         "description": "# \ud83d\udcb0 Revenue Stats\n\nOrder revenue breakdown by period, payment method, and pharmacy."
@@ -4141,14 +4291,26 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/content?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "content"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "content"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
                             ]
                         },
                         "description": "# \ud83d\udcdd Content Stats\n\nBlog post views, most viewed drugs, and content engagement metrics."
@@ -4159,14 +4321,26 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/pharmacy-performance?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "pharmacy-performance"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "pharmacy-performance"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
                             ]
                         },
                         "description": "# \ud83c\udfe5 Pharmacy Performance\n\nRankings by orders, revenue, and drug availability across all registered pharmacies."
@@ -4177,14 +4351,26 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/drug-performance?period=month",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "drug-performance"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "drug-performance"
+                            ],
                             "query": [
-                                { "key": "period", "value": "month" }
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
                             ]
                         },
                         "description": "# \ud83d\udc8a Drug Performance\n\nTop searched and top ordered drugs. Search ranking is aggregated from `recent_searches` filtered by `match_type IN (drug, product)` and grouped by `match_id`."
@@ -4195,12 +4381,21 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            { "key": "X-API-Key", "value": "{{api_key}}", "type": "text" }
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/stats/realtime",
-                            "host": ["{{base_url}}"],
-                            "path": ["stats", "realtime"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stats",
+                                "realtime"
+                            ]
                         },
                         "description": "# \u26a1 Real-Time Stats\n\nLive metrics for the last 24 hours: active users, orders in progress, searches, and unique drugs searched (scoped to `match_type IN (drug, product)`)."
                     }
@@ -4244,52 +4439,52 @@
                     }
                 },
                 {
-                     "name": "Search Consultation (Public)",
-                     "request": {
-                         "method": "GET",
-                         "header": [
-                             {
-                                 "key": "X-API-Key",
-                                 "value": "{{api_key}}",
-                                 "type": "text"
-                             },
-                             {
-                                 "key": "Accept",
-                                 "value": "application/json",
-                                 "type": "text"
-                             }
-                         ],
-                         "url": {
-                             "raw": "{{base_url}}/consultations/search?consultation_number=CONS-2026-1234&patient_phone=0241234567",
-                             "host": [
-                                 "{{base_url}}"
-                             ],
-                             "path": [
-                                 "consultations",
-                                 "search"
-                             ],
-                             "query": [
-                                 {
-                                     "key": "consultation_number",
-                                     "value": "CONS-2026-1234",
-                                     "description": "The consultation number to search for."
-                                 },
-                                 {
-                                     "key": "patient_phone",
-                                     "value": "0241234567",
-                                     "description": "Required for verification (or patient_email)."
-                                 },
-                                 {
-                                     "key": "patient_email",
-                                     "value": "guest@example.com",
-                                     "description": "Required for verification (or patient_phone).",
-                                     "disabled": true
-                                 }
-                             ]
-                         },
-                         "description": "Search for a consultation by its number.\n\n**Security Requirement:**\nTo prevent enumeration, you **MUST** provide either `patient_phone` or `patient_email` that matches the record associated with the consultation number."
-                     }
-                 }
+                    "name": "Search Consultation (Public)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/consultations/search?consultation_number=CONS-2026-1234&patient_phone=0241234567",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "consultations",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "consultation_number",
+                                    "value": "CONS-2026-1234",
+                                    "description": "The consultation number to search for."
+                                },
+                                {
+                                    "key": "patient_phone",
+                                    "value": "0241234567",
+                                    "description": "Required for verification (or patient_email)."
+                                },
+                                {
+                                    "key": "patient_email",
+                                    "value": "guest@example.com",
+                                    "description": "Required for verification (or patient_phone).",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Search for a consultation by its number.\n\n**Security Requirement:**\nTo prevent enumeration, you **MUST** provide either `patient_phone` or `patient_email` that matches the record associated with the consultation number."
+                    }
+                }
             ]
         }
     ]

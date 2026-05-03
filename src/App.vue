@@ -3,6 +3,8 @@ import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import NotificationContainer from '@/components/NotificationContainer.vue';
+import MaintenanceOverlay from '@/components/MaintenanceOverlay.vue';
+import RateLimitWarning from '@/components/RateLimitWarning.vue';
 import { useAuthStore } from '@/store/auth';
 import { favoritesService } from '@/services/favoritesService';
 
@@ -45,6 +47,8 @@ onUnmounted(() => {
       </transition>
     </router-view>
     <NotificationContainer />
+    <MaintenanceOverlay />
+    <RateLimitWarning />
   </MainLayout>
 </template>
 

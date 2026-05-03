@@ -533,7 +533,7 @@ onMounted(async () => {
             </span>
           </div>
 
-          <h4 class="mb-2 text-xl font-sm text-gray-900 dark:text-white">
+          <h4 class="mb-2 text-xl font-bold text-gray-900 transition-colors duration-300 dark:text-white group-hover:text-[#246BFD] dark:group-hover:text-[#5089FF]">
             {{ medication.name }}
           </h4>
 
@@ -542,28 +542,33 @@ onMounted(async () => {
           </p>
 
           <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Available in</p>
-              <p class="font-medium text-gray-900 dark:text-white">
-                {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }}
-              </p>
+            <!-- Modern Pharmacy Count Badge -->
+            <div class="inline-flex items-center" v-if="medication.pharmacy_count !== undefined">
+              <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#246BFD]/10 to-[#246BFD]/5 border border-[#246BFD]/20 transition-transform hover:-translate-y-0.5 shadow-sm">
+                <div class="flex items-center justify-center w-7 h-7 bg-[#246BFD] rounded-lg shadow-md shadow-[#246BFD]/30">
+                  <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                </div>
+                <div class="flex flex-col pr-1">
+                  <span class="text-[9px] font-black tracking-widest text-[#246BFD]/70 dark:text-[#5089FF]/80 uppercase leading-none mb-0.5">Verified Stock</span>
+                  <span class="text-xs font-bold text-[#246BFD] dark:text-[#5089FF] leading-none">
+                    {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'Pharmacy' : 'Pharmacies' }}
+                  </span>
+                </div>
+              </div>
             </div>
             <div class="flex gap-2">
               <button
                 @click="openQuickView(medication.id, $event)"
-                class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full transition-colors dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                class="p-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-full transition-colors dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 title="Quick view"
               >
+                <span class="sr-only">Quick view</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
-              </button>
-              <button
-                @click="viewMedication(medication, $event)"
-                class="px-4 py-2 rounded-full bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
-              >
-                View Details
               </button>
             </div>
           </div>

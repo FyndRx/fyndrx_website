@@ -188,8 +188,8 @@ onMounted(() => {
                   <LazyImage 
                     :src="order.pharmacyImage || ''" 
                     alt="Pharmacy Logo"
-                    class="w-full h-full object-cover"
-                    fallback="https://ui-avatars.com/api/?name=Rx&background=246BFD&color=fff"
+                    className="w-full h-full object-cover"
+                    aspectRatio="square"
                   />
                 </div>
                 

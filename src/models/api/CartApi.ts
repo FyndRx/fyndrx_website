@@ -26,6 +26,7 @@ export interface CartItemApiResponse {
   strength?: string | { strength: string }; // Handle both string and object
   strength_uom?: string | { uom: string }; // Handle both string and object
   image?: string; // Top-level image from Flattened response
+  accepted_payment_methods?: ('platform' | 'direct')[]; // Added to fix build
 
   // Branch info
   branch_name?: string; // Flattened branch name
@@ -79,6 +80,7 @@ export interface CartApiResponse {
     items: CartItemApiResponse[];
     subtotal: number;
     payment_method?: string;
+    accepted_payment_methods?: ('platform' | 'direct')[];
   }[];
   total_items?: number;
   totalItems?: number;

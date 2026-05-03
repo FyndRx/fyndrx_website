@@ -311,7 +311,7 @@ const addToCart = (price: PharmacyPrice, manualQuantity: number = 0) => {
     inStock: price.in_stock || false,
     requiresPrescription: price.requires_prescription || false,
     pharmacyBranchId: price.pharmacy_branch_id || pharmacy.value.id,
-    pharmacyDrugPriceId: (price as any).price_id || (price as any).pharmacyDrugPriceId || 0
+    pharmacyDrugPriceId: price.id || 0
   });
 
   notification.success(
@@ -427,8 +427,13 @@ onMounted(() => {
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div class="flex-1 space-y-4">
                 <div class="flex items-center gap-4">
-                  <div class="w-16 h-16 rounded-2xl bg-white p-2 shadow-2xl overflow-hidden">
-                    <img :src="pharmacy.logo" :alt="pharmacy.name" class="w-full h-full object-contain" />
+                  <div class="w-16 h-16 rounded-2xl bg-white shadow-2xl overflow-hidden shrink-0">
+                    <LazyImage 
+                      :src="pharmacy.logo || '/images/pharmacies/default-pharmacy.jpg'" 
+                      :alt="pharmacy.name" 
+                      aspectRatio="square"
+                      className="w-full h-full object-contain" 
+                    />
                   </div>
                   <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
                     {{ pharmacy.name }}

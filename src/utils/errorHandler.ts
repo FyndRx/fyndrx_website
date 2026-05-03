@@ -66,3 +66,17 @@ export function isValidationError(error: unknown): boolean {
   }
   return false;
 }
+
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof AxiosError) {
+    return error.response?.status === 429;
+  }
+  return false;
+}
+
+export function isMaintenanceError(error: unknown): boolean {
+  if (error instanceof AxiosError) {
+    return error.response?.status === 503;
+  }
+  return false;
+}

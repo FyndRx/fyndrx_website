@@ -112,6 +112,7 @@ const paginatedPharmacies = computed(() => {
   
   return rawData.map((p: any) => ({
     id: p.pharmacy_id,
+    priceId: p.id,
     name: p.pharmacy_name,
     logo: p.logoPath,
     price: p.price,

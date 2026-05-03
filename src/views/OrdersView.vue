@@ -217,11 +217,23 @@ onMounted(() => {
                       {{ statusLabels[order.status] || order.status }}
                     </span>
                   </div>
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ order.pharmacyName }}
-                    <span v-if="order.branchName" class="text-gray-500">• {{ order.branchName }}</span>
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(order.createdAt) }}</p>
+                  <div class="flex items-center gap-3">
+                    <div v-if="order.pharmacyImage" class="w-10 h-10 overflow-hidden bg-white dark:bg-gray-700 rounded-lg shadow-sm flex-shrink-0">
+                      <LazyImage
+                        :src="order.pharmacyImage"
+                        :alt="order.pharmacyName"
+                        aspectRatio="square"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {{ order.pharmacyName }}
+                        <span v-if="order.branchName" class="text-gray-500">• {{ order.branchName }}</span>
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(order.createdAt) }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -346,10 +346,11 @@ export function transformCartItem(apiItem: CartItemApiResponse): CartItem {
     quantity: apiItem.quantity,
     price: apiItem.price,
     discountPrice: apiItem.discount_price,
-    image: apiItem.image || brand?.image || medication?.image,
+    image: brand?.image || medication?.image || apiItem.image || (apiItem as any).medication_image || (apiItem as any).drug_image,
     inStock: true, // Default to true if not provided
     requiresPrescription: medication?.requires_prescription,
     pharmacyDrugPriceId: apiItem.pharmacy_drug_price_id,
+    acceptedPaymentMethods: (apiItem as any).accepted_payment_methods,
   };
 }
 
@@ -368,7 +369,8 @@ export function transformCart(apiCart: CartApiResponse): Cart {
           id: pharmacyGroup.pharmacy_id,
           name: pharmacyGroup.pharmacy_name,
           logo: pharmacyGroup.pharmacy_logo || undefined
-        }
+        },
+        accepted_payment_methods: pharmacyGroup.accepted_payment_methods
       }))
     );
   } else {
@@ -412,7 +414,7 @@ export function transformOrderItem(apiItem: OrderItemApiResponse): OrderItem {
   return {
     id: String(apiItem.id || `item-${apiItem.drug_id}-${Math.random()}`),
     medicationId: apiItem.drug_id,
-    medicationName: medication?.name || findProp(apiItem, ['name', 'name', 'medication_name', 'drugName']) || '',
+    medicationName: medication?.name || findProp(apiItem, ['name', 'medication_name', 'drugName']) || '',
     brandId: apiItem.drug_brand_id,
     brandName: brand?.name || 
                (apiItem as any).drug_brand?.brand?.brand_name || 
@@ -435,7 +437,7 @@ export function transformOrderItem(apiItem: OrderItemApiResponse): OrderItem {
     quantity: Number(apiItem.quantity),
     price: Number(apiItem.price),
     discountPrice: apiItem.discount_price ? Number(apiItem.discount_price) : undefined,
-    image: brand?.image || medication?.image || findProp(apiItem, ['brand_image', 'drug_image', 'image']),
+    image: brand?.image || medication?.image || findProp(apiItem, ['medication_image', 'brand_image', 'drug_image', 'image']),
   };
 }
 
@@ -477,7 +479,7 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     branchName: (apiOrder as any).pharmacy?.branch_name || (apiOrder as any).pharmacy_branch?.branch_name || (apiOrder as any).branch_name || undefined,
     pharmacyPhone: apiOrder.pharmacy_phone || apiOrder.pharmacyPhone || (apiOrder as any).pharmacy_branch?.phone || (apiOrder as any).pharmacy?.phone || (apiOrder as any).branch_phone || '',
     pharmacyAddress: apiOrder.pharmacy_address || (apiOrder as any).pharmacy?.branch_address || (apiOrder as any).pharmacy_branch?.address || apiOrder.pharmacyAddress || (apiOrder as any).pharmacy?.address || '',
-    pharmacyImage: (apiOrder as any).pharmacy?.image || (apiOrder as any).pharmacy?.logo,
+    pharmacyImage: (apiOrder as any).pharmacy_logo || (apiOrder as any).pharmacy?.logo || (apiOrder as any).pharmacy?.image || (apiOrder as any).pharmacy_logo || (apiOrder as any).pharmacyLogo,
     items: (apiOrder.items || []).map(transformOrderItem),
     subtotal: Number(apiOrder.subtotal),
     deliveryFee: Number(apiOrder.delivery_fee || apiOrder.deliveryFee || 0),

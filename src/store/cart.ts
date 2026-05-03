@@ -47,7 +47,8 @@ export const useCartStore = defineStore('cart', () => {
           pharmacyName: item.pharmacyName,
           pharmacyLogo: item.pharmacyLogo,
           items: [],
-          subtotal: 0
+          subtotal: 0,
+          acceptedPaymentMethods: item.acceptedPaymentMethods || ['platform', 'direct']
         });
       }
 
