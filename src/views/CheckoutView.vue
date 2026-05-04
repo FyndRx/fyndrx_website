@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
+import { useSettingsStore } from '@/store/settings';
 import { useNotification } from '@/composables/useNotification';
 import { cartService } from '@/services/cartService';
 import { orderService } from '@/services/orderService';
@@ -15,6 +16,7 @@ const router = useRouter();
 const route = useRoute();
 const cartStore = useCartStore();
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 const notification = useNotification();
 
 const selectedPharmacyIds = ref<number[]>([]);
@@ -38,7 +40,7 @@ const deliveryFee = computed(() => {
   let fee = 0;
   deliveryMethods.value.forEach((method) => {
     if (method === 'delivery') {
-      fee += 5; // 5 GH₵ per delivery order
+      fee += settingsStore.deliveryFeeFlat;
     }
   });
   return fee;

@@ -59,6 +59,7 @@ const router = createRouter({
       meta: {
         title: 'Upload Prescription | FyndRx',
         description: 'Upload your prescription securely and let FyndRx help you find the best prices across partner pharmacies.',
+        requiresAuth: true,
       },
     },
     {
@@ -195,7 +196,8 @@ const router = createRouter({
       component: () => import('@/views/FavoritesView.vue'),
       meta: {
         title: 'My Favorites | FyndRX',
-        description: 'View your favorite medications and pharmacies'
+        description: 'View your favorite medications and pharmacies',
+        requiresAuth: true
       }
     },
     {
@@ -213,7 +215,8 @@ const router = createRouter({
       component: () => import('@/views/CartView.vue'),
       meta: {
         title: 'Shopping Cart | FyndRX',
-        description: 'View and manage your shopping cart'
+        description: 'View and manage your shopping cart',
+        requiresAuth: true
       }
     },
     {
@@ -223,7 +226,7 @@ const router = createRouter({
       meta: {
         title: 'Checkout | FyndRX',
         description: 'Complete your order',
-        requiresAuth: false
+        requiresAuth: true
       }
     },
     {

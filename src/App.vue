@@ -6,10 +6,12 @@ import NotificationContainer from '@/components/NotificationContainer.vue';
 import MaintenanceOverlay from '@/components/MaintenanceOverlay.vue';
 import RateLimitWarning from '@/components/RateLimitWarning.vue';
 import { useAuthStore } from '@/store/auth';
+import { useSettingsStore } from '@/store/settings';
 import { favoritesService } from '@/services/favoritesService';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 
 const handleUnauthorized = async () => {
   // Only redirect if not already on login page
@@ -24,7 +26,10 @@ onMounted(async () => {
     // Global event listener for 401 Unauthorized
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 
-    console.log('App mounted, checking auth...');
+    console.log('App mounted, checking auth and settings...');
+    // Load platform settings (maintenance mode, fees, etc.)
+    await settingsStore.fetchSettings();
+    
     await authStore.checkAuth();
     if (authStore.isAuthenticated) {
       await favoritesService.initialize();

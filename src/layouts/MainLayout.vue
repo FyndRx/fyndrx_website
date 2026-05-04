@@ -1,41 +1,7 @@
 <script setup lang="ts">
-// import { ref, computed } from 'vue';
-// import { useRouter } from 'vue-router';
-// import { useAuthStore } from '@/store/auth';
 import Header from '@/views/Home/landing/Header.vue';
 import Footer from '@/views/Home/landing/Footer.vue';
-
-// const router = useRouter();
-// const authStore = useAuthStore();
-
-// const navigationItems = [
-//   { name: 'Home', path: '/' },
-//   { name: 'About', path: '/about' },
-//   { name: 'Services', path: '/services' },
-//   { name: 'Contact', path: '/contact' }
-// ];
-
-// const showMobileMenu = ref(false);
-// const showUserMenu = ref(false);
-// const isAuthenticated = computed(() => authStore.isAuthenticated);
-// const user = computed(() => authStore.user);
-
-// const toggleMobileMenu = () => {
-//   showMobileMenu.value = !showMobileMenu.value;
-// };
-
-// const toggleUserMenu = () => {
-//   showUserMenu.value = !showUserMenu.value;
-// };
-
-// const handleLogout = async () => {
-//   try {
-//     await authStore.logout();
-//     router.push('/login');
-//   } catch (error) {
-//     console.error('Logout failed:', error);
-//   }
-// };
+import MaintenanceBanner from '@/components/MaintenanceBanner.vue';
 </script>
 
 <script lang="ts">
@@ -46,6 +12,7 @@ export default {
 
 <template>
   <div class="flex flex-col min-h-screen">
+    <MaintenanceBanner />
     <Header />
     <main class="flex-grow">
       <slot></slot>
