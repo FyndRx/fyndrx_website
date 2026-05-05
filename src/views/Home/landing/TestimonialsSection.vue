@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { StarIcon } from '@heroicons/vue/24/solid';
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon, CheckIcon } from '@heroicons/vue/24/outline';
 import Button from '@/components/Button.vue';
 
 interface Testimony {

@@ -62,17 +62,17 @@ export default {
         </div>
 
         <div class="bg-gray-50 rounded-3xl shadow-2xl dark:bg-gray-800">
-          <div class="flex border-b border-gray-200 dark:border-gray-700">
+          <div class="flex flex-col sm:flex-row border-b border-gray-200 dark:border-gray-700">
             <button
               @click="switchTab('medication')"
               :class="[
-                'flex-1 px-6 py-4 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
+                'flex-1 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
                 activeTab === 'medication'
-                  ? 'bg-white dark:bg-gray-900 text-[#246BFD] border-b-4 border-[#246BFD]'
+                  ? 'bg-white dark:bg-gray-900 text-[#246BFD] border-b-4 sm:border-b-4 border-[#246BFD]'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
               ]"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
               </svg>
               <span>Find Medication</span>
@@ -80,13 +80,13 @@ export default {
             <button
               @click="switchTab('pharmacy')"
               :class="[
-                'flex-1 px-6 py-4 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
+                'flex-1 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
                 activeTab === 'pharmacy'
-                  ? 'bg-white dark:bg-gray-900 text-[#246BFD] border-b-4 border-[#246BFD]'
+                  ? 'bg-white dark:bg-gray-900 text-[#246BFD] border-b-4 sm:border-b-4 border-[#246BFD]'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
               ]"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
               </svg>
               <span>Find Pharmacy</span>
@@ -94,18 +94,19 @@ export default {
             <button
               @click="switchTab('consultation')"
               :class="[
-                'flex-1 px-6 py-4 text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
+                'flex-1 px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2',
                 activeTab === 'consultation'
-                  ? 'bg-white dark:bg-gray-900 text-[#FE9615] border-b-4 border-[#FE9615]'
+                  ? 'bg-white dark:bg-gray-900 text-[#FE9615] border-b-4 sm:border-b-4 border-[#FE9615]'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
               ]"
             >
-               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
               </svg>
               <span>Consultation</span>
             </button>
           </div>
+
 
           <div class="p-8 bg-white dark:bg-gray-900">
             <div v-if="activeTab === 'medication'" class="space-y-6">

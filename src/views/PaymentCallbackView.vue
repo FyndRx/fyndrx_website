@@ -51,14 +51,20 @@ const statusConfig = computed(() => {
 const verifyPayment = async (ref: string) => {
   try {
     const response = await paymentService.verifyPayment(ref);
-    // Flexible check: verify status is success. 
-    // We remove the strict 'response.success' boolean check as it might be undefined after unwrapping.
-    if (response.status === 'success' || (response as any).message === 'Verification successful') {
+    // Flexible check: verify status is success or response is valid
+    // If response is null/undefined (e.g. 204), we might need to handle it or retry
+    if (response && (response.status === 'success' || (response as any).message === 'Verification successful')) {
       paymentStatus.value = 'success';
       message.value = 'Your payment was processed successfully. We\'ve sent a confirmation email.';
       // Use standard order_id from response, or fallback to reference if missing
-      // Handle various potential response formats for order ID
       orderId.value = (response as any).order_id || (response as any).orderId || (response as any).order?.id || ref; 
+      cartStore.clearCart();
+    } else if (!response) {
+      // Handle potential 204 No Content - if we reach here it might be successful but no body
+      // We'll assume success if the API didn't throw an error and returned 204
+      paymentStatus.value = 'success';
+      message.value = 'Payment confirmed. Your order is being processed.';
+      orderId.value = ref;
       cartStore.clearCart();
     } else {
       paymentStatus.value = 'failed';

@@ -142,6 +142,53 @@ export default {
           <UserAvatar v-else />
         </div>
 
+        <!-- Mobile Actions — visible only below lg -->
+        <div class="flex items-center lg:hidden space-x-2 ml-auto mr-2">
+          <!-- Upload Rx Icon -->
+          <router-link 
+            to="/upload-prescription"
+            class="p-2 rounded-full bg-[#FE9615]/10 text-[#FE9615] hover:bg-[#FE9615] hover:text-white transition-all duration-300"
+            title="Upload Prescription"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+          </router-link>
+
+          <!-- Cart Icon -->
+          <router-link 
+            to="/cart"
+            class="relative p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+            title="Shopping Cart"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span 
+              v-if="cartStore.cartItemsCount > 0"
+              class="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] font-bold text-white bg-[#FE9615] rounded-full"
+            >
+              {{ cartStore.cartItemsCount }}
+            </span>
+          </router-link>
+
+          <!-- User Avatar or Login Icon -->
+          <template v-if="!isAuthenticated">
+            <router-link 
+              to="/login"
+              class="p-2 rounded-full bg-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+              title="Sign In"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+            </router-link>
+          </template>
+          <div v-else class="relative z-[60]">
+            <UserAvatar />
+          </div>
+        </div>
+
         <!-- Hamburger — visible below lg -->
         <button 
           @click="isMobileMenuOpen = !isMobileMenuOpen"
@@ -193,50 +240,10 @@ export default {
           </router-link>
 
           <div class="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
-            <!-- Upload Rx -->
-            <router-link 
-              to="/upload-prescription"
-              class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#FE9615]/10 text-[#FE9615] font-medium hover:bg-[#FE9615] hover:text-white transition-all"
-              @click="isMobileMenuOpen = false"
-            >
-              <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
-              <span>Upload Prescription</span>
-            </router-link>
-
-            <!-- Cart -->
-            <router-link 
-              to="/cart"
-              class="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-[#246BFD] hover:text-white transition-all"
-              @click="isMobileMenuOpen = false"
-            >
-              <span class="font-medium">Shopping Cart</span>
-              <span v-if="cartStore.cartItemsCount > 0" class="px-2 py-0.5 text-xs font-bold text-white bg-[#FE9615] rounded-full">
-                {{ cartStore.cartItemsCount }}
-              </span>
-            </router-link>
-
-            <!-- Dark Mode + Auth row -->
-            <div class="flex items-center gap-2 pt-2">
+            <!-- Dark Mode Toggle row -->
+            <div class="flex items-center justify-between px-4 py-2">
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Appearance</span>
               <DarkModeToggle />
-              <template v-if="!isAuthenticated">
-                <router-link 
-                  to="/login" 
-                  class="flex-1 px-4 py-2.5 text-center rounded-full bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-colors text-sm"
-                  @click="isMobileMenuOpen = false"
-                >
-                  Sign In
-                </router-link>
-                <router-link 
-                  to="/register" 
-                  class="flex-1 px-4 py-2.5 text-center rounded-full bg-[#FE9615] text-white font-semibold hover:bg-[#ffb547] transition-colors text-sm"
-                  @click="isMobileMenuOpen = false"
-                >
-                  Register
-                </router-link>
-              </template>
-              <UserAvatar v-else />
             </div>
           </div>
         </div>
