@@ -19,8 +19,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber: string;
-  userId: number;
-  pharmacyId: number;
+  userId: string;
+  pharmacyId: string;
   pharmacyName: string;
   branchName?: string;
   pharmacyPhone: string;
@@ -39,6 +39,7 @@ export interface Order {
   pharmacyLat?: number;
   pharmacyLng?: number;
   deliveryMethod: 'pickup' | 'delivery';
+  deliveryProvider?: 'pharmacy' | 'fyndrx' | null;
   phoneNumber: string;
   status: 'pending' | 'confirmed' | 'processing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
   createdAt: string;
@@ -70,5 +71,6 @@ export interface OrderTracking {
 export type OrderStatus = Order['status'];
 export type PaymentStatus = Order['paymentStatus'];
 export type DeliveryMethod = Order['deliveryMethod'];
+export type DeliveryProvider = 'pharmacy' | 'fyndrx';
 export type PaymentMethod = Order['paymentMethod'];
 

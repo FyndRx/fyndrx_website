@@ -11,10 +11,10 @@ export interface CartItemApiResponse {
   subtotal: number;
 
   // From PharmacyDrugPriceResource
-  id: string | number;           // pharmacy_drug_price_id
-  pharmacy_id: number;
-  pharmacy_branch_id: number | null;
-  product_id: number | null;
+  id: string;                    // pharmacy_drug_price_id (UUID)
+  pharmacy_id: string;
+  pharmacy_branch_id: string | null;
+  product_id: string | null;
   drug_id: number | null;
   brand_id: number | null;
   form_id: number | null;
@@ -49,7 +49,7 @@ export interface CartItemApiResponse {
 
   // Optional nested pharmacy (when included)
   pharmacy?: {
-    id: number;
+    id: string;
     name: string;
     logo?: string | null;
     address?: string;
@@ -58,7 +58,7 @@ export interface CartItemApiResponse {
     latitude?: number | string | null;
     longitude?: number | string | null;
     location?: { lat: number; lng: number };
-    branch_id?: number;
+    branch_id?: string;
     branch_name?: string;
     accepted_payment_methods?: ('platform' | 'direct')[];
     accepted_payment_labels?: string[];
@@ -66,8 +66,8 @@ export interface CartItemApiResponse {
 }
 
 export interface CartPharmacyGroup {
-  pharmacy_id: number;
-  pharmacy_branch_id: number;
+  pharmacy_id: string;
+  pharmacy_branch_id: string;
   pharmacy_name?: string;
   pharmacy_logo?: string | null;
   is_open?: boolean;

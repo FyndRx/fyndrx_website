@@ -7,10 +7,10 @@ import type { PaginationMeta } from './ApiResponse';
 
 // Direct output of PharmacyDrugPriceResource
 export interface PharmacyPriceApiResponse {
-  id: number;
-  pharmacy_id: number;
-  pharmacy_branch_id: number;
-  product_id: number | null;
+  id: string;
+  pharmacy_id: string;
+  pharmacy_branch_id: string;
+  product_id: string | null;
   drug_id: number | null;
   brand_id: number | null;
   form_id: number | null;
@@ -23,9 +23,13 @@ export interface PharmacyPriceApiResponse {
   image?: string | null;
   requires_prescription: boolean;
 
-  // Pricing & stock
-  price: number;
-  discount_price?: number | null;
+  // Pricing & stock — API returns normal_price/discounted_price
+  normal_price?: number;
+  discounted_price?: number | null;
+  max_discounted_price?: number | null;
+  price?: number; // legacy / other endpoints
+  discount_price?: number | null; // legacy
+  is_active?: boolean;
   in_stock: boolean;
   stock_quantity: number;
 
@@ -34,25 +38,28 @@ export interface PharmacyPriceApiResponse {
   form_name?: string | null;
   strength?: string | null;
   uom?: string | null;
-  
+  drug_name?: string | null;
+
   // Flattened pharmacy & branch info
   pharmacy_name?: string;
   pharmacy_logo?: string | null;
   is_open?: boolean;
-  branch_name?: string;
+  branch_id?: string | null;
+  branch_name?: string | null;
+  branch_location?: { lat: number; lng: number } | null;
   latitude?: number;
   longitude?: number;
 
   // Optional nested pharmacy (when withPharmacy() is called)
   pharmacy?: {
-    id: number;
+    id: string;
     name: string;
     logo?: string | null;
     address?: string;
     rating?: number;
     is_open?: boolean;
     distance?: number | string;
-    branch_id?: number;
+    branch_id?: string;
     branch_name?: string;
     latitude?: number;
     longitude?: number;
@@ -68,7 +75,7 @@ export type PharmacyPricesByPharmacyApiResponse = PharmacyPricesApiResponse;
 
 // Response from /api/v1/prices?product_id=X (PriceSearchController)
 export interface DrugPriceMatchApiResponse {
-  id: number;
+  id: string;
   name: string;
   description?: string | null;
   brand_id: number | null;
@@ -95,7 +102,7 @@ export interface DrugPriceMatchApiResponse {
 }
 
 export interface DrugPriceRelatedApiResponse {
-  id: number;
+  id: string;
   name: string;
   drug_id: number | null;
   drug_name?: string | null;
@@ -111,10 +118,10 @@ export interface DrugPriceRelatedApiResponse {
   price: number;
   discount_price?: number | null;
   in_stock: boolean;
-  pharmacy_id: number;
+  pharmacy_id: string;
   pharmacy_name?: string;
   pharmacy_logo?: string | null;
-  branch_id?: number | null;
+  branch_id?: string | null;
   branch_name?: string | null;
 }
 

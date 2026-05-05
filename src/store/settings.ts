@@ -7,6 +7,8 @@ interface SettingsState {
   deliveryFeeFlat: number;
   freeDeliveryThreshold: number;
   maxCartItems: number;
+  onlinePaymentEnabled: boolean;
+  offlinePaymentEnabled: boolean;
   isLoaded: boolean;
 }
 
@@ -17,8 +19,19 @@ export const useSettingsStore = defineStore('settings', {
     deliveryFeeFlat: 5,
     freeDeliveryThreshold: 500,
     maxCartItems: 20,
+    onlinePaymentEnabled: true,
+    offlinePaymentEnabled: true,
     isLoaded: false,
   }),
+
+  getters: {
+    enabledPaymentMethods: (state): ('platform' | 'direct')[] => {
+      const methods: ('platform' | 'direct')[] = [];
+      if (state.onlinePaymentEnabled)  methods.push('platform');
+      if (state.offlinePaymentEnabled) methods.push('direct');
+      return methods;
+    },
+  },
 
   actions: {
     async fetchSettings() {
@@ -31,6 +44,8 @@ export const useSettingsStore = defineStore('settings', {
           this.deliveryFeeFlat = Number(s.delivery_fee_flat) || 5;
           this.freeDeliveryThreshold = Number(s.free_delivery_threshold) || 500;
           this.maxCartItems = Number(s.max_cart_items) || 20;
+          this.onlinePaymentEnabled  = s.online_payment_enabled  !== false && s.online_payment_enabled  !== 'false';
+          this.offlinePaymentEnabled = s.offline_payment_enabled !== false && s.offline_payment_enabled !== 'false';
           this.isLoaded = true;
         }
       } catch (error) {

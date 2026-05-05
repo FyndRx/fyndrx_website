@@ -5,7 +5,7 @@
 
 import type { User } from '@/models/User';
 import type { Medication } from '@/models/Medication';
-import type { Pharmacy, PharmacyWorkingHours } from '@/models/Pharmacy';
+import type { Pharmacy, PharmacyBranch, PharmacyWorkingHours } from '@/models/Pharmacy';
 import type { PharmacyPrice } from '@/models/PharmacyPrice';
 import type { Cart, CartItem } from '@/models/Cart';
 import type { Order, OrderItem, OrderTracking } from '@/models/Order';
@@ -68,7 +68,7 @@ export function unwrapArrayResponse<T>(response: T[] | { data: T[] } | { [key: s
  */
 export function transformUser(apiUser: UserApiResponse): User {
   return {
-    id: apiUser.id,
+    id: String(apiUser.id),
     firstname: apiUser.firstname,
     lastname: apiUser.lastname,
     fullname: apiUser.fullname,
@@ -95,24 +95,37 @@ export function transformUser(apiUser: UserApiResponse): User {
  * Medication Transformers
  */
 export function transformMedication(apiMed: MedicationApiResponse): Medication {
-  const brands = (apiMed.brands ?? []).map(brand => ({
-    ...brand,
-    image: brand.image ?? undefined
-  }));
+  // ProductResource returns `brand`/`form` (singular); DrugResource returns `brands`/`forms` (arrays).
+  // Normalise both shapes into arrays so downstream filters always have data to work with.
+  const rawBrands: any[] = apiMed.brands ?? [];
+  const singularBrand: any = (apiMed as any).brand;
+  const brands = rawBrands.length
+    ? rawBrands.map(b => ({ id: b.id, name: b.name ?? b.brand_name ?? '', image: b.image ?? undefined }))
+    : singularBrand
+      ? [{ id: singularBrand.id, name: singularBrand.name ?? singularBrand.brand_name ?? '', image: singularBrand.image ?? undefined }]
+      : [];
+
+  const rawForms: any[] = apiMed.forms ?? [];
+  const singularForm: any = (apiMed as any).form;
+  const forms = rawForms.length
+    ? rawForms
+    : singularForm
+      ? [{ id: singularForm.id, form_name: singularForm.form_name ?? '', strengths: singularForm.strengths ?? [] }]
+      : [];
 
   // Use the drug image if available, otherwise fallback to the first brand's image
   const mainImage = apiMed.image || brands[0]?.image || '';
 
   return {
     id: apiMed.id,
-    product_id: (apiMed as any).product_id ?? apiMed.id, // Fallback to id if not explicit
+    product_id: (apiMed as any).product_id ?? apiMed.id,
     name: apiMed.name,
     description: apiMed.description ?? '',
-    brands: brands,
-    forms: apiMed.forms ?? [],
+    brands,
+    forms,
     image: mainImage,
     predefinedQuantities: apiMed.predefined_quantities ?? apiMed.predefinedQuantities ?? [],
-    category: apiMed.categories ?? apiMed.category ?? '',
+    category: apiMed.categories ?? (apiMed as any).drug?.categories ?? apiMed.category ?? '',
     requiresPrescription: apiMed.requires_prescription ?? apiMed.requiresPrescription ?? false,
     pharmacy_count: apiMed.pharmacy_count ?? (apiMed as any).pharmacies_count ?? (apiMed as any).available_pharmacies_count,
     price: apiMed.price ?? (apiMed as any).starting_price,
@@ -403,6 +416,70 @@ export function parseWorkingHours(workingHoursInput: any): PharmacyWorkingHours 
 /**
  * Pharmacy Transformers
  */
+function mapServiceObject(s: any) {
+  if (typeof s === 'string') {
+    return { id: 0, name: s, slug: s.toLowerCase().replace(/\s+/g, '-'), category: '' };
+  }
+  return { id: s.id ?? 0, name: s.name ?? '', slug: s.slug ?? '', category: s.category ?? '', description: s.description, icon: s.icon };
+}
+
+export function transformBranch(branch: any): PharmacyBranch {
+  const wh = branch.working_hours;
+  const parsedWh = wh ? parseWorkingHours(wh) : undefined;
+  return {
+    id: branch.id,
+    pharmacyId: branch.pharmacy_id,
+    branchName: branch.name ?? branch.branch_name ?? '',
+    description: branch.description ?? undefined,
+    phone: branch.phone ?? '',
+    whatsappNumber: branch.whatsapp_number ?? undefined,
+    email: branch.email ?? undefined,
+    website: branch.website ?? undefined,
+    address: branch.address ?? '',
+    city: branch.city ?? undefined,
+    region: branch.region ?? undefined,
+    latitude: branch.location?.lat != null ? String(branch.location.lat) : undefined,
+    longitude: branch.location?.lng != null ? String(branch.location.lng) : undefined,
+    location: branch.location ?? null,
+    licenseNumber: branch.license_number ?? undefined,
+    managerName: branch.manager?.name ?? undefined,
+    managerPhone: branch.manager?.phone ?? undefined,
+    managerEmail: branch.manager?.email ?? undefined,
+    digitalAddress: branch.digital_address ?? undefined,
+    bannerImage: branch.banner_image ?? undefined,
+    rating: branch.rating ?? undefined,
+    totalReviews: branch.total_reviews ?? undefined,
+    isActive: branch.is_active ?? true,
+    workingHours: parsedWh,
+    isOpen: (() => {
+      if (parsedWh && Object.values(parsedWh).some(v => v !== '')) {
+        return isPharmacyOpenNow(parsedWh);
+      }
+      return branch.is_open ?? false;
+    })(),
+    languages: Array.isArray(branch.languages)
+      ? branch.languages
+      : (typeof branch.languages === 'string' && (branch.languages as string).trim()
+          ? (branch.languages as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : []),
+    specialStorage: Array.isArray(branch.special_storage)
+      ? branch.special_storage
+      : (typeof branch.special_storage === 'string' && (branch.special_storage as string).trim()
+          ? (branch.special_storage as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : []),
+    acceptsOnlinePrescriptions: branch.accepts_online_prescriptions ?? false,
+    services: (branch.services ?? []).map(mapServiceObject),
+    deliveryInfo: branch.delivery ? {
+      available: Boolean(branch.delivery.available),
+      radiusKm: branch.delivery.radius_km != null ? Number(branch.delivery.radius_km) : null,
+      baseFee: branch.delivery.base_fee != null ? Number(branch.delivery.base_fee) : null,
+      feePerKm: branch.delivery.fee_per_km != null ? Number(branch.delivery.fee_per_km) : null,
+    } : undefined,
+    acceptedPaymentMethods: branch.accepted_payment_methods ?? [],
+    distance: branch.distance,
+  };
+}
+
 export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
   const workingHours = parseWorkingHours(apiPharmacy.working_hours || apiPharmacy.workingHours);
 
@@ -418,7 +495,7 @@ export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
     isOpen: workingHours && Object.values(workingHours).some(val => val !== '') ? isPharmacyOpenNow(workingHours) : (apiPharmacy.is_open ?? apiPharmacy.isOpen ?? true),
     isActive: apiPharmacy.is_active ?? true,
     distance: apiPharmacy.distance || '',
-    services: apiPharmacy.services || [],
+    services: (apiPharmacy.services || []).map(mapServiceObject),
     workingHours,
     phone: apiPharmacy.phone || '',
     email: apiPharmacy.email || '',
@@ -430,22 +507,32 @@ export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
     },
     licenseNumber: apiPharmacy.license_number,
     license: apiPharmacy.license,
+    whatsappNumber: apiPharmacy.whatsapp_number,
+    digitalAddress: apiPharmacy.digital_address,
+    city: apiPharmacy.city,
+    region: apiPharmacy.region,
+    acceptsOnlinePrescriptions: apiPharmacy.accepts_online_prescriptions,
+    specialStorage: Array.isArray(apiPharmacy.special_storage)
+      ? apiPharmacy.special_storage
+      : (typeof apiPharmacy.special_storage === 'string' && (apiPharmacy.special_storage as string).trim()
+          ? (apiPharmacy.special_storage as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : []),
+    languages: Array.isArray(apiPharmacy.languages)
+      ? apiPharmacy.languages
+      : (typeof apiPharmacy.languages === 'string' && (apiPharmacy.languages as string).trim()
+          ? (apiPharmacy.languages as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : []),
     branchesCount: apiPharmacy.branches_count || 0,
-    branches: (apiPharmacy.branches || []).map((branch: any) => ({
-      id: branch.id,
-      pharmacyId: branch.pharmacy_id,
-      branchName: branch.branch_name,
-      phone: branch.phone,
-      address: branch.address,
-      latitude: branch.latitude,
-      longitude: branch.longitude,
-      licenseNumber: branch.license_number,
-      managerName: branch.manager_name,
-      managerPhone: branch.manager_phone,
-      managerEmail: branch.manager_email,
-      digitalAddress: branch.digital_address,
-    })),
+    branches: (apiPharmacy.branches || []).map(transformBranch),
     medications: [],
+    deliveryInfo: apiPharmacy.delivery ? {
+      available: Boolean(apiPharmacy.delivery.available),
+      radiusKm: apiPharmacy.delivery.radius_km !== undefined ? (apiPharmacy.delivery.radius_km !== null ? Number(apiPharmacy.delivery.radius_km) : null) : null,
+      baseFee: apiPharmacy.delivery.base_fee !== undefined ? (apiPharmacy.delivery.base_fee !== null ? Number(apiPharmacy.delivery.base_fee) : null) : null,
+      feePerKm: apiPharmacy.delivery.fee_per_km !== undefined ? (apiPharmacy.delivery.fee_per_km !== null ? Number(apiPharmacy.delivery.fee_per_km) : null) : null,
+    } : undefined,
+    acceptedPaymentMethods: apiPharmacy.accepted_payment_methods,
+    acceptedPaymentLabels: apiPharmacy.accepted_payment_labels,
   };
 }
 
@@ -460,46 +547,61 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
   const pharmacyInfo = apiPrice.pharmacy;
   const branchInfo = (apiPrice as any).pharmacy_branch;
 
+  // API returns normal_price/discounted_price; legacy endpoints use price/discount_price
+  const resolvedPrice = apiPrice.normal_price ?? apiPrice.price ?? 0;
+  const resolvedDiscount = apiPrice.discounted_price ?? apiPrice.discount_price ?? undefined;
+
+  const branchId = apiPrice.branch_id
+    ? String(apiPrice.branch_id)
+    : apiPrice.pharmacy_branch_id
+      ? String(apiPrice.pharmacy_branch_id)
+      : apiPrice.pharmacy?.branch_id
+        ? String(apiPrice.pharmacy.branch_id)
+        : undefined;
+
   return {
-    id: apiPrice.id,
-    pharmacy_id: apiPrice.pharmacy_id ?? 0,
-    pharmacy_branch_id: apiPrice.pharmacy_branch_id ?? apiPrice.pharmacy?.branch_id,
+    id: String(apiPrice.id),
+    pharmacy_id: String(apiPrice.pharmacy_id ?? ''),
+    pharmacy_branch_id: branchId,
+    branch_id: branchId,
+    product_id: apiPrice.product_id ?? undefined,
     drug_id: apiPrice.drug_id ?? 0,
     brand_id: apiPrice.brand_id ?? 0,
     form_id: apiPrice.form_id ?? 0,
     strength_id: apiPrice.strength_id ?? 0,
     uom_id: apiPrice.uom_id ?? 0,
-    price: apiPrice.price ?? 0,
-    discount_price: apiPrice.discount_price ?? undefined,
+    price: resolvedPrice,
+    discount_price: resolvedDiscount != null ? resolvedDiscount : undefined,
     stock_quantity: apiPrice.stock_quantity,
     in_stock: apiPrice.in_stock ?? false,
     created_at: '',
     updated_at: '',
     pharmacy: pharmacyInfo ? {
-      id: pharmacyInfo.id ?? apiPrice.pharmacy_id,
+      id: String(pharmacyInfo.id ?? apiPrice.pharmacy_id ?? ''),
       name: pharmacyInfo.name || apiPrice.pharmacy_name,
       logo: pharmacyInfo.logo || apiPrice.pharmacy_logo || undefined,
       address: pharmacyInfo.address,
       rating: pharmacyInfo.rating,
       distance: pharmacyInfo.distance?.toString(),
       is_open: pharmacyInfo.is_open ?? apiPrice.is_open,
-      pharmacy_branch_id: pharmacyInfo.branch_id ?? apiPrice.pharmacy_branch_id,
+      pharmacy_branch_id: branchId,
       branch_name: pharmacyInfo.branch_name || apiPrice.branch_name || '',
-      branch_address: (pharmacyInfo as any).branch_address || (branchInfo as any)?.address || apiPrice.branch_name || '',
+      branch_address: (pharmacyInfo as any).branch_address || (branchInfo as any)?.address || '',
     } : undefined,
     pharmacy_name: apiPrice.pharmacy_name || apiPrice.pharmacy?.name || '',
     pharmacy_logo: apiPrice.pharmacy_logo || apiPrice.pharmacy?.logo || undefined,
-    branch_name: apiPrice.branch_name || apiPrice.pharmacy?.branch_name || '',
-    is_open: apiPrice.is_open ?? apiPrice.pharmacy?.is_open ?? false,
+    branch_name: apiPrice.branch_name || '',
+    branch_location: apiPrice.branch_location ?? undefined,
+    is_open: apiPrice.is_open ?? false,
     name: apiPrice.name,
     brand_name: apiPrice.brand_name ?? '',
     form_name: apiPrice.form_name ?? '',
     strength: apiPrice.strength ?? '',
     uom: apiPrice.uom ?? '',
-    branch_id: apiPrice.pharmacy_branch_id ?? apiPrice.pharmacy?.branch_id ?? 0,
     image: apiPrice.image ?? undefined,
-    latitude: apiPrice.latitude ?? apiPrice.pharmacy?.latitude,
-    longitude: apiPrice.longitude ?? apiPrice.pharmacy?.longitude,
+    latitude: apiPrice.branch_location?.lat ?? apiPrice.latitude,
+    longitude: apiPrice.branch_location?.lng ?? apiPrice.longitude,
+    requires_prescription: apiPrice.requires_prescription,
   };
 }
 
@@ -515,12 +617,12 @@ export function transformCartItem(apiItem: CartItemApiResponse, acceptedPaymentM
     id: String(apiItem.cart_item_id),
     medicationId: apiItem.drug_id ?? 0,
     medicationName: apiItem.name,
-    pharmacyId: apiItem.pharmacy_id,
+    pharmacyId: String(apiItem.pharmacy_id ?? ''),
     pharmacyName: apiItem.pharmacy_name ?? apiItem.pharmacy?.name ?? '',
     pharmacyLogo: apiItem.pharmacy_logo ?? apiItem.pharmacy?.logo ?? undefined,
-    isOpen: apiItem.is_open ?? apiItem.pharmacy?.is_open ?? false,
-    pharmacyBranchId: apiItem.pharmacy_branch_id ?? apiItem.pharmacy?.branch_id,
-    branchName: apiItem.branch_name ?? apiItem.pharmacy?.branch_name ?? '',
+    isOpen: apiItem.is_open ?? false,
+    pharmacyBranchId: apiItem.pharmacy_branch_id ? String(apiItem.pharmacy_branch_id) : undefined,
+    branchName: apiItem.branch_name ?? '',
     brandId: apiItem.brand_id ?? 0,
     brandName: apiItem.brand_name ?? '',
     formId: apiItem.form_id ?? 0,
@@ -535,10 +637,10 @@ export function transformCartItem(apiItem: CartItemApiResponse, acceptedPaymentM
     image: apiItem.image ?? undefined,
     inStock: apiItem.in_stock,
     requiresPrescription: apiItem.requires_prescription,
-    pharmacyDrugPriceId: Number(apiItem.id),
-    acceptedPaymentMethods: acceptedPaymentMethods || apiItem.pharmacy?.accepted_payment_methods,
-    latitude: (apiItem.latitude ?? apiItem.pharmacy?.latitude ?? apiItem.pharmacy?.location?.lat) ? Number(apiItem.latitude ?? apiItem.pharmacy?.latitude ?? apiItem.pharmacy?.location?.lat) : undefined,
-    longitude: (apiItem.longitude ?? apiItem.pharmacy?.longitude ?? apiItem.pharmacy?.location?.lng) ? Number(apiItem.longitude ?? apiItem.pharmacy?.longitude ?? apiItem.pharmacy?.location?.lng) : undefined,
+    pharmacyDrugPriceId: String(apiItem.id),
+    acceptedPaymentMethods: acceptedPaymentMethods,
+    latitude: apiItem.latitude != null ? Number(apiItem.latitude) : undefined,
+    longitude: apiItem.longitude != null ? Number(apiItem.longitude) : undefined,
   };
 }
 
@@ -551,7 +653,7 @@ export function transformCart(apiCart: CartApiResponse): Cart {
       if (!item.pharmacyName) item.pharmacyName = group.pharmacy_name || '';
       if (!item.pharmacyLogo) item.pharmacyLogo = group.pharmacy_logo || undefined;
       if (item.isOpen === undefined) item.isOpen = group.is_open ?? false;
-      if (!item.pharmacyBranchId) item.pharmacyBranchId = group.pharmacy_branch_id;
+      if (!item.pharmacyBranchId) item.pharmacyBranchId = group.pharmacy_branch_id ? String(group.pharmacy_branch_id) : undefined;
       if (!item.branchName) item.branchName = group.branch_name || '';
       if (!item.latitude && group.latitude) item.latitude = Number(group.latitude);
       if (!item.longitude && group.longitude) item.longitude = Number(group.longitude);
@@ -602,8 +704,8 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     return {
       id: '0',
       orderNumber: '',
-      userId: 0,
-      pharmacyId: 0,
+      userId: '',
+      pharmacyId: '',
       pharmacyName: '',
       pharmacyPhone: '',
       pharmacyAddress: '',
@@ -626,8 +728,8 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
   return {
     id: String(apiOrder.id),
     orderNumber: apiOrder.order_number,
-    userId: apiOrder.user_id,
-    pharmacyId: apiOrder.pharmacy_id,
+    userId: String(apiOrder.user_id),
+    pharmacyId: String(apiOrder.pharmacy_id),
     pharmacyName: apiOrder.pharmacy_name ?? '',
     pharmacyPhone: apiOrder.pharmacy_phone ?? '',
     pharmacyAddress: apiOrder.pharmacy_address ?? '',
@@ -646,6 +748,7 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     pharmacyLat: (apiOrder.pharmacy_lat !== null && apiOrder.pharmacy_lat !== undefined) ? Number(apiOrder.pharmacy_lat) : undefined,
     pharmacyLng: (apiOrder.pharmacy_lng !== null && apiOrder.pharmacy_lng !== undefined) ? Number(apiOrder.pharmacy_lng) : undefined,
     deliveryMethod: apiOrder.delivery_method,
+    deliveryProvider: apiOrder.delivery_provider ?? null,
     phoneNumber: apiOrder.phone_number,
     status: apiOrder.status,
     prescriptionRequired: apiOrder.prescription_required,
@@ -774,11 +877,14 @@ export function transformPrescription(apiPrescription: PrescriptionApiResponse):
     user_id: apiPrescription.user_id,
     pharmacy_id: apiPrescription.pharmacy_id,
     pharmacy_branch_id: apiPrescription.pharmacy_branch_id,
+    origin: (apiPrescription as any).origin,
     drugs: (apiPrescription.drugs || []).map(drug => ({
       id: drug.id,
       prescription_id: drug.prescription_id,
       drug_id: drug.drug_id,
-      name: drug.drug_name ?? drug.name ?? '',
+      product_id: drug.product_id,
+      display_name: drug.display_name ?? drug.drug_name ?? drug.name ?? '',
+      name: drug.display_name ?? drug.drug_name ?? drug.name ?? '',
       brand_id: drug.brand_id,
       brand_name: drug.brand_name,
       form_id: drug.form_id,
@@ -816,14 +922,31 @@ export function transformBlogPost(apiPost: any): BlogPost {
     category: apiPost.category?.name || apiPost.category || 'Uncategorized',
     date: apiPost.date || apiPost.created_at || apiPost.createdAt || new Date().toISOString(),
     author: {
-      name: apiPost.author?.name || apiPost.user?.name || 'Anonymous',
-      avatar: apiPost.author?.avatar || apiPost.user?.avatar || apiPost.author?.profile_picture || '',
-      bio: apiPost.author?.bio || ''
+      // User relationship sends `fullname` (accessor) + `firstname`/`lastname`, never `name`.
+      // Fall back to the post's own author_name for non-registered / manually-set authors.
+      name:
+        apiPost.author?.fullname ||
+        (apiPost.author?.firstname
+          ? `${apiPost.author.firstname} ${apiPost.author.lastname ?? ''}`.trim()
+          : '') ||
+        apiPost.author_name ||
+        apiPost.user?.fullname ||
+        apiPost.user?.name ||
+        'Anonymous',
+      avatar:
+        apiPost.author?.profile_picture ||
+        apiPost.author?.image ||
+        apiPost.author_avatar ||
+        apiPost.user?.profile_picture ||
+        apiPost.user?.avatar ||
+        '',
+      bio: apiPost.author?.bio || apiPost.author_bio || '',
     },
     tags: apiPost.tags || [],
-    readTime: apiPost.read_time || apiPost.readTime || 5, // Default to 5 min if missing
-    likes: apiPost.likes || apiPost.likes_count || 0,
-    views: apiPost.views || apiPost.views_count || 0,
+    readTime: apiPost.read_time || apiPost.readTime || 5,
+    likes: apiPost.likes_count ?? apiPost.likes ?? 0,
+    views: apiPost.views_count ?? apiPost.views ?? 0,
+    liked: apiPost.user_liked ?? false,
     comments: Array.isArray(apiPost.comments) ? apiPost.comments.map(transformComment) : []
   };
 }
@@ -833,16 +956,34 @@ export function transformBlogPosts(apiPosts: any[]): BlogPost[] {
 }
 
 export function transformComment(apiComment: any): Comment {
+  const user = apiComment.user;
+
+  // Build author name: prefer fullname, fall back to firstname+lastname, then
+  // the anonymous `name` field on the comment itself, then a generic fallback.
+  const authorName =
+    user?.fullname ||
+    (user?.firstname ? `${user.firstname} ${user.lastname || ''}`.trim() : '') ||
+    apiComment.author?.name ||
+    apiComment.name ||
+    'Anonymous';
+
+  // Build avatar: prefer profile_picture_full, profile_picture, then ui-avatars fallback.
+  const authorAvatar =
+    user?.profile_picture_full ||
+    user?.profile_picture ||
+    user?.avatar ||
+    apiComment.author?.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=246BFD&color=fff`;
+
   return {
     id: apiComment.id,
-    author: {
-      name: apiComment.author?.name || apiComment.user?.name || 'Anonymous',
-      avatar: apiComment.author?.avatar || apiComment.user?.avatar || '',
-    },
-    content: apiComment.content || apiComment.body || '',
-    date: apiComment.date || apiComment.created_at || new Date().toISOString(),
-    likes: apiComment.likes || 0,
-    replies: Array.isArray(apiComment.replies) ? apiComment.replies.map(transformComment) : []
+    author: { name: authorName, avatar: authorAvatar },
+    // Backend stores the text in `comment`, not `content`
+    content: apiComment.comment || apiComment.content || apiComment.body || '',
+    date: apiComment.created_at || apiComment.date || new Date().toISOString(),
+    likes: apiComment.likes_count ?? apiComment.likes ?? 0,
+    liked: apiComment.user_liked ?? false,
+    replies: Array.isArray(apiComment.replies) ? apiComment.replies.map(transformComment) : [],
   };
 }
 

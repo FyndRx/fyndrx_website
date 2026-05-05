@@ -79,7 +79,8 @@ export const medicationService = {
             price: p.price,
             discount_price: p.discount_price,
             brands: p.brand ? [{ id: p.brand_id, name: p.brand }] : [],
-            categories: p.categories || [],
+            // Use undefined (not []) so transformMedication falls through to category field
+            categories: p.categories?.length ? p.categories : undefined,
             brand_id: p.brand_id,
             form_id: p.form_id,
             strength_id: p.strength_id,
@@ -152,7 +153,7 @@ export const medicationService = {
             url: p.url || `/medication/${p.id}`,
             price: p.price,
             discount_price: p.discount_price,
-            categories: p.categories || []
+            categories: p.categories?.length ? p.categories : undefined
           })),
           brands: [],
           generics: [],
@@ -175,10 +176,25 @@ export const medicationService = {
    * @param id - Medication ID
    * @returns Medication details
    */
-  async getMedicationById(id: number): Promise<Medication> {
+  async getMedicationById(id: string | number): Promise<Medication> {
     const response = await apiService.get<MedicationDetailApiResponse>(`/products/${id}`);
     const apiMed = unwrapApiResponse(response);
     return transformMedication(apiMed);
+  },
+
+  /** Fetch per-pharmacy prices for a product, sorted cheapest first. */
+  async getProductPrices(productId: string | number): Promise<Array<{
+    pharmacy_id: string;
+    pharmacy_name: string;
+    pharmacy_logo?: string | null;
+    price: number;
+    discount_price?: number | null;
+    in_stock: boolean;
+    is_open?: boolean;
+    branch_name?: string | null;
+  }>> {
+    const response = await apiService.get<any>(`/prices?product_id=${productId}&sort=price`);
+    return response?.data?.exact_match?.pharmacies?.data ?? [];
   },
 
   /**

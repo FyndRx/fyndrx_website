@@ -30,27 +30,95 @@ export interface PharmacyWorkingHours {
   sunday: string;
 }
 
-export interface PharmacyBranch {
+/** A service offered by a pharmacy — now a proper entity, not a plain string. */
+export interface PharmacyService {
   id: number;
-  pharmacyId: number;
+  name: string;
+  slug: string;
+  category: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface PharmacyServiceGroup {
+  category: string;
+  label: string;
+  services: PharmacyService[];
+}
+
+export interface PharmacyBranch {
+  id: string;
+  pharmacyId: string;
   branchName: string;
+  description?: string;
   phone: string;
+  whatsappNumber?: string;
+  email?: string;
+  website?: string;
   address: string;
+  city?: string;
+  region?: string;
   latitude?: string | null;
   longitude?: string | null;
+  location?: PharmacyLocation | null;
   licenseNumber?: string | null;
   managerName?: string | null;
   managerPhone?: string | null;
   managerEmail?: string | null;
   digitalAddress?: string | null;
+  bannerImage?: string | null;
+  rating?: number;
+  totalReviews?: number;
+  isActive?: boolean;
+  isOpen?: boolean;
+  workingHours?: PharmacyWorkingHours;
+  languages?: string[];
+  specialStorage?: string[];
+  acceptsOnlinePrescriptions?: boolean;
+  services?: PharmacyService[];
+  deliveryInfo?: PharmacyDeliveryInfo;
+  acceptedPaymentMethods?: ('platform' | 'direct')[];
+  distance?: string;
+}
+
+export interface PharmacyDeliveryInfo {
+  available: boolean;
+  radiusKm: number | null;
+  baseFee: number | null;
+  feePerKm: number | null;
+}
+
+export interface DeliveryOptionDetail {
+  available: boolean;
+  fee: number | null;
+  baseFee?: number;
+  feePerKm?: number;
+  radiusKm?: number | null;
+  maxRadiusKm?: number | null;
+  distanceKm?: number | null;
+  label: string;
+  note?: string;
+  unavailableReason?: string | null;
+}
+
+export interface PharmacyDeliveryOptions {
+  pharmacyId: string;
+  pharmacyName: string;
+  pickup: DeliveryOptionDetail;
+  pharmacyDelivery: DeliveryOptionDetail;
+  fyndrxDelivery: DeliveryOptionDetail;
 }
 
 export interface Pharmacy {
-  id: number;
+  id: string;
   name: string;
   address: string;
+  city?: string;
+  region?: string;
+  digitalAddress?: string;
   phone: string;
   email: string;
+  whatsappNumber?: string;
   website: string;
   licenseNumber?: string | null;
   license?: string | null;
@@ -61,19 +129,25 @@ export interface Pharmacy {
   isOpen: boolean;
   isActive: boolean;
   distance?: string;
-  services: string[];
+  services: PharmacyService[];
   workingHours: PharmacyWorkingHours;
   description: string;
   location: PharmacyLocation;
   branchesCount: number;
-  branches?: PharmacyBranch[]; 
-  reviews: PharmacyReview[]; 
+  branches?: PharmacyBranch[];
+  reviews: PharmacyReview[];
   medications: PharmacyMedication[];
+  acceptsOnlinePrescriptions?: boolean;
+  specialStorage?: string[];
+  languages?: string[];
+  deliveryInfo?: PharmacyDeliveryInfo;
+  acceptedPaymentMethods?: ('platform' | 'direct')[];
+  acceptedPaymentLabels?: string[];
 }
 
 export interface PharmacyFilters {
   searchQuery?: string;
-  selectedServices?: string[];
+  selectedServices?: string[]; // service slugs
   sortBy?: 'distance' | 'rating' | 'name' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc';
   isOpenNow?: boolean;
   inStockOnly?: boolean;

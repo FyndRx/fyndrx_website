@@ -26,8 +26,8 @@ export interface UserApiResponse {
   dob: string | null;
   gender: string | null;
   email: string;
-  pharmacy_id: number | null;
-  pharmacy_branch_id: number | null;
+  pharmacy_id: string | null;
+  pharmacy_branch_id: string | null;
   phone_number: string;
   status: string | null;
   member_id: string;

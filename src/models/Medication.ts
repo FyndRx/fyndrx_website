@@ -29,7 +29,7 @@ export interface MedicationForm {
 
 export interface Medication {
   id: number;
-  product_id?: number;
+  product_id?: string;
   drug_id?: number;
   name: string;
   description: string;
@@ -51,10 +51,10 @@ export interface Medication {
   uom_id?: number;
   uom?: string;
   starting_price?: number;
-  pharmacy_id?: number;
+  pharmacy_id?: string;
   pharmacy_name?: string;
   pharmacy_logo?: string;
-  branch_id?: number;
+  branch_id?: string;
   branch_name?: string;
   is_open?: boolean;
 }

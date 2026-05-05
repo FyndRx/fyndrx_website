@@ -49,7 +49,7 @@ export const useCartStore = defineStore('cart', () => {
       if (!groups.has(groupKey)) {
         groups.set(groupKey, {
           pharmacyId: item.pharmacyId,
-          pharmacyBranchId: item.pharmacyBranchId || 0,
+          pharmacyBranchId: item.pharmacyBranchId || '',
           pharmacyName: item.pharmacyName,
           pharmacyLogo: item.pharmacyLogo,
           isOpen: item.isOpen,
@@ -105,7 +105,7 @@ export const useCartStore = defineStore('cart', () => {
       // Crucial change: We now REQUIRE pharmacyDrugPriceId for API sync
       if (authStore.isAuthenticated && item.pharmacyDrugPriceId) {
         const addedItem = await cartService.addToCart({
-          pharmacy_drug_price_id: item.pharmacyDrugPriceId,
+          pharmacy_drug_price_id: String(item.pharmacyDrugPriceId),
           quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
         });
         
@@ -187,7 +187,7 @@ export const useCartStore = defineStore('cart', () => {
     saveToLocalStorage();
   };
 
-  const clearPharmacyItems = (pharmacyId: number) => {
+  const clearPharmacyItems = (pharmacyId: string) => {
     items.value = items.value.filter(item => item.pharmacyId !== pharmacyId);
     saveToLocalStorage();
   };
@@ -200,7 +200,14 @@ export const useCartStore = defineStore('cart', () => {
     const stored = localStorage.getItem('cart');
     if (stored) {
       try {
-        items.value = JSON.parse(stored);
+        const parsed: CartItem[] = JSON.parse(stored);
+        // Coerce UUID fields that were stored as numbers before the UUID migration
+        items.value = parsed.map(item => ({
+          ...item,
+          pharmacyId: item.pharmacyId != null ? String(item.pharmacyId) : item.pharmacyId,
+          pharmacyBranchId: item.pharmacyBranchId != null ? String(item.pharmacyBranchId) : item.pharmacyBranchId,
+          pharmacyDrugPriceId: item.pharmacyDrugPriceId != null ? String(item.pharmacyDrugPriceId) : item.pharmacyDrugPriceId,
+        }));
       } catch (error) {
         console.error('Error loading cart from localStorage:', error);
         items.value = [];
@@ -224,11 +231,11 @@ export const useCartStore = defineStore('cart', () => {
     }
   };
 
-  const hasItemsFromPharmacy = (pharmacyId: number) => {
+  const hasItemsFromPharmacy = (pharmacyId: string) => {
     return items.value.some(item => item.pharmacyId === pharmacyId);
   };
 
-  const getPharmacyItemsCount = (pharmacyId: number) => {
+  const getPharmacyItemsCount = (pharmacyId: string) => {
     return items.value
       .filter(item => item.pharmacyId === pharmacyId)
       .reduce((total, item) => total + item.quantity, 0);

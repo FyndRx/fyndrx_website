@@ -5,7 +5,7 @@
 
 export interface OrderItemApiResponse {
   id: string | number;
-  product_id: number | null;
+  product_id: string | null;
   drug_id: number | null;
   brand_id: number | null;
   form_id: number | null;
@@ -22,8 +22,8 @@ export interface OrderItemApiResponse {
 export interface OrderApiResponse {
   id: string | number;
   order_number: string;
-  user_id: number;
-  pharmacy_id: number;
+  user_id: string;
+  pharmacy_id: string;
   pharmacy_name?: string;
   pharmacy_phone?: string;
   pharmacy_address?: string;
@@ -37,6 +37,7 @@ export interface OrderApiResponse {
   payment_method: 'platform' | 'direct';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   delivery_method: 'pickup' | 'delivery';
+  delivery_provider?: 'pharmacy' | 'fyndrx' | null;
   delivery_address?: string;
   delivery_lat?: number | string | null;
   delivery_lng?: number | string | null;
