@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "src": "/payment/callback(.*)", "dest": "/index.html" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
