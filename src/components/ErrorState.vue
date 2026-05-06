@@ -114,7 +114,7 @@ const displayMessage = computed(() => props.message || errorConfig.value.default
     
     <div v-if="type === 'network'" class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 max-w-md">
       <p class="text-sm text-blue-800 dark:text-blue-200">
-        <span class="font-semibold">💡 Quick tips:</span><br>
+        <span class="font-semibold text-blue-600 dark:text-blue-400">Quick tips:</span><br>
         • Check your WiFi or mobile data<br>
         • Try disabling VPN if enabled<br>
         • Wait a moment and refresh

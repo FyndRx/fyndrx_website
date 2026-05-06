@@ -32,13 +32,13 @@ const filteredTransactions = computed(() => {
 const totalPaid = computed(() => 
   transactions.value
     .filter(t => t.status === 'success')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 );
 
 const totalPending = computed(() => 
   transactions.value
     .filter(t => t.status === 'pending')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Number(t.amount), 0)
 );
 
 const viewReceipt = (transactionId: string) => {
@@ -63,7 +63,11 @@ const formatDate = (dateString: string) => {
 const loadTransactions = async () => {
   loading.value = true;
   try {
-    transactions.value = await paymentService.getTransactions();
+    const response = await paymentService.getTransactions();
+    // Handle paginated response
+    const data = (response as any).data || response;
+    transactions.value = Array.isArray(data) ? data : [];
+    
     transactions.value = transactions.value.sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
@@ -230,8 +234,15 @@ onMounted(() => {
                       {{ statusLabels[transaction.status] }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ (transaction as any).metadata?.pharmacyName || 'Order Payment' }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(transaction.created_at) }}</p>
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="text-sm font-bold text-[#246BFD] uppercase tracking-tighter">
+                      {{ transaction.order?.pharmacy_name || 'Generic Transaction' }}
+                    </p>
+                    <span v-if="transaction.metadata?.is_bulk" class="px-2 py-0.5 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded font-black uppercase">
+                      Combined Payment
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">{{ formatDate(transaction.created_at) }}</p>
                 </div>
               </div>
 

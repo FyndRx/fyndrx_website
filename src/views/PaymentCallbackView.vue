@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { paymentService } from '@/services/paymentService';
+import { formatCurrency } from '@/utils/currency';
 
 const route = useRoute();
 const router = useRouter();
@@ -12,6 +13,8 @@ const loading = ref(true);
 const paymentStatus = ref<'success' | 'failed' | 'cancelled'>('success');
 const transactionReference = ref('');
 const orderId = ref('');
+const orders = ref<any[]>([]);
+const isBulk = ref(false);
 const message = ref('');
 
 const statusConfig = computed(() => {
@@ -22,8 +25,14 @@ const statusConfig = computed(() => {
       iconBg: 'bg-green-100 dark:bg-green-900/30',
       title: 'Payment Successful!',
       subtitle: 'Your order has been confirmed',
-      buttonText: 'View Order',
-      buttonAction: () => router.push({ name: 'order-detail', params: { id: orderId.value } })
+      buttonText: isBulk.value ? 'View All Paid Orders' : 'View Order Detail',
+      buttonAction: () => {
+        if (isBulk.value) {
+          // Stay here or scroll to list
+        } else {
+          router.push({ name: 'order-detail', params: { id: orderId.value } });
+        }
+      }
     };
   } else if (paymentStatus.value === 'failed') {
     return {
@@ -56,12 +65,18 @@ const verifyPayment = async (ref: string) => {
     if (response && (response.status === 'success' || (response as any).message === 'Verification successful')) {
       paymentStatus.value = 'success';
       message.value = 'Your payment was processed successfully. We\'ve sent a confirmation email.';
-      // Use standard order_id from response, or fallback to reference if missing
-      orderId.value = (response as any).order_id || (response as any).orderId || (response as any).order?.id || ref; 
+      
+      orders.value = (response as any).orders || [];
+      isBulk.value = (response as any).is_bulk || false;
+      
+      if (orders.value.length > 0) {
+        orderId.value = orders.value[0].id;
+      } else {
+        orderId.value = (response as any).order_id || (response as any).orderId || (response as any).order?.id || ref;
+      }
+      
       cartStore.clearCart();
     } else if (!response) {
-      // Handle potential 204 No Content - if we reach here it might be successful but no body
-      // We'll assume success if the API didn't throw an error and returned 204
       paymentStatus.value = 'success';
       message.value = 'Payment confirmed. Your order is being processed.';
       orderId.value = ref;
@@ -139,18 +154,49 @@ onMounted(async () => {
         </div>
 
         <div v-if="transactionReference" class="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4" :class="orderId && !isBulk ? 'md:grid-cols-2' : ''">
             <div class="text-left">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Transaction Reference</p>
               <p class="font-mono text-sm font-medium text-gray-900 dark:text-white break-all">
                 {{ transactionReference }}
               </p>
             </div>
-            <div v-if="orderId" class="text-left">
+            <div v-if="orderId && !isBulk" class="text-left">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Order ID</p>
               <p class="font-mono text-sm font-medium text-gray-900 dark:text-white">
                 {{ orderId }}
               </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orders List for Bulk Payment -->
+        <div v-if="isBulk && orders.length > 0" class="mb-10 text-left">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 px-2 uppercase tracking-wider">Paid Orders</h2>
+          <div class="space-y-4">
+            <div v-for="order in orders" :key="order.id" 
+                 @click="router.push({ name: 'order-detail', params: { id: order.id } })"
+                 class="group bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-[#246BFD] transition-all cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div v-if="order.pharmacy?.logo" class="w-12 h-12 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden bg-white p-1">
+                  <img :src="order.pharmacy.logo" :alt="order.pharmacy.name" class="w-full h-full object-contain" />
+                </div>
+                <div v-else class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#246BFD]">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900 dark:text-white">Order #{{ order.order_number }}</p>
+                  <p class="text-sm text-gray-500">{{ order.pharmacy?.name }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-lg font-bold text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-[#246BFD] transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
             </div>
           </div>
         </div>

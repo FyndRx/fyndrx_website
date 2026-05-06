@@ -876,7 +876,7 @@ onMounted(() => {
                     </div>
                  </div>
 
-                 <!-- Buy Control -->
+                 <!-- Add to Cart Control -->
                  <div class="pt-6 border-t border-gray-50 dark:border-gray-700/50 flex flex-col gap-3">
                     <div class="flex gap-3">
                       <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl flex items-center px-1 h-12 w-32 border border-gray-100 dark:border-gray-700">
@@ -908,7 +908,7 @@ onMounted(() => {
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
-                        Buy
+                        Add to Cart
                       </button>
                     </div>
 

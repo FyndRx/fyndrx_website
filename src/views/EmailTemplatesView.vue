@@ -46,7 +46,7 @@ const categoryColors: Record<string, string> = {
       </div>
       <div class="relative px-4 mx-auto max-w-6xl text-center">
         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/80 text-sm font-medium mb-6">
-          <span>✉️</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           <span>Developer Resources</span>
         </div>
         <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
@@ -85,7 +85,7 @@ const categoryColors: Record<string, string> = {
             ? 'bg-gradient-to-r from-[#246BFD] to-[#1B4DBC] text-white shadow-lg shadow-blue-500/20'
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
         >
-          <span>{{ cat.icon }}</span>
+          <span v-html="cat.icon"></span>
           <span>{{ cat.label }}</span>
           <span
             v-if="cat.id !== 'all'"
@@ -184,7 +184,7 @@ const categoryColors: Record<string, string> = {
       <div class="mt-12 bg-gradient-to-r from-[#246BFD]/5 to-[#FE9615]/5 dark:from-[#246BFD]/10 dark:to-[#FE9615]/10 rounded-2xl p-8 border border-[#246BFD]/10 dark:border-[#246BFD]/20">
         <div class="flex items-start gap-4">
           <div class="w-12 h-12 rounded-xl bg-[#246BFD]/10 flex items-center justify-center flex-shrink-0">
-            <span class="text-2xl">💡</span>
+            <svg class="w-6 h-6 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75V19a2.25 2.25 0 01-4.5 0v-.25c0-.438-.174-.858-.485-1.169l-.548-.547z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
           </div>
           <div>
             <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-2">Using These Templates</h3>

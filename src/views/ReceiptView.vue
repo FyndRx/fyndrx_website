@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import { formatCurrency } from '@/utils/currency';
 
 import fyndRxLogo from '@/assets/logo/logo_blue_orange.png';
+import placeholderSquare from '@/assets/placeholder/square.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -224,17 +225,16 @@ onMounted(() => {
         </div>
 
         <!-- Receipt Content -->
-        <div ref="receiptRef" class="relative bg-white shadow-2xl rounded-sm overflow-hidden md:max-w-3xl mx-auto receipt-paper">
+        <div ref="receiptRef" class="relative bg-white shadow-2xl rounded-sm overflow-hidden md:max-w-3xl mx-auto receipt-paper flex flex-col min-h-[600px]">
            <!-- Zigzag Top Border via CSS or SVG -->
            <div class="h-2 bg-gradient-to-r from-[#246BFD] to-[#1B4DBC]"></div>
 
-          <div class="p-8 md:p-12">
+          <div class="p-8 md:p-12 flex-grow flex flex-col">
             <!-- Branding Header -->
             <div class="flex items-center justify-between mb-10 pb-8 border-b-2 border-dashed border-gray-200">
                <!-- Left: FyndRX Info -->
                <div>
-                  <img :src="fyndRxLogo" alt="FyndRX" class="h-10 mb-3" />
-                  <p class="text-sm text-gray-500">The Modern Pharmacy Marketplace</p>
+                  <img :src="fyndRxLogo" alt="FyndRX" class="h-[4.5rem] mb-3" />
                   <p class="text-xs text-gray-400 mt-1">www.fyndrx.com</p>
                </div>
                
@@ -255,12 +255,13 @@ onMounted(() => {
                <div class="flex-1">
                   <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Issued By</p>
                   <div class="flex items-start gap-4">
-                     <div class="w-16 h-16 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
+                     <div class="w-14 h-14 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0">
                          <LazyImage 
-                          :src="receiptData.pharmacyImage || ''" 
+                          :src="receiptData.pharmacyImage || placeholderSquare" 
                           alt="Pharmacy"
+                          aspectRatio="square"
                           class="w-full h-full object-cover"
-                          fallback="https://ui-avatars.com/api/?name=Rx&background=f3f4f6&color=6b7280"
+                          :placeholder="placeholderSquare"
                         />
                      </div>
                      <div>
@@ -333,18 +334,20 @@ onMounted(() => {
                      <span class="text-2xl font-extrabold text-[#246BFD]">{{ formatCurrency(receiptData.total) }}</span>
                   </div>
                   
-                  <div class="mt-6 p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
+                  <div v-if="receiptData.paymentMethod.includes('Paystack')" class="mt-6 p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
                      <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span class="text-xs font-bold text-gray-600 uppercase">Paid via {{ receiptData.paymentMethod.includes('Paystack') ? 'Paystack' : 'Pharmacy' }}</span>
+                        <span class="text-xs font-bold text-gray-600 uppercase">Paid via Paystack</span>
                      </div>
                      <span class="font-mono text-sm font-bold text-gray-900">{{ formatCurrency(receiptData.amountPaid) }}</span>
                   </div>
                </div>
             </div>
 
+            <div class="flex-grow"></div>
+
             <!-- Footer -->
-            <div class="text-center pt-8 border-t-2 border-dashed border-gray-200">
+            <div class="text-center pt-8 border-t-2 border-dashed border-gray-200 mt-auto">
                <svg class="w-8 h-8 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                </svg>
@@ -362,17 +365,75 @@ onMounted(() => {
 
 <style>
 @media print {
-  body {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  
+  html, body {
     background: white !important;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
-  .print\:hidden {
+  .min-h-screen {
+    background: white !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: auto !important;
+  }
+  
+  .receipt-paper {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    min-height: 297mm !important; /* Force A4 height or at least one page */
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Force layout structure for print */
+  .receipt-paper .flex.md\:flex-row {
+    flex-direction: row !important;
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+  
+  .receipt-paper .justify-end {
+    justify-content: flex-end !important;
+    display: flex !important;
+  }
+
+  .receipt-paper .md\:text-right {
+    text-align: right !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+  }
+  
+  .receipt-paper .w-full.md\:w-1\/2 {
+    width: 45% !important;
+  }
+  
+  .print\:hidden,
+  nav, 
+  header, 
+  footer, 
+  .no-print {
     display: none !important;
   }
   
-  nav, header, footer, .no-print {
-    display: none !important;
-  }
+  /* Force text colors for readability in dark mode print */
+  .text-gray-900, .text-gray-800 { color: #111827 !important; }
+  .text-gray-600, .text-gray-500 { color: #4b5563 !important; }
+  .text-gray-400 { color: #9ca3af !important; }
+  .bg-white { background-color: #ffffff !important; }
+  .bg-gray-50 { background-color: #f9fafb !important; }
 }
 </style>
 

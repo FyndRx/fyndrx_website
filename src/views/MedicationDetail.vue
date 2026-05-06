@@ -570,7 +570,7 @@ watch(
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                           </svg>
-                          Buy
+                          Add to Cart
                         </button>
                       </div>
                       <p 
@@ -617,24 +617,27 @@ watch(
               <div class="flex flex-wrap gap-2 mt-3 pt-4 border-t border-gray-100 dark:border-gray-800 transition-all">
                 <button 
                   @click="relatedSort = ''; relatedSearch = ''"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
                   :class="relatedSort === '' && !relatedSearch ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-lg shadow-[#246BFD]/20' : 'bg-[#246BFD]/5 border-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD]/10'"
                 >
-                  🔥 Best Match
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                  Best Match
                 </button>
                 <button 
                   @click="relatedSort = 'price_asc'"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
                   :class="relatedSort === 'price_asc' ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-green-500/5 border-green-500/10 text-green-600 hover:bg-green-500/10'"
                 >
-                  💰 Cheapest
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                  Cheapest
                 </button>
                 <button 
                   @click="relatedSort = 'distance_asc'"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border"
+                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
                   :class="relatedSort === 'distance_asc' ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-amber-500/5 border-amber-500/10 text-amber-600 hover:bg-amber-500/10'"
                 >
-                  ⚡ Fast Delivery
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                  Fast Delivery
                 </button>
               </div>
             </div>

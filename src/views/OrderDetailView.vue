@@ -184,7 +184,10 @@ onMounted(() => {
             <div class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
               <div class="flex items-center gap-5">
                 <!-- Pharmacy Logo/Image -->
-                <div class="relative w-20 h-20 rounded-2xl overflow-hidden shadow-lg border-2 border-white dark:border-gray-700 bg-white">
+                <div 
+                  @click="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
+                  class="relative w-20 h-20 rounded-2xl overflow-hidden shadow-lg border-2 border-white dark:border-gray-700 bg-white cursor-pointer hover:ring-4 hover:ring-[#246BFD]/20 transition-all"
+                >
                   <LazyImage 
                     :src="order.pharmacyImage || ''" 
                     alt="Pharmacy Logo"
@@ -193,10 +196,15 @@ onMounted(() => {
                   />
                 </div>
                 
-                <div>
+                <div class="min-w-0">
                   <div class="flex items-center gap-3 mb-1">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ order.pharmacyName }}</h1>
-                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    <h1 
+                      @click="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
+                      class="text-2xl font-bold text-gray-900 dark:text-white truncate cursor-pointer hover:text-[#246BFD] transition-colors"
+                    >
+                      {{ order.pharmacyName }}
+                    </h1>
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 flex-shrink-0">
                       {{ order.branchName || 'Main Branch' }}
                     </span>
                   </div>
@@ -291,9 +299,10 @@ onMounted(() => {
                 <div
                   v-for="item in order.items"
                   :key="item.id"
-                  class="flex gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+                  @click="router.push({ name: 'MedicationDetail', params: { id: item.medicationId } })"
+                  class="flex gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 transition-all cursor-pointer border border-transparent hover:border-[#246BFD]/30 group/item"
                 >
-                  <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-white dark:bg-gray-800 rounded-lg">
+                  <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-white dark:bg-gray-800 rounded-lg group-hover/item:scale-105 transition-transform">
                     <LazyImage
                       v-if="item.image"
                       :src="item.image"
@@ -303,19 +312,19 @@ onMounted(() => {
                     />
                   </div>
                   
-                  <div class="flex-1">
-                    <h4 class="mb-1 font-medium text-gray-900 dark:text-white">
+                  <div class="flex-1 min-w-0">
+                    <h4 class="mb-1 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors">
                       {{ item.medicationName }}
                     </h4>
                     <div class="mb-2 space-y-1">
-                      <p v-if="item.brandName" class="text-sm text-gray-600 dark:text-gray-400">
-                        Brand: {{ item.brandName }}
+                      <p v-if="item.brandName" class="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                        {{ item.brandName }}
                       </p>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
                         {{ item.formName }} • {{ item.strength }} • {{ item.uom }}
                       </p>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">
-                        Quantity: {{ item.quantity }}
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        Qty: {{ item.quantity }}
                       </p>
                     </div>
                   </div>
@@ -420,13 +429,23 @@ onMounted(() => {
                 <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Payment Status</p>
                 <div class="flex flex-wrap gap-2">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                    :class="order.paymentMethod === 'platform' && order.paymentStatus === 'paid'
-                      ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
-                      : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'">
+                    :class="[
+                      order.paymentMethod === 'platform'
+                        ? (order.paymentStatus === 'paid' 
+                            ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                            : (order.paymentStatus === 'failed'
+                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+                                : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'))
+                        : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800'
+                    ]">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                     </svg>
-                    {{ order.paymentMethod === 'platform' ? 'Paid Online' : 'Pay at Pharmacy' }}
+                    {{ 
+                      order.paymentMethod === 'platform' 
+                        ? (order.paymentStatus === 'paid' ? 'Paid Online' : (order.paymentStatus === 'failed' ? 'Payment Failed' : 'Pay Online')) 
+                        : 'Pay at Pharmacy' 
+                    }}
                   </span>
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
                     :class="{
@@ -447,7 +466,12 @@ onMounted(() => {
               <div class="space-y-3">
                 <div>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Pharmacy</p>
-                  <p class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ order.pharmacyName }}</p>
+                  <p 
+                    @click="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
+                    class="text-base font-bold text-[#246BFD] hover:text-[#5089FF] transition-colors cursor-pointer mb-2"
+                  >
+                    {{ order.pharmacyName }}
+                  </p>
                   
                   <template v-if="order.branchName">
                     <p class="text-sm text-gray-600 dark:text-gray-400">Branch</p>

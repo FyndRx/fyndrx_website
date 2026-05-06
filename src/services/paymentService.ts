@@ -29,13 +29,27 @@ export interface Transaction {
   paid_at?: string;
   created_at: string;
   updated_at: string;
+  order?: {
+    order_number: string;
+    pharmacy_name: string;
+    pharmacy?: {
+      logo: string;
+      name: string;
+    }
+  };
+  metadata?: {
+    is_bulk?: boolean;
+    [key: string]: any;
+  };
 }
 
 export const paymentService = {
-  async initializePayment(orderId: string): Promise<PaymentInitializationResponse> {
-    return await apiService.postAuth<PaymentInitializationResponse>('/payments/initialize', {
-      order_id: orderId
-    });
+  async initializePayment(orderIds: string | string[]): Promise<PaymentInitializationResponse> {
+    const payload = Array.isArray(orderIds) 
+      ? { order_ids: orderIds } 
+      : { order_id: orderIds };
+      
+    return await apiService.postAuth<PaymentInitializationResponse>('/payments/initialize', payload);
   },
 
   async verifyPayment(reference: string): Promise<PaymentVerification> {

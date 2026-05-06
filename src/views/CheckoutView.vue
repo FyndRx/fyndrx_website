@@ -11,6 +11,7 @@ import { paymentService } from '@/services/paymentService';
 import { formatCurrency } from '@/utils/currency';
 import type { CartPharmacyGroup } from '@/models/Cart';
 import LazyImage from '@/components/LazyImage.vue';
+import CustomCheckbox from '@/components/CustomCheckbox.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -160,6 +161,33 @@ const removePrescription = (pharmacyId: number) => {
 
 const createdOrders = ref<any[]>([]); // To store created orders
 const showSuccess = ref(false);
+const selectedOrderIds = ref<string[]>([]);
+const bulkPaymentLoading = ref(false);
+
+const selectableOrders = computed(() => {
+  return createdOrders.value.filter(order => 
+    order.paymentMethod === 'platform' && order.paymentStatus === 'pending'
+  );
+});
+
+const isAllSelected = computed(() => {
+  return selectableOrders.value.length > 0 && 
+         selectedOrderIds.value.length === selectableOrders.value.length;
+});
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedOrderIds.value = [];
+  } else {
+    selectedOrderIds.value = selectableOrders.value.map(order => order.id);
+  }
+};
+
+const selectedTotal = computed(() => {
+  return createdOrders.value
+    .filter(order => selectedOrderIds.value.includes(order.id))
+    .reduce((total, order) => total + Number(order.total), 0);
+});
 
 const showDeliveryAddressInput = computed(() => {
   for (const method of deliveryMethods.value.values()) {
@@ -302,17 +330,24 @@ const placeAllOrders = async () => {
   }
 };
 
-const payNow = async (orderId: string) => {
+const payNow = async (orderId: string | string[]) => {
+  const isBulk = Array.isArray(orderId);
+  if (isBulk) bulkPaymentLoading.value = true;
+  else loading.value = true;
+
   try {
     const paymentResponse = await paymentService.initializePayment(orderId);
     window.location.href = paymentResponse.authorization_url;
   } catch (err: any) {
     console.error('Payment initialization failed:', err);
     if (err.status === 403) {
-      notification.error('Payment Disabled', 'Online payment is currently disabled for this pharmacy. Please contact support or switch your payment method.');
+      notification.error('Payment Disabled', 'Online payment is currently disabled for one or more pharmacies. Please contact support.');
     } else {
       notification.error('Payment Error', err.message || 'Failed to initialize payment. Please try again.');
     }
+  } finally {
+    if (isBulk) bulkPaymentLoading.value = false;
+    else loading.value = false;
   }
 };
 </script>
@@ -335,46 +370,111 @@ const payNow = async (orderId: string) => {
         </div>
 
         <div class="space-y-6 text-left">
-          <div v-for="order in createdOrders" :key="order.id" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="font-semibold text-lg text-gray-900 dark:text-white">Order #{{ order.orderNumber }}</h3>
-                <p class="text-sm text-gray-500 font-medium">
-                  {{ order.pharmacyName }}
-                  <span v-if="order.branchName" class="text-gray-400">• {{ order.branchName }}</span>
-                </p>
+          <div v-if="selectableOrders.length > 1" class="flex justify-between items-center mb-6 px-2">
+            <CustomCheckbox 
+              :modelValue="isAllSelected" 
+              @update:modelValue="toggleSelectAll"
+              label="Select all for online payment"
+              size="medium"
+              color="primary"
+            />
+          </div>
+
+          <div v-for="order in createdOrders" :key="order.id" class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-100 dark:border-gray-700 transition-all hover:shadow-lg relative overflow-hidden group">
+            <!-- Selection Checkbox -->
+            <div v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'" class="absolute top-6 right-6 z-10">
+              <CustomCheckbox 
+                v-model="selectedOrderIds"
+                :value="order.id"
+                size="large"
+              />
+            </div>
+
+            <div class="flex items-start gap-4 mb-4 pr-10">
+              <!-- Pharmacy Logo -->
+              <div v-if="order.pharmacy?.logo" class="w-12 h-12 flex-shrink-0 bg-white rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <LazyImage
+                  :src="order.pharmacy.logo"
+                  :alt="order.pharmacyName"
+                  aspectRatio="square"
+                  className="w-full h-full object-contain p-1"
+                />
               </div>
-              <div class="text-right">
-                <span :class="[
-                  'px-3 py-1 rounded-full text-xs font-medium',
-                  order.paymentMethod === 'platform' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                ]">
-                  {{ order.paymentMethod === 'platform' ? 'Pay Online' : 'Pay at Pharmacy' }}
-                </span>
+              <div v-else class="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-1">Order #{{ order.orderNumber }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                      {{ order.pharmacyName }}
+                      <span v-if="order.branchName" class="text-gray-400">• {{ order.branchName }}</span>
+                    </p>
+                  </div>
+                  <span :class="[
+                    'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap',
+                    order.paymentMethod === 'platform' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  ]">
+                    {{ order.paymentMethod === 'platform' ? 'Pay Online' : 'Pay at Pharmacy' }}
+                  </span>
+                </div>
               </div>
             </div>
             
-            <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4">
-              <span class="text-gray-600 dark:text-gray-300">Total Amount</span>
-              <span class="text-xl font-bold text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
-            </div>
-
-            <!-- Pay Now Button for Platform Orders -->
-            <div v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'" class="mt-4">
-               <button 
-                 @click="payNow(order.id)"
-                 class="w-full py-2 px-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-lg font-medium transition-colors flex items-center justify-center"
-               >
-                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                 </svg>
-                 Pay Now
-               </button>
+            <div class="flex items-center justify-between border-t border-gray-50 dark:border-gray-700/50 pt-5 mt-2">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Total Amount</span>
+              <span class="text-2xl font-black text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
             </div>
           </div>
         </div>
 
-        <div class="mt-8 flex justify-center space-x-4">
+        <!-- Bulk Payment Summary -->
+        <div v-if="selectedOrderIds.length > 1" class="mt-8 p-8 bg-gradient-to-br from-[#246BFD]/5 to-[#246BFD]/10 dark:from-[#246BFD]/10 dark:to-transparent rounded-3xl border-2 border-[#246BFD] border-dashed text-center shadow-xl shadow-blue-500/5">
+          <div class="inline-flex items-center justify-center w-12 h-12 bg-[#246BFD] text-white rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Pay for {{ selectedOrderIds.length }} Orders</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Process a single combined payment for all selected items</p>
+          
+          <div class="flex items-center justify-center gap-2 mb-8">
+            <span class="text-gray-500 text-sm font-medium">Total:</span>
+            <span class="text-4xl font-black text-[#246BFD]">{{ formatCurrency(selectedTotal) }}</span>
+          </div>
+
+          <button 
+            @click="payNow(selectedOrderIds)"
+            :disabled="bulkPaymentLoading"
+            class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-2xl font-bold shadow-2xl shadow-blue-500/40 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center mx-auto"
+          >
+            <span v-if="bulkPaymentLoading" class="flex items-center">
+              <svg class="w-5 h-5 mr-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing Payment...
+            </span>
+            <span v-else>Securely Pay All Selected</span>
+          </button>
+        </div>
+
+        <!-- Individual Pay Now Button if only one selected or no selection -->
+        <div v-else-if="selectedOrderIds.length === 1" class="mt-8">
+           <button 
+             @click="payNow(selectedOrderIds[0])"
+             class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center mx-auto"
+           >
+             Pay for Order #{{ createdOrders.find(o => o.id === selectedOrderIds[0])?.orderNumber }}
+           </button>
+        </div>
+
+        <!-- Action Links -->
+        <div class="mt-12 flex justify-center space-x-6">
           <button @click="router.push({ name: 'orders' })" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">
             View My Orders
           </button>
