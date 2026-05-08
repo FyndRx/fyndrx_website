@@ -205,6 +205,53 @@ class AuthService {
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
   }
+
+  // ── Address Management ──────────────────────────────────────────────────
+
+  async getAddresses(): Promise<any[]> {
+    const response = await apiService.getAuth<any>('/user/addresses');
+    return response.data;
+  }
+
+  async addAddress(data: any): Promise<any> {
+    const response = await apiService.postAuth<any>('/user/addresses', data);
+    return response.data;
+  }
+
+  async updateAddress(id: number, data: any): Promise<any> {
+    const response = await apiService.putAuth<any>(`/user/addresses/${id}`, data);
+    return response.data;
+  }
+
+  async deleteAddress(id: number): Promise<void> {
+    await apiService.deleteAuth<void>(`/user/addresses/${id}`);
+  }
+
+  async setDefaultAddress(id: number): Promise<any> {
+    const response = await apiService.postAuth<any>(`/user/addresses/${id}/set-default`);
+    return response.data;
+  }
+
+  // ── Medical Record Management ───────────────────────────────────────────
+
+  async getMedicalRecords(): Promise<any[]> {
+    const response = await apiService.getAuth<any>('/user/medical-records');
+    return response.data;
+  }
+
+  async addMedicalRecord(data: any): Promise<any> {
+    const response = await apiService.postAuth<any>('/user/medical-records', data);
+    return response.data;
+  }
+
+  async updateMedicalRecord(id: number, data: any): Promise<any> {
+    const response = await apiService.putAuth<any>(`/user/medical-records/${id}`, data);
+    return response.data;
+  }
+
+  async deleteMedicalRecord(id: number): Promise<void> {
+    await apiService.deleteAuth<void>(`/user/medical-records/${id}`);
+  }
 }
 
 export const authService = new AuthService();

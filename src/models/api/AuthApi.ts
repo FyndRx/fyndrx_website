@@ -34,6 +34,8 @@ export interface UserApiResponse {
   profile_picture: string | null;
   profile_picture_full: string | null;
   saved_money: number;
+  addresses?: any[];
+  medical_records?: any[];
   created_at?: string;
   updated_at?: string;
 }

@@ -86,6 +86,8 @@ export function transformUser(apiUser: UserApiResponse): User {
     profile_picture: apiUser.profile_picture,
     profile_picture_full: apiUser.profile_picture_full,
     saved_money: apiUser.saved_money,
+    addresses: apiUser.addresses,
+    medical_records: apiUser.medical_records,
   };
 }
 

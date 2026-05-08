@@ -17,6 +17,35 @@ export type User = {
   profile_picture: string | null;
   profile_picture_full: string | null;
   saved_money: number;
+  addresses?: Address[];
+  medical_records?: MedicalRecord[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Address = {
+  id: number;
+  label: string | null;
+  google_address: string | null;
+  address_line_1: string;
+  address_line_2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string;
+  is_default: boolean;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export type MedicalRecord = {
+  id: number;
+  category: string;
+  item_name: string;
+  notes: string | null;
+  status: string;
+  date_identified: string | null;
+  created_at: string;
 };
 
 export type UserCredentials = {

@@ -193,6 +193,97 @@ export const useAuthStore = defineStore('auth', () => {
       }
   };
 
+  const addAddress = async (data: any) => {
+    try {
+      loading.value = true;
+      await authService.addAddress(data);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateAddress = async (id: number, data: any) => {
+    try {
+      loading.value = true;
+      await authService.updateAddress(id, data);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteAddress = async (id: number) => {
+    try {
+      loading.value = true;
+      await authService.deleteAddress(id);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const setDefaultAddress = async (id: number) => {
+    try {
+      loading.value = true;
+      await authService.setDefaultAddress(id);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const addMedicalRecord = async (data: any) => {
+    try {
+      loading.value = true;
+      await authService.addMedicalRecord(data);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateMedicalRecord = async (id: number, data: any) => {
+    try {
+      loading.value = true;
+      await authService.updateMedicalRecord(id, data);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteMedicalRecord = async (id: number) => {
+    try {
+      loading.value = true;
+      await authService.deleteMedicalRecord(id);
+      await fetchUserDetails();
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const checkAuth = async () => {
     if (!accessToken.value || !isAuthenticated.value) {
       clearAuth();
@@ -224,5 +315,12 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     updateUserDetails,
     uploadProfilePicture,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress,
+    addMedicalRecord,
+    updateMedicalRecord,
+    deleteMedicalRecord,
   };
 });
