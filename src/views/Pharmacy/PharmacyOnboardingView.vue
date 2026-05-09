@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useSeoMeta } from '@/composables/useSeoMeta';
+import MapPicker from '@/components/profile/MapPicker.vue';
+import CustomCheckbox from '@/components/CustomCheckbox.vue';
+import TimePickerInput from '@/components/TimePickerInput.vue';
+import PharmacyServiceSelect from '@/components/PharmacyServiceSelect.vue';
 
 useSeoMeta({
   title: 'Join FyndRx as a Partner Pharmacy | FyndRx',
@@ -11,7 +15,6 @@ useSeoMeta({
 });
 
 const route = useRoute();
-const router = useRouter();
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -42,23 +45,22 @@ const PHARMACY_TYPES = [
   { value: 'specialist',  label: 'Specialist / Niche Pharmacy' },
 ];
 
-const SERVICES_LIST = [
-  'Drug Dispensing', 'Prescription Verification', 'OTC Medication Supply',
-  'Compounding', 'Home Delivery', 'Blood Pressure Monitoring',
-  'Blood Glucose Testing', 'Malaria Rapid Diagnostic Test (MRDT)',
-  'Injectable Medications', 'Pharmaceutical Care & Counselling',
-  'Vaccination / Immunisation', 'Family Planning Supplies',
-  'Wound Care Products', 'Mother & Child Health Products',
-];
 
 const LANGUAGES = [
   'English','Twi (Akan)','Hausa','Ga','Ewe','Dagbani','Fante','Dagaare','Nzema','Kasem',
 ];
 
-const SPECIAL_STORAGE = [
-  { value: 'cold_chain',         label: 'Cold Chain / Refrigerated Storage' },
-  { value: 'controlled_vault',   label: 'Controlled Substances Vault' },
-  { value: 'hazardous_materials',label: 'Hazardous / Cytotoxic Materials' },
+const SPECIAL_STORAGE: { value: string; label: string; icon: string }[] = [
+  { value: 'refrigeration',         label: 'Refrigeration (2–8°C)',                       icon: 'M12 3v1m0 16v1M4.22 4.22l.707.707M18.364 18.364l.707.707M1 12h1m20 0h1M4.22 19.778l.707-.707M18.364 5.636l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z' },
+  { value: 'deep_freezer',          label: 'Deep Freezer (< −15°C)',                      icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10' },
+  { value: 'controlled_temperature',label: 'Controlled Room Temperature (15–25°C)',       icon: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3' },
+  { value: 'cold_chain',            label: 'Cold Chain Logistics',                        icon: 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0' },
+  { value: 'narcotics_safe',        label: 'Narcotics / Controlled Substances Safe',      icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+  { value: 'light_sensitive',       label: 'Light-Sensitive (UV-Protected) Storage',      icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+  { value: 'humidity_controlled',   label: 'Humidity-Controlled Storage',                 icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z' },
+  { value: 'flammables_cabinet',    label: 'Flammables Cabinet',                          icon: 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z' },
+  { value: 'cytotoxic',             label: 'Cytotoxic Drug Handling',                     icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
+  { value: 'biological_samples',    label: 'Biological Samples Storage',                  icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
 ];
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -120,6 +122,20 @@ const DOCUMENT_REQUIREMENTS = [
     required: false,
     accept: '.pdf,.jpg,.jpeg,.png',
   },
+  {
+    key: 'logo',
+    label: 'Pharmacy Logo',
+    description: 'Square logo image displayed on your FyndRx profile (PNG or JPG recommended).',
+    required: false,
+    accept: '.jpg,.jpeg,.png,.webp',
+  },
+  {
+    key: 'banner_image',
+    label: 'Pharmacy Banner',
+    description: 'Wide banner image shown at the top of your pharmacy profile page.',
+    required: false,
+    accept: '.jpg,.jpeg,.png,.webp',
+  },
 ];
 
 const BANKS = [
@@ -133,9 +149,15 @@ const BANKS = [
 const currentStep = ref(0); // 0 = welcome screen
 const isSaving = ref(false);
 const isSubmitted = ref(false);
+const isRejected = ref(false);
+const rejectionReason = ref<string | null>(null);
+const submissionCount = ref(1);
 const resumeAvailable = ref(false);
+const resumed = ref(false);         // true when server returned 200 + resumed:true
+const resumeMessage = ref('');      // server message for the welcome-back notice
 const applicationId = ref<string | null>(null);
 const stepErrors = reactive<Record<string, string>>({});
+const saveDraftText = ref('Save Draft');
 
 const form = reactive({
   // Step 1 – Get Started
@@ -163,6 +185,10 @@ const form = reactive({
   secondary_phone: '',
   business_email: '',
   website: '',
+  // Map location
+  latitude: 0,
+  longitude: 0,
+  location_name: '',
 
   // Step 4 – Operations
   operating_hours: DAYS.map((day) => ({
@@ -175,7 +201,8 @@ const form = reactive({
   services: [] as string[],
   delivery_available: false,
   delivery_radius_km: '',
-  delivery_fee_structure: '',
+  delivery_base_fee: '',
+  delivery_fee_per_km: '',
   special_storage: [] as string[],
   accepts_online_prescriptions: true,
 
@@ -206,6 +233,12 @@ DOCUMENT_REQUIREMENTS.forEach((doc) => {
   documents[doc.key] = { file: null, preview: null, name: null, size: null };
 });
 
+// URLs of documents already on the server (populated when resuming an existing application)
+const serverDocUrls = reactive<Record<string, string | null>>({});
+DOCUMENT_REQUIREMENTS.forEach((doc) => {
+  serverDocUrls[doc.key] = null;
+});
+
 // ─── Computed ─────────────────────────────────────────────────────────────────
 
 const progressPercent = computed(() =>
@@ -213,7 +246,7 @@ const progressPercent = computed(() =>
 );
 
 const uploadedCount = computed(() =>
-  DOCUMENT_REQUIREMENTS.filter((d) => documents[d.key].file).length
+  DOCUMENT_REQUIREMENTS.filter((d) => documents[d.key].file || serverDocUrls[d.key]).length
 );
 
 const requiredDocCount = computed(() =>
@@ -221,7 +254,7 @@ const requiredDocCount = computed(() =>
 );
 
 const uploadedRequiredCount = computed(() =>
-  DOCUMENT_REQUIREMENTS.filter((d) => d.required && documents[d.key].file).length
+  DOCUMENT_REQUIREMENTS.filter((d) => d.required && (documents[d.key].file || serverDocUrls[d.key])).length
 );
 
 // ─── Draft Persistence ────────────────────────────────────────────────────────
@@ -232,9 +265,19 @@ function saveDraft() {
       currentStep: currentStep.value,
       form: { ...form, operating_hours: [...form.operating_hours] },
       applicationId: applicationId.value,
+      isRejected: isRejected.value,
+      rejectionReason: rejectionReason.value,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
   } catch (_) { /* storage full — silently continue */ }
+}
+
+function handleSaveDraft() {
+  saveDraft();
+  saveDraftText.value = 'Saved ✓';
+  setTimeout(() => {
+    saveDraftText.value = 'Save Draft';
+  }, 2000);
 }
 
 function loadDraft() {
@@ -245,6 +288,15 @@ function loadDraft() {
     if (saved.form?.contact_email) {
       Object.assign(form, saved.form);
       applicationId.value = saved.applicationId ?? null;
+      if (saved.isRejected) {
+        isRejected.value = true;
+        rejectionReason.value = saved.rejectionReason ?? null;
+      }
+      // Always ensure all 7 days are present and field names are normalised
+      const normalized = normalizeOperatingHours(
+        Array.isArray(form.operating_hours) ? form.operating_hours : []
+      );
+      form.operating_hours.splice(0, form.operating_hours.length, ...normalized);
       resumeAvailable.value = true;
     }
   } catch (_) { /* malformed JSON — ignore */ }
@@ -254,7 +306,7 @@ function clearDraft() {
   localStorage.removeItem(DRAFT_KEY);
 }
 
-function resumeDraft() {
+async function resumeDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
@@ -263,7 +315,32 @@ function resumeDraft() {
     applicationId.value = saved.applicationId ?? null;
     currentStep.value = saved.currentStep ?? 1;
     resumeAvailable.value = false;
+    // Ensure all 7 days are present in the just-loaded draft
+    const normalized = normalizeOperatingHours(
+      Array.isArray(form.operating_hours) ? form.operating_hours : []
+    );
+    form.operating_hours.splice(0, form.operating_hours.length, ...normalized);
   } catch (_) {}
+
+  // Silently refresh operating hours from the server so any admin-side changes
+  // (e.g. hours entered in Filament after the draft was last saved) are picked up.
+  if (applicationId.value) {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/pharmacy-applications/${applicationId.value}`,
+        { headers: { 'X-API-Key': import.meta.env.VITE_API_KEY as string } }
+      );
+      if (res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const serverHours = payload?.data?.operating_hours;
+        if (Array.isArray(serverHours) && serverHours.length > 0) {
+          const fresh = normalizeOperatingHours(serverHours);
+          form.operating_hours.splice(0, form.operating_hours.length, ...fresh);
+          saveDraft(); // persist the freshened data
+        }
+      }
+    } catch (_) { /* network failure — silently keep draft data */ }
+  }
 }
 
 function startFresh() {
@@ -292,6 +369,9 @@ function startFresh() {
   form.secondary_phone = '';
   form.business_email = '';
   form.website = '';
+  form.latitude = 0;
+  form.longitude = 0;
+  form.location_name = '';
   form.operating_hours = DAYS.map((day) => ({
     day,
     open: '08:00',
@@ -302,7 +382,8 @@ function startFresh() {
   form.services = [];
   form.delivery_available = false;
   form.delivery_radius_km = '';
-  form.delivery_fee_structure = '';
+  form.delivery_base_fee = '';
+  form.delivery_fee_per_km = '';
   form.special_storage = [];
   form.accepts_online_prescriptions = true;
   form.superintendent_name = '';
@@ -322,10 +403,47 @@ function startFresh() {
   form.mobile_money_airteltigo = '';
   form.preferred_payment_method = '';
 
-  // Reset the documents reactive object
+  // Reset the documents reactive objects
   DOCUMENT_REQUIREMENTS.forEach((doc) => {
-    documents[doc.key] = { file: null, preview: null, name: null, size: null };
+    documents[doc.key]    = { file: null, preview: null, name: null, size: null };
+    serverDocUrls[doc.key] = null;
   });
+}
+
+function prefillFromResumedData(data: Record<string, any>) {
+  const directFields = [
+    'contact_email','pharmacy_name','legal_name','pharmacy_type','year_established',
+    'gpc_license_number','fda_registration_number','business_registration_number','tin_number',
+    'description','street_address','area_suburb','city','region','digital_address',
+    'primary_phone','whatsapp_number','secondary_phone','business_email','website',
+    'latitude','longitude','location_name','delivery_available','delivery_radius_km',
+    'delivery_base_fee','delivery_fee_per_km','accepts_online_prescriptions',
+    'superintendent_name','superintendent_license_number','superintendent_phone','superintendent_email',
+    'staff_count_pharmacists','staff_count_technicians','staff_count_assistants',
+    'bank_name','bank_account_name','bank_account_number','bank_branch',
+    'mobile_money_mtn','mobile_money_vodafone','mobile_money_airteltigo','preferred_payment_method',
+  ];
+  directFields.forEach(field => {
+    if (data[field] !== undefined && data[field] !== null) {
+      (form as any)[field] = data[field];
+    }
+  });
+  if (Array.isArray(data.services))         form.services         = data.services;
+  if (Array.isArray(data.special_storage))  form.special_storage  = data.special_storage;
+  if (Array.isArray(data.languages))        form.languages        = data.languages;
+  if (Array.isArray(data.operating_hours) && data.operating_hours.length > 0) {
+    const normalized = normalizeOperatingHours(data.operating_hours);
+    form.operating_hours.splice(0, form.operating_hours.length, ...normalized);
+  }
+  // Populate server-side document URLs so Step 7 can show previews and offer Replace
+  DOCUMENT_REQUIREMENTS.forEach(doc => {
+    const url = data[doc.key];
+    serverDocUrls[doc.key] = (url && typeof url === 'string') ? url : null;
+  });
+  if (data.status === 'rejected') {
+    isRejected.value       = true;
+    rejectionReason.value  = data.rejection_reason ?? null;
+  }
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -379,6 +497,14 @@ async function nextStep() {
   if (currentStep.value === 0) { currentStep.value = 1; return; }
   if (!validateStep(currentStep.value)) return;
   isSaving.value = true;
+
+  // Step 1 with no existing application → create or resume from server
+  if (currentStep.value === 1 && !applicationId.value) {
+    await startApplication();
+    isSaving.value = false;
+    return; // startApplication handles navigation itself
+  }
+
   const success = await saveToApi();
   isSaving.value = false;
   if (!success) return;
@@ -403,6 +529,65 @@ function goToStep(n: number) {
 }
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
+
+async function startApplication(): Promise<void> {
+  delete stepErrors.api;
+  delete stepErrors.contact_email;
+  delete stepErrors.pharmacy_name;
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/pharmacy-applications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': import.meta.env.VITE_API_KEY as string,
+      },
+      body: JSON.stringify({
+        contact_email: form.contact_email,
+        pharmacy_name: form.pharmacy_name,
+      }),
+    });
+
+    const payload = await res.json().catch(() => ({}));
+
+    // 201 — brand new application
+    if (res.status === 201) {
+      applicationId.value = payload.application_id ?? payload.data?.id ?? null;
+      saveDraft();
+      currentStep.value = 2;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 200 — existing draft/rejected/pending/resubmitted application found
+    if (res.status === 200 && payload.resumed && payload.data) {
+      applicationId.value = payload.data.id;
+      prefillFromResumedData(payload.data);
+      resumed.value       = true;
+      resumeMessage.value = payload.message || 'Your previous progress has been restored.';
+      saveDraft();
+      // Jump straight to where they left off (backend stores the current step)
+      currentStep.value = payload.data.step ?? 2;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 409 — conflict
+    if (res.status === 409) {
+      if (payload.code === 'ALREADY_APPROVED') {
+        stepErrors.contact_email = payload.message || 'An approved pharmacy already exists for this email. Contact support if this is unexpected.';
+      } else if (payload.code === 'NAME_TAKEN') {
+        stepErrors.pharmacy_name = payload.message || 'This pharmacy name is already in use. Please choose a different trading name.';
+      } else {
+        stepErrors.api = payload.message || 'Could not start application. Please try again.';
+      }
+      return;
+    }
+
+    stepErrors.api = payload.message || 'Failed to start application. Please try again.';
+  } catch (_) {
+    stepErrors.api = 'Network error. Please check your connection and try again.';
+  }
+}
 
 async function saveToApi(): Promise<boolean> {
   delete stepErrors.api;
@@ -460,9 +645,12 @@ async function submitApplication() {
         }
       }
     }
-    // Final submit
+    // Final submit (or resubmit if previously rejected)
     if (applicationId.value) {
-      const subRes = await fetch(`${endpoint}/pharmacy-applications/${applicationId.value}/submit`, {
+      const submitEndpoint = isRejected.value
+        ? `${endpoint}/pharmacy-applications/${applicationId.value}/resubmit`
+        : `${endpoint}/pharmacy-applications/${applicationId.value}/submit`;
+      const subRes = await fetch(submitEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -474,10 +662,13 @@ async function submitApplication() {
         const subErr = await subRes.json().catch(() => ({}));
         throw new Error(subErr.message || 'Failed to submit application.');
       }
+      const subData = await subRes.json().catch(() => ({}));
+      if (subData.submission_count) submissionCount.value = subData.submission_count;
     } else {
       throw new Error('Application ID is missing. Please make sure you have filled out the previous steps.');
     }
     clearDraft();
+    isRejected.value = false;
     isSubmitted.value = true;
   } catch (err: any) {
     stepErrors.submit = err.message || 'Submission failed. Please try again or contact support@fyndrx.com.';
@@ -519,14 +710,41 @@ function triggerFileInput(docKey: string) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function toggleService(service: string) {
-  const idx = form.services.indexOf(service);
-  idx === -1 ? form.services.push(service) : form.services.splice(idx, 1);
+// Normalises an operating_hours array from either the frontend format (open/close/is_24h)
+// or the admin-panel Filament format (open_time/close_time/is_24_hours). Always returns
+// a full 7-day array ordered by DAYS, filling defaults for any missing day.
+function normalizeOperatingHours(hours: any[]) {
+  const byDay: Record<string, any> = {};
+  for (const h of hours) {
+    if (h?.day) byDay[h.day] = h;
+  }
+  return DAYS.map((day) => {
+    const h = byDay[day];
+    if (h) {
+      return {
+        day,
+        open:      String(h.open      || h.open_time  || '08:00'),
+        close:     String(h.close     || h.close_time || '17:00'),
+        is_closed: Boolean(h.is_closed),
+        is_24h:    Boolean(h.is_24h   || h.is_24_hours),
+      };
+    }
+    return { day, open: '08:00', close: '17:00', is_closed: day === 'Sunday', is_24h: false };
+  });
 }
 
-function toggleStorage(val: string) {
-  const idx = form.special_storage.indexOf(val);
-  idx === -1 ? form.special_storage.push(val) : form.special_storage.splice(idx, 1);
+function isImageUrl(url: string): boolean {
+  return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
+}
+
+// Time display helper (mirrors TimePickerInput's parse without importing it)
+function formatTime(time24: string): string {
+  const [hStr, mStr = '00'] = (time24 || '08:00').split(':');
+  const h = parseInt(hStr, 10);
+  if (isNaN(h)) return time24;
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr.slice(0, 2)} ${period}`;
 }
 
 function toggleLanguage(lang: string) {
@@ -534,10 +752,20 @@ function toggleLanguage(lang: string) {
   idx === -1 ? form.languages.push(lang) : form.languages.splice(idx, 1);
 }
 
-function formatFileSize(bytes: number) {
-  return bytes > 1048576
-    ? `${(bytes / 1048576).toFixed(1)} MB`
-    : `${Math.round(bytes / 1024)} KB`;
+// First open (non-24h) day — used as the source for "copy to all open days"
+const firstOpenDay = computed(() =>
+  form.operating_hours.find(h => !h.is_closed && !h.is_24h) ?? null
+);
+
+function applyHoursToAllOpenDays() {
+  const src = firstOpenDay.value;
+  if (!src) return;
+  form.operating_hours.forEach(h => {
+    if (!h.is_closed && !h.is_24h) {
+      h.open  = src.open;
+      h.close = src.close;
+    }
+  });
 }
 
 const years = Array.from({ length: 60 }, (_, i) => String(new Date().getFullYear() - i));
@@ -552,6 +780,22 @@ onMounted(() => {
     currentStep.value = 1;
   }
   loadDraft();
+
+  // If no saved coordinates, try to get user's current geolocation
+  if (!form.latitude && !form.longitude) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          form.latitude = pos.coords.latitude;
+          form.longitude = pos.coords.longitude;
+        },
+        () => {
+          // Permission denied or unavailable — keep Accra default (handled in MapPicker)
+        },
+        { timeout: 8000 }
+      );
+    }
+  }
 });
 </script>
 
@@ -565,9 +809,15 @@ onMounted(() => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">Application Submitted!</h1>
+      <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
+        {{ submissionCount > 1 ? 'Application Resubmitted!' : 'Application Submitted!' }}
+      </h1>
       <p class="text-lg text-gray-600 dark:text-gray-300 max-w-xl mb-8">
-        Thank you, <strong>{{ form.pharmacy_name }}</strong>. Your application is now under review by the FyndRx verification team.
+        Thank you, <strong>{{ form.pharmacy_name }}</strong>.
+        {{ submissionCount > 1
+          ? 'Your updated application has been sent back to our team for review.'
+          : 'Your application is now under review by the FyndRx verification team.'
+        }}
       </p>
       <div class="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-left space-y-4 mb-8">
         <h3 class="font-bold text-gray-900 dark:text-white">What happens next?</h3>
@@ -600,9 +850,26 @@ onMounted(() => {
       <!-- ═══════════════════════════ WELCOME SCREEN (Step 0) ════════════════ -->
       <div v-if="currentStep === 0" class="relative">
 
-        <!-- Resume banner -->
+        <!-- Rejection notice banner -->
         <transition enter-active-class="duration-300 ease-out" enter-from-class="-translate-y-full opacity-0" enter-to-class="translate-y-0 opacity-100">
-          <div v-if="resumeAvailable" class="bg-[#FE9615] text-white px-4 py-3 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm font-medium">
+          <div v-if="isRejected && resumeAvailable" class="bg-red-600 text-white px-4 py-4 flex flex-col items-center gap-3 text-sm">
+            <div class="flex items-center gap-2 font-bold text-base">
+              <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              Your application for <strong class="mx-1">{{ form.pharmacy_name }}</strong> was not approved.
+            </div>
+            <p v-if="rejectionReason" class="text-red-100 text-xs text-center max-w-xl">
+              Reason: {{ rejectionReason }}
+            </p>
+            <p class="text-red-100 text-xs">Please address the feedback and resubmit your application.</p>
+            <button @click="resumeDraft" class="px-5 py-2 rounded-full bg-white text-red-600 font-semibold hover:bg-red-50 transition-colors">
+              Fix &amp; Resubmit
+            </button>
+          </div>
+        </transition>
+
+        <!-- Resume banner (unfinished non-rejected draft) -->
+        <transition enter-active-class="duration-300 ease-out" enter-from-class="-translate-y-full opacity-0" enter-to-class="translate-y-0 opacity-100">
+          <div v-if="resumeAvailable && !isRejected" class="bg-[#FE9615] text-white px-4 py-3 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm font-medium">
             <span>You have an unfinished application for <strong>{{ form.pharmacy_name || 'your pharmacy' }}</strong>.</span>
             <div class="flex gap-3">
               <button @click="resumeDraft" class="px-4 py-1.5 rounded-full bg-white text-[#FE9615] font-semibold hover:bg-gray-100 transition-colors">
@@ -739,6 +1006,26 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- Welcome-back notice (server resume) -->
+        <transition enter-active-class="transition-all duration-500 ease-out" enter-from-class="opacity-0 -translate-y-3" enter-to-class="opacity-100 translate-y-0">
+          <div v-if="resumed" class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div class="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/50">
+              <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-800/40 flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Welcome back, {{ form.pharmacy_name || 'your pharmacy' }}!</p>
+                <p class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">{{ resumeMessage }}</p>
+              </div>
+              <button @click="resumed = false" class="flex-shrink-0 text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </transition>
+
         <!-- Form Body -->
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
@@ -822,93 +1109,136 @@ onMounted(() => {
                       :class="stepErrors[field.key] ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors[field.key]" class="mt-1 text-xs text-red-500">{{ stepErrors[field.key] }}</p>
                   </div>
-                </div>
-              </div>
+                </div><!-- /.space-y-4 -->
+              </div><!-- /.bg-blue-50 regulatory box -->
 
               <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Brief Description of Your Pharmacy <span class="text-gray-400 font-normal">(optional)</span></label>
-                <textarea v-model="form.description" rows="3" placeholder="Tell patients what makes your pharmacy special — your specialties, years of service, or community focus."
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all resize-none text-sm"></textarea>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  Pharmacy Description <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea v-model="form.description" rows="3"
+                  placeholder="Brief description of your pharmacy, specialisations, and what makes it unique..."
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all resize-none"></textarea>
               </div>
-            </div>
-          </div>
+            </div><!-- /.space-y-5 Step 2 body -->
+          </div><!-- /v-if currentStep === 2 -->
 
-          <!-- ── STEP 3: Location & Contact ─────────────────────────────── -->
+          <!-- ── STEP 3: Location & Contact ──────────────────────────────── -->
           <div v-if="currentStep === 3">
             <div class="mb-8">
-              <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Location & Contact</h2>
-              <p class="text-gray-500 dark:text-gray-400">How patients find and reach you.</p>
+              <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Location &amp; Contact</h2>
+              <p class="text-gray-500 dark:text-gray-400">Where your pharmacy is located and how patients reach you.</p>
             </div>
-            <div class="space-y-5">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Street Address <span class="text-red-500">*</span></label>
-                <input v-model="form.street_address" type="text" placeholder="House/plot number and street name"
-                  class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
-                  :class="stepErrors.street_address ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
-                <p v-if="stepErrors.street_address" class="mt-1 text-xs text-red-500">{{ stepErrors.street_address }}</p>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="space-y-6">
+
+              <!-- Address Fields -->
+              <div class="space-y-5">
                 <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Area / Suburb</label>
-                  <input v-model="form.area_suburb" type="text" placeholder="e.g. Labone, Adum, Ashaiman"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">City / Town <span class="text-red-500">*</span></label>
-                  <input v-model="form.city" type="text" placeholder="e.g. Accra, Kumasi, Tamale"
+                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Street Address <span class="text-red-500">*</span></label>
+                  <input v-model="form.street_address" type="text" placeholder="House/plot number and street name"
                     class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
-                    :class="stepErrors.city ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
-                  <p v-if="stepErrors.city" class="mt-1 text-xs text-red-500">{{ stepErrors.city }}</p>
+                    :class="stepErrors.street_address ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
+                  <p v-if="stepErrors.street_address" class="mt-1 text-xs text-red-500">{{ stepErrors.street_address }}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Area / Suburb</label>
+                    <input v-model="form.area_suburb" type="text" placeholder="e.g. Labone, Adum, Ashaiman"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">City / Town <span class="text-red-500">*</span></label>
+                    <input v-model="form.city" type="text" placeholder="e.g. Accra, Kumasi, Tamale"
+                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      :class="stepErrors.city ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
+                    <p v-if="stepErrors.city" class="mt-1 text-xs text-red-500">{{ stepErrors.city }}</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Region <span class="text-red-500">*</span></label>
+                    <select v-model="form.region"
+                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      :class="stepErrors.region ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
+                      <option value="" disabled>Select region</option>
+                      <option v-for="r in GHANA_REGIONS" :key="r" :value="r">{{ r }}</option>
+                    </select>
+                    <p v-if="stepErrors.region" class="mt-1 text-xs text-red-500">{{ stepErrors.region }}</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      GhanaPostGPS Digital Address
+                      <span class="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <input v-model="form.digital_address" type="text" placeholder="e.g. GA-123-4567"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                  </div>
                 </div>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Region <span class="text-red-500">*</span></label>
-                  <select v-model="form.region"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
-                    :class="stepErrors.region ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
-                    <option value="" disabled>Select region</option>
-                    <option v-for="r in GHANA_REGIONS" :key="r" :value="r">{{ r }}</option>
-                  </select>
-                  <p v-if="stepErrors.region" class="mt-1 text-xs text-red-500">{{ stepErrors.region }}</p>
+
+              <!-- Map Picker -->
+              <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-[#246BFD]/10 flex items-center justify-center">
+                      <svg class="w-4 h-4 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-bold text-gray-900 dark:text-white">Pin Your Pharmacy on the Map</h3>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Search for your location or drag the pin — this helps patients find you.</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                    GhanaPostGPS Digital Address
-                    <span class="text-gray-400 font-normal">(optional)</span>
-                  </label>
-                  <input v-model="form.digital_address" type="text" placeholder="e.g. GA-123-4567"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Primary Phone <span class="text-red-500">*</span></label>
-                  <input v-model="form.primary_phone" type="tel" placeholder="+233 XX XXX XXXX"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
-                    :class="stepErrors.primary_phone ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
-                  <p v-if="stepErrors.primary_phone" class="mt-1 text-xs text-red-500">{{ stepErrors.primary_phone }}</p>
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">WhatsApp Number</label>
-                  <input v-model="form.whatsapp_number" type="tel" placeholder="+233 XX XXX XXXX"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                <div class="p-4">
+                  <MapPicker
+                    :model-value="{ lat: Number(form.latitude) || 5.6037, lng: Number(form.longitude) || -0.1870, address: form.location_name }"
+                    @update:model-value="(val: any) => { form.latitude = val.lat; form.longitude = val.lng; form.location_name = val.address; }"
+                    @address-components="(c: any) => {
+                      const street = [c.street_number, c.route].filter(Boolean).join(' ');
+                      if (street) form.street_address = street;
+                      form.area_suburb = c.area_suburb;
+                      if (c.city) form.city = c.city;
+                      if (c.region) form.region = GHANA_REGIONS.find(r => r.toLowerCase().includes(c.region.toLowerCase().replace(' region','').trim())) || form.region;
+                    }"
+                  />
                 </div>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Business Email <span class="text-red-500">*</span></label>
-                  <input v-model="form.business_email" type="email" placeholder="pharmacy@example.com"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
-                    :class="stepErrors.business_email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
-                  <p v-if="stepErrors.business_email" class="mt-1 text-xs text-red-500">{{ stepErrors.business_email }}</p>
+
+              <!-- Contact Fields -->
+              <div class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Primary Phone <span class="text-red-500">*</span></label>
+                    <input v-model="form.primary_phone" type="tel" placeholder="+233 XX XXX XXXX"
+                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      :class="stepErrors.primary_phone ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
+                    <p v-if="stepErrors.primary_phone" class="mt-1 text-xs text-red-500">{{ stepErrors.primary_phone }}</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">WhatsApp Number</label>
+                    <input v-model="form.whatsapp_number" type="tel" placeholder="+233 XX XXX XXXX"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Website <span class="text-gray-400 font-normal">(optional)</span></label>
-                  <input v-model="form.website" type="url" placeholder="https://yourpharmacy.com"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Business Email <span class="text-red-500">*</span></label>
+                    <input v-model="form.business_email" type="email" placeholder="pharmacy@example.com"
+                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      :class="stepErrors.business_email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
+                    <p v-if="stepErrors.business_email" class="mt-1 text-xs text-red-500">{{ stepErrors.business_email }}</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Website <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <input v-model="form.website" type="url" placeholder="https://yourpharmacy.com"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                  </div>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -923,76 +1253,168 @@ onMounted(() => {
               <!-- Operating Hours -->
               <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Operating Hours</h3>
-                <div class="space-y-2">
-                  <div v-for="(hours, idx) in form.operating_hours" :key="hours.day"
-                    class="grid grid-cols-12 gap-2 items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
-                    <span class="col-span-3 text-sm font-medium text-gray-700 dark:text-gray-300">{{ hours.day.slice(0, 3) }}</span>
-                    <div class="col-span-3 flex items-center gap-1.5">
-                      <input type="checkbox" :id="`closed_${idx}`" v-model="hours.is_closed"
-                        class="rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]" />
-                      <label :for="`closed_${idx}`" class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer">Closed</label>
-                    </div>
+                <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+                  <!-- Day rows -->
+                  <div
+                    v-for="hours in form.operating_hours"
+                    :key="hours.day"
+                    class="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 border-gray-100 dark:border-gray-700/60 transition-colors"
+                    :class="hours.is_closed ? 'bg-gray-50/80 dark:bg-gray-800/30' : 'bg-white dark:bg-gray-800'"
+                  >
+                    <!-- Day name -->
+                    <span
+                      class="w-24 flex-shrink-0 text-sm font-semibold transition-colors"
+                      :class="hours.is_closed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'"
+                    >
+                      {{ hours.day }}
+                    </span>
+
+                    <!-- Open / Closed pill toggle — much clearer than a checkbox -->
+                    <button
+                      type="button"
+                      @click="hours.is_closed = !hours.is_closed; if (hours.is_closed) hours.is_24h = false"
+                      class="flex-shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1"
+                      :class="hours.is_closed
+                        ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:border-[#246BFD] hover:text-[#246BFD] hover:bg-[#246BFD]/5 focus:ring-[#246BFD]/30'
+                        : 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:border-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 focus:ring-emerald-400/30'"
+                      :title="hours.is_closed ? 'Click to mark as open' : 'Click to mark as closed'"
+                    >
+                      {{ hours.is_closed ? 'Closed' : 'Open' }}
+                    </button>
+
+                    <div class="flex-1 min-w-0" />
+
+                    <!-- ── Open state: time pickers + 24h pill ── -->
                     <template v-if="!hours.is_closed">
-                      <div class="col-span-3 flex items-center gap-1.5">
-                        <input type="checkbox" :id="`h24_${idx}`" v-model="hours.is_24h"
-                          class="rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]" />
-                        <label :for="`h24_${idx}`" class="text-xs text-gray-500 dark:text-gray-400 cursor-pointer">24h</label>
-                      </div>
-                      <div v-if="!hours.is_24h" class="col-span-3 flex items-center gap-1">
-                        <input v-model="hours.open" type="time"
-                          class="flex-1 px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-[#246BFD] outline-none" />
-                        <span class="text-gray-400 text-xs">–</span>
-                        <input v-model="hours.close" type="time"
-                          class="flex-1 px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-[#246BFD] outline-none" />
-                      </div>
-                      <div v-else class="col-span-3 text-xs text-green-600 font-medium">Open 24 hours</div>
+                      <template v-if="!hours.is_24h">
+                        <TimePickerInput :model-value="hours.open" @update:model-value="(v: string) => { hours.open = v; }" />
+                        <span class="text-gray-400 text-sm font-medium select-none flex-shrink-0">–</span>
+                        <TimePickerInput :model-value="hours.close" @update:model-value="(v: string) => { hours.close = v; }" />
+                      </template>
+                      <span v-else class="flex-shrink-0 text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-xl">
+                        Open 24 hrs
+                      </span>
+
+                      <!-- 24h pill toggle -->
+                      <button
+                        type="button"
+                        @click="hours.is_24h = !hours.is_24h"
+                        class="flex-shrink-0 ml-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide border-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-1"
+                        :class="hours.is_24h
+                          ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 focus:ring-emerald-400/30'
+                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:border-[#246BFD] hover:text-[#246BFD] hover:bg-[#246BFD]/5 focus:ring-[#246BFD]/30'"
+                      >
+                        24h
+                      </button>
                     </template>
-                    <div v-else class="col-span-6 text-xs text-gray-400 italic">Not open this day</div>
+
+                    <!-- ── Closed state: clickable "Set hours" hint ── -->
+                    <button
+                      v-else
+                      type="button"
+                      @click="hours.is_closed = false"
+                      class="flex items-center gap-1 text-xs italic text-gray-400 dark:text-gray-500 hover:text-[#246BFD] dark:hover:text-[#246BFD] transition-colors"
+                      title="Click to set opening hours for this day"
+                    >
+                      Set hours
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </button>
                   </div>
+
+                  <!-- Copy-to-all bar (only shown when there's at least one open, non-24h day) -->
+                  <div
+                    v-if="firstOpenDay"
+                    class="flex items-center flex-wrap gap-x-2 gap-y-1 px-4 py-2.5 bg-blue-50/50 dark:bg-[#246BFD]/5 border-t border-blue-100 dark:border-[#246BFD]/10"
+                  >
+                    <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                      Apply <strong class="text-gray-700 dark:text-gray-200">{{ firstOpenDay.day }}</strong>'s hours
+                      <span class="font-mono text-gray-600 dark:text-gray-300">({{ formatTime(firstOpenDay.open) }} – {{ formatTime(firstOpenDay.close) }})</span>
+                      to all open days:
+                    </span>
+                    <button
+                      type="button"
+                      @click="applyHoursToAllOpenDays"
+                      class="ml-auto text-xs font-bold text-[#246BFD] hover:text-[#5089FF] transition-colors flex-shrink-0"
+                    >
+                      Apply to all
+                    </button>
+                  </div>
+
                 </div>
               </div>
 
               <!-- Services -->
               <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1">Services Offered <span class="text-red-500">*</span></h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select all that apply. This helps patients know what to expect at your pharmacy.</p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="service in SERVICES_LIST"
-                    :key="service"
-                    type="button"
-                    @click="toggleService(service)"
-                    class="px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200"
-                    :class="form.services.includes(service)
-                      ? 'bg-[#246BFD] text-white border-[#246BFD]'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-[#246BFD] hover:text-[#246BFD]'"
-                  >
-                    {{ service }}
-                  </button>
-                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Select all services your pharmacy offers. Search or browse by category.</p>
+                <PharmacyServiceSelect
+                  :model-value="form.services"
+                  :error="stepErrors.services"
+                  @update:model-value="(v) => { form.services = v; }"
+                />
                 <p v-if="stepErrors.services" class="mt-2 text-xs text-red-500">{{ stepErrors.services }}</p>
               </div>
 
               <!-- Delivery -->
               <div class="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-3 mb-4">
-                  <input type="checkbox" id="delivery_available" v-model="form.delivery_available"
-                    class="w-5 h-5 rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]" />
-                  <label for="delivery_available" class="text-base font-bold text-gray-900 dark:text-white cursor-pointer">
-                    We offer home delivery
-                  </label>
-                </div>
+                <CustomCheckbox
+                  variant="switch"
+                  :model-value="form.delivery_available"
+                  @update:model-value="(v) => { form.delivery_available = v as boolean; }"
+                  label="We offer home delivery"
+                />
                 <template v-if="form.delivery_available">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+                  <div class="mt-5 space-y-4">
+                    <!-- Coverage radius -->
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Radius (km)</label>
-                      <input v-model="form.delivery_radius_km" type="number" placeholder="e.g. 10"
-                        class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Maximum Delivery Radius (km)</label>
+                      <div class="relative max-w-xs">
+                        <input v-model="form.delivery_radius_km" type="number" min="0" placeholder="e.g. 15"
+                          class="w-full pl-4 pr-12 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">km</span>
+                      </div>
                     </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Delivery Fee Structure</label>
-                      <input v-model="form.delivery_fee_structure" type="text" placeholder="e.g. GHS 10 within 5km, GHS 20 beyond"
-                        class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+
+                    <!-- Per-distance fee structure -->
+                    <div class="bg-blue-50/60 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-100 dark:border-blue-800/30">
+                      <p class="text-xs font-bold text-[#246BFD] uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Distance-based fee calculation
+                      </p>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Base Fee (GHS)</label>
+                          <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₵</span>
+                            <input v-model="form.delivery_base_fee" type="number" min="0" step="0.50" placeholder="0.00"
+                              class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                          </div>
+                          <p class="mt-1 text-[10px] text-gray-400">Flat charge for any delivery</p>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Rate per km (GHS)</label>
+                          <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₵</span>
+                            <input v-model="form.delivery_fee_per_km" type="number" min="0" step="0.10" placeholder="0.00"
+                              class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                          </div>
+                          <p class="mt-1 text-[10px] text-gray-400">Added per km of distance</p>
+                        </div>
+                      </div>
+                      <!-- Live preview -->
+                      <div v-if="form.delivery_base_fee || form.delivery_fee_per_km" class="mt-3 p-3 rounded-lg bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800/20 text-xs text-gray-500 dark:text-gray-400">
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">Example: </span>
+                        For a 5 km order → GHS {{ ((parseFloat(form.delivery_base_fee || '0') + parseFloat(form.delivery_fee_per_km || '0') * 5)).toFixed(2) }}
+                        <span class="text-gray-400 ml-1">(₵{{ form.delivery_base_fee || '0' }} base + ₵{{ form.delivery_fee_per_km || '0' }}/km × 5)</span>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -1000,24 +1422,58 @@ onMounted(() => {
 
               <!-- Special Storage -->
               <div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white mb-3">Special Storage Capabilities <span class="text-gray-400 font-normal text-sm">(optional)</span></h3>
-                <div class="space-y-2">
-                  <label v-for="opt in SPECIAL_STORAGE" :key="opt.value" class="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" :value="opt.value" v-model="form.special_storage"
-                      class="w-5 h-5 rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]" />
-                    <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-[#246BFD] transition-colors">{{ opt.label }}</span>
-                  </label>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1">Special Storage Capabilities <span class="text-gray-400 font-normal text-sm">(optional)</span></h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Select all storage types and handling capabilities available at your pharmacy.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    v-for="opt in SPECIAL_STORAGE"
+                    :key="opt.value"
+                    type="button"
+                    @click="form.special_storage.includes(opt.value) ? form.special_storage.splice(form.special_storage.indexOf(opt.value), 1) : form.special_storage.push(opt.value)"
+                    :class="[
+                      'flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all duration-200 focus:outline-none',
+                      form.special_storage.includes(opt.value)
+                        ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                    ]"
+                  >
+                    <div :class="[
+                      'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
+                      form.special_storage.includes(opt.value)
+                        ? 'bg-[#246BFD]/10 dark:bg-[#246BFD]/20'
+                        : 'bg-gray-100 dark:bg-gray-700'
+                    ]">
+                      <svg :class="['w-4.5 h-4.5 w-[18px] h-[18px]', form.special_storage.includes(opt.value) ? 'text-[#246BFD]' : 'text-gray-400 dark:text-gray-500']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" :d="opt.icon"/>
+                      </svg>
+                    </div>
+                    <span :class="['text-xs font-semibold leading-tight', form.special_storage.includes(opt.value) ? 'text-[#246BFD]' : 'text-gray-700 dark:text-gray-300']">
+                      {{ opt.label }}
+                    </span>
+                    <div class="ml-auto flex-shrink-0">
+                      <div :class="[
+                        'w-4 h-4 rounded border-2 flex items-center justify-center transition-all',
+                        form.special_storage.includes(opt.value)
+                          ? 'bg-[#246BFD] border-[#246BFD]'
+                          : 'border-gray-300 dark:border-gray-600'
+                      ]">
+                        <svg v-if="form.special_storage.includes(opt.value)" class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
                 </div>
+                <p v-if="form.special_storage.length" class="mt-2 text-xs text-[#246BFD] font-medium">{{ form.special_storage.length }} capability{{ form.special_storage.length > 1 ? ' capabilities' : '' }} selected</p>
               </div>
 
               <!-- Accepts online prescriptions -->
-              <div class="flex items-center gap-3">
-                <input type="checkbox" id="accepts_rx" v-model="form.accepts_online_prescriptions"
-                  class="w-5 h-5 rounded border-gray-300 text-[#246BFD] focus:ring-[#246BFD]" />
-                <label for="accepts_rx" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                  We accept digitally uploaded prescriptions via FyndRx
-                </label>
-              </div>
+              <CustomCheckbox
+                variant="switch"
+                :model-value="form.accepts_online_prescriptions"
+                @update:model-value="(v) => { form.accepts_online_prescriptions = v as boolean; }"
+                label="We accept digitally uploaded prescriptions via FyndRx"
+              />
 
             </div>
           </div>
@@ -1188,31 +1644,56 @@ onMounted(() => {
             </div>
 
             <div class="space-y-4">
-              <div v-for="doc in DOCUMENT_REQUIREMENTS" :key="doc.key"
+              <div
+                v-for="doc in DOCUMENT_REQUIREMENTS"
+                :key="doc.key"
                 class="bg-white dark:bg-gray-800 rounded-2xl border transition-colors"
-                :class="documents[doc.key].file ? 'border-green-300 dark:border-green-700' : 'border-gray-200 dark:border-gray-700'">
+                :class="(documents[doc.key].file || serverDocUrls[doc.key])
+                  ? 'border-green-300 dark:border-green-700'
+                  : 'border-gray-200 dark:border-gray-700'"
+              >
                 <div class="p-5">
+
+                  <!-- Card header -->
                   <div class="flex items-start justify-between gap-4 mb-3">
                     <div class="flex-1">
                       <div class="flex items-center gap-2 mb-1">
                         <h4 class="text-sm font-bold text-gray-900 dark:text-white">{{ doc.label }}</h4>
-                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="doc.required ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'">
+                        <span
+                          class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                          :class="doc.required
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+                        >
                           {{ doc.required ? 'Required' : 'Optional' }}
                         </span>
                       </div>
                       <p class="text-xs text-gray-500 dark:text-gray-400">{{ doc.description }}</p>
                     </div>
-                    <!-- Uploaded state -->
-                    <div v-if="documents[doc.key].file" class="flex items-center gap-2 flex-shrink-0">
+                    <div v-if="documents[doc.key].file || serverDocUrls[doc.key]" class="flex-shrink-0">
                       <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                   </div>
 
-                  <!-- Uploaded file display -->
+                  <!-- Hidden file input — always present so triggerFileInput() works in all states -->
+                  <input
+                    :id="`file_${doc.key}`"
+                    type="file"
+                    :accept="doc.accept"
+                    class="sr-only"
+                    @change="handleFileSelect(doc.key, $event)"
+                  />
+
+                  <!-- STATE 1: Newly selected local file (takes priority over server doc) -->
                   <div v-if="documents[doc.key].file" class="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3">
-                    <img v-if="documents[doc.key].preview" :src="documents[doc.key].preview!" class="w-12 h-12 object-cover rounded-lg flex-shrink-0" />
+                    <img
+                      v-if="documents[doc.key].preview"
+                      :src="documents[doc.key].preview!"
+                      class="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      alt=""
+                    />
                     <div v-else class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                       <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1220,32 +1701,95 @@ onMounted(() => {
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ documents[doc.key].name }}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ documents[doc.key].size }}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">{{ documents[doc.key].size }} · new file selected</p>
                     </div>
-                    <button @click="removeFile(doc.key)" type="button"
-                      class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <button
+                      type="button"
+                      @click="removeFile(doc.key)"
+                      class="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Remove selection"
+                    >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
 
-                  <!-- Upload zone -->
+                  <!-- STATE 2: Document already on server — view + replace -->
+                  <div
+                    v-else-if="serverDocUrls[doc.key]"
+                    class="flex items-center gap-3 bg-emerald-50/70 dark:bg-emerald-900/10 rounded-xl px-4 py-3 border border-emerald-200/60 dark:border-emerald-800/40"
+                  >
+                    <!-- Thumbnail or file icon -->
+                    <img
+                      v-if="isImageUrl(serverDocUrls[doc.key]!)"
+                      :src="serverDocUrls[doc.key]!"
+                      class="w-14 h-14 object-cover rounded-xl flex-shrink-0 ring-2 ring-emerald-200 dark:ring-emerald-700"
+                      alt=""
+                    />
+                    <div v-else class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <svg class="w-7 h-7 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Already uploaded
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                        {{ serverDocUrls[doc.key]!.split('/').pop()?.split('?')[0] }}
+                      </p>
+                    </div>
+
+                    <!-- View + Replace actions -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <a
+                        :href="serverDocUrls[doc.key]!"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#246BFD] hover:bg-[#246BFD]/10 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        View
+                      </a>
+                      <button
+                        type="button"
+                        @click="triggerFileInput(doc.key)"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Replace
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- STATE 3: Nothing uploaded yet — upload zone -->
                   <div v-else>
-                    <input :id="`file_${doc.key}`" type="file" :accept="doc.accept" class="sr-only"
-                      @change="handleFileSelect(doc.key, $event)" />
-                    <button type="button" @click="triggerFileInput(doc.key)"
-                      class="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl px-6 py-5 flex flex-col items-center gap-2 hover:border-[#246BFD] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group">
+                    <button
+                      type="button"
+                      @click="triggerFileInput(doc.key)"
+                      class="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl px-6 py-5 flex flex-col items-center gap-2 hover:border-[#246BFD] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group"
+                    >
                       <svg class="w-8 h-8 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                       <span class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-[#246BFD] transition-colors">
-                        Click to browse or drag & drop
+                        Click to browse or drag &amp; drop
                       </span>
-                      <span class="text-xs text-gray-400">{{ doc.accept.replace(/\./g, '').toUpperCase() }} • Max 10 MB</span>
+                      <span class="text-xs text-gray-400">{{ doc.accept.replace(/\./g, '').toUpperCase() }} · Max 10 MB</span>
                     </button>
                     <p v-if="stepErrors[`doc_${doc.key}`]" class="mt-1 text-xs text-red-500">{{ stepErrors[`doc_${doc.key}`] }}</p>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1277,10 +1821,10 @@ onMounted(() => {
             <div class="flex items-center gap-3">
               <button
                 type="button"
-                @click="saveDraft(); $event.target.textContent = 'Saved ✓'"
+                @click="handleSaveDraft"
                 class="px-6 py-3 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-sm"
               >
-                Save Draft
+                {{ saveDraftText }}
               </button>
               <button
                 type="button"
@@ -1296,7 +1840,7 @@ onMounted(() => {
                   Saving…
                 </span>
                 <template v-else>
-                  <span>{{ currentStep === TOTAL_STEPS ? 'Submit Application' : 'Continue' }}</span>
+                  <span>{{ currentStep === TOTAL_STEPS ? (isRejected ? 'Resubmit Application' : 'Submit Application') : 'Continue' }}</span>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>
