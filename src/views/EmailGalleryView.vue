@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { emailTemplates, type EmailTemplate } from '@/data/emailTemplates';
+import { emailTemplates } from '@/data/emailTemplates';
 
 const selectedId = ref(emailTemplates[0].id);
 const viewMode = ref<'desktop' | 'mobile'>('desktop');

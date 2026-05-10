@@ -17,7 +17,7 @@ const isVisible = ref(false);
 
 import PromotionsCarousel from '@/views/Home/landing/PromotionsCarousel.vue';
 import PartnershipBanner from '@/views/Home/landing/PartnershipBanner.vue';
-import AppDownloadBanner from '@/views/Home/landing/AppDownloadBanner.vue';
+// import AppDownloadBanner from '@/views/Home/landing/AppDownloadBanner.vue';
 
 onMounted(() => {
   isVisible.value = true;
@@ -114,12 +114,12 @@ useSeoMeta({
     </section>
 
     <!-- App Download Section -->
-    <section 
+    <!-- <section 
       class="relative"
       :class="{ 'animate-fade-in': isVisible }"
     >
       <AppDownloadBanner />
-    </section>
+    </section> -->
 
     <!-- CTA Section -->
     <section 
