@@ -4486,6 +4486,188 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "\u2139\ufe0f Information & Support",
+            "description": "Public content endpoints for legal policies, help resources, team information, and customer feedback.",
+            "item": [
+                {
+                    "name": "Get Legal Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/legal/privacy-policy",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "legal",
+                                "privacy-policy"
+                            ]
+                        },
+                        "description": "Retrieve a specific legal document by its slug.\n\n### Available Slugs\n- `privacy-policy`\n- `terms-of-service`\n- `cookie-policy`"
+                    }
+                },
+                {
+                    "name": "Get Help Center (All Content)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/help-center",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "help-center"
+                            ]
+                        },
+                        "description": "Returns all help center articles and FAQs, grouped by category."
+                    }
+                },
+                {
+                    "name": "Get FAQs Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/faqs",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "faqs"
+                            ]
+                        },
+                        "description": "Specifically retrieves items flagged as FAQs for display in accordion-style UI components."
+                    }
+                },
+                {
+                    "name": "Get Team Members",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/team",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "team"
+                            ]
+                        },
+                        "description": "List all team members with their roles, bios, and social links."
+                    }
+                },
+                {
+                    "name": "Get Partners",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partners",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "partners"
+                            ]
+                        },
+                        "description": "List all active partners (pharmacies, insurance providers, etc.) for display in the footer or partners section."
+                    }
+                },
+                {
+                    "name": "Get Public App Settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/app-settings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "app-settings"
+                            ]
+                        },
+                        "description": "Retrieve global public settings including:\n- Contact Details (Email, Phone, Address)\n- Social Media URLs\n- App Store & Play Store links\n- About Us, Mission, and Vision statements"
+                    }
+                },
+                {
+                    "name": "Submit Feedback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "json",
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"subject\": \"General Inquiry\",\n  \"message\": \"Your platform is amazing!\",\n  \"rating\": 5\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/feedback",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "feedback"
+                            ]
+                        },
+                        "description": "Submit user feedback or a general inquiry.\n\n**Note**: If an `Authorization` header is present, the feedback will automatically be linked to the authenticated user."
+                    }
+                }
+            ]
         }
     ]
 }

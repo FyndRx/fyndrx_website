@@ -405,12 +405,31 @@ const router = createRouter({
       }
     },
     {
-      path: '/email-templates',
-      name: 'email-templates',
-      component: () => import('../views/EmailTemplatesView.vue'),
+      path: '/cookies',
+      name: 'cookies',
+      component: () => import('@/views/Legal/CookiePolicy.vue'),
       meta: {
-        title: 'Email Templates | FyndRx',
-        description: 'FyndRx email templates for system communications.',
+        title: 'Cookie Policy',
+        description: 'Information about how we use cookies'
+      }
+    },
+    {
+      path: '/accessibility',
+      name: 'accessibility',
+      component: () => import('@/views/Legal/Accessibility.vue'),
+      meta: {
+        title: 'Accessibility',
+        description: 'Our commitment to accessibility'
+      }
+    },
+    {
+      path: '/email-gallery',
+      name: 'email-gallery',
+      component: () => import('../views/EmailGalleryView.vue'),
+      meta: {
+        title: 'Email Template Gallery | FyndRX',
+        description: 'Preview and manage system email templates.',
+        requiresAuth: false,
       },
     },
     {

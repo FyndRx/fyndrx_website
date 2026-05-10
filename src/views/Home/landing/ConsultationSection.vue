@@ -4,12 +4,11 @@ import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useAuthStore } from '@/store/auth';
 import LazyImage from '@/components/LazyImage.vue';
+import doctorImage from '@/assets/images/telemedicine_doctor.png';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { registerElement } = useScrollAnimation();
-
-const doctorImage = 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=2670&auto=format&fit=crop';
 
 const features = [
   {

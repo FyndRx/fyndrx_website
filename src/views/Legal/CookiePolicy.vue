@@ -7,9 +7,9 @@ const loading = ref(true);
 
 onMounted(async () => {
   try {
-    document.value = await informationService.getLegalDocument('terms-of-service');
+    document.value = await informationService.getLegalDocument('cookie-policy');
   } catch (error) {
-    console.error('Failed to load terms of service:', error);
+    console.error('Failed to load cookie policy:', error);
   } finally {
     loading.value = false;
   }
@@ -31,7 +31,7 @@ onMounted(async () => {
           </p>
         </div>
         <div v-else class="text-center py-12 text-gray-500">
-          Terms of Service content is currently unavailable.
+          Cookie Policy content is currently unavailable.
         </div>
       </div>
     </div>

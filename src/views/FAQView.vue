@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useSeoMeta } from '@/composables/useSeoMeta';
+import { informationService, type HelpArticle } from '@/services/informationService';
+
 const { registerElement } = useScrollAnimation();
 
 useSeoMeta({
@@ -11,122 +13,59 @@ useSeoMeta({
   ogType: 'website',
 });
 
-onMounted(() => {
-  const elements = document.querySelectorAll('.scroll-animate');
-  elements.forEach((element) => registerElement(element as HTMLElement));
-});
-
 const activeIndex = ref<number | null>(null);
-
-const toggleFAQ = (index: number) => {
-  activeIndex.value = activeIndex.value === index ? null : index;
-};
+const allFaqs = ref<HelpArticle[]>([]);
+const loading = ref(true);
 
 const categories = ref([
   {
-    id: 'general',
+    id: 'General',
     name: 'General',
     icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
   },
   {
-    id: 'orders',
+    id: 'Orders & Delivery',
     name: 'Orders & Delivery',
     icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
   },
   {
-    id: 'prescriptions',
+    id: 'Prescriptions',
     name: 'Prescriptions',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
   },
   {
-    id: 'payments',
+    id: 'Payments & Security',
     name: 'Payments & Security',
     icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'
   }
 ]);
 
-const selectedCategory = ref('general');
+const selectedCategory = ref('General');
 
-const faqs = ref([
-  {
-    id: 1,
-    category: 'general',
-    question: 'How does FyndRx work?',
-    answer: 'FyndRx is an ePharmacy platform that connects you with verified pharmacies. Simply search for your medication, upload your prescription (if required), add items to cart, and checkout. You can choose pharmacy pickup or home delivery based on your preference.'
-  },
-  {
-    id: 2,
-    category: 'general',
-    question: 'How do I know the pharmacies are verified?',
-    answer: 'All pharmacies on FyndRx are licensed and verified by our team. They undergo a thorough vetting process including license verification, quality checks, and compliance reviews. Look for the "Verified" badge on pharmacy profiles.'
-  },
-  {
-    id: 3,
-    category: 'general',
-    question: 'What if my medication is not available?',
-    answer: 'If a medication is out of stock, we\'ll notify you immediately and suggest alternative pharmacies that have it in stock. You can also set up alerts to be notified when the medication becomes available at your preferred pharmacy.'
-  },
-  {
-    id: 4,
-    category: 'orders',
-    question: 'Can I track my order?',
-    answer: 'Yes! Once your order is confirmed, you can track it in real-time through your dashboard. You\'ll receive SMS and push notifications at every stage: Processing, Ready for Pickup, Out for Delivery, and Completed.'
-  },
-  {
-    id: 5,
-    category: 'orders',
-    question: 'Do you offer home delivery?',
-    answer: 'Yes! Most of our partner pharmacies offer home delivery services. During checkout, you can choose between pharmacy pickup or home delivery based on availability in your area. Delivery times and fees vary by location.'
-  },
-  {
-    id: 6,
-    category: 'orders',
-    question: 'How long does delivery take?',
-    answer: 'Delivery times vary by location and pharmacy. Typically, orders are delivered within 24-48 hours. Express delivery options may be available in some areas. You\'ll see estimated delivery times during checkout.'
-  },
-  {
-    id: 7,
-    category: 'prescriptions',
-    question: 'How do I upload my prescription?',
-    answer: 'You can upload your prescription by taking a clear photo or scanning it as a PDF. Our platform accepts images in JPG, PNG, or PDF format (up to 10MB). A licensed pharmacist will review and verify your prescription before processing your order.'
-  },
-  {
-    id: 8,
-    category: 'prescriptions',
-    question: 'Is my prescription information secure?',
-    answer: 'Yes, absolutely! We use bank-grade encryption to protect your personal and medical information. All prescriptions are securely transmitted to licensed pharmacists who verify them before fulfillment. We comply with all healthcare privacy regulations.'
-  },
-  {
-    id: 9,
-    category: 'prescriptions',
-    question: 'Can I set up recurring prescriptions?',
-    answer: 'Yes! For chronic medications that require regular refills, you can set up recurring orders and automatic reminders. This ensures you never run out of essential medications and makes managing your health easier.'
-  },
-  {
-    id: 10,
-    category: 'payments',
-    question: 'What payment methods do you accept?',
-    answer: 'We accept multiple payment methods including debit/credit cards, bank transfers, and mobile money. All payments are processed securely through Paystack with direct routing to the pharmacy, ensuring fast and reliable transactions.'
-  },
-  {
-    id: 11,
-    category: 'payments',
-    question: 'Is my payment information secure?',
-    answer: 'Absolutely! All payments are processed through Paystack, a PCI-DSS compliant payment processor. We never store your full card details on our servers. Your payment information is encrypted and secure.'
-  },
-  {
-    id: 12,
-    category: 'payments',
-    question: 'Can I get a refund?',
-    answer: 'Yes, you can request a refund for unprocessed orders. Once a prescription is verified and order is being prepared, refunds are subject to the pharmacy\'s refund policy. Contact our support team for assistance with refunds.'
+onMounted(async () => {
+  const elements = document.querySelectorAll('.scroll-animate');
+  elements.forEach((element) => registerElement(element as HTMLElement));
+
+  try {
+    allFaqs.value = await informationService.getFAQs();
+  } catch (error) {
+    console.error('Failed to load FAQs:', error);
+  } finally {
+    loading.value = false;
   }
-]);
+});
 
-const filteredFAQs = ref(faqs.value.filter(faq => faq.category === selectedCategory.value));
+const toggleFAQ = (index: number) => {
+  activeIndex.value = activeIndex.value === index ? null : index;
+};
+
+const filteredFAQs = computed(() => {
+  if (!selectedCategory.value) return allFaqs.value;
+  return allFaqs.value.filter(faq => faq.category === selectedCategory.value);
+});
 
 const filterByCategory = (category: string) => {
   selectedCategory.value = category;
-  filteredFAQs.value = faqs.value.filter(faq => faq.category === category);
   activeIndex.value = null;
 };
 </script>
@@ -173,12 +112,19 @@ const filterByCategory = (category: string) => {
         </div>
 
         <div class="flex-1">
-          <div class="space-y-4">
+          <div v-if="loading" class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
+          </div>
+
+          <div v-else-if="filteredFAQs.length === 0" class="text-center py-12 text-gray-500">
+            No FAQs found for this category.
+          </div>
+
+          <div v-else class="space-y-4">
             <div
               v-for="(faq, index) in filteredFAQs"
               :key="faq.id"
-              class="scroll-animate slide-up"
-              :class="`delay-${(index + 1) * 50}`"
+              class="scroll-animate slide-up visible"
             >
               <div class="overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-gray-800 rounded-2xl hover:shadow-xl">
                 <button
@@ -186,7 +132,7 @@ const filterByCategory = (category: string) => {
                   class="flex items-center justify-between w-full p-6 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <span class="text-lg font-medium text-gray-900 dark:text-white pr-8">
-                    {{ faq.question }}
+                    {{ faq.title }}
                   </span>
                   <svg
                     class="flex-shrink-0 w-6 h-6 text-[#246BFD] transition-transform duration-300"
@@ -200,8 +146,7 @@ const filterByCategory = (category: string) => {
                 </button>
                 
                 <div v-show="activeIndex === index" class="overflow-hidden transition-all duration-300">
-                  <div class="px-6 pb-6 text-gray-600 dark:text-gray-300">
-                    {{ faq.answer }}
+                  <div class="px-6 pb-6 text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none" v-html="faq.content">
                   </div>
                 </div>
               </div>

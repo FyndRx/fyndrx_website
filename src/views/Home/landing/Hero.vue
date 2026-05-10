@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useAuthStore } from '@/store/auth';
 import LazyImage from '@/components/LazyImage.vue';
+import { informationService, type AppSettings } from '@/services/informationService';
 
 const router = useRouter();
 const heroImage = 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2940&auto=format&fit=crop';
@@ -11,6 +12,7 @@ const heroImage = 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?
 const { registerElement } = useScrollAnimation();
 const isVisible = ref(false);
 const particles = ref<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([]);
+const appSettings = ref<AppSettings | null>(null);
 
 const createParticles = () => {
   const particleCount = 30;
@@ -44,11 +46,17 @@ const goToConsultation = () => {
   router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' });
 };
 
-onMounted(() => {
+onMounted(async () => {
   isVisible.value = true;
   createParticles();
   const elements = document.querySelectorAll('.scroll-animate');
   elements.forEach((element) => registerElement(element as HTMLElement));
+
+  try {
+    appSettings.value = await informationService.getAppSettings();
+  } catch (error) {
+    console.error('Failed to load app settings:', error);
+  }
 });
 
 onUnmounted(() => {
@@ -122,7 +130,7 @@ onUnmounted(() => {
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Download our mobile app</p>
             <div class="flex flex-wrap gap-3">
               <a 
-                href="https://play.google.com/store/apps/details?id=com.aby.fyndrx" 
+                :href="appSettings?.links.play_store || '#'" 
                 target="_blank"
                 rel="noopener noreferrer"
                 class="group hover-lift"
@@ -134,15 +142,21 @@ onUnmounted(() => {
                 />
               </a>
               <a 
-                href="#" 
+                :href="appSettings?.links.app_store || '#'" 
+                target="_blank"
+                rel="noopener noreferrer"
                 class="relative group hover-lift"
               >
                 <img 
                   src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" 
                   alt="Download on the App Store" 
-                  class="h-10 sm:h-12 transition-all duration-300 opacity-50 grayscale group-hover:scale-105"
+                  class="h-10 sm:h-12 transition-all duration-300 group-hover:scale-105"
+                  :class="{ 'opacity-50 grayscale': !appSettings?.links.app_store || appSettings?.links.app_store === '#' }"
                 />
-                <span class="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs font-semibold text-white bg-black/60 rounded-lg backdrop-blur-sm">
+                <span 
+                  v-if="!appSettings?.links.app_store || appSettings?.links.app_store === '#'"
+                  class="absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs font-semibold text-white bg-black/60 rounded-lg backdrop-blur-sm"
+                >
                   Coming Soon
                 </span>
               </a>

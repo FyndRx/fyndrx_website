@@ -1,44 +1,42 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { informationService, type HelpCategory } from '@/services/informationService';
 import TextInput from '@/components/TextInput.vue';
 
-const faqs = ref([
-  {
-    question: 'How do I order medications?',
-    answer: 'You can order medications through our app or website. Simply search for your medication, add it to cart, and proceed to checkout. You can also upload your prescription for prescription medications.'
-  },
-  {
-    question: 'What payment methods do you accept?',
-    answer: 'We accept various payment methods including mobile money (MTN, Vodafone, AirtelTigo), credit/debit cards, and bank transfers.'
-  },
-  {
-    question: 'How long does delivery take?',
-    answer: 'Delivery times vary by location. In major cities, we offer same-day delivery. For other areas, delivery typically takes 1-3 business days.'
-  },
-  {
-    question: 'Can I track my order?',
-    answer: 'Yes, you can track your order through our app or website. You\'ll receive real-time updates on your order status and delivery progress.'
-  },
-  {
-    question: 'What is your return policy?',
-    answer: 'We accept returns within 7 days of delivery for unopened and undamaged products. Prescription medications cannot be returned for safety reasons.'
-  }
-]);
-
-const activeFaq = ref<number | null>(null);
+const categories = ref<HelpCategory[]>([]);
+const loading = ref(true);
+const activeFaq = ref<{ categoryIndex: number, articleIndex: number } | null>(null);
 const searchQuery = ref('');
 
-const toggleFaq = (index: number) => {
-  activeFaq.value = activeFaq.value === index ? null : index;
+onMounted(async () => {
+  try {
+    categories.value = await informationService.getHelpCenter();
+  } catch (error) {
+    console.error('Failed to load help center:', error);
+  } finally {
+    loading.value = false;
+  }
+});
+
+const toggleFaq = (categoryIndex: number, articleIndex: number) => {
+  if (activeFaq.value?.categoryIndex === categoryIndex && activeFaq.value?.articleIndex === articleIndex) {
+    activeFaq.value = null;
+  } else {
+    activeFaq.value = { categoryIndex, articleIndex };
+  }
 };
 
-const filteredFaqs = computed(() => {
-  if (!searchQuery.value) return faqs.value;
+const filteredCategories = computed(() => {
+  if (!searchQuery.value) return categories.value;
   const query = searchQuery.value.toLowerCase();
-  return faqs.value.filter(faq => 
-    faq.question.toLowerCase().includes(query) || 
-    faq.answer.toLowerCase().includes(query)
-  );
+  
+  return categories.value.map(category => ({
+    ...category,
+    articles: category.articles.filter(article => 
+      article.title.toLowerCase().includes(query) || 
+      article.content.toLowerCase().includes(query)
+    )
+  })).filter(category => category.articles.length > 0);
 });
 </script>
 
@@ -63,37 +61,49 @@ const filteredFaqs = computed(() => {
         />
       </div>
 
-      <!-- FAQ Section -->
+      <!-- Help Content -->
       <div class="max-w-3xl mx-auto">
-        <h2 class="mb-6 text-2xl font-semibold text-gray-900 dark:text-white">Frequently Asked Questions</h2>
-        <div class="space-y-4">
-          <div
-            v-for="(faq, index) in filteredFaqs"
-            :key="index"
-            class="transition-all duration-300 bg-white border border-gray-200 shadow-sm dark:bg-gray-800 rounded-2xl dark:border-gray-700 hover:shadow-md"
-          >
-            <button
-              @click="toggleFaq(index)"
-              class="w-full px-6 py-4 text-left focus:outline-none"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-lg font-medium text-gray-900 dark:text-white">{{ faq.question }}</span>
-                <svg
-                  class="w-5 h-5 text-gray-500 transition-transform duration-300 transform dark:text-gray-400"
-                  :class="{ 'rotate-180': activeFaq === index }"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </button>
+        <div v-if="loading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
+        </div>
+
+        <div v-else-if="filteredCategories.length === 0" class="text-center py-12 text-gray-500">
+          No help articles found.
+        </div>
+
+        <div v-else v-for="(category, cIndex) in filteredCategories" :key="category.id" class="mb-10">
+          <h2 class="mb-6 text-2xl font-semibold text-gray-900 dark:text-white border-b pb-2 border-gray-100 dark:border-gray-800">
+            {{ category.name }}
+          </h2>
+          <div class="space-y-4">
             <div
-              v-show="activeFaq === index"
-              class="px-6 pb-4 text-gray-600 dark:text-gray-300"
+              v-for="(article, aIndex) in category.articles"
+              :key="article.id"
+              class="transition-all duration-300 bg-white border border-gray-200 shadow-sm dark:bg-gray-800 rounded-2xl dark:border-gray-700 hover:shadow-md"
             >
-              {{ faq.answer }}
+              <button
+                @click="toggleFaq(cIndex, aIndex)"
+                class="w-full px-6 py-4 text-left focus:outline-none"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-lg font-medium text-gray-900 dark:text-white">{{ article.title }}</span>
+                  <svg
+                    class="w-5 h-5 text-gray-500 transition-transform duration-300 transform dark:text-gray-400"
+                    :class="{ 'rotate-180': activeFaq?.categoryIndex === cIndex && activeFaq?.articleIndex === aIndex }"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </button>
+              <div
+                v-show="activeFaq?.categoryIndex === cIndex && activeFaq?.articleIndex === aIndex"
+                class="px-6 pb-4 text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none"
+                v-html="article.content"
+              >
+              </div>
             </div>
           </div>
         </div>

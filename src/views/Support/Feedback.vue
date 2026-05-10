@@ -2,43 +2,59 @@
 import { ref } from 'vue';
 import TextInput from '@/components/TextInput.vue';
 import Dropdown from '@/components/Dropdown.vue';
+import { informationService } from '@/services/informationService';
 
 const feedbackType = ref('');
 const feedback = ref('');
 const name = ref('');
 const email = ref('');
-const rating = ref(0);
+const rating = ref(5);
 const isSubmitting = ref(false);
 const submitSuccess = ref(false);
+const errorMessage = ref('');
 
 const feedbackTypes = [
-  { label: 'Suggestion', value: 'suggestion' },
-  { label: 'Bug Report', value: 'bug' },
-  { label: 'Complaint', value: 'complaint' },
-  { label: 'Praise', value: 'praise' },
-  { label: 'Other', value: 'other' }
+  { label: 'Suggestion', value: 'Suggestion' },
+  { label: 'Bug Report', value: 'Bug Report' },
+  { label: 'Complaint', value: 'Complaint' },
+  { label: 'Praise', value: 'Praise' },
+  { label: 'Other', value: 'Other' }
 ];
 
 const handleSubmit = async () => {
-  isSubmitting.value = true;
-  
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Reset form
-  feedbackType.value = '';
-  feedback.value = '';
-  name.value = '';
-  email.value = '';
-  rating.value = 0;
-  
-  isSubmitting.value = false;
-  submitSuccess.value = true;
-  
-  // Hide success message after 5 seconds
-  setTimeout(() => {
-    submitSuccess.value = false;
-  }, 5000);
+  if (!feedbackType.value || !feedback.value) return;
+
+  try {
+    isSubmitting.value = true;
+    errorMessage.value = '';
+    
+    await informationService.submitFeedback({
+      name: name.value || 'Anonymous',
+      email: email.value || 'no-email@fyndrx.com',
+      subject: feedbackType.value,
+      message: feedback.value,
+      rating: rating.value
+    });
+    
+    // Reset form
+    feedbackType.value = '';
+    feedback.value = '';
+    name.value = '';
+    email.value = '';
+    rating.value = 5;
+    
+    submitSuccess.value = true;
+    
+    // Hide success message after 5 seconds
+    setTimeout(() => {
+      submitSuccess.value = false;
+    }, 5000);
+  } catch (error: any) {
+    console.error('Feedback submission failed:', error);
+    errorMessage.value = error.message || 'Failed to submit feedback. Please try again.';
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>
 
@@ -67,6 +83,25 @@ const handleSubmit = async () => {
           <div class="ml-3">
             <p class="text-sm font-medium text-green-800 dark:text-green-200">
               Thank you for your feedback! We appreciate your input.
+            </p>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Error Message -->
+      <div
+        v-if="errorMessage"
+        class="p-4 mb-8 border border-red-200 bg-red-50 dark:bg-red-900/30 dark:border-red-800 rounded-2xl"
+      >
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="w-5 h-5 text-red-400 dark:text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-red-800 dark:text-red-200">
+              {{ errorMessage }}
             </p>
           </div>
         </div>

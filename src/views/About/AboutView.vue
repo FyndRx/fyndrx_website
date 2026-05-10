@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
-import latifaImage from '@/assets/team/latifa.jpg';
-import abyImage from '@/assets/team/aby.jpg';
-import wunnamImage from '@/assets/team/wunnam.jpg';
+import { informationService, type TeamMember, type AppSettings } from '@/services/informationService';
 
 useSeoMeta({
   title: 'About FyndRx | Safest and Most Convenient Online Pharmacy in Ghana',
@@ -14,9 +12,25 @@ useSeoMeta({
 
 const isVisible = ref(false);
 const activeValue = ref<number | null>(null);
+const team = ref<TeamMember[]>([]);
+const appSettings = ref<AppSettings | null>(null);
+const loading = ref(true);
 
-onMounted(() => {
+onMounted(async () => {
   isVisible.value = true;
+  
+  try {
+    const [teamData, settings] = await Promise.all([
+      informationService.getTeamMembers(),
+      informationService.getAppSettings()
+    ]);
+    team.value = teamData;
+    appSettings.value = settings;
+  } catch (error) {
+    console.error('Failed to load about page data:', error);
+  } finally {
+    loading.value = false;
+  }
 });
 
 const features = [
@@ -91,24 +105,6 @@ const stats = [
   { label: 'Partner Pharmacies', value: '500+' },
   { label: 'Cities Covered', value: '20+' },
   { label: 'Customer Satisfaction', value: '98%' },
-];
-
-const team = [
-  {
-    name: 'Alhassan Latifa',
-    role: 'Business Lead and Marketing Strategist',
-    image: latifaImage,
-  },
-  {
-    name: 'Abdul Basit Yahaya',
-    role: 'General Technical Operations Lead',
-    image: abyImage,
-  },
-  {
-    name: 'Mahmud Wunnam',
-    role: 'Lead Developer',
-    image: wunnamImage,
-  },
 ];
 </script>
 
@@ -217,15 +213,13 @@ const team = [
             <p class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl mb-6">
               Making Healthcare Accessible for Everyone
             </p>
-            <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+            <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6" v-if="appSettings?.about.description">
+              {{ appSettings.about.description }}
+            </p>
+            <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6" v-else>
               We believe that access to quality healthcare is a fundamental right, not a privilege. FyndRx was founded to 
               bridge the gap between patients and pharmacies, making it easier to find, compare, and order the medicines 
               you need — no matter where you are.
-            </p>
-            <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-              With multiple price options and flexible payment methods, there are no limits for you. 
-              Whether you need a routine prescription refill or urgent medication, FyndRx is your trusted partner 
-              in accessible and affordable healthcare.
             </p>
           </div>
 
@@ -235,12 +229,12 @@ const team = [
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
                 <div class="text-3xl font-bold text-[#246BFD] mb-2">🎯</div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Vision</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400">A world where quality healthcare is just a tap away for everyone.</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.vision || 'A world where quality healthcare is just a tap away for everyone.' }}</p>
               </div>
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mt-8">
                 <div class="text-3xl font-bold text-[#FE9615] mb-2">💡</div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Innovation</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Using technology to simplify and transform how people access medicine.</p>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Mission</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.mission || 'Using technology to simplify and transform how people access medicine.' }}</p>
               </div>
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
                 <div class="text-3xl font-bold text-[#10B981] mb-2">🤝</div>
@@ -385,11 +379,11 @@ const team = [
           </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
+        <div class="flex flex-wrap justify-center gap-y-12 gap-x-8 lg:gap-x-12 max-w-6xl mx-auto">
           <div
             v-for="member in team"
-            :key="member.name"
-            class="group text-center"
+            :key="member.id"
+            class="group text-center w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-2rem)]"
             :class="{ 'animate-fade-in': isVisible }"
           >
             <div class="relative inline-block mb-6">
@@ -402,7 +396,12 @@ const team = [
             </div>
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ member.name }}</h3>
             <p class="text-[#246BFD] dark:text-[#5089FF] font-medium mt-1">{{ member.role }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-3 px-4 line-clamp-3">{{ member.bio }}</p>
           </div>
+        </div>
+
+        <div v-if="!loading && team.length === 0" class="text-center text-gray-500 py-12">
+          No team members listed at the moment.
         </div>
       </div>
     </section>

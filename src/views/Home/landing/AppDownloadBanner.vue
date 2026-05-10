@@ -1,5 +1,17 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import logoIcon from '@/assets/logo/logo_icon_white_plain_bg.png';
+import { informationService, type AppSettings } from '@/services/informationService';
+
+const appSettings = ref<AppSettings | null>(null);
+
+onMounted(async () => {
+  try {
+    appSettings.value = await informationService.getAppSettings();
+  } catch (error) {
+    console.error('Failed to load app settings for banner:', error);
+  }
+});
 </script>
 
 <template>
@@ -39,18 +51,31 @@ import logoIcon from '@/assets/logo/logo_icon_white_plain_bg.png';
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
             
             <!-- App Store Button -->
-            <button class="group relative flex items-center gap-4 bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all active:scale-95 min-w-[200px]">
+            <a 
+              :href="appSettings?.links.app_store || '#'" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group relative flex items-center gap-4 bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all active:scale-95 min-w-[200px]"
+              :class="{ 'opacity-50 pointer-events-none': !appSettings?.links.app_store || appSettings?.links.app_store === '#' }"
+            >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.78 1.18-.19 2.31-1.11 3.73-.89 1.57.25 2.65.65 3.37 1.72-2.73 1.63-2.28 6.16.48 7.32-.61 1.74-1.49 3.5-2.66 4.04zm-4.22-17.5c1.34.02 2.51 1.34 2.19 3.29-1.3.17-2.61-1.12-2.61-3.29.13-.02.26-.03.42-.03z"/>
               </svg>
               <div class="text-left leading-tight">
-                 <div class="text-[0.65rem] font-semibold uppercase tracking-wide opacity-80">Download on the</div>
+                 <div class="text-[0.65rem] font-semibold uppercase tracking-wide opacity-80">
+                   {{ (!appSettings?.links.app_store || appSettings?.links.app_store === '#') ? 'Coming Soon on' : 'Download on the' }}
+                 </div>
                  <div class="text-xl font-bold -mt-0.5">App Store</div>
               </div>
-            </button>
+            </a>
 
             <!-- Play Store Button -->
-            <button class="group relative flex items-center gap-4 bg-transparent border border-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all active:scale-95 min-w-[220px]">
+            <a 
+              :href="appSettings?.links.play_store || '#'" 
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group relative flex items-center gap-4 bg-transparent border border-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all active:scale-95 min-w-[220px]"
+            >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85M21.5,12C21.5,12.5 21.18,12.95 20.72,13.2L18.16,14.68L15.6,12.12L18.16,9.56L20.72,11.05C21.18,11.3 21.5,11.75 21.5,12M16.81,8.88L14.54,11.15L6.05,2.66L16.81,8.88Z" />
               </svg>
@@ -58,7 +83,7 @@ import logoIcon from '@/assets/logo/logo_icon_white_plain_bg.png';
                 <div class="text-[0.65rem] font-semibold uppercase tracking-wide opacity-70">Get it on</div>
                 <div class="text-xl font-bold -mt-0.5 whitespace-nowrap">Google Play</div>
               </div>
-            </button>
+            </a>
           </div>
         </div>
 
