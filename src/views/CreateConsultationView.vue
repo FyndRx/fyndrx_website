@@ -1,72 +1,110 @@
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue';
+import { ref, computed, reactive, onMounted, nextTick } from 'vue';
+import { useNotification } from '@/composables/useNotification';
 import { useRouter } from 'vue-router';
 import { consultationService } from '@/services/consultationService';
 import { authService } from '@/services/auth.service';
-import type { CreateConsultationPayload, ConsultationType, ConsultationPriority } from '@/types/consultation';
+import { pharmacyService } from '@/services/pharmacyService';
+import type { Pharmacy, PharmacyBranch } from '@/models/Pharmacy';
+import type { ConsultationType, PatientConsultationIntake } from '@/types/consultation';
 import Button from '@/components/Button.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
-import Dropdown from '@/components/Dropdown.vue';
 import DateTimePicker from '@/components/DateTimePicker.vue';
-import { 
-  CheckCircleIcon, 
+import {
+  CheckCircleIcon,
   UserIcon,
-  ClipboardDocumentListIcon, 
-  ClockIcon,
+  ClipboardDocumentListIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-  HeartIcon as HeartOutlineIcon
+  BuildingStorefrontIcon,
+  ChevronDownIcon,
+  XMarkIcon,
+  ArrowUpTrayIcon,
+  DocumentTextIcon,
+  CalendarIcon,
+  UserPlusIcon,
+  CheckIcon,
+  MapPinIcon,
 } from '@heroicons/vue/24/outline';
-import { StarIcon, ShieldCheckIcon, HeartIcon, BoltIcon, ChartBarIcon } from '@heroicons/vue/24/solid';
+import { StarIcon, ShieldCheckIcon, HeartIcon, BoltIcon, SparklesIcon } from '@heroicons/vue/24/solid';
 
 const router = useRouter();
+const { success: notifySuccess } = useNotification();
 const currentStep = ref(1);
 const submitting = ref(false);
 const error = ref('');
-const formErrors = reactive({
-  symptoms: '',
-  medical_history: '',
-  current_medications: '',
-  allergies: ''
-});
 
-// Form Data with Defaults
-const form = reactive<CreateConsultationPayload>({
+// ── Pharmacy state ────────────────────────────────────────────
+const pharmaciesData = ref<Pharmacy[]>([]);
+const selectedPharmacy = ref<Pharmacy | null>(null);
+const loadingBranches = ref(false);
+const showPharmacyPicker = ref(false);
+const showBranchPicker = ref(false);
+const pharmacySearch = ref('');
+const branchSearch = ref('');
+const userLocation = ref<{ lat: number; lng: number } | null>(null);
+
+// Refs + position for teleported dropdown panels
+const pharmacyTriggerRef = ref<HTMLElement | null>(null);
+const branchTriggerRef = ref<HTMLElement | null>(null);
+const pharmacyPanelPos = ref({ top: '0px', left: '0px', width: '0px' });
+const branchPanelPos = ref({ top: '0px', left: '0px', width: '0px' });
+
+function calcPos(triggerRef: HTMLElement, pos: typeof pharmacyPanelPos) {
+  const rect = triggerRef.getBoundingClientRect();
+  pos.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  };
+}
+
+const openPharmacyPicker = () => {
+  showBranchPicker.value = false;
+  showPharmacyPicker.value = !showPharmacyPicker.value;
+  if (showPharmacyPicker.value && pharmacyTriggerRef.value) {
+    nextTick(() => calcPos(pharmacyTriggerRef.value!, pharmacyPanelPos));
+  }
+};
+
+const openBranchPicker = () => {
+  showPharmacyPicker.value = false;
+  showBranchPicker.value = !showBranchPicker.value;
+  if (showBranchPicker.value && branchTriggerRef.value) {
+    nextTick(() => calcPos(branchTriggerRef.value!, branchPanelPos));
+  }
+};
+
+// ── File state ────────────────────────────────────────────────
+const isDragOver = ref(false);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const previewFiles = ref<Array<{ file: File; preview: string | null; name: string }>>([]);
+
+const form = reactive<PatientConsultationIntake & { booking_for: 'myself' | 'someone_else' }>({
+  booking_for: 'myself',
   consultation_type: 'general',
-  priority: 'normal',
-
-  symptoms: '',
-  medical_history: '',
-  current_medications: '',
-  allergies: '',
+  chief_complaint: '',
   consultation_notes: '',
   patient_name: '',
   patient_email: '',
   patient_phone: '',
   patient_date_of_birth: '',
   patient_gender: '',
-  vitals: {
-    blood_pressure_systolic: undefined,
-    blood_pressure_diastolic: undefined,
-    heart_rate: undefined,
-    temperature: undefined,
-    oxygen_saturation: undefined,
-    respiratory_rate: undefined,
-    weight: undefined,
-    height: undefined
-  },
-  pharmacy_id: 1, // Hardcoded as requested
+  pharmacy_id: undefined,
+  pharmacy_branch_id: undefined,
+  scheduled_at: '',
   source: 'web',
-  user_id: 0
+  user_id: undefined,
+  attachments: [],
 });
 
-// Options
 const consultationTypes = [
-  { value: 'general', label: 'General Inquiry', icon: StarIcon, desc: 'General health questions' },
-  { value: 'medication_review', label: 'Medication Review', icon: ShieldCheckIcon, desc: 'Review current meds' },
-  { value: 'chronic_disease', label: 'Chronic Disease', icon: HeartIcon, desc: 'Sort term management' },
-  { value: 'acute_illness', label: 'Acute Illness', icon: BoltIcon, desc: 'Flu, cold, etc.' },
+  { value: 'general', label: 'General advice', icon: StarIcon, desc: 'Questions about health or medicines' },
+  { value: 'medication_review', label: 'Medication review', icon: ShieldCheckIcon, desc: 'Check interactions or dosing' },
+  { value: 'chronic_disease', label: 'Chronic care', icon: HeartIcon, desc: 'Ongoing condition support' },
+  { value: 'acute_illness', label: 'Feeling unwell', icon: BoltIcon, desc: 'Recent illness or symptoms' },
+  { value: 'wellness', label: 'Wellness', icon: SparklesIcon, desc: 'Prevention and lifestyle' },
 ];
 
 const genderOptions = [
@@ -75,597 +113,761 @@ const genderOptions = [
 ];
 
 const steps = [
-  { number: 1, title: 'Triage', icon: ClockIcon },
-  { number: 2, title: 'Patient', icon: UserIcon },
-  { number: 3, title: 'Vitals', icon: HeartOutlineIcon },
-  { number: 4, title: 'Clinical', icon: ClipboardDocumentListIcon },
-  { number: 5, title: 'Review', icon: CheckCircleIcon },
+  { number: 1, title: 'Service', icon: BuildingStorefrontIcon },
+  { number: 2, title: 'You', icon: UserIcon },
+  { number: 3, title: 'Request', icon: ClipboardDocumentListIcon },
 ];
 
-// Navigation Logic
+const stepsProgress = computed(() => ((currentStep.value - 1) / (steps.length - 1)) * 100);
+
+const canProceed = computed(() => {
+  if (currentStep.value === 1) return !!form.consultation_type;
+  if (currentStep.value === 2) return !!(form.patient_name?.trim() && form.patient_phone?.trim());
+  if (currentStep.value === 3) return form.chief_complaint.trim().length >= 10;
+  return true;
+});
+
 const nextStep = () => {
-  if (currentStep.value === 4) { // Clinical Step Validation
-    // Validation removed as per request - fields are optional
+  error.value = '';
+  if (!canProceed.value) {
+    if (currentStep.value === 3)
+      error.value = 'Please describe your reason for visit (10+ characters).';
+    return;
   }
-  if (currentStep.value < 5) currentStep.value++;
+  if (currentStep.value < 3) currentStep.value++;
 };
 
 const prevStep = () => {
   if (currentStep.value > 1) currentStep.value--;
 };
 
+// ── Distance helpers ──────────────────────────────────────────
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function fmtDist(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+}
+
+// ── Pharmacies with distance, sorted nearest-first ───────────
+type PharmacyWithDist = Pharmacy & { distKm: number | null };
+
+const pharmaciesWithDistance = computed<PharmacyWithDist[]>(() => {
+  return pharmaciesData.value.map(p => {
+    let distKm: number | null = null;
+    if (userLocation.value && p.location?.lat && p.location?.lng) {
+      distKm = haversineKm(userLocation.value.lat, userLocation.value.lng, p.location.lat, p.location.lng);
+    }
+    return { ...p, distKm };
+  }).sort((a, b) => {
+    if (a.distKm !== null && b.distKm !== null) return a.distKm - b.distKm;
+    return a.distKm !== null ? -1 : b.distKm !== null ? 1 : 0;
+  });
+});
+
+const filteredPharmacies = computed(() => {
+  const q = pharmacySearch.value.toLowerCase().trim();
+  if (!q) return pharmaciesWithDistance.value;
+  return pharmaciesWithDistance.value.filter(p =>
+    p.name.toLowerCase().includes(q) || p.address?.toLowerCase().includes(q)
+  );
+});
+
+// ── Branches with distance ────────────────────────────────────
+type BranchWithDist = PharmacyBranch & { distKm: number | null };
+
+const selectedPharmacyBranches = computed<BranchWithDist[]>(() => {
+  if (!selectedPharmacy.value?.branches?.length) return [];
+  return (selectedPharmacy.value.branches).map(b => {
+    let distKm: number | null = null;
+    const bLat = parseFloat(b.latitude || '');
+    const bLng = parseFloat(b.longitude || '');
+    if (userLocation.value && !isNaN(bLat) && !isNaN(bLng)) {
+      distKm = haversineKm(userLocation.value.lat, userLocation.value.lng, bLat, bLng);
+    }
+    return { ...b, distKm };
+  }).sort((a, b) => {
+    if (a.distKm !== null && b.distKm !== null) return a.distKm - b.distKm;
+    return a.distKm !== null ? -1 : b.distKm !== null ? 1 : 0;
+  });
+});
+
+const filteredBranches = computed(() => {
+  const q = branchSearch.value.toLowerCase().trim();
+  if (!q) return selectedPharmacyBranches.value;
+  return selectedPharmacyBranches.value.filter(b =>
+    b.branchName?.toLowerCase().includes(q) || b.address?.toLowerCase().includes(q)
+  );
+});
+
+const selectedBranch = computed<BranchWithDist | null>(() => {
+  if (!form.pharmacy_branch_id) return null;
+  return selectedPharmacyBranches.value.find(b => b.id === form.pharmacy_branch_id) ?? null;
+});
+
+const currentConsultationType = computed(() =>
+  consultationTypes.find(t => t.value === form.consultation_type)
+);
+
+// ── Pharmacy / Branch selection ───────────────────────────────
+const selectPharmacy = async (pharmacy: PharmacyWithDist) => {
+  selectedPharmacy.value = pharmacy;
+  form.pharmacy_id = pharmacy.id;
+  form.pharmacy_branch_id = undefined;
+  showPharmacyPicker.value = false;
+  pharmacySearch.value = '';
+
+  if (!pharmacy.branches?.length && pharmacy.branchesCount > 0) {
+    loadingBranches.value = true;
+    try {
+      const full = await pharmacyService.getPharmacy(pharmacy.id);
+      selectedPharmacy.value = { ...full, distKm: pharmacy.distKm } as PharmacyWithDist;
+    } catch { /* keep what we have */ }
+    finally { loadingBranches.value = false; }
+  }
+
+  if (selectedPharmacy.value?.branches?.length) showBranchPicker.value = true;
+};
+
+const selectBranch = (branch: BranchWithDist) => {
+  form.pharmacy_branch_id = branch.id;
+  showBranchPicker.value = false;
+  branchSearch.value = '';
+};
+
+// ── Patient fields ────────────────────────────────────────────
+const currentUser = ref<Record<string, unknown> | null>(null);
+const isProfileIncomplete = ref(false);
+
+const setPatientToSelf = () => {
+  if (!currentUser.value) return;
+  const u = currentUser.value;
+  form.patient_name = (u.fullname as string) || `${u.firstname || ''} ${u.lastname || ''}`.trim();
+  form.patient_email = (u.email as string) || '';
+  form.patient_phone = (u.phone_number as string) || '';
+  form.patient_date_of_birth = (u.dob as string) || '';
+  form.patient_gender = (u.gender as string) || '';
+  form.user_id = u.id as string;
+  isProfileIncomplete.value = !u.dob || !u.gender;
+};
+
+const setPatientToOther = () => {
+  form.patient_name = '';
+  form.patient_email = '';
+  form.patient_phone = '';
+  form.patient_date_of_birth = '';
+  form.patient_gender = '';
+  if (currentUser.value) form.user_id = currentUser.value.id as string;
+  isProfileIncomplete.value = false;
+};
+
+const handleBookingForChange = (val: 'myself' | 'someone_else') => {
+  form.booking_for = val;
+  val === 'myself' ? setPatientToSelf() : setPatientToOther();
+};
+
+const formatScheduled = (iso: string) => {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString([], {
+      weekday: 'short', year: 'numeric', month: 'short',
+      day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  } catch { return iso; }
+};
+
+// ── File / dropzone ───────────────────────────────────────────
+const addFiles = (files: File[]) => {
+  files.filter(f => f.size <= 5 * 1024 * 1024).forEach(file => {
+    const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+    previewFiles.value.push({ file, preview, name: file.name });
+  });
+  form.attachments = previewFiles.value.map(f => f.file);
+};
+
+const onDrop = (e: DragEvent) => {
+  isDragOver.value = false;
+  addFiles(Array.from(e.dataTransfer?.files || []));
+};
+
+const onFileInputChange = (e: Event) => {
+  addFiles(Array.from((e.target as HTMLInputElement).files || []));
+};
+
+const removeFile = (idx: number) => {
+  const removed = previewFiles.value.splice(idx, 1)[0];
+  if (removed.preview) URL.revokeObjectURL(removed.preview);
+  form.attachments = previewFiles.value.map(f => f.file);
+};
+
+// ── Submit ────────────────────────────────────────────────────
 const submitConsultation = async () => {
+  if (!canProceed.value) { error.value = 'Please complete all required fields.'; return; }
   try {
     submitting.value = true;
     error.value = '';
-
-    if (!form.user_id) {
-      error.value = 'User ID is missing. Please try reloading the page.';
-      submitting.value = false;
-      return;
+    if (!form.user_id) { error.value = 'Please sign in to book a consultation.'; return; }
+    if (isProfileIncomplete.value && form.booking_for === 'myself') {
+      await authService.updateUserDetails({ dob: form.patient_date_of_birth, gender: form.patient_gender });
     }
-
-    console.log(form);
-
-    // Update profile if needed
-    if (isProfileIncomplete.value) {
-      await authService.updateUserDetails({
-        dob: form.patient_date_of_birth,
-        gender: form.patient_gender
-      });
-    }
-
-    await consultationService.createConsultation(form);
-    router.push('/consultations');
-  } catch (err: any) {
-    console.error(err);
-    error.value = err.response?.data?.message || 'Failed to create consultation.';
+    const { booking_for, user_id, ...intake } = form;
+    const response = await consultationService.createConsultation(intake) as any;
+    const apiMessage = response?.message || response?.data?.message;
+    notifySuccess(
+      'Consultation submitted!',
+      apiMessage || `Your request has been received. A pharmacist will be in touch with you shortly.`,
+      6000,
+    );
+    setTimeout(() => router.push('/consultations'), 800);
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } };
+    error.value = e.response?.data?.message || 'Failed to book consultation. Please try again.';
   } finally {
     submitting.value = false;
   }
 };
 
-
-
-const stepsProgress = computed(() => {
-  return ((currentStep.value - 1) / (steps.length - 1)) * 100;
-});
-
-
-// State to track if profile needs update
-const isProfileIncomplete = ref(false);
-
 onMounted(async () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      userLocation.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    });
+  }
   try {
     const user = await authService.getUserDetails();
-    if (user) {
-      currentUser.value = user;
-      setPatientToSelf();
+    if (user) { currentUser.value = user; setPatientToSelf(); }
+    const list = await pharmacyService.getAllPharmacies();
+    pharmaciesData.value = list || [];
+    if (pharmaciesData.value.length && !form.pharmacy_id) {
+      const first = pharmaciesData.value[0];
+      form.pharmacy_id = first.id;
+      selectedPharmacy.value = { ...first, distKm: null } as PharmacyWithDist;
     }
-  } catch (err) {
-    console.error('Failed to load user details:', err);
+  } catch {
+    form.pharmacy_id = undefined;
   }
 });
-
-const currentUser = ref<any>(null);
-const consultationFor = ref<'myself' | 'someone_else'>('myself');
-
-const setPatientToSelf = () => {
-    if (!currentUser.value) return;
-    const user = currentUser.value;
-    form.patient_name = user.fullname || `${user.firstname || ''} ${user.lastname || ''}`.trim();
-    form.patient_email = user.email || '';
-    form.patient_phone = user.phone_number || '';
-    form.patient_date_of_birth = user.dob || '';
-    // @ts-ignore
-    form.patient_gender = user.gender || '';
-    form.user_id = user.id;
-
-    // Check if profile is incomplete
-    if (!user.dob || !user.gender) {
-        isProfileIncomplete.value = true;
-    } else {
-        isProfileIncomplete.value = false;
-    }
-};
-
-const setPatientToOther = () => {
-    form.patient_name = '';
-    form.patient_email = '';
-    form.patient_phone = '';
-    form.patient_date_of_birth = '';
-    form.patient_gender = '';
-    // user_id stays as auth user, as they are the creator
-    if (currentUser.value) {
-        form.user_id = currentUser.value.id;
-    }
-    isProfileIncomplete.value = false; // Not updating profile for others
-};
-
-const handleConsultationForChange = (val: 'myself' | 'someone_else') => {
-    consultationFor.value = val;
-    if (val === 'myself') {
-        setPatientToSelf();
-    } else {
-        setPatientToOther();
-    }
-};
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-28 pb-12 px-4">
-    <div class="max-w-5xl mx-auto">
-      
-      <!-- Stepper Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-6">New Consultation</h1>
-        
-        <div class="relative flex justify-between items-center mx-auto">
-          <!-- Progress Bar Background -->
-          <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 -z-0 -translate-y-1/2 rounded-full"></div>
-          <!-- Active Progress -->
-          <div class="absolute top-1/2 left-0 h-1 bg-[#246BFD] -z-0 -translate-y-1/2 rounded-full transition-all duration-500" :style="{ width: `${stepsProgress}%` }"></div>
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Book a pharmacy consultation</h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
+          Tell us why you need help. A pharmacist will review your request and take any clinical measurements during your visit.
+        </p>
+      </div>
 
-          <!-- Steps -->
-          <div 
-            v-for="step in steps" 
-            :key="step.number"
-            class="relative z-10 flex flex-col items-center group cursor-pointer"
-            @click="currentStep > step.number ? currentStep = step.number : null"
+      <!-- Staff-only notice -->
+      <div class="mb-8 rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/80 dark:bg-blue-950/30 px-5 py-4 flex gap-3">
+        <div class="text-blue-600 dark:text-blue-400 text-xl shrink-0">ℹ️</div>
+        <p class="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
+          <strong>You do not need to enter vital signs</strong> (blood pressure, temperature, etc.) — those are recorded by our pharmacy team when you are seen.
+        </p>
+      </div>
+
+      <!-- Stepper -->
+      <div class="mb-10 relative flex justify-between max-w-md mx-auto">
+        <div class="absolute top-5 left-0 w-full h-0.5 bg-gray-200 dark:bg-gray-700 -z-0" />
+        <div class="absolute top-5 left-0 h-0.5 bg-[#246BFD] -z-0 transition-all duration-500" :style="{ width: `${stepsProgress}%` }" />
+        <div v-for="step in steps" :key="step.number" class="relative z-10 flex flex-col items-center">
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white dark:bg-gray-800 transition-colors"
+            :class="currentStep >= step.number ? 'border-[#246BFD] text-[#246BFD]' : 'border-gray-300 text-gray-400'"
           >
-            <div 
-              class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 bg-white dark:bg-gray-800"
-              :class="[
-                currentStep >= step.number ? 'border-[#246BFD] text-[#246BFD]' : 'border-gray-300 dark:border-gray-600 text-gray-400'
-              ]"
-            >
-              <component :is="step.icon" class="w-5 h-5" />
-            </div>
-            <span 
-              class="absolute -bottom-6 text-xs font-medium transition-colors duration-300 whitespace-nowrap"
-              :class="currentStep >= step.number ? 'text-[#246BFD]' : 'text-gray-400'"
-            >
-              {{ step.title }}
-            </span>
+            <component :is="step.icon" class="w-5 h-5" />
           </div>
+          <span class="mt-2 text-xs font-medium" :class="currentStep >= step.number ? 'text-[#246BFD]' : 'text-gray-400'">
+            {{ step.title }}
+          </span>
         </div>
       </div>
 
-      <!-- Form Content -->
-      <Card class="p-8 min-h-[400px] relative transition-all duration-500">
+      <Card class="p-8 min-h-[360px]">
         <Transition name="fade" mode="out-in">
-          
-          <!-- STEP 1: TRIAGE -->
-          <div v-if="currentStep === 1" key="step1" class="space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Urgency & Type</h2>
-            
-            <div class="space-y-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Consultation Type</label>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div 
-                  v-for="type in consultationTypes" 
-                  :key="type.value"
-                  @click="form.consultation_type = type.value as ConsultationType"
-                  class="p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md flex items-center gap-3"
-                  :class="form.consultation_type === type.value ? 'border-[#246BFD] bg-blue-50 dark:bg-blue-900/20 ring-1 ring-[#246BFD]' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'"
-                >
-                  <div class="p-2 rounded-full bg-white dark:bg-gray-800 text-[#246BFD]">
-                    <component :is="type.icon" class="w-5 h-5" />
+
+          <!-- ── Step 1: Service ──────────────────────────────── -->
+          <div v-if="currentStep === 1" key="s1" class="space-y-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">What do you need?</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                v-for="type in consultationTypes"
+                :key="type.value"
+                type="button"
+                class="p-4 border rounded-xl text-left transition-all flex gap-3 items-start"
+                :class="form.consultation_type === type.value
+                  ? 'border-[#246BFD] ring-2 ring-[#246BFD]/30 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'"
+                @click="form.consultation_type = type.value as ConsultationType"
+              >
+                <component :is="type.icon" class="w-6 h-6 text-[#246BFD] shrink-0" />
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">{{ type.label }}</div>
+                  <div class="text-xs text-gray-500 mt-0.5">{{ type.desc }}</div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Pharmacy picker -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Preferred pharmacy
+              </label>
+
+              <!-- Trigger button -->
+              <button
+                ref="pharmacyTriggerRef"
+                type="button"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-left transition-colors"
+                :class="showPharmacyPicker ? 'border-[#246BFD] ring-2 ring-[#246BFD]/20' : 'border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/50'"
+                @click="openPharmacyPicker"
+              >
+                <div v-if="selectedPharmacy" class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 flex items-center justify-center">
+                    <img v-if="selectedPharmacy.logo" :src="selectedPharmacy.logo" class="w-full h-full object-cover" />
+                    <BuildingStorefrontIcon v-else class="w-5 h-5 text-gray-400" />
                   </div>
-                  <div>
-                    <div class="font-medium text-gray-900 dark:text-white">{{ type.label }}</div>
-                    <div class="text-xs text-gray-500">{{ type.desc }}</div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ selectedPharmacy.name }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ selectedPharmacy.address }}</p>
                   </div>
                 </div>
+                <span v-else class="text-sm text-gray-400">Select a pharmacy</span>
+                <ChevronDownIcon class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{ 'rotate-180': showPharmacyPicker }" />
+              </button>
+
+              <!-- Pharmacy list panel — teleported to body so it escapes any overflow/stacking context -->
+              <Teleport to="body">
+                <template v-if="showPharmacyPicker">
+                  <div class="fixed inset-0 z-[9998]" @click="showPharmacyPicker = false" />
+                  <div
+                    class="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden"
+                    :style="pharmacyPanelPos"
+                  >
+                    <div class="p-3 border-b border-gray-100 dark:border-gray-700">
+                      <div class="relative">
+                        <input
+                          v-model="pharmacySearch"
+                          type="text"
+                          placeholder="Search by name or area..."
+                          class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
+                          @click.stop
+                        />
+                        <BuildingStorefrontIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      </div>
+                      <p v-if="userLocation" class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
+                        <MapPinIcon class="w-3 h-3" /> Sorted by distance from your location
+                      </p>
+                    </div>
+                    <div class="max-h-60 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
+                      <button
+                        v-for="(pharmacy, idx) in filteredPharmacies"
+                        :key="pharmacy.id"
+                        type="button"
+                        class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+                        :class="{ 'bg-blue-50/40 dark:bg-blue-900/10': form.pharmacy_id === pharmacy.id }"
+                        @click.stop="selectPharmacy(pharmacy)"
+                      >
+                        <div class="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 flex items-center justify-center">
+                          <img v-if="pharmacy.logo" :src="pharmacy.logo" class="w-full h-full object-cover" />
+                          <BuildingStorefrontIcon v-else class="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ pharmacy.name }}</p>
+                            <span
+                              v-if="idx === 0 && pharmacy.distKm !== null"
+                              class="shrink-0 text-[9px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/30 px-1.5 py-0.5 rounded-full"
+                            >NEAREST</span>
+                          </div>
+                          <p class="text-xs text-gray-500 truncate">{{ pharmacy.address }}</p>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-2">
+                          <span v-if="pharmacy.distKm !== null" class="text-xs font-bold text-[#246BFD] bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                            {{ fmtDist(pharmacy.distKm) }}
+                          </span>
+                          <CheckIcon v-if="form.pharmacy_id === pharmacy.id" class="w-4 h-4 text-[#246BFD]" />
+                        </div>
+                      </button>
+                      <div v-if="!filteredPharmacies.length" class="px-4 py-6 text-center text-sm text-gray-400">
+                        No pharmacies match your search.
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </Teleport>
+
+              <!-- Branch picker -->
+              <div v-if="selectedPharmacy" class="space-y-2 mt-1">
+                <div v-if="loadingBranches" class="flex items-center gap-2 text-xs text-gray-500 py-2">
+                  <div class="w-3 h-3 border-2 border-[#246BFD] border-t-transparent rounded-full animate-spin" />
+                  Loading branches…
+                </div>
+                <template v-else-if="selectedPharmacyBranches.length > 0">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Branch
+                    <span class="ml-1 text-xs font-normal text-gray-400">{{ selectedPharmacyBranches.length }} available</span>
+                  </label>
+
+                  <button
+                    ref="branchTriggerRef"
+                    type="button"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-left transition-colors"
+                    :class="showBranchPicker ? 'border-[#246BFD] ring-2 ring-[#246BFD]/20' : 'border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/50'"
+                    @click="openBranchPicker"
+                  >
+                    <div v-if="selectedBranch" class="flex items-center gap-3 min-w-0">
+                      <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0 flex items-center justify-center">
+                        <MapPinIcon class="w-4 h-4 text-indigo-500" />
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ selectedBranch.branchName }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ selectedBranch.address }}</p>
+                      </div>
+                    </div>
+                    <span v-else class="text-sm text-gray-400">Select a branch</span>
+                    <ChevronDownIcon class="w-4 h-4 text-gray-400 shrink-0 transition-transform" :class="{ 'rotate-180': showBranchPicker }" />
+                  </button>
+
+                  <!-- Branch panel — also teleported -->
+                  <Teleport to="body">
+                    <template v-if="showBranchPicker">
+                      <div class="fixed inset-0 z-[9998]" @click="showBranchPicker = false" />
+                      <div
+                        class="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden"
+                        :style="branchPanelPos"
+                      >
+                        <div class="p-3 border-b border-gray-100 dark:border-gray-700">
+                          <div class="relative">
+                            <input
+                              v-model="branchSearch"
+                              type="text"
+                              placeholder="Search branches..."
+                              class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
+                              @click.stop
+                            />
+                            <MapPinIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          </div>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-700/50">
+                          <button
+                            v-for="(branch, idx) in filteredBranches"
+                            :key="branch.id"
+                            type="button"
+                            class="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+                            :class="{ 'bg-blue-50/40 dark:bg-blue-900/10': form.pharmacy_branch_id === branch.id }"
+                            @click.stop="selectBranch(branch)"
+                          >
+                            <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 shrink-0 flex items-center justify-center">
+                              <MapPinIcon class="w-4 h-4 text-indigo-500" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ branch.branchName }}</p>
+                                <span v-if="idx === 0 && branch.distKm !== null" class="shrink-0 text-[9px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/30 px-1.5 py-0.5 rounded-full">NEAREST</span>
+                              </div>
+                              <p class="text-xs text-gray-500 truncate">{{ branch.address }}</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                              <span v-if="branch.distKm !== null" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-full">
+                                {{ fmtDist(branch.distKm) }}
+                              </span>
+                              <CheckIcon v-if="form.pharmacy_branch_id === branch.id" class="w-4 h-4 text-[#246BFD]" />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </Teleport>
+                </template>
               </div>
             </div>
 
-              <div class="space-y-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority Level</label>
+            <DateTimePicker
+              label="Preferred date & time (optional)"
+              format="datetime"
+              :model-value="form.scheduled_at || ''"
+              @update:model-value="(val: string) => (form.scheduled_at = val)"
+              :min-date="new Date().toISOString()"
+            />
+          </div>
+
+          <!-- ── Step 2: Patient ──────────────────────────────── -->
+          <div v-else-if="currentStep === 2" key="s2" class="space-y-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Who is this for?</h2>
+
+            <!-- Creative booking-for cards -->
+            <div class="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                class="relative overflow-hidden p-5 rounded-2xl border-2 text-left transition-all duration-200"
+                :class="form.booking_for === 'myself'
+                  ? 'border-[#246BFD] bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/10 shadow-md shadow-blue-100 dark:shadow-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                @click="handleBookingForChange('myself')"
+              >
+                <!-- Check indicator -->
+                <div class="absolute top-3 right-3">
+                  <div
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+                    :class="form.booking_for === 'myself' ? 'border-[#246BFD] bg-[#246BFD]' : 'border-gray-300 dark:border-gray-600'"
+                  >
+                    <CheckIcon v-if="form.booking_for === 'myself'" class="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                <!-- Icon -->
+                <div
+                  class="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-all"
+                  :class="form.booking_for === 'myself' ? 'bg-[#246BFD] text-white shadow-lg shadow-blue-300/40 dark:shadow-blue-900/40' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'"
+                >
+                  <UserIcon class="w-6 h-6" />
+                </div>
+                <p class="font-bold text-gray-900 dark:text-white text-sm mb-1">For Myself</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Pre-fill with your registered profile</p>
+              </button>
+
+              <button
+                type="button"
+                class="relative overflow-hidden p-5 rounded-2xl border-2 text-left transition-all duration-200"
+                :class="form.booking_for === 'someone_else'
+                  ? 'border-[#246BFD] bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/10 shadow-md shadow-blue-100 dark:shadow-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                @click="handleBookingForChange('someone_else')"
+              >
+                <div class="absolute top-3 right-3">
+                  <div
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+                    :class="form.booking_for === 'someone_else' ? 'border-[#246BFD] bg-[#246BFD]' : 'border-gray-300 dark:border-gray-600'"
+                  >
+                    <CheckIcon v-if="form.booking_for === 'someone_else'" class="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                <div
+                  class="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-all"
+                  :class="form.booking_for === 'someone_else' ? 'bg-[#246BFD] text-white shadow-lg shadow-blue-300/40 dark:shadow-blue-900/40' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'"
+                >
+                  <UserPlusIcon class="w-6 h-6" />
+                </div>
+                <p class="font-bold text-gray-900 dark:text-white text-sm mb-1">Someone Else</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Enter the patient's details manually</p>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput label="Full name" v-model="form.patient_name" required :disabled="form.booking_for === 'myself'" />
+              <TextInput label="Phone" v-model="form.patient_phone" required :disabled="form.booking_for === 'myself'" />
+              <TextInput label="Email" v-model="form.patient_email" :disabled="form.booking_for === 'myself'" />
+              <DateTimePicker
+                label="Date of birth"
+                format="date"
+                :model-value="form.patient_date_of_birth || ''"
+                @update:model-value="(val: string) => (form.patient_date_of_birth = val)"
+                :max-date="new Date().toISOString()"
+                :disabled="form.booking_for === 'myself' && !isProfileIncomplete"
+              />
+            </div>
+
+            <!-- Inline gender selector -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gender</label>
               <div class="flex flex-wrap gap-2">
                 <button
-                  v-for="p in ['low', 'normal', 'high', 'urgent']"
-                  :key="p"
+                  v-for="g in genderOptions"
+                  :key="g.value"
                   type="button"
-                  @click="form.priority = p as ConsultationPriority"
-                  class="px-4 py-2 rounded-full text-sm font-medium capitalize transition-all border"
-                  :class="[
-                    form.priority === p 
-                      ? 'text-white shadow-md' 
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
-                    form.priority === p && p === 'low' ? 'bg-green-500 border-green-500' : '',
-                    form.priority === p && p === 'normal' ? 'bg-[#246BFD] border-[#246BFD]' : '',
-                    form.priority === p && p === 'high' ? 'bg-orange-500 border-orange-500' : '',
-                    form.priority === p && p === 'urgent' ? 'bg-red-500 border-red-500' : ''
-                  ]"
+                  class="px-4 py-2 rounded-full text-sm font-medium border transition-all"
+                  :class="form.patient_gender === g.value
+                    ? 'border-[#246BFD] bg-[#246BFD] text-white shadow-sm'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-[#246BFD]/40'"
+                  :disabled="form.booking_for === 'myself' && !isProfileIncomplete"
+                  @click="form.patient_gender = g.value"
                 >
-                  {{ p }}
+                  {{ g.label }}
                 </button>
               </div>
             </div>
-            
-            <div class="pt-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
-               <p class="text-sm text-yellow-800 dark:text-yellow-200 flex items-center">
-                 <ClockIcon class="w-4 h-4 mr-2" />
-                 Typical response time for  <strong>{{ form.priority }}</strong>  priority is under 24 hours.
-               </p>
-            </div>
           </div>
 
-          <!-- STEP 2: PATIENT PROFILE -->
-          <div v-else-if="currentStep === 2" key="step2" class="space-y-6">
-            
-            <!-- Who is this for? -->
-            <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Who is this consultation for?</label>
-                <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="consultationFor" value="myself" :checked="consultationFor === 'myself'" @change="handleConsultationForChange('myself')" class="text-blue-600 focus:ring-blue-500">
-                        <span class="text-gray-900 dark:text-white font-medium">Myself</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="consultationFor" value="someone_else" :checked="consultationFor === 'someone_else'" @change="handleConsultationForChange('someone_else')" class="text-blue-600 focus:ring-blue-500">
-                        <span class="text-gray-900 dark:text-white font-medium">Someone else</span>
-                    </label>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Patient Details</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <TextInput label="Full Name" v-model="form.patient_name" :disabled="consultationFor === 'myself'" placeholder="Patient's Full Name" />
-               <TextInput label="Email Address" v-model="form.patient_email" :disabled="consultationFor === 'myself'" placeholder="Patient's Email (Optional)" />
-               <TextInput label="Phone Number" v-model="form.patient_phone" :disabled="consultationFor === 'myself'" placeholder="Patient's Phone Number" />
-               
-                <DateTimePicker 
-                  label="Date of Birth" 
-                  format="date" 
-                  :model-value="form.patient_date_of_birth || ''"
-                  @update:model-value="(val) => form.patient_date_of_birth = val"
-                  :max-date="new Date().toISOString()"
-                  :disabled="!isProfileIncomplete"
-                  required 
-                />
-             </div>
-            
-            <div>
-              <Dropdown 
-                label="Gender" 
-                :options="genderOptions"
-                v-model="form.patient_gender"
-                placeholder="Select Gender"
-                :disabled="consultationFor === 'myself' && !isProfileIncomplete"
-                required
-              />
-            </div>
-          </div>
-
-          <!-- STEP 3: VITALS -->
-          <div v-else-if="currentStep === 3" key="step3" class="space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Vital Signs (Optional)</h2>
-            <p class="text-sm text-gray-500 -mt-3 mb-6">Providing these helps the doctor assess your condition better.</p>
-
-            <div v-if="form.vitals" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              
-              <!-- Blood Pressure -->
-              <div class="md:col-span-2 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
-                <div class="flex items-center gap-2 mb-3 text-red-700 dark:text-red-400 font-medium">
-                  <HeartIcon class="w-5 h-5" /> Blood Pressure
-                </div>
-                <div class="flex gap-4">
-                  <TextInput 
-                    label="Systolic (mmHg)" 
-                    type="number" 
-                    v-model="form.vitals.blood_pressure_systolic" 
-                    placeholder="120"
-                  />
-                  <TextInput 
-                    label="Diastolic (mmHg)" 
-                    type="number" 
-                    v-model="form.vitals.blood_pressure_diastolic" 
-                    placeholder="80"
-                  />
-                </div>
-              </div>
-
-              <!-- Heart Rate -->
-              <div class="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                 <div class="flex items-center gap-2 mb-3 text-blue-700 dark:text-blue-400 font-medium">
-                  <ChartBarIcon class="w-5 h-5" /> Heart Rate
-                </div>
-                <TextInput 
-                  label="BPM" 
-                  type="number" 
-                  v-model="form.vitals.heart_rate" 
-                  placeholder="72"
-                />
-              </div>
-
-              <!-- Temperature -->
-              <div class="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/30">
-                 <div class="flex items-center gap-2 mb-3 text-orange-700 dark:text-orange-400 font-medium">
-                  <BoltIcon class="w-5 h-5" /> Temperature
-                </div>
-                <TextInput 
-                  label="Celsius (°C)" 
-                  type="number" 
-                  v-model="form.vitals.temperature" 
-                  placeholder="36.5"
-                  step="0.1"
-                />
-              </div>
-
-              <!-- Oxygen Saturation -->
-              <div class="p-4 bg-cyan-50 dark:bg-cyan-900/10 rounded-xl border border-cyan-100 dark:border-cyan-900/30">
-                 <div class="flex items-center gap-2 mb-3 text-cyan-700 dark:text-cyan-400 font-medium">
-                  <span class="font-bold text-lg">O₂</span> Oxygen Sat
-                </div>
-                <TextInput 
-                  label="Percent (%)" 
-                  type="number" 
-                  v-model="form.vitals.oxygen_saturation" 
-                  placeholder="98"
-                />
-              </div>
-
-               <!-- Respiratory Rate -->
-              <div class="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-900/30">
-                 <div class="flex items-center gap-2 mb-3 text-purple-700 dark:text-purple-400 font-medium">
-                   <span class="font-bold text-lg">RR</span> Respiratory Rate
-                </div>
-                <TextInput 
-                  label="Breaths/min" 
-                  type="number" 
-                  v-model="form.vitals.respiratory_rate" 
-                  placeholder="16"
-                />
-              </div>
-
-               <!-- Weight -->
-              <div class="p-4 bg-gray-100 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center gap-2 mb-3 text-gray-700 dark:text-gray-400 font-medium">
-                   Weight
-                </div>
-                <TextInput 
-                  label="kg" 
-                  type="number" 
-                  v-model="form.vitals.weight" 
-                  placeholder="70"
-                  step="0.1"
-                />
-              </div>
-
-               <!-- Height -->
-              <div class="p-4 bg-gray-100 dark:bg-gray-700/30 rounded-xl border border-gray-200 dark:border-gray-700">
-                 <div class="flex items-center gap-2 mb-3 text-gray-700 dark:text-gray-400 font-medium">
-                   Height
-                </div>
-                <TextInput 
-                  label="cm" 
-                  type="number" 
-                  v-model="form.vitals.height" 
-                  placeholder="175"
-                />
-              </div>
-
-            </div>
-          </div>
-
-          <!-- STEP 4: CLINICAL -->
-          <div v-else-if="currentStep === 4" key="step4" class="space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Clinical Context</h2>
-            
-
-            
-            <TextInput 
-              type="textarea" 
-              label="Symptoms (Optional)" 
-              v-model="form.symptoms" 
-              placeholder="Describe what you are feeling..." 
-              :rows="3" 
-              :error="formErrors.symptoms"
+          <!-- ── Step 3: Request ──────────────────────────────── -->
+          <div v-else key="s3" class="space-y-6">
+            <TextInput
+              type="textarea"
+              label="Why are you requesting this consultation?"
+              v-model="form.chief_complaint"
+              :rows="4"
+              required
+              placeholder="Describe your concern in your own words — e.g. 'I have had a dry cough for 3 days and want advice on over-the-counter options.'"
+              helper-text="At least 10 characters. A pharmacist will follow up with you."
             />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextInput 
-                type="textarea" 
-                label="Medical History (Optional)" 
-                v-model="form.medical_history" 
-                placeholder="Past conditions..." 
-                :rows="2" 
-                :error="formErrors.medical_history"
-              />
-              <TextInput 
-                type="textarea" 
-                label="Current Medications (Optional)" 
-                v-model="form.current_medications" 
-                placeholder="Meds you are taking..." 
-                :rows="2" 
-                :error="formErrors.current_medications"
-              />
-              <TextInput 
-                type="textarea" 
-                label="Allergies (Optional)" 
-                v-model="form.allergies" 
-                placeholder="Any known allergies..." 
-                :rows="2"
-                class="md:col-span-2" 
-                :error="formErrors.allergies"
-              />
-              <TextInput 
-                type="textarea" 
-                label="Consultation Notes" 
-                v-model="form.consultation_notes" 
-                placeholder="Any additional context..." 
-                :rows="2"
-                class="md:col-span-2" 
-              />
-            </div>
-          </div>
+            <TextInput
+              type="textarea"
+              label="Anything else we should know? (optional)"
+              v-model="form.consultation_notes"
+              :rows="2"
+              placeholder="Preferred contact time, accessibility needs, etc."
+            />
 
+            <!-- Dropzone -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Photos <span class="text-xs font-normal text-gray-400">(optional)</span>
+              </label>
 
-
-          <!-- STEP 5: REVIEW -->
-          <div v-else-if="currentStep === 5" key="step5" class="space-y-6">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 text-center">Review Summary</h2>
-            
-            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
-               <!-- Decorative Header -->
-               <div class="h-2 w-full bg-gradient-to-r from-blue-500 to-[#246BFD]"></div>
-               
-               <div class="p-8">
-                 <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-100 dark:border-gray-700 border-dashed">
-                    <div>
-
-                      <h3 class="text-xl font-bold text-gray-900 dark:text-white capitalize">{{ form.consultation_type.replace(/_/g, ' ') }}</h3>
-                    </div>
-                    <div class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-mono text-gray-500">
-                      Draft
-                    </div>
-                 </div>
-
-                 <div class="grid grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Type</p>
-                      <div class="flex items-center gap-2">
-                        <StarIcon v-if="form.consultation_type === 'general'" class="w-5 h-5 text-yellow-400" />
-                        <ShieldCheckIcon v-else-if="form.consultation_type === 'medication_review'" class="w-5 h-5 text-blue-400" />
-                        <span class="font-medium text-gray-700 dark:text-gray-300 capitalize">{{ form.consultation_type.replace('_', ' ') }}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Priority</p>
-                      <span 
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-                        :class="{
-                          'bg-green-100 text-green-800': form.priority === 'low',
-                          'bg-blue-100 text-blue-800': form.priority === 'normal',
-                          'bg-orange-100 text-orange-800': form.priority === 'high',
-                          'bg-red-100 text-red-800': form.priority === 'urgent'
-                        }"
-                      >
-                        {{ form.priority }}
-                      </span>
-                    </div>
+              <div
+                class="relative border-2 border-dashed rounded-2xl px-6 py-8 text-center cursor-pointer transition-all duration-200"
+                :class="isDragOver
+                  ? 'border-[#246BFD] bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/50 hover:bg-gray-50 dark:hover:bg-gray-800/40'"
+                @dragover.prevent="isDragOver = true"
+                @dragleave.prevent="isDragOver = false"
+                @drop.prevent="onDrop"
+                @click="fileInputRef?.click()"
+              >
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,application/pdf"
+                  multiple
+                  class="hidden"
+                  @change="onFileInputChange"
+                />
+                <div class="flex flex-col items-center gap-3 pointer-events-none">
+                  <div
+                    class="w-14 h-14 rounded-2xl flex items-center justify-center transition-all"
+                    :class="isDragOver ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-700'"
+                  >
+                    <ArrowUpTrayIcon class="w-7 h-7 transition-colors" :class="isDragOver ? 'text-[#246BFD]' : 'text-gray-400'" />
                   </div>
-
-                  <div class="mb-6 pb-6 border-b border-gray-100 dark:border-gray-700 border-dashed">
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Patient Details</p>
-                      <div class="grid grid-cols-2 gap-4">
-                        <div>
-                          <p class="text-xs text-gray-400">Name</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.patient_name }}</p>
-                        </div>
-                         <div>
-                          <p class="text-xs text-gray-400">Date of Birth</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.patient_date_of_birth }}</p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-gray-400">Gender</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ form.patient_gender }}</p>
-                        </div>
-                      </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span class="text-[#246BFD] font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Prescription label, rash photo, referral letter — JPG, PNG or PDF, max 5MB each</p>
                   </div>
-
-                  <div v-if="form.vitals && Object.values(form.vitals).some(v => v)" class="mb-6 pb-6 border-b border-gray-100 dark:border-gray-700 border-dashed">
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Vitals</p>
-                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div v-if="form.vitals.blood_pressure_systolic">
-                          <p class="text-xs text-gray-400">BP</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.blood_pressure_systolic }}/{{ form.vitals.blood_pressure_diastolic }} mmHg</p>
-                        </div>
-                        <div v-if="form.vitals.heart_rate">
-                          <p class="text-xs text-gray-400">Heart Rate</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.heart_rate }} BPM</p>
-                        </div>
-                        <div v-if="form.vitals.temperature">
-                          <p class="text-xs text-gray-400">Temp</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.temperature }} °C</p>
-                        </div>
-                        <div v-if="form.vitals.oxygen_saturation">
-                          <p class="text-xs text-gray-400">O₂ Sat</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.oxygen_saturation }}%</p>
-                        </div>
-                         <div v-if="form.vitals.weight">
-                          <p class="text-xs text-gray-400">Weight</p>
-                          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ form.vitals.weight }} kg</p>
-                        </div>
-                      </div>
-                  </div>
-
-                  <div class="space-y-4">
-                    <div v-if="form.symptoms">
-                      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Symptoms</p>
-                      <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl text-sm text-gray-600 dark:text-gray-300 italic leading-relaxed border border-gray-100 dark:border-gray-700">
-                        "{{ form.symptoms }}"
-                      </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <div v-if="form.medical_history">
-                          <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">History</p>
-                          <p class="text-sm text-gray-700 dark:text-gray-300">{{ form.medical_history }}</p>
-                       </div>
-                        <div v-if="form.allergies">
-                          <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Allergies</p>
-                          <p class="text-sm text-red-600 dark:text-red-400 font-medium">{{ form.allergies }}</p>
-                       </div>
-                       <div v-if="form.current_medications">
-                          <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Meds</p>
-                          <p class="text-sm text-gray-700 dark:text-gray-300">{{ form.current_medications }}</p>
-                       </div>
-                    </div>
-
-
-                 </div>
-               </div>
-            </div>
-
-            <!-- Floating Error Toast -->
-            <Transition name="toast">
-              <div v-if="error" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium animate-bounce-short">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                {{ error }}
+                </div>
               </div>
-            </Transition>
+
+              <!-- File previews -->
+              <div v-if="previewFiles.length" class="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
+                <div v-for="(pf, idx) in previewFiles" :key="idx" class="relative group">
+                  <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <img v-if="pf.preview" :src="pf.preview" class="w-full h-full object-cover" />
+                    <DocumentTextIcon v-else class="w-7 h-7 text-gray-400" />
+                  </div>
+                  <button
+                    type="button"
+                    class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full items-center justify-center shadow-sm hidden group-hover:flex transition-all"
+                    @click.stop="removeFile(idx)"
+                  >
+                    <XMarkIcon class="w-3 h-3" />
+                  </button>
+                  <p class="text-[10px] text-gray-500 truncate mt-1 leading-tight">{{ pf.name }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary card -->
+            <div class="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+              <!-- Header -->
+              <div class="px-5 py-3 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                <ClipboardDocumentListIcon class="w-4 h-4 text-gray-400" />
+                <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Consultation Summary</span>
+              </div>
+
+              <div class="p-5 space-y-4 bg-white dark:bg-gray-800/30">
+                <!-- Service -->
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                    <component :is="currentConsultationType?.icon" class="w-4 h-4 text-[#246BFD]" />
+                  </div>
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Service</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 capitalize">
+                      {{ form.consultation_type.replace(/_/g, ' ') }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Patient -->
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                    <UserIcon class="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Patient</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ form.patient_name || '—' }}</p>
+                  </div>
+                </div>
+
+                <!-- Pharmacy + Branch -->
+                <div v-if="selectedPharmacy" class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                    <BuildingStorefrontIcon class="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pharmacy</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ selectedPharmacy.name }}</p>
+                    <p v-if="selectedBranch" class="text-xs text-gray-500">{{ selectedBranch.branchName }}</p>
+                  </div>
+                </div>
+
+                <!-- Schedule -->
+                <div v-if="form.scheduled_at" class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+                    <CalendarIcon class="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Scheduled</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ formatScheduled(form.scheduled_at || '') }}</p>
+                  </div>
+                </div>
+
+                <!-- Chief complaint -->
+                <div v-if="form.chief_complaint" class="pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <p class="text-xs text-gray-400 italic line-clamp-3">"{{ form.chief_complaint }}"</p>
+                </div>
+              </div>
+            </div>
+
+            <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
           </div>
 
         </Transition>
       </Card>
 
-      <!-- Footer Actions -->
-      <div class="mt-8 flex justify-between items-center">
-        <Button 
-          v-if="currentStep > 1"
-          variant="secondary"
-          @click="prevStep"
-          class="flex items-center"
-        >
-          <ChevronLeftIcon class="w-4 h-4 mr-2" /> Back
+      <div class="mt-8 flex justify-between">
+        <Button v-if="currentStep > 1" variant="secondary" @click="prevStep">
+          <ChevronLeftIcon class="w-4 h-4 inline mr-1" /> Back
         </Button>
-        <div v-else></div> <!-- Spacer -->
+        <span v-else />
 
-        <Button 
-          v-if="currentStep < 5"
+        <Button
+          v-if="currentStep < 3"
           variant="primary"
+          :disabled="!canProceed"
           @click="nextStep"
-          class="flex items-center"
         >
-          Next <ChevronRightIcon class="w-4 h-4 ml-2" />
+          Continue <ChevronRightIcon class="w-4 h-4 inline ml-1" />
         </Button>
-        <Button 
+        <Button
           v-else
           variant="primary"
           :loading="submitting"
+          :disabled="!canProceed"
+          class="bg-green-600 hover:bg-green-700"
           @click="submitConsultation"
-          class="bg-green-600 hover:bg-green-700 border-green-600 flex items-center px-8"
         >
-          Confirm Consultation <CheckCircleIcon class="w-5 h-5 ml-2" />
+          Submit request <CheckCircleIcon class="w-5 h-5 inline ml-1" />
         </Button>
       </div>
-
     </div>
   </div>
 </template>
@@ -673,23 +875,11 @@ const handleConsultationForChange = (val: 'myself' | 'someone_else') => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateX(10px);
-}
-
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translate(-50%, 20px);
+  transform: translateY(8px);
 }
 </style>
