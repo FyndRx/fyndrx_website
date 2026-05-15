@@ -108,14 +108,21 @@ const startShopping = () => {
 
       <div v-else class="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-6">
-          <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl">
-            <CustomCheckbox
-              :model-value="allPharmaciesSelected"
-              label="Select All Pharmacies"
-              size="medium"
-              variant="switch"
-              @update:model-value="toggleSelectAll"
-            />
+          <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <div class="flex items-center gap-4">
+              <CustomCheckbox
+                :model-value="allPharmaciesSelected"
+                size="medium"
+                variant="switch"
+                @update:model-value="toggleSelectAll"
+              />
+              <span class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Select All Pharmacies</span>
+            </div>
+            <div v-if="selectedPharmacies.size > 0" class="hidden sm:block">
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {{ selectedPharmacies.size }} {{ selectedPharmacies.size === 1 ? 'Pharmacy' : 'Pharmacies' }} selected
+              </span>
+            </div>
           </div>
 
           <div
@@ -123,43 +130,65 @@ const startShopping = () => {
             :key="pharmacy.pharmacyId"
             class="overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl"
           >
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
               <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                  <CustomCheckbox
-                    :model-value="selectedPharmacies.has(pharmacy.pharmacyId)"
-                    size="medium"
-                    @update:model-value="togglePharmacySelection(pharmacy.pharmacyId)"
-                  />
-                  <div v-if="pharmacy.pharmacyLogo" class="w-12 h-12 overflow-hidden bg-white rounded-lg">
-                    <LazyImage
-                      :src="pharmacy.pharmacyLogo"
-                      :alt="pharmacy.pharmacyName"
-                      aspectRatio="square"
-                      className="w-full h-full object-contain"
+                <div class="flex items-center space-x-5">
+                  <div class="relative group">
+                    <CustomCheckbox
+                      :model-value="selectedPharmacies.has(pharmacy.pharmacyId)"
+                      size="medium"
+                      @update:model-value="togglePharmacySelection(pharmacy.pharmacyId)"
+                      class="z-10"
                     />
                   </div>
-                    <div>
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                  
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 group-hover:scale-105 transition-transform">
+                      <LazyImage
+                        :src="pharmacy.pharmacyLogo || '/images/pharmacies/default-pharmacy.jpg'"
+                        :alt="pharmacy.pharmacyName"
+                        aspectRatio="square"
+                        className="w-full h-full object-contain rounded-full"
+                      />
+                    </div>
+                    
+                    <div class="min-w-0">
+                      <h3 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                         {{ pharmacy.pharmacyName }}
                       </h3>
-                      <p v-if="pharmacy.items[0]?.branchName" class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ pharmacy.items[0].branchName }}
-                      </p>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'item' : 'items' }}
-                      </p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                          {{ pharmacy.branchName || 'Main Branch' }}
+                        </p>
+                        <span class="mx-2 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                          {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'Product' : 'Products' }}
+                        </span>
+                      </div>
                     </div>
+                  </div>
                 </div>
-                <button
-                  @click="cartStore.clearPharmacyItems(pharmacy.pharmacyId)"
-                  class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                  title="Remove all items from this pharmacy"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
+                
+                <div class="flex items-center gap-4">
+                  <div class="hidden sm:block text-right pr-4 border-r border-gray-200 dark:border-gray-700">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pharmacy Subtotal</p>
+                    <p class="text-lg font-black text-[#246BFD]">{{ formatCurrency(pharmacy.subtotal) }}</p>
+                  </div>
+                  
+                  <button
+                    @click="cartStore.clearPharmacyItems(pharmacy.pharmacyId)"
+                    class="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                    title="Remove all items from this pharmacy"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -186,18 +215,14 @@ const startShopping = () => {
                   </div>
 
                   <div class="flex-1 min-w-0">
-                    <h4 class="mb-1 text-lg font-medium text-gray-900 dark:text-white truncate">
+                    <h4 class="mb-1 text-lg font-bold text-gray-900 dark:text-white truncate">
                       {{ item.medicationName }}
                     </h4>
-                    <div class="mb-2 space-y-1">
-                      <p class="text-sm text-gray-600 dark:text-gray-400">
-                        <span v-if="item.brandName">{{ item.brandName }} • </span>
-                        <span>{{ item.formName }}</span> • <span>{{ item.strength }} {{ item.uom }}</span>
-                      </p>
+                    <div class="mb-2">
                       <div class="flex items-center gap-2 flex-wrap">
                         <span
                           v-if="item.requiresPrescription"
-                          class="inline-flex items-center px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-100 rounded-full dark:bg-orange-900 dark:text-orange-200"
+                          class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-800 bg-orange-100 rounded-lg dark:bg-orange-900/30 dark:text-orange-200"
                         >
                           <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>

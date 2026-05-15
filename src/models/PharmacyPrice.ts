@@ -42,6 +42,7 @@ export interface PharmacyPrice {
   distance?: string;
   rating?: number;
   branch_name?: string; // Flattened branch name
+  is_open?: boolean;
 
   // Display and metadata fields
   name?: string;

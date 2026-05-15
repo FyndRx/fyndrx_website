@@ -143,16 +143,22 @@ export const pharmacyService = {
       page?: number;
       per_page?: number;
       services?: string[];
+      product_id?: number | string;
     }
   ): Promise<PharmacyPricesByDrugApiResponse['data']> {
     let url = `/prices`; // NEW ENDPOINT
     const params = new URLSearchParams();
     
-    // Ensure drug_id is always passed
-    params.append('drug_id', drugId.toString());
+    // Support both legacy drugId and new productId
+    if (filters?.product_id) {
+      params.append('product_id', filters.product_id.toString());
+    } else {
+      params.append('drug_id', drugId.toString());
+    }
 
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
+        if (key === 'product_id') return; // already handled
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => params.append(`${key}[]`, v.toString()));
@@ -171,6 +177,19 @@ export const pharmacyService = {
     const response = await apiService.get<PharmacyPricesByDrugApiResponse>(url);
     // Return the structured object: { exact_match, related_drugs? }
     return response.data;
+  },
+
+  /**
+   * Get all medication categories
+   */
+  async getCategories(): Promise<any[]> {
+    try {
+      const response = await apiService.get<any>('/categories');
+      return unwrapArrayResponse(response);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
   },
 
   /**
@@ -249,7 +268,7 @@ export const pharmacyService = {
    * @returns Hierarchical data structure
    */
   async getMedicationDetailsWithPrices(drugId: number, filters?: any): Promise<MedicationPricingHierarchy> {
-    const [medication, responseData] = await Promise.all([
+    const [medication, responseData]: [Medication, PharmacyPricesByDrugApiResponse['data']] = await Promise.all([
       import('@/services/medicationService').then(m => m.medicationService.getMedicationById(drugId)),
       this.getPricesByDrug(drugId, filters)
     ]);
@@ -336,20 +355,24 @@ export const pharmacyService = {
     if (responseData.related_drugs) {
       responseData.related_drugs.forEach(related => {
         const brandId = related.brand_id;
+        if (!brandId) return;
+
         if (!hierarchyBrands.has(brandId)) {
           hierarchyBrands.set(brandId, {
             id: brandId,
-            name: related.brand || 'Unknown Brand',
+            name: related.brand_name || 'Unknown Brand',
             forms: new Map()
           });
         }
         const brandNode = hierarchyBrands.get(brandId)!;
 
         const formId = related.form_id;
+        if (!formId) return;
+
         if (!brandNode.forms.has(formId)) {
           brandNode.forms.set(formId, {
             id: formId,
-            name: related.form || 'Unknown Form',
+            name: related.form_name || 'Unknown Form',
             variants: []
           });
         }
@@ -362,12 +385,12 @@ export const pharmacyService = {
 
         if (!existingVariant) {
           formNode.variants.push({
-            strengthId: related.strength_id,
+            strengthId: related.strength_id ?? 0,
             strength: related.strength || '',
-            uomId: related.uom_id,
+            uomId: related.uom_id ?? 0,
             uom: related.uom || '',
-            label: `${related.form} ${related.strength} ${related.uom || ''}`.trim(),
-            value: `${formId}_${related.strength_id}_${related.uom_id}`,
+            label: `${related.form_name || ''} ${related.strength || ''} ${related.uom || ''}`.trim(),
+            value: `${formId}_${related.strength_id ?? 0}_${related.uom_id ?? 0}`,
             pharmacyCount: 0, // Unknown from summary
             minPrice: related.price,
             maxPrice: related.price

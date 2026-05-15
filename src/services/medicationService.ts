@@ -176,7 +176,7 @@ export const medicationService = {
    * @returns Medication details
    */
   async getMedicationById(id: number): Promise<Medication> {
-    const response = await apiService.get<MedicationDetailApiResponse>(`/drugs/${id}`);
+    const response = await apiService.get<MedicationDetailApiResponse>(`/products/${id}`);
     const apiMed = unwrapApiResponse(response);
     return transformMedication(apiMed);
   },

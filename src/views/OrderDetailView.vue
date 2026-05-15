@@ -313,19 +313,16 @@ onMounted(() => {
                   </div>
                   
                   <div class="flex-1 min-w-0">
-                    <h4 class="mb-1 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors">
+                    <h4 class="mb-2 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors leading-tight">
                       {{ item.medicationName }}
                     </h4>
-                    <div class="mb-2 space-y-1">
-                      <p v-if="item.brandName" class="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                        {{ item.brandName }}
-                      </p>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ item.formName }} • {{ item.strength }} • {{ item.uom }}
-                      </p>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 rounded-lg bg-[#246BFD]/10 text-[#246BFD] text-[10px] font-bold uppercase tracking-wider">
                         Qty: {{ item.quantity }}
-                      </p>
+                      </span>
+                      <span class="text-xs font-medium text-gray-500">
+                        Unit Price: {{ formatCurrency(item.discountPrice || item.price) }}
+                      </span>
                     </div>
                   </div>
 

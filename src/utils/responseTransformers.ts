@@ -105,6 +105,7 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
 
   return {
     id: apiMed.id,
+    product_id: (apiMed as any).product_id ?? apiMed.id, // Fallback to id if not explicit
     name: apiMed.name,
     description: apiMed.description ?? '',
     brands: brands,
@@ -114,12 +115,17 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
     category: apiMed.categories ?? apiMed.category ?? '',
     requiresPrescription: apiMed.requires_prescription ?? apiMed.requiresPrescription ?? false,
     pharmacy_count: apiMed.pharmacy_count ?? (apiMed as any).pharmacies_count ?? (apiMed as any).available_pharmacies_count,
-    price: apiMed.price,
+    price: apiMed.price ?? (apiMed as any).starting_price,
     discount_price: apiMed.discount_price,
     brand_id: (apiMed as any).brand_id,
+    brand_name: (apiMed as any).brand_name ?? (apiMed as any).brand?.name,
     form_id: (apiMed as any).form_id,
+    form_name: (apiMed as any).form_name ?? (apiMed as any).form?.form_name,
     strength_id: (apiMed as any).strength_id,
-    uom_id: (apiMed as any).uom_id
+    strength: (apiMed as any).strength ?? (apiMed as any).strength?.strength,
+    uom_id: (apiMed as any).uom_id,
+    uom: (apiMed as any).uom ?? (apiMed as any).uom?.uom,
+    starting_price: (apiMed as any).starting_price
   };
 }
 
@@ -229,67 +235,45 @@ export function transformPharmacies(apiPharmacies: PharmacyApiResponse[]): Pharm
  */
 export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): PharmacyPrice {
   const pharmacyInfo = apiPrice.pharmacy;
-  const branchInfo = apiPrice.pharmacy_branch;
-
-  const normalizedPharmacy = pharmacyInfo
-    ? {
-      id: pharmacyInfo.id ?? apiPrice.pharmacy_id,
-      name: pharmacyInfo.name || apiPrice.pharmacy_name,
-      logo: pharmacyInfo.logo || apiPrice.pharmacy_logo,
-      address: pharmacyInfo.address || apiPrice.pharmacy_address,
-      rating: pharmacyInfo.rating ?? apiPrice.rating,
-      distance: pharmacyInfo.distance || apiPrice.distance,
-      is_open: pharmacyInfo.is_open ?? (pharmacyInfo as any).isOpen ?? apiPrice.is_open,
-      pharmacy_branch_id: pharmacyInfo.pharmacy_branch_id ?? apiPrice.pharmacy_branch_id,
-      branch_name: pharmacyInfo.branch_name || branchInfo?.branch_name,
-      branch_address: pharmacyInfo.branch_address || branchInfo?.address || apiPrice.pharmacy_address,
-    }
-    : undefined;
-
-  const normalizedBranch = branchInfo && branchInfo.id
-    ? {
-      id: branchInfo.id,
-      name: branchInfo.name || branchInfo.branch_name,
-      address: branchInfo.address || '',
-      pharmacy_id: branchInfo.pharmacy_id ?? apiPrice.pharmacy_id,
-    }
-    : undefined;
+  const branchInfo = (apiPrice as any).pharmacy_branch;
 
   return {
     id: apiPrice.id,
-    pharmacy_id: apiPrice.pharmacy_id || apiPrice.pharmacyId || 0,
-    pharmacy_branch_id: apiPrice.pharmacy_branch_id,
-    drug_id: apiPrice.drug_id || apiPrice.drugId || 0,
-    brand_id: apiPrice.brand_id || 0,
-    form_id: apiPrice.form_id || apiPrice.formId || apiPrice.drug_brand_form_id || 0,
-    strength_id: apiPrice.strength_id || apiPrice.strengthId || apiPrice.dosage_id || 0,
-    uom_id: apiPrice.uom_id || apiPrice.uomId || apiPrice.strength_uom_id || 0,
-    price: apiPrice.price || apiPrice.normal_price || 0,
-    discount_price: apiPrice.discount_price || apiPrice.discounted_price || apiPrice.discountPrice,
+    pharmacy_id: apiPrice.pharmacy_id ?? 0,
+    pharmacy_branch_id: apiPrice.pharmacy_branch_id ?? apiPrice.pharmacy?.branch_id,
+    drug_id: apiPrice.drug_id ?? 0,
+    brand_id: apiPrice.brand_id ?? 0,
+    form_id: apiPrice.form_id ?? 0,
+    strength_id: apiPrice.strength_id ?? 0,
+    uom_id: apiPrice.uom_id ?? 0,
+    price: apiPrice.price ?? 0,
+    discount_price: apiPrice.discount_price ?? undefined,
     stock_quantity: apiPrice.stock_quantity,
-    in_stock: apiPrice.in_stock ?? apiPrice.inStock ?? false,
-    created_at: apiPrice.created_at,
-    updated_at: apiPrice.updated_at,
-    pharmacy: normalizedPharmacy,
-    pharmacy_branch: normalizedBranch,
-    branch_name: apiPrice.branch_name || normalizedBranch?.name, // Map flat branch_name or nested
-    pharmacy_name: apiPrice.pharmacy_name,
-    pharmacy_logo: apiPrice.pharmacy_logo,
-    pharmacy_address: apiPrice.pharmacy_address,
-    distance: apiPrice.distance,
-    rating: apiPrice.rating,
-
-    // Map optional fields (handling potential snake_case vs camelCase)
-    name: apiPrice.name || apiPrice.drugName,
-    drug_image: apiPrice.drug_image || apiPrice.drugImage,
-    brand_name: apiPrice.brand_name || apiPrice.brandName,
-    form_name: apiPrice.form_name || apiPrice.formName,
-    strength: apiPrice.strength || (apiPrice as any).strengthValue,
-    // Handle UOM: Check uom_name (new string field), falling back to other possible fields
-    uom: typeof apiPrice.uom_name === 'string' ? apiPrice.uom_name : (apiPrice.uom_name as any)?.uom || apiPrice.uom || (apiPrice as any).uomValue,
-    
-    // New fields from exact_match.pharmacies
-    branch_id: apiPrice.branch_id ?? undefined,
+    in_stock: apiPrice.in_stock ?? false,
+    created_at: '',
+    updated_at: '',
+    pharmacy: pharmacyInfo ? {
+      id: pharmacyInfo.id ?? apiPrice.pharmacy_id,
+      name: pharmacyInfo.name || apiPrice.pharmacy_name,
+      logo: pharmacyInfo.logo || apiPrice.pharmacy_logo || undefined,
+      address: pharmacyInfo.address,
+      rating: pharmacyInfo.rating,
+      distance: pharmacyInfo.distance?.toString(),
+      is_open: pharmacyInfo.is_open ?? apiPrice.is_open,
+      pharmacy_branch_id: pharmacyInfo.branch_id ?? apiPrice.pharmacy_branch_id,
+      branch_name: pharmacyInfo.branch_name || apiPrice.branch_name || '',
+      branch_address: (pharmacyInfo as any).branch_address || (branchInfo as any)?.address || apiPrice.branch_name || '',
+    } : undefined,
+    pharmacy_name: apiPrice.pharmacy_name || apiPrice.pharmacy?.name || '',
+    pharmacy_logo: apiPrice.pharmacy_logo || apiPrice.pharmacy?.logo || undefined,
+    branch_name: apiPrice.branch_name || apiPrice.pharmacy?.branch_name || '',
+    is_open: apiPrice.is_open ?? apiPrice.pharmacy?.is_open ?? false,
+    name: apiPrice.name,
+    brand_name: apiPrice.brand_name ?? '',
+    form_name: apiPrice.form_name ?? '',
+    strength: apiPrice.strength ?? '',
+    uom: apiPrice.uom ?? '',
+    branch_id: apiPrice.pharmacy_branch_id ?? apiPrice.pharmacy?.branch_id ?? 0,
     image: apiPrice.image ?? undefined,
   };
 }
@@ -301,93 +285,57 @@ export function transformPharmacyPrices(apiPrices: PharmacyPriceApiResponse[]): 
 /**
  * Cart Transformers
  */
-export function transformCartItem(apiItem: CartItemApiResponse): CartItem {
-  const medication = apiItem.medication;
-  const pharmacy = apiItem.pharmacy;
-  const brand = apiItem.brand;
-  const form = apiItem.form;
-  const strengthObj = apiItem.strength_obj; // Renamed property in interface
-  const uom = apiItem.uom;
-
-  // Helper to extract value from potentially nested or flat source
-  const getValue = (primary?: string, secondary?: any, key?: string) => {
-    if (primary) return primary;
-    if (secondary && key && secondary[key]) return secondary[key];
-    return '';
-  };
-
-  const getStrengthVal = (val: string | { strength: string } | undefined) => {
-    if (typeof val === 'string') return val;
-    if (val && typeof val === 'object' && 'strength' in val) return val.strength;
-    return '';
-  };
-
-  const getUomVal = (val: string | { uom: string } | undefined) => {
-    if (typeof val === 'string') return val;
-    if (val && typeof val === 'object' && 'uom' in val) return val.uom;
-    return '';
-  };
-
+export function transformCartItem(apiItem: CartItemApiResponse, acceptedPaymentMethods?: ('platform' | 'direct')[]): CartItem {
   return {
-    id: String(apiItem.id),
-    medicationId: apiItem.drug_id,
-    medicationName: getValue(apiItem.name, medication, 'name'),
-    pharmacyId: apiItem.pharmacy_id || pharmacy?.id || 0,
-    pharmacyName: pharmacy?.name || '',
-    pharmacyLogo: pharmacy?.logo,
-    pharmacyBranchId: apiItem.pharmacy_branch_id,
-    branchName: getValue(apiItem.branch_name, apiItem.pharmacy_branch, 'name') || getValue(undefined, apiItem.pharmacy_branch, 'branch_name'),
-    brandId: apiItem.drug_brand_id || brand?.id || 0,
-    brandName: getValue(apiItem.brand_name, brand, 'name'),
-    formId: apiItem.drug_brand_form_id || form?.id || 0,
-    formName: getValue(apiItem.form_name, form, 'form_name'),
-    strengthId: apiItem.dosage_id || strengthObj?.id || 0,
-    strength: getStrengthVal(apiItem.strength) || (strengthObj?.strength || ''),
-    uomId: apiItem.strength_uom_id || uom?.id || 0,
-    uom: getUomVal(apiItem.strength_uom) || (uom?.uom || ''),
+    id: String(apiItem.cart_item_id),
+    medicationId: apiItem.drug_id ?? 0,
+    medicationName: apiItem.name,
+    pharmacyId: apiItem.pharmacy_id,
+    pharmacyName: apiItem.pharmacy_name ?? apiItem.pharmacy?.name ?? '',
+    pharmacyLogo: apiItem.pharmacy_logo ?? apiItem.pharmacy?.logo ?? undefined,
+    isOpen: apiItem.is_open ?? apiItem.pharmacy?.is_open ?? false,
+    pharmacyBranchId: apiItem.pharmacy_branch_id ?? apiItem.pharmacy?.branch_id,
+    branchName: apiItem.branch_name ?? apiItem.pharmacy?.branch_name ?? '',
+    brandId: apiItem.brand_id ?? 0,
+    brandName: apiItem.brand_name ?? '',
+    formId: apiItem.form_id ?? 0,
+    formName: apiItem.form_name ?? '',
+    strengthId: apiItem.strength_id ?? 0,
+    strength: apiItem.strength ?? '',
+    uomId: apiItem.uom_id ?? 0,
+    uom: apiItem.uom ?? '',
     quantity: apiItem.quantity,
     price: apiItem.price,
-    discountPrice: apiItem.discount_price,
-    image: brand?.image || medication?.image || apiItem.image || (apiItem as any).medication_image || (apiItem as any).drug_image,
-    inStock: true, // Default to true if not provided
-    requiresPrescription: medication?.requires_prescription,
-    pharmacyDrugPriceId: apiItem.pharmacy_drug_price_id,
-    acceptedPaymentMethods: (apiItem as any).accepted_payment_methods,
+    discountPrice: apiItem.discount_price ?? undefined,
+    image: apiItem.image ?? undefined,
+    inStock: apiItem.in_stock,
+    requiresPrescription: apiItem.requires_prescription,
+    pharmacyDrugPriceId: Number(apiItem.id),
+    acceptedPaymentMethods: acceptedPaymentMethods || apiItem.pharmacy?.accepted_payment_methods,
   };
 }
 
 export function transformCart(apiCart: CartApiResponse): Cart {
-  let items: CartItem[] = [];
-
-  if (apiCart.items) {
-    items = apiCart.items.map(transformCartItem);
-  } else if (apiCart.pharmacies) {
-    // Flatten split pharmacy items into single list
-    items = apiCart.pharmacies.flatMap(pharmacyGroup => 
-      (pharmacyGroup.items || []).map(item => transformCartItem({
-        ...item,
-        // Ensure pharmacy details are passed down if missing in item
-        pharmacy: item.pharmacy || {
-          id: pharmacyGroup.pharmacy_id,
-          name: pharmacyGroup.pharmacy_name,
-          logo: pharmacyGroup.pharmacy_logo || undefined
-        },
-        accepted_payment_methods: pharmacyGroup.accepted_payment_methods
-      }))
-    );
-  } else {
-    // Only warn if truly empty and not just 0 items
-    if ((apiCart.total_items || 0) > 0) {
-      console.warn('transformCart received incomplete data:', JSON.stringify(apiCart, null, 2));
-    }
-  }
+  // Flatten all pharmacy groups into a single items list
+  const items: CartItem[] = (apiCart.pharmacies ?? []).flatMap(group => {
+    return group.items.map(apiItem => {
+      // Inject group-level pharmacy info if missing on item
+      const item = transformCartItem(apiItem, group.accepted_payment_methods);
+      if (!item.pharmacyName) item.pharmacyName = group.pharmacy_name || '';
+      if (!item.pharmacyLogo) item.pharmacyLogo = group.pharmacy_logo || undefined;
+      if (item.isOpen === undefined) item.isOpen = group.is_open ?? false;
+      if (!item.pharmacyBranchId) item.pharmacyBranchId = group.pharmacy_branch_id;
+      if (!item.branchName) item.branchName = group.branch_name || '';
+      return item;
+    });
+  });
 
   return {
     items,
-    totalItems: apiCart.total_items || apiCart.totalItems || items.length,
-    subtotal: apiCart.subtotal || 0,
-    discount: apiCart.discount || 0,
-    total: apiCart.total || 0,
+    totalItems: apiCart.total_items ?? items.length,
+    subtotal: apiCart.subtotal ?? 0,
+    discount: 0,
+    total: apiCart.total ?? 0,
   };
 }
 
@@ -398,48 +346,22 @@ export function transformCart(apiCart: CartApiResponse): Cart {
 // console.log('transformOrderItem apiItem:', apiItem);
 
 export function transformOrderItem(apiItem: OrderItemApiResponse): OrderItem {
-  const medication = apiItem.medication;
-  const brand = apiItem.brand;
-  const form = apiItem.form;
-  const strength = apiItem.strength;
-  const uom = apiItem.uom || (apiItem as any).strength_uom;
-
-  // Helper to find property across potentially flat or nested structures
-  const findProp = (obj: any, keys: string[]) => {
-    if (!obj) return undefined;
-    for (const key of keys) {
-      if (obj[key] !== undefined && obj[key] !== null) return obj[key];
-    }
-    return undefined;
-  };
-
   return {
-    id: String(apiItem.id || `item-${apiItem.drug_id}-${Math.random()}`),
-    medicationId: apiItem.drug_id,
-    medicationName: medication?.name || findProp(apiItem, ['name', 'medication_name', 'drugName']) || '',
-    brandId: apiItem.drug_brand_id,
-    brandName: brand?.name || 
-               (apiItem as any).drug_brand?.brand?.brand_name || 
-               findProp(apiItem, ['brand_name', 'brandName', 'drug_brand_name', 'drugBrandName', 'brand', 'drug_brand'])?.name || 
-               findProp(apiItem, ['brand_name', 'brandName', 'drug_brand_name', 'drugBrandName']) || '',
-    formId: apiItem.drug_brand_form_id,
-    formName: form?.form_name || 
-              (form as any)?.name || 
-              (apiItem as any).drug_form?.form?.form_name ||
-              findProp(apiItem, ['form_name', 'formName', 'drug_form_name', 'drugFormName', 'form', 'dosage_form', 'drug_form'])?.name || 
-              findProp(apiItem, ['form_name', 'formName', 'drug_form_name', 'drugFormName']) || '',
-    strengthId: apiItem.dosage_id,
-    strength: strength?.strength || 
-              (apiItem as any).drug_strength?.strength?.strength ||
-              findProp(apiItem, ['strength_value', 'strength', 'dosage']) || '',
-    uomId: apiItem.strength_uom_id,
-    uom: uom?.uom || 
-         (apiItem as any).drug_uom?.uom?.uom ||
-         findProp(apiItem, ['uom_name', 'uom']) || '',
+    id: String(apiItem.id),
+    medicationId: apiItem.drug_id ?? 0,
+    medicationName: apiItem.name,
+    brandId: apiItem.brand_id ?? undefined,
+    brandName: '',
+    formId: apiItem.form_id ?? 0,
+    formName: '',
+    strengthId: apiItem.strength_id ?? 0,
+    strength: '',
+    uomId: apiItem.uom_id ?? 0,
+    uom: '',
     quantity: Number(apiItem.quantity),
     price: Number(apiItem.price),
     discountPrice: apiItem.discount_price ? Number(apiItem.discount_price) : undefined,
-    image: brand?.image || medication?.image || findProp(apiItem, ['medication_image', 'brand_image', 'drug_image', 'image']),
+    image: apiItem.image ?? undefined,
   };
 }
 
@@ -474,37 +396,36 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
 
   return {
     id: String(apiOrder.id),
-    orderNumber: apiOrder.order_number || apiOrder.orderNumber || '',
-    userId: apiOrder.user_id || apiOrder.userId || 0,
-    pharmacyId: apiOrder.pharmacy_id || apiOrder.pharmacyId || 0,
-    pharmacyName: apiOrder.pharmacy_name || apiOrder.pharmacyName || (apiOrder as any).pharmacy?.name || '',
-    branchName: (apiOrder as any).pharmacy?.branch_name || (apiOrder as any).pharmacy_branch?.branch_name || (apiOrder as any).branch_name || undefined,
-    pharmacyPhone: apiOrder.pharmacy_phone || apiOrder.pharmacyPhone || (apiOrder as any).pharmacy_branch?.phone || (apiOrder as any).pharmacy?.phone || (apiOrder as any).branch_phone || '',
-    pharmacyAddress: apiOrder.pharmacy_address || (apiOrder as any).pharmacy?.branch_address || (apiOrder as any).pharmacy_branch?.address || apiOrder.pharmacyAddress || (apiOrder as any).pharmacy?.address || '',
-    pharmacyImage: (apiOrder as any).pharmacy_logo || (apiOrder as any).pharmacy?.logo || (apiOrder as any).pharmacy?.image || (apiOrder as any).pharmacy_logo || (apiOrder as any).pharmacyLogo,
-    items: (apiOrder.items || []).map(transformOrderItem),
+    orderNumber: apiOrder.order_number,
+    userId: apiOrder.user_id,
+    pharmacyId: apiOrder.pharmacy_id,
+    pharmacyName: apiOrder.pharmacy_name ?? '',
+    pharmacyPhone: apiOrder.pharmacy_phone ?? '',
+    pharmacyAddress: apiOrder.pharmacy_address ?? '',
+    pharmacyImage: undefined,
+    items: (apiOrder.items ?? []).map(transformOrderItem),
     subtotal: Number(apiOrder.subtotal),
-    deliveryFee: Number(apiOrder.delivery_fee || apiOrder.deliveryFee || 0),
+    deliveryFee: Number(apiOrder.delivery_fee ?? 0),
     total: Number(apiOrder.total),
-    paymentMethod: apiOrder.payment_method || apiOrder.paymentMethod || 'platform',
-    paymentStatus: apiOrder.payment_status || apiOrder.paymentStatus || 'pending',
-    deliveryAddress: apiOrder.delivery_address || apiOrder.deliveryAddress,
-    deliveryMethod: apiOrder.delivery_method || apiOrder.deliveryMethod || 'pickup',
-    phoneNumber: apiOrder.phone_number || apiOrder.phoneNumber || '',
+    paymentMethod: apiOrder.payment_method,
+    paymentStatus: apiOrder.payment_status,
+    deliveryAddress: apiOrder.delivery_address,
+    deliveryMethod: apiOrder.delivery_method,
+    phoneNumber: apiOrder.phone_number,
     status: apiOrder.status,
-    prescriptionRequired: apiOrder.prescription_required ?? apiOrder.prescriptionRequired ?? false,
-    prescriptionUploaded: apiOrder.prescription_uploaded ?? apiOrder.prescriptionUploaded ?? false,
-    prescriptionUrl: apiOrder.prescription_url || apiOrder.prescriptionUrl,
+    prescriptionRequired: apiOrder.prescription_required,
+    prescriptionUploaded: apiOrder.prescription_uploaded,
+    prescriptionUrl: apiOrder.prescription_url,
     notes: apiOrder.notes,
-    estimatedReadyTime: apiOrder.estimated_ready_time || apiOrder.estimatedReadyTime,
-    completedAt: apiOrder.completed_at || apiOrder.completedAt,
-    cancelledAt: apiOrder.cancelled_at || apiOrder.cancelledAt,
-    cancellationReason: apiOrder.cancellation_reason || apiOrder.cancellationReason,
-    createdAt: apiOrder.created_at || apiOrder.createdAt || new Date().toISOString(),
-    updatedAt: apiOrder.updated_at || apiOrder.updatedAt || new Date().toISOString(),
-    statusHistory: (apiOrder.status_history || apiOrder.statusHistory || []).map(history => ({
+    estimatedReadyTime: apiOrder.estimated_ready_time,
+    completedAt: apiOrder.completed_at,
+    cancelledAt: undefined,
+    cancellationReason: apiOrder.cancellation_reason,
+    createdAt: apiOrder.created_at,
+    updatedAt: apiOrder.updated_at,
+    statusHistory: (apiOrder.status_history ?? []).map(history => ({
       status: history.status,
-      timestamp: (history as any).created_at || history.timestamp || new Date().toISOString(),
+      timestamp: history.timestamp,
       note: history.note,
     })),
   };
@@ -521,13 +442,13 @@ export function transformOrders(apiOrders: OrderApiResponse[]): Order[] {
 export function transformOrderTracking(apiTracking: OrderTrackingApiResponse): OrderTracking {
   return {
     order: transformOrder(apiTracking.order),
-    statusHistory: (apiTracking.status_history || apiTracking.statusHistory || []).map(history => ({
+    statusHistory: (apiTracking.status_history ?? []).map(history => ({
       status: history.status,
       timestamp: history.timestamp,
       note: history.note,
     })),
-    currentStep: apiTracking.current_step || apiTracking.currentStep || 0,
-    estimatedDelivery: apiTracking.estimated_delivery || apiTracking.estimatedDelivery,
+    currentStep: apiTracking.current_step ?? 0,
+    estimatedDelivery: apiTracking.estimated_delivery,
   };
 }
 

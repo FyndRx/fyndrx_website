@@ -27,7 +27,7 @@ const router = useRouter();
 const route = useRoute();
 const medicationsStore = useMedicationsStore();
 const {
-  searchQuery: storeSearchQuery, // Rename to avoid conflict
+  searchQuery: storeSearchQuery,
   selectedCategory,
   selectedForm,
   selectedBrand,
@@ -41,27 +41,14 @@ const {
   showQuickView,
   activeFiltersCount,
   pagination,
+  categories: storeCategories,
 } = storeToRefs(medicationsStore);
 
 // Local query for the search bar only
 const searchBarQuery = ref(storeSearchQuery.value);
 
 const categories = computed(() => {
-  const cats = new Set<string>(['all']);
-  allMedications.value.forEach(med => {
-    if (med.category) {
-      if (Array.isArray(med.category)) {
-        med.category.forEach(cat => {
-          const name = typeof cat === 'string' ? cat : cat.name;
-          cats.add(name);
-        });
-      } else {
-        const name = typeof med.category === 'string' ? med.category : (med.category as any).name;
-        cats.add(name);
-      }
-    }
-  });
-  return Array.from(cats);
+  return ['all', ...storeCategories.value.map(c => c.slug)];
 });
 
 const baseFilteredMedications = computed(() => {
@@ -69,23 +56,9 @@ const baseFilteredMedications = computed(() => {
 });
 
 const categoryOptions = computed(() => {
-  const cats = new Set<string>();
-  baseFilteredMedications.value.forEach(med => {
-    if (med.category) {
-      if (Array.isArray(med.category)) {
-        med.category.forEach(cat => {
-          const name = typeof cat === 'string' ? cat : cat.name;
-          cats.add(name);
-        });
-      } else {
-        const name = typeof med.category === 'string' ? med.category : (med.category as any).name;
-        cats.add(name);
-      }
-    }
-  });
   return [
     { label: 'All Categories', value: 'all' },
-    ...Array.from(cats).sort().map(c => ({ label: c, value: c }))
+    ...storeCategories.value.map(c => ({ label: c.name, value: c.slug }))
   ];
 });
 
@@ -242,19 +215,10 @@ const viewMedication = (medication: any, event?: Event) => {
   if (event) {
     event.stopPropagation();
   }
-  console.log(`MEDICATION DRUG ID: ${medication.id}`);
-  console.log(`MEDICATION BRAND ID: ${medication.brand_id}`);
-  console.log(`MEDICATION FORM ID: ${medication.form_id}`);
-  console.log(`MEDICATION STRENGTH ID: ${medication.strength_id}`);
-  console.log(`MEDICATION UOM ID: ${medication.uom_id}`);
+  const productId = medication.product_id || medication.id;
+  console.log(`NAVIGATING TO PRODUCT ID: ${productId}`);
   router.push({ 
-    path: `/medication/${medication.id}`,
-    query: {
-      brand_id: medication.brand_id,
-      form_id: medication.form_id,
-      strength_id: medication.strength_id,
-      uom_id: medication.uom_id
-    }
+    path: `/medication/${productId}`
   });
 };
 
@@ -429,22 +393,23 @@ onMounted(async () => {
       </div>
 
       <!-- Category Pills (Quick Filter) -->
-      <div class="mb-6">
-        <div class="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
+      <div class="mb-8 relative group">
+        <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar scroll-smooth">
           <button
             v-for="category in categories"
             :key="`category-${category}`"
             @click="handleCategoryClick(category)"
             :class="[
-              'px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0',
+              'px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 border',
               isCategoryActive(category)
-                ? 'bg-[#246BFD] text-white shadow-lg shadow-[#246BFD]/30'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white border-transparent shadow-xl shadow-[#246BFD]/20 scale-105'
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/50 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             ]"
           >
-            {{ category === 'all' ? 'All Categories' : category }}
+            {{ category === 'all' ? '✨ All Essentials' : (storeCategories.find(c => c.slug === category)?.name || category) }}
           </button>
         </div>
+        <div class="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-gray-50 dark:from-gray-900 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
 
       <!-- Recently Viewed - Temporarily hidden -->
@@ -542,19 +507,40 @@ onMounted(async () => {
           </p>
 
           <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            <!-- Modern Pharmacy Count Badge -->
-            <div class="inline-flex items-center" v-if="medication.pharmacy_count !== undefined">
-              <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#246BFD]/10 to-[#246BFD]/5 border border-[#246BFD]/20 transition-transform hover:-translate-y-0.5 shadow-sm">
-                <div class="flex items-center justify-center w-7 h-7 bg-[#246BFD] rounded-lg shadow-md shadow-[#246BFD]/30">
-                  <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                  </svg>
+            <!-- Modern Pharmacy Info Badge -->
+            <div class="flex flex-col gap-2 w-full">
+              <div v-if="medication.pharmacy_name" class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 transition-all hover:bg-white dark:hover:bg-gray-700 shadow-sm">
+                <div v-if="medication.pharmacy_logo" class="w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-50 dark:border-gray-600">
+                  <LazyImage
+                    :src="medication.pharmacy_logo || ''"
+                    :alt="medication.pharmacy_name"
+                    aspectRatio="square"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <div class="flex flex-col pr-1">
-                  <span class="text-[9px] font-black tracking-widest text-[#246BFD]/70 dark:text-[#5089FF]/80 uppercase leading-none mb-0.5">Verified Stock</span>
-                  <span class="text-xs font-bold text-[#246BFD] dark:text-[#5089FF] leading-none">
-                    {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'Pharmacy' : 'Pharmacies' }}
-                  </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">
+                    {{ medication.pharmacy_name }}
+                  </p>
+                  <p v-if="medication.branch_name" class="text-[10px] font-bold text-[#246BFD] dark:text-[#5089FF] uppercase tracking-widest">
+                    {{ medication.branch_name }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="inline-flex items-center" v-if="medication.pharmacy_count !== undefined && !medication.pharmacy_name">
+                <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#246BFD]/10 to-[#246BFD]/5 border border-[#246BFD]/20 transition-transform hover:-translate-y-0.5 shadow-sm">
+                  <div class="flex items-center justify-center w-7 h-7 bg-[#246BFD] rounded-lg shadow-md shadow-[#246BFD]/30">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                  </div>
+                  <div class="flex flex-col pr-1">
+                    <span class="text-[9px] font-black tracking-widest text-[#246BFD]/70 dark:text-[#5089FF]/80 uppercase leading-none mb-0.5">Verified Stock</span>
+                    <span class="text-xs font-bold text-[#246BFD] dark:text-[#5089FF] leading-none">
+                      {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'Pharmacy' : 'Pharmacies' }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

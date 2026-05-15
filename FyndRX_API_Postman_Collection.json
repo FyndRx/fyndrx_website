@@ -359,7 +359,7 @@
                         ],
                         "body": {
                             "mode": "json",
-                            "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"phone_number\": \"0241234567\",\n  \"email\": \"newemail@example.com\",\n  \"dob\": \"1990-01-01\",\n  \"address\": \"123 Main Street, Accra\"\n}"
+                            "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"phone_number\": \"0241234567\",\n  \"email\": \"newemail@example.com\",\n  \"dob\": \"1990-01-01\",\n  \"gender\": \"male\",\n  \"gps_code\": \"GA-183-2011\",\n  \"address\": \"123 Main Street, Accra\"\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/user/details/update",
@@ -372,7 +372,7 @@
                                 "update"
                             ]
                         },
-                        "description": "# \u270f\ufe0f Update Profile\n\nUpdate personal information.\n\n### Supports Partial Updates\nYou can send only the fields you want to change.\n\n### Mutable Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | First Name |\n| `lastname` | string | Last Name |\n| `email` | email | Must be unique. |\n| `phone_number` | string | Must be unique. |\n| `dob` | date | Date of Birth (YYYY-MM-DD or string). |\n| `address` | string | Physical address. |"
+                        "description": "# \u270f\ufe0f Update Profile\n\nUpdate personal information.\n\n### Supports Partial Updates\nYou can send only the fields you want to change.\n\n### Mutable Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | First Name |\n| `lastname` | string | Last Name |\n| `email` | email | Must be unique. |\n| `phone_number` | string | Must be unique. |\n| `dob` | date | Date of Birth (YYYY-MM-DD). |\n| `gender` | string | `male`, `female`, `other`, `prefer_not_to_say` |\n| `gps_code` | string | Digital address (e.g., GA-183-2011) |\n| `address` | string | Physical address. |"
                     }
                 },
                 {
@@ -476,17 +476,17 @@
                                 {
                                     "key": "q",
                                     "value": "paracetamol",
-                                    "description": "Search query for drugs, brands, categories"
+                                    "description": "Search query for products, generics (drugs), brands, and categories"
                                 },
                                 {
                                     "key": "track",
                                     "value": "1",
-                                    "description": "Set to 1 to track this search. Logs query + match_type + match_id to recent_searches. Works for authenticated users or anonymous.",
+                                    "description": "Set to 1 to track this search. Logs query + match to recent_searches.",
                                     "disabled": false
                                 }
                             ]
                         },
-                        "description": "# \ud83d\udd0d Smart Search\n\nHybrid search across drugs, brands, and categories. Returns structured sections: `nav_suggestions`, `products`, `brands`.\n\n### Category Support\nSearching by category name (e.g., \"Antibiotics\") will now return products in that category in the `results.products` array. Each product also includes its associated categories.\n\n### Tracking\nWhen `track=1` is passed, the server logs the search query and the top match entity to the `recent_searches` table. The new schema stores:\n- `query` - the exact text searched\n- `match_type` - `drug`, `brand`, `category`, or `product`\n- `match_id` - ID of the resolved entity\n- `search_count` - incremented if same user+query is repeated same day\n\n### Query Params\n| Param | Type | Description |\n|---|---|---|\n| `q` | string | **Required**. Search term. |\n| `track` | integer | Optional. `1` to enable analytics tracking. |"
+                        "description": "# \ud83d\udd0d Smart Hybrid Search\n\nAdvanced hybrid search across products, generic drugs, brands, and categories. Uses a tiered confidence scoring system to determine the most relevant result.\n\n### \ud83c\udfaf Confidence Tiers\n1.  **Navigational (Exact Match)**: If query matches a category or brand name exactly, it returns a navigational top_match.\n2.  **Transactional (Product Match)**: Search for specific combinations like \"Panadol 500mg syrup\".\n3.  **Informational (Broad Match)**: Fallback search across names and descriptions.\n\n### \ud83d\udce6 Structured Results\n- `top_match`: The single best result for navigation (navigate vs results).\n- `results.products`: Specific drug variants (e.g. Panadol Tablet 500mg).\n- `results.generics`: Generic medication groups (e.g. Paracetamol).\n- `results.brands`: Pharmaceutical brands.\n- `results.categories`: Medical categories.\n\n### \ud83d\udcca Analytics Tracking\nWhen `track=1` is passed, the server logs the search query and the resolved entity for personalized recommendations and trends."
                     }
                 },
                 {
@@ -812,7 +812,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/prices?drug_id=1&brand_id=1&form_id=1&strength_id=1&uom_id=1&q=medicare&sort=price",
+                            "raw": "{{base_url}}/prices?product_id=1&sort=price",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -821,34 +821,44 @@
                             ],
                             "query": [
                                 {
+                                    "key": "product_id",
+                                    "value": "1",
+                                    "description": "Recommended: Provide product_id for direct variant pricing"
+                                },
+                                {
                                     "key": "drug_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "disabled": true
                                 },
                                 {
                                     "key": "brand_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "disabled": true
                                 },
                                 {
                                     "key": "form_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "disabled": true
                                 },
                                 {
                                     "key": "strength_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "disabled": true
                                 },
                                 {
                                     "key": "uom_id",
-                                    "value": "1"
+                                    "value": "1",
+                                    "disabled": true
                                 },
                                 {
                                     "key": "q",
                                     "value": "medicare",
-                                    "description": "Search by pharmacy name"
+                                    "description": "Filter by pharmacy name or location"
                                 },
                                 {
                                     "key": "sort",
                                     "value": "price",
-                                    "description": "Sort by price or distance"
+                                    "description": "Sort by 'price' or 'distance'"
                                 },
                                 {
                                     "key": "lat",
@@ -862,7 +872,7 @@
                                 }
                             ]
                         },
-                        "description": "Returns exact drug variant prices. All variant IDs are mandatory."
+                        "description": "### \ud83c\udff7\ufe0f Price Comparison\n\nReturns exact pricing and availability for a specific drug variant across all pharmacies.\n\n**Standardized Output**: Now uses the `PharmacyDrugPriceResource` format, providing a clean, flat object with product metadata and nested pharmacy details.\n\n#### Mandatory Filter\nWhile you can provide `drug_id`, `brand_id`, etc., it is highly recommended to pass a single `product_id` for the most accurate variant matching."
                     }
                 },
                 {
@@ -1137,7 +1147,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/pharmacies?drugs={\"0\":{\"drug_id\":1,\"brand_id\":1,\"form_id\":1,\"dosage_id\":1}}",
+                            "raw": "{{base_url}}/pharmacies?drugs=%7B%220%22%3A%7B%22drug_id%22%3A1%2C%22brand_id%22%3A1%2C%22form_id%22%3A1%2C%22strength_id%22%3A1%7D%7D",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -1147,7 +1157,7 @@
                             "query": [
                                 {
                                     "key": "drugs",
-                                    "value": "{\"0\":{\"drug_id\":1,\"brand_id\":1,\"form_id\":1,\"dosage_id\":1}}"
+                                    "value": "{\"0\":{\"drug_id\":1,\"brand_id\":1,\"form_id\":1,\"strength_id\":1}}"
                                 }
                             ]
                         },
@@ -1487,7 +1497,7 @@
                                 "cart"
                             ]
                         },
-                        "description": "### \ud83d\uded2 Fetch Shopping Cart\n\nRetrieves the user's current shopping cart, grouped intelligently by pharmacy.\n\n**\u2728 New Feature**: The response now includes `accepted_payment_methods` and `accepted_payment_labels` for each pharmacy grouping. The frontend **MUST** use these arrays to determine which payment options to show the user at checkout (e.g. hiding Paystack if the pharmacy only accepts offline payments).\n\n# \ud83d\uded2 Get Cart\n\nRetrieve current cart items.\n\n### Response Structure\nItems are grouped by pharmacy since orders are processed per-pharmacy.\n\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"HealthPlus\",\n      \"items\": [...],\n      \"subtotal\": 100\n    }\n  ],\n  \"total\": 100,\n  \"total_items\": 2\n}\n```"
+                        "description": "### \ud83d\uded2 Fetch Shopping Cart\n\nRetrieves the user's current shopping cart, grouped intelligently by pharmacy.\n\n**Standardized Items**: Each cart item is now transformed via `PharmacyDrugPriceResource`, providing flattened product data (name, image, dosage) and ensuring snake_case consistency.\n\n**\u2728 Payment Methods**: Each pharmacy group includes `accepted_payment_methods` (e.g. `['platform', 'direct']`). The frontend **MUST** use these to filter available payment options at checkout.\n\n### Response Structure\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"Medicare\",\n      \"accepted_payment_methods\": [\"platform\", \"direct\"],\n      \"items\": [\n        {\n          \"id\": 10, \n          \"cart_item_id\": 1, \n          \"name\": \"Panadol Tablet 500mg\",\n          \"quantity\": 2,\n          \"price\": 10.50,\n          ...\n        }\n      ],\n      \"subtotal\": 21.00\n    }\n  ],\n  \"total\": 21.00,\n  \"total_items\": 2\n}\n```"
                     }
                 },
                 {
@@ -1711,7 +1721,7 @@
                                 "{{order_id}}"
                             ]
                         },
-                        "description": "# \ud83d\udcc4 Order Details\n\nGet full details of a specific order, including items and status."
+                        "description": "### \ud83d\udcc4 Order Details\n\nRetrieves full details of a specific order using the standardized `OrderResource`.\n\n**Schema Update**: All fields are now strictly `snake_case` (e.g., `order_number`, `pharmacy_name`, `delivery_fee`). The `items` array uses standardized drug metadata similar to the cart."
                     }
                 },
                 {
@@ -2031,7 +2041,7 @@
                         ],
                         "body": {
                             "mode": "json",
-                            "raw": "{\n  \"drugs\": [\n    {\n      \"drug_id\": 1,\n      \"quantity\": 30,\n      \"dose\": \"500mg\",\n      \"frequency\": \"Morning\"\n    },\n    {\n      \"drug_id\": 55,\n      \"quantity\": 1,\n      \"dose\": \"10ml\",\n      \"uom_id\": 2\n    }\n  ]\n}"
+                            "raw": "{\n  \"drugs\": [\n    {\n      \"drug_id\": 1,\n      \"quantity\": 30,\n      \"dose\": \"500mg\",\n      \"frequency\": \"Morning\"\n    },\n    {\n      \"drug_id\": 55,\n      \"quantity\": 1,\n      \"dose\": \"10ml\",\n      \"frequency\": \"Twice daily\"\n    }\n  ]\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/prescriptions/{{prescription_id}}/store-drugs-bulk",
@@ -3817,10 +3827,11 @@
                                 {
                                     "key": "type",
                                     "value": "all",
-                                    "description": "all, drugs, pharmacies"
+                                    "description": "Filter by type: all, drugs, pharmacies"
                                 }
                             ]
-                        }
+                        },
+                        "description": "### \u2b50 My Favorites\n\nRetrieves a paginated list of favorited items. Drugs are returned using the `DrugResource` (standardized generic medication data), and pharmacies use the `PharmacyResource`."
                     }
                 },
                 {
@@ -4483,6 +4494,188 @@
                             ]
                         },
                         "description": "Search for a consultation by its number.\n\n**Security Requirement:**\nTo prevent enumeration, you **MUST** provide either `patient_phone` or `patient_email` that matches the record associated with the consultation number."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "\u2139\ufe0f Information & Support",
+            "description": "Public content endpoints for legal policies, help resources, team information, and customer feedback.",
+            "item": [
+                {
+                    "name": "Get Legal Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/legal/privacy-policy",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "legal",
+                                "privacy-policy"
+                            ]
+                        },
+                        "description": "Retrieve a specific legal document by its slug.\n\n### Available Slugs\n- \n- \n- "
+                    }
+                },
+                {
+                    "name": "Get Help Center (All Content)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/help-center",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "help-center"
+                            ]
+                        },
+                        "description": "Returns all help center articles and FAQs, grouped by category."
+                    }
+                },
+                {
+                    "name": "Get FAQs Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/faqs",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "faqs"
+                            ]
+                        },
+                        "description": "Specifically retrieves items flagged as FAQs for display in accordion-style UI components."
+                    }
+                },
+                {
+                    "name": "Get Team Members",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/team",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "team"
+                            ]
+                        },
+                        "description": "List all team members with their roles, bios, and social links."
+                    }
+                },
+                {
+                    "name": "Get Partners",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partners",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "partners"
+                            ]
+                        },
+                        "description": "List all active partners (pharmacies, insurance providers, etc.) for display in the footer or partners section."
+                    }
+                },
+                {
+                    "name": "Get Public App Settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/app-settings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "app-settings"
+                            ]
+                        },
+                        "description": "Retrieve global public settings including:\n- Contact Details (Email, Phone, Address)\n- Social Media URLs\n- App Store & Play Store links\n- About Us, Mission, and Vision statements"
+                    }
+                },
+                {
+                    "name": "Submit Feedback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "json",
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"subject\": \"General Inquiry\",\n  \"message\": \"Your platform is amazing!\",\n  \"rating\": 5\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/feedback",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "feedback"
+                            ]
+                        },
+                        "description": "Submit user feedback or a general inquiry.\n\n**Note**: If an  header is present, the feedback will automatically be linked to the authenticated user."
                     }
                 }
             ]

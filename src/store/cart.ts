@@ -38,21 +38,28 @@ export const useCartStore = defineStore('cart', () => {
   }));
 
   const groupedByPharmacy = computed<CartPharmacyGroup[]>(() => {
-    const groups = new Map<number, CartPharmacyGroup>();
+    const groups = new Map<string, CartPharmacyGroup>();
 
     items.value.forEach(item => {
-      if (!groups.has(item.pharmacyId)) {
-        groups.set(item.pharmacyId, {
+      // Group by branch if available, otherwise by pharmacy ID
+      // We use a string key to safely handle both cases
+      const groupKey = item.pharmacyBranchId ? `branch-${item.pharmacyBranchId}` : `pharmacy-${item.pharmacyId}`;
+      
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
           pharmacyId: item.pharmacyId,
+          pharmacyBranchId: item.pharmacyBranchId || 0,
           pharmacyName: item.pharmacyName,
           pharmacyLogo: item.pharmacyLogo,
+          isOpen: item.isOpen,
+          branchName: item.branchName,
           items: [],
           subtotal: 0,
           acceptedPaymentMethods: item.acceptedPaymentMethods || ['platform', 'direct']
         });
       }
 
-      const group = groups.get(item.pharmacyId)!;
+      const group = groups.get(groupKey)!;
       group.items.push(item);
       const price = item.discountPrice || item.price;
       group.subtotal += price * item.quantity;

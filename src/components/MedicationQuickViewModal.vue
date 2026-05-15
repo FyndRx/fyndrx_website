@@ -44,14 +44,9 @@ const loadMedication = async () => {
 
 const viewFullDetails = () => {
   if (medication.value) {
+    const productId = medication.value.product_id || medication.value.id;
     router.push({ 
-      path: `/medication/${medication.value.id}`,
-      query: {
-        brand_id: props.brandId,
-        form_id: props.formId,
-        strength_id: props.strengthId,
-        uom_id: props.uomId
-      }
+      path: `/medication/${productId}`
     });
     emit('close');
   }

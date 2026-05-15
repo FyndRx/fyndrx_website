@@ -261,15 +261,12 @@ onMounted(() => {
                     />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-gray-900 dark:text-white truncate group-hover/item:text-[#246BFD] transition-colors">
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate group-hover/item:text-[#246BFD] transition-colors">
                       {{ item.medicationName }}
                     </h4>
-                    <div class="mt-0.5 space-y-0.5">
-                      <p v-if="item.brandName" class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        {{ item.brandName }}
-                      </p>
-                      <p class="text-[11px] text-gray-400">
-                        {{ item.formName }} • {{ item.strength }}
+                    <div class="mt-0.5">
+                      <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                        Qty: {{ item.quantity }} • {{ formatCurrency(item.discountPrice || item.price) }}
                       </p>
                     </div>
                   </div>

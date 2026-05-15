@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
@@ -21,13 +21,17 @@ const settingsStore = useSettingsStore();
 const notification = useNotification();
 
 const selectedPharmacyIds = ref<number[]>([]);
-const pharmaciesCheckout = ref<CartPharmacyGroup[]>([]);
-const deliveryMethods = ref<Map<number, 'pickup' | 'delivery'>>(new Map());
+const pharmaciesCheckout = computed<CartPharmacyGroup[]>(() => {
+  return cartStore.groupedByPharmacy.filter(group => 
+    selectedPharmacyIds.value.includes(group.pharmacyId)
+  );
+});
+const deliveryMethods = ref<Map<string | number, 'pickup' | 'delivery'>>(new Map());
 const deliveryAddress = ref('');
 const phoneNumber = ref('');
-const prescriptionFiles = ref<Map<number, File>>(new Map());
-const prescriptionPreviews = ref<Map<number, string>>(new Map());
-const paymentMethods = ref<Map<number, 'platform' | 'direct'>>(new Map());
+const prescriptionFiles = ref<Map<string | number, File>>(new Map());
+const prescriptionPreviews = ref<Map<string | number, string>>(new Map());
+const paymentMethods = ref<Map<string | number, 'platform' | 'direct'>>(new Map());
 const loading = ref(false);
 const error = ref<string | null>(null);
 
@@ -91,21 +95,30 @@ onMounted(async () => {
       console.error('Failed to sync with server cart:', e);
     }
     
-    // Group items by pharmacy for display
-    pharmaciesCheckout.value = cartStore.groupedByPharmacy.filter(group => 
-      selectedPharmacyIds.value.includes(group.pharmacyId)
-    );
+    // Pre-populate payment and delivery methods
+    watch(pharmaciesCheckout, (newPharmacies) => {
+      newPharmacies.forEach(pharmacy => {
+        // Use branch ID as unique key if available
+        const groupKey = pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId;
+        
+        // Set default payment method if not already set or if the current one is no longer available
+        const accepted = pharmacy.acceptedPaymentMethods || ['platform', 'direct'];
+        const currentMethod = paymentMethods.value.get(groupKey);
+        
+        if (!currentMethod || !accepted.includes(currentMethod)) {
+          if (accepted.includes('platform')) {
+            paymentMethods.value.set(groupKey, 'platform');
+          } else if (accepted.includes('direct')) {
+            paymentMethods.value.set(groupKey, 'direct');
+          }
+        }
 
-    pharmaciesCheckout.value.forEach(pharmacy => {
-      // Set default payment method based on what is available
-      const accepted = pharmacy.acceptedPaymentMethods || ['platform', 'direct'];
-      if (accepted.includes('platform')) {
-        paymentMethods.value.set(pharmacy.pharmacyId, 'platform');
-      } else if (accepted.includes('direct')) {
-        paymentMethods.value.set(pharmacy.pharmacyId, 'direct');
-      }
-      deliveryMethods.value.set(pharmacy.pharmacyId, 'pickup'); // Default to pickup
-    });
+        // Set default delivery method if not already set
+        if (!deliveryMethods.value.has(groupKey)) {
+          deliveryMethods.value.set(groupKey, 'pickup');
+        }
+      });
+    }, { immediate: true });
 
     // Pre-populate user details
     if (authStore.user) {
@@ -269,8 +282,8 @@ const placeAllOrders = async () => {
       // Use pharmacy branch ID if available, else pharmacy ID logic from before
       const keyId = p.items[0]?.pharmacyBranchId || p.pharmacyId; // Prefer branch ID
       if (keyId) {
-        paymentMethodsMap[keyId] = paymentMethods.value.get(p.pharmacyId) || 'platform';
-        deliveryMethodsMap[keyId] = deliveryMethods.value.get(p.pharmacyId) || 'pickup';
+        paymentMethodsMap[keyId] = paymentMethods.value.get(keyId) || 'platform';
+        deliveryMethodsMap[keyId] = deliveryMethods.value.get(keyId) || 'pickup';
       }
     });
 
@@ -392,18 +405,13 @@ const payNow = async (orderId: string | string[]) => {
 
             <div class="flex items-start gap-4 mb-4 pr-10">
               <!-- Pharmacy Logo -->
-              <div v-if="order.pharmacy?.logo" class="w-12 h-12 flex-shrink-0 bg-white rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div class="w-12 h-12 flex-shrink-0 bg-white rounded-full border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
                 <LazyImage
-                  :src="order.pharmacy.logo"
+                  :src="order.pharmacy?.logo || '/images/pharmacies/default-pharmacy.jpg'"
                   :alt="order.pharmacyName"
                   aspectRatio="square"
-                  className="w-full h-full object-contain p-1"
+                  className="w-full h-full object-contain p-1 rounded-full"
                 />
-              </div>
-              <div v-else class="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
               </div>
 
               <div class="flex-1 min-w-0">
@@ -524,17 +532,17 @@ const payNow = async (orderId: string | string[]) => {
                     Delivery Options per Pharmacy
                   </label>
                   <div class="grid grid-cols-1 gap-4">
-                    <div v-for="pharmacy in pharmaciesCheckout" :key="`del-${pharmacy.pharmacyId}`" 
+                    <div v-for="pharmacy in pharmaciesCheckout" :key="`del-${pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId}`" 
                       class="p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
                       <div class="flex items-center justify-between mb-3">
                         <span class="text-sm font-medium text-gray-900 dark:text-white">{{ pharmacy.pharmacyName }}</span>
                       </div>
                       <div class="grid grid-cols-2 gap-3">
                         <button
-                          @click="deliveryMethods.set(pharmacy.pharmacyId, 'pickup')"
+                          @click="deliveryMethods.set(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId, 'pickup')"
                           :class="[
                             'p-2 rounded-lg border-2 text-xs font-medium transition-all flex items-center justify-center gap-2',
-                            deliveryMethods.get(pharmacy.pharmacyId) === 'pickup'
+                            deliveryMethods.get(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId) === 'pickup'
                               ? 'border-[#246BFD] bg-[#246BFD]/5 text-[#246BFD]'
                               : 'border-gray-200 dark:border-gray-600 text-gray-500'
                           ]"
@@ -543,10 +551,10 @@ const payNow = async (orderId: string | string[]) => {
                           Pickup
                         </button>
                         <button
-                          @click="deliveryMethods.set(pharmacy.pharmacyId, 'delivery')"
+                          @click="deliveryMethods.set(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId, 'delivery')"
                           :class="[
                             'p-2 rounded-lg border-2 text-xs font-medium transition-all flex items-center justify-center gap-2',
-                            deliveryMethods.get(pharmacy.pharmacyId) === 'delivery'
+                            deliveryMethods.get(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId) === 'delivery'
                               ? 'border-[#246BFD] bg-[#246BFD]/5 text-[#246BFD]'
                               : 'border-gray-200 dark:border-gray-600 text-gray-500'
                           ]"
@@ -577,34 +585,34 @@ const payNow = async (orderId: string | string[]) => {
             <!-- Pharmacies List -->
             <div
               v-for="pharmacy in pharmaciesCheckout"
-              :key="pharmacy.pharmacyId"
+              :key="pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId"
               class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl"
             >
-              <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-6 border-b border-gray-100 dark:border-gray-700/50 gap-4">
                 <div class="flex items-center space-x-4">
-                  <div v-if="pharmacy.pharmacyLogo" class="w-12 h-12 overflow-hidden bg-white rounded-lg">
+                  <div class="w-16 h-16 p-1.5 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600">
                     <LazyImage
-                      :src="pharmacy.pharmacyLogo"
+                      :src="pharmacy.pharmacyLogo || '/images/pharmacies/default-pharmacy.jpg'"
                       :alt="pharmacy.pharmacyName"
                       aspectRatio="square"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain rounded-full"
                     />
                   </div>
                   <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white flex flex-wrap items-center gap-x-2">
                       {{ pharmacy.pharmacyName }}
-                      <span v-if="pharmacy.items[0]?.branchName" class="text-gray-500 font-normal">
-                        • {{ pharmacy.items[0]?.branchName }}
+                      <span v-if="pharmacy.branchName" class="px-2 py-0.5 text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md">
+                        {{ pharmacy.branchName }}
                       </span>
                     </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                      {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'item' : 'items' }}
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                      Processing {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'Product' : 'Products' }}
                     </p>
                   </div>
                 </div>
-                <div class="text-right">
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
-                  <p class="text-lg font-medium text-[#246BFD]">{{ formatCurrency(pharmacy.subtotal) }}</p>
+                <div class="w-full sm:w-auto p-4 sm:p-0 bg-blue-50/50 dark:bg-[#246BFD]/5 rounded-2xl sm:bg-transparent border border-blue-100/50 sm:border-0 text-center sm:text-right">
+                  <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Order Subtotal</p>
+                  <p class="text-2xl font-black text-[#246BFD]">{{ formatCurrency(pharmacy.subtotal) }}</p>
                 </div>
               </div>
 
@@ -625,15 +633,16 @@ const payNow = async (orderId: string | string[]) => {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ item.medicationName }}</p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                          <span v-if="item.brandName">{{ item.brandName }} • </span>
-                          <span>{{ item.formName }}</span>
-                        </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">
-                          {{ item.strength }} {{ item.uom }} • Qty: {{ item.quantity }}
-                        </p>
+                    <div class="flex-1">
+                      <p class="text-sm font-bold text-gray-900 dark:text-white leading-tight mb-1">{{ item.medicationName }}</p>
+                      <div class="flex items-center gap-3">
+                        <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-600 dark:text-gray-400">
+                          QTY: {{ item.quantity }}
+                        </span>
+                        <span class="text-xs font-medium text-gray-500">
+                          @ {{ formatCurrency(item.discountPrice || item.price) }}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <span class="text-sm font-medium text-gray-900 dark:text-white">
@@ -643,18 +652,17 @@ const payNow = async (orderId: string | string[]) => {
               </div>
 
               <div class="mb-6">
-                <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Payment Method
-                </label>
-                
                 <template v-if="(pharmacy.acceptedPaymentMethods || ['platform', 'direct']).length > 1">
+                  <label class="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Payment Method
+                  </label>
                   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <button
                       v-if="!pharmacy.acceptedPaymentMethods || pharmacy.acceptedPaymentMethods.includes('platform')"
-                      @click="paymentMethods.set(pharmacy.pharmacyId, 'platform')"
+                      @click="paymentMethods.set(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId, 'platform')"
                       :class="[
                         'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
-                        paymentMethods.get(pharmacy.pharmacyId) === 'platform'
+                        paymentMethods.get(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId) === 'platform'
                           ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       ]"
@@ -669,10 +677,10 @@ const payNow = async (orderId: string | string[]) => {
     
                     <button
                       v-if="!pharmacy.acceptedPaymentMethods || pharmacy.acceptedPaymentMethods.includes('direct')"
-                      @click="paymentMethods.set(pharmacy.pharmacyId, 'direct')"
+                      @click="paymentMethods.set(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId, 'direct')"
                       :class="[
                         'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
-                        paymentMethods.get(pharmacy.pharmacyId) === 'direct'
+                        paymentMethods.get(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId) === 'direct'
                           ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       ]"
@@ -680,20 +688,36 @@ const payNow = async (orderId: string | string[]) => {
                       <div class="flex items-start space-x-3">
                          <div class="flex-1">
                           <p class="font-medium text-gray-900 dark:text-white">Pay at Pharmacy</p>
-                          <p class="text-sm text-gray-600 dark:text-gray-400">Pay when you {{ deliveryMethods.get(pharmacy.pharmacyId) === 'pickup' ? 'pickup' : 'receive' }} your order</p>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">Pay when you {{ deliveryMethods.get(pharmacy.items[0]?.pharmacyBranchId || pharmacy.pharmacyId) === 'pickup' ? 'pickup' : 'receive' }} your order</p>
                         </div>
                       </div>
                     </button>
                   </div>
                 </template>
+                <template v-else-if="(pharmacy.acceptedPaymentMethods || [])[0] === 'platform'">
+                  <div class="flex items-center gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                    <div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+                      <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-bold text-blue-900 dark:text-blue-200">Secure Online Payment</p>
+                      <p class="text-xs text-blue-700/70 dark:text-blue-400/70">Payment processed securely via Paystack</p>
+                    </div>
+                  </div>
+                </template>
                 <template v-else>
-                  <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700">
-                    <p class="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>Payment Note:</strong> This pharmacy only accepts 
-                      <span class="font-bold text-[#246BFD]">
-                        {{ (pharmacy.acceptedPaymentMethods || [])[0] === 'platform' ? 'Online Payment' : 'Payment at Pharmacy' }}
-                      </span>.
-                    </p>
+                   <div class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700">
+                    <div class="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-bold text-gray-900 dark:text-white">Pay at Pharmacy</p>
+                      <p class="text-xs text-gray-600 dark:text-gray-400">Payment will be collected at the pharmacy counter</p>
+                    </div>
                   </div>
                 </template>
               </div>
