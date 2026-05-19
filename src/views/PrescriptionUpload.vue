@@ -13,9 +13,9 @@ const notification = useNotification();
 
 const form = ref<CreatePrescriptionRequest>({
   title: '',
-  doctorName: '',
-  prescriptionDate: new Date().toISOString().split('T')[0],
-  expiryDate: '',
+  doctor_name: '',
+  prescription_date: new Date().toISOString().split('T')[0],
+  expiry_date: '',
   notes: '',
   prescription_picture: null
 });
@@ -88,8 +88,8 @@ const validateForm = () => {
         isValid = false;
     }
 
-    if (form.value.expiryDate && form.value.prescriptionDate) {
-        if (new Date(form.value.expiryDate) < new Date(form.value.prescriptionDate)) {
+    if (form.value.expiry_date && form.value.prescription_date) {
+        if (new Date(form.value.expiry_date) < new Date(form.value.prescription_date)) {
             fieldErrors.value.expiryDate = 'Expiry date cannot be before prescription date';
             isValid = false;
         }
@@ -178,14 +178,14 @@ onMounted(() => {
               />
               
               <TextInput
-                v-model="form.doctorName"
+                v-model="form.doctor_name"
                 label="Doctor's Name (Optional)"
                 placeholder="Dr. Smith"
                 :error="fieldErrors.doctorName"
               />
 
               <DateTimePicker
-                v-model="form.prescriptionDate"
+                v-model="form.prescription_date"
                 format="date"
                 label="Prescription Date"
                 :max-date="new Date().toISOString()"
@@ -193,7 +193,7 @@ onMounted(() => {
               />
 
               <DateTimePicker
-                v-model="form.expiryDate"
+                v-model="form.expiry_date"
                 format="date"
                 label="Expiry Date (Optional)"
                 :min-date="new Date().toISOString()"
