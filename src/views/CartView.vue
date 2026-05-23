@@ -14,8 +14,8 @@ const cartStore = useCartStore();
 const authStore = useAuthStore();
 const notification = useNotification();
 
-const selectedBranches = ref<Set<number>>(new Set());
-const activeMapBranchId = ref<number | null>(null);
+const selectedBranches = ref<Set<string>>(new Set());
+const activeMapBranchId = ref<string | null>(null);
 
 // Cart Location Selector refs
 const deliveryLat = ref<number | undefined>();
@@ -54,7 +54,7 @@ const selectedTotal = computed(() => {
     .reduce((total, group) => total + group.subtotal, 0);
 });
 
-const toggleMap = (branchId: number) => {
+const toggleMap = (branchId: string) => {
   if (activeMapBranchId.value === branchId) {
     activeMapBranchId.value = null;
   } else {
@@ -71,7 +71,7 @@ watch(() => cartStore.groupedByPharmacy, (groups) => {
   }
 }, { immediate: true, deep: true });
 
-const togglePharmacySelection = (branchId: number) => {
+const togglePharmacySelection = (branchId: string) => {
   if (selectedBranches.value.has(branchId)) {
     selectedBranches.value.delete(branchId);
   } else {
