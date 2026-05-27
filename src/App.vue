@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import MainLayout from '@/layouts/MainLayout.vue';
 import NotificationContainer from '@/components/NotificationContainer.vue';
 import MaintenanceOverlay from '@/components/MaintenanceOverlay.vue';
@@ -10,6 +10,7 @@ import { useSettingsStore } from '@/store/settings';
 import { favoritesService } from '@/services/favoritesService';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 
@@ -48,7 +49,7 @@ onUnmounted(() => {
   <MainLayout>
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
-        <component :is="Component" />
+        <component :is="Component" :key="route.fullPath" />
       </transition>
     </router-view>
     <NotificationContainer />
