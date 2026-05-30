@@ -1,17 +1,43 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
+import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/composables/useNotification';
 import { formatCurrency } from '@/utils/currency';
 import LazyImage from '@/components/LazyImage.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
+import OrderTrackingMap from '@/components/OrderTrackingMap.vue';
 
 const router = useRouter();
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 const notification = useNotification();
 
-const selectedPharmacies = ref<Set<number>>(new Set());
+const selectedBranches = ref<Set<number>>(new Set());
+const activeMapBranchId = ref<number | null>(null);
+
+// Cart Location Selector refs
+const deliveryLat = ref<number | undefined>();
+const deliveryLng = ref<number | undefined>();
+const deliveryAddress = ref('');
+const defaultUserAddress = ref('');
+const showMapModal = ref(false);
+
+onMounted(() => {
+  if (authStore.user) {
+    deliveryAddress.value = authStore.user.address || '';
+    defaultUserAddress.value = authStore.user.address || '';
+  }
+});
+
+const onCartLocationSelected = (payload: { lat: number; lng: number; address: string }) => {
+  deliveryLat.value = payload.lat;
+  deliveryLng.value = payload.lng;
+  if (payload.address) {
+    deliveryAddress.value = payload.address;
+  }
+};
 
 const hasPrescriptionItems = computed(() => {
   return cartStore.items.some(item => item.requiresPrescription);
@@ -19,55 +45,68 @@ const hasPrescriptionItems = computed(() => {
 
 const allPharmaciesSelected = computed(() => {
   return cartStore.groupedByPharmacy.length > 0 && 
-         selectedPharmacies.value.size === cartStore.groupedByPharmacy.length;
+         selectedBranches.value.size === cartStore.groupedByPharmacy.length;
 });
 
 const selectedTotal = computed(() => {
   return cartStore.groupedByPharmacy
-    .filter(group => selectedPharmacies.value.has(group.pharmacyId))
+    .filter(group => selectedBranches.value.has(group.pharmacyBranchId))
     .reduce((total, group) => total + group.subtotal, 0);
 });
 
+const toggleMap = (branchId: number) => {
+  if (activeMapBranchId.value === branchId) {
+    activeMapBranchId.value = null;
+  } else {
+    activeMapBranchId.value = branchId;
+  }
+};
+
 // Auto-select all pharmacies when cart data is available
 watch(() => cartStore.groupedByPharmacy, (groups) => {
-  if (groups.length > 0 && selectedPharmacies.value.size === 0) {
+  if (groups.length > 0 && selectedBranches.value.size === 0) {
     groups.forEach(group => {
-      selectedPharmacies.value.add(group.pharmacyId);
+      selectedBranches.value.add(group.pharmacyBranchId);
     });
   }
 }, { immediate: true, deep: true });
 
-const togglePharmacySelection = (pharmacyId: number) => {
-  if (selectedPharmacies.value.has(pharmacyId)) {
-    selectedPharmacies.value.delete(pharmacyId);
+const togglePharmacySelection = (branchId: number) => {
+  if (selectedBranches.value.has(branchId)) {
+    selectedBranches.value.delete(branchId);
   } else {
-    selectedPharmacies.value.add(pharmacyId);
+    selectedBranches.value.add(branchId);
   }
 };
 
 const toggleSelectAll = () => {
   if (allPharmaciesSelected.value) {
-    selectedPharmacies.value.clear();
+    selectedBranches.value.clear();
   } else {
     cartStore.groupedByPharmacy.forEach(group => {
-      selectedPharmacies.value.add(group.pharmacyId);
+      selectedBranches.value.add(group.pharmacyBranchId);
     });
   }
 };
 
 const proceedToCheckout = () => {
-  if (selectedPharmacies.value.size === 0) {
+  if (selectedBranches.value.size === 0) {
     notification.warning(
       'No Pharmacies Selected',
-      'Please select at least one pharmacy to proceed to checkout.'
+      'Please select at least one pharmacy branch to proceed to checkout.'
     );
     return;
   }
   
-  const selectedPharmacyIds = Array.from(selectedPharmacies.value);
+  const selectedBranchIds = Array.from(selectedBranches.value);
   router.push({ 
     name: 'checkout',
-    query: { pharmacies: selectedPharmacyIds.join(',') }
+    query: { 
+      pharmacies: selectedBranchIds.join(','),
+      lat: deliveryLat.value,
+      lng: deliveryLng.value,
+      address: deliveryAddress.value
+    }
   });
 };
 
@@ -106,38 +145,40 @@ const startShopping = () => {
         </button>
       </div>
 
-      <div v-else class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div class="lg:col-span-2 space-y-6">
-          <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
-            <div class="flex items-center gap-4">
-              <CustomCheckbox
-                :model-value="allPharmaciesSelected"
-                size="medium"
-                variant="switch"
-                @update:model-value="toggleSelectAll"
-              />
-              <span class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Select All Pharmacies</span>
+      <div v-else class="space-y-8">
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <!-- Main Content Column -->
+          <div class="lg:col-span-2 space-y-6">
+            <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+              <div class="flex items-center gap-4">
+                <CustomCheckbox
+                  :model-value="allPharmaciesSelected"
+                  size="medium"
+                  variant="switch"
+                  @update:model-value="toggleSelectAll"
+                />
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Select All Pharmacies</span>
+              </div>
+              <div v-if="selectedBranches.size > 0" class="hidden sm:block">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {{ selectedBranches.size }} {{ selectedBranches.size === 1 ? 'Pharmacy' : 'Pharmacies' }} selected
+                </span>
+              </div>
             </div>
-            <div v-if="selectedPharmacies.size > 0" class="hidden sm:block">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {{ selectedPharmacies.size }} {{ selectedPharmacies.size === 1 ? 'Pharmacy' : 'Pharmacies' }} selected
-              </span>
-            </div>
-          </div>
 
-          <div
-            v-for="pharmacy in cartStore.groupedByPharmacy"
-            :key="pharmacy.pharmacyId"
-            class="overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl"
-          >
+            <div
+              v-for="pharmacy in cartStore.groupedByPharmacy"
+              :key="pharmacy.pharmacyBranchId"
+              class="overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl"
+            >
             <div class="p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-5">
                   <div class="relative group">
                     <CustomCheckbox
-                      :model-value="selectedPharmacies.has(pharmacy.pharmacyId)"
+                      :model-value="selectedBranches.has(pharmacy.pharmacyBranchId)"
                       size="medium"
-                      @update:model-value="togglePharmacySelection(pharmacy.pharmacyId)"
+                      @update:model-value="togglePharmacySelection(pharmacy.pharmacyBranchId)"
                       class="z-10"
                     />
                   </div>
@@ -168,6 +209,20 @@ const startShopping = () => {
                         <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
                           {{ pharmacy.items.length }} {{ pharmacy.items.length === 1 ? 'Product' : 'Products' }}
                         </span>
+                        <span class="mx-2 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                        <button 
+                          @click="toggleMap(pharmacy.pharmacyBranchId)"
+                          class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 border focus:outline-none"
+                          :class="activeMapBranchId === pharmacy.pharmacyBranchId 
+                            ? 'bg-[#246BFD]/10 border-[#246BFD] text-[#246BFD] shadow-sm scale-105' 
+                            : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#246BFD] hover:text-[#246BFD] hover:scale-105'"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {{ activeMapBranchId === pharmacy.pharmacyBranchId ? 'Hide Map' : 'View Location' }}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -191,6 +246,31 @@ const startShopping = () => {
                 </div>
               </div>
             </div>
+
+            <!-- Dynamic Map Accordion (Lazy-Loaded, Singleton Active) -->
+            <transition
+              enter-active-class="transition-all duration-500 ease-out"
+              enter-from-class="transform -translate-y-2 opacity-0 max-h-0"
+              enter-to-class="transform translate-y-0 opacity-100 max-h-[450px]"
+              leave-active-class="transition-all duration-400 ease-in"
+              leave-from-class="transform translate-y-0 opacity-100 max-h-[450px]"
+              leave-to-class="transform -translate-y-2 opacity-0 max-h-0"
+            >
+              <div 
+                v-if="activeMapBranchId === pharmacy.pharmacyBranchId" 
+                class="overflow-hidden border-b border-gray-150 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/10"
+              >
+                <div class="p-4 sm:p-6">
+                  <div class="relative h-[350px] w-full rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-700">
+                    <OrderTrackingMap 
+                      :pharmacyLocations="[{ lat: Number(pharmacy.latitude || 5.6037), lng: Number(pharmacy.longitude || -0.1870), name: pharmacy.branchName ? `${pharmacy.pharmacyName} - ${pharmacy.branchName}` : pharmacy.pharmacyName }]"
+                      deliveryMethod="pickup"
+                      class="h-full w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </transition>
 
             <div class="divide-y divide-gray-200 dark:divide-gray-700">
               <div
@@ -299,22 +379,56 @@ const startShopping = () => {
                 <span>Discount</span>
                 <span>-{{ formatCurrency(cartStore.discount) }}</span>
               </div>
-              <div v-if="selectedPharmacies.size > 0" class="flex justify-between text-gray-600 dark:text-gray-300">
+              <div v-if="selectedBranches.size > 0" class="flex justify-between text-gray-600 dark:text-gray-300">
                 <span>Selected Items</span>
                 <span>{{ formatCurrency(selectedTotal) }}</span>
               </div>
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">
                   <span>Total</span>
-                  <span class="text-[#246BFD]">{{ formatCurrency(selectedPharmacies.size > 0 ? selectedTotal : cartStore.total) }}</span>
+                  <span class="text-[#246BFD]">{{ formatCurrency(selectedBranches.size > 0 ? selectedTotal : cartStore.total) }}</span>
                 </div>
+              </div>
+            </div>
+
+            <!-- Creative Delivery Destination Widget inside Sidebar -->
+            <div class="mb-6 p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/40 dark:to-gray-800 border border-gray-150 dark:border-gray-700/60 shadow-sm relative overflow-hidden transition-all duration-300">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-[#246BFD]/10 text-[#246BFD] flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Delivery Destination</span>
+                </div>
+                
+                <button 
+                  @click="showMapModal = true"
+                  class="text-xs font-bold text-[#246BFD] hover:underline flex items-center gap-1 focus:outline-none"
+                >
+                  Change
+                </button>
+              </div>
+              
+              <div class="space-y-1 text-left">
+                <p class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                  {{ deliveryAddress || 'No location selected yet' }}
+                </p>
+                <p v-if="deliveryLat && deliveryLng" class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black">
+                  Coordinates: {{ deliveryLat.toFixed(4) }}°, {{ deliveryLng.toFixed(4) }}°
+                </p>
+                <p v-else class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-bold">
+                  Uses default profile address
+                </p>
               </div>
             </div>
 
             <div class="space-y-3">
               <button
                 @click="proceedToCheckout"
-                :disabled="selectedPharmacies.size === 0"
+                :disabled="selectedBranches.size === 0"
                 class="w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout
@@ -355,7 +469,66 @@ const startShopping = () => {
         </div>
       </div>
     </div>
+    <!-- Modern Full-Screen Blur Location Picker Modal -->
+    <transition
+      enter-active-class="transition-all duration-300 ease-out"
+      leave-active-class="transition-all duration-200 ease-in"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+    >
+      <div v-if="showMapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-gray-900/60 dark:bg-black/70 backdrop-blur-md">
+        <div class="relative w-full max-w-4xl h-[85vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-white/10 dark:border-gray-800 overflow-hidden flex flex-col transition-transform duration-500 animate-in fade-in zoom-in-95">
+          <!-- Modal Header -->
+          <div class="p-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-20 relative">
+            <div>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white">Choose Delivery Destination</h3>
+              <p class="text-xs text-gray-500 mt-1">Search or drag the red marker to pin your exact location</p>
+            </div>
+            
+            <button 
+              @click="showMapModal = false"
+              class="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-gray-500 hover:text-red-600 flex items-center justify-center transition-all duration-300 focus:outline-none"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Map Canvas Wrapper -->
+          <div class="flex-1 w-full relative min-h-[300px]">
+            <OrderTrackingMap 
+              :deliveryLocation="deliveryLat && deliveryLng ? { lat: deliveryLat, lng: deliveryLng } : undefined"
+              :enableLocationPicker="true"
+              deliveryMethod="delivery"
+              class="w-full h-full"
+              @location-selected="onCartLocationSelected"
+            />
+          </div>
+          
+          <!-- Modal Footer / Confirm -->
+          <div class="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 relative">
+            <div class="text-left w-full sm:max-w-md">
+              <span class="text-[9px] font-black uppercase tracking-widest text-[#246BFD]">Selected Address</span>
+              <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-0.5">
+                {{ deliveryAddress || 'Loading resolved address...' }}
+              </p>
+            </div>
+            
+            <button 
+              @click="showMapModal = false"
+              class="w-full sm:w-auto px-8 py-3 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              Confirm Location
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
+</div>
 </template>
 
 <style scoped>

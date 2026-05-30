@@ -53,6 +53,8 @@ export const useCartStore = defineStore('cart', () => {
           pharmacyLogo: item.pharmacyLogo,
           isOpen: item.isOpen,
           branchName: item.branchName,
+          latitude: item.latitude,
+          longitude: item.longitude,
           items: [],
           subtotal: 0,
           acceptedPaymentMethods: item.acceptedPaymentMethods || ['platform', 'direct']
