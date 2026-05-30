@@ -24,6 +24,8 @@ export interface CartItem {
   pharmacyDrugPriceId?: number; // Added for API compatibility
   acceptedPaymentMethods?: ('platform' | 'direct')[];
   isOpen?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Cart {
@@ -41,6 +43,8 @@ export interface CartPharmacyGroup {
   pharmacyLogo?: string;
   isOpen?: boolean;
   branchName?: string;
+  latitude?: number;
+  longitude?: number;
   items: CartItem[];
   subtotal: number;
   paymentMethod?: 'platform' | 'direct';

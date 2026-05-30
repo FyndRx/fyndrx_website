@@ -27,6 +27,9 @@ export interface OrderApiResponse {
   pharmacy_name?: string;
   pharmacy_phone?: string;
   pharmacy_address?: string;
+  pharmacy_logo?: string | null;
+  pharmacy_banner?: string | null;
+  branch_name?: string;
   items: OrderItemApiResponse[];
   subtotal: number;
   delivery_fee: number;
@@ -35,6 +38,10 @@ export interface OrderApiResponse {
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   delivery_method: 'pickup' | 'delivery';
   delivery_address?: string;
+  delivery_lat?: number | string | null;
+  delivery_lng?: number | string | null;
+  pharmacy_lat?: number | string | null;
+  pharmacy_lng?: number | string | null;
   phone_number: string;
   status: 'pending' | 'confirmed' | 'processing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
   prescription_required: boolean;

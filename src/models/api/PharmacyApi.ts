@@ -20,6 +20,14 @@ export interface PharmacyBranchApiResponse {
   location?: PharmacyLocationApiResponse;
 }
 
+export interface PharmacyWorkingDayApiResponse {
+  day: string;
+  open_time?: string | null;
+  close_time?: string | null;
+  is_closed?: boolean;
+  is_24_hours?: boolean;
+}
+
 export interface PharmacyApiResponse {
   id: number;
   name: string;
@@ -39,8 +47,8 @@ export interface PharmacyApiResponse {
   isOpen?: boolean; // Sometimes camelCase
   is_active?: boolean;
   services?: string[];
-  working_hours?: Record<string, string>;
-  workingHours?: Record<string, string>; // Sometimes camelCase
+  working_hours?: PharmacyWorkingDayApiResponse[] | Record<string, string> | string[] | string;
+  workingHours?: PharmacyWorkingDayApiResponse[] | Record<string, string> | string[] | string; // Sometimes camelCase
   location?: PharmacyLocationApiResponse;
   pharmacy_branch_id?: number;
   branch_name?: string;

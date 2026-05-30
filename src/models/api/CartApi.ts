@@ -44,6 +44,8 @@ export interface CartItemApiResponse {
   pharmacy_logo?: string | null;
   is_open?: boolean;
   branch_name?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 
   // Optional nested pharmacy (when included)
   pharmacy?: {
@@ -53,6 +55,9 @@ export interface CartItemApiResponse {
     address?: string;
     is_open?: boolean;
     distance?: number | string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    location?: { lat: number; lng: number };
     branch_id?: number;
     branch_name?: string;
     accepted_payment_methods?: ('platform' | 'direct')[];
@@ -67,6 +72,8 @@ export interface CartPharmacyGroup {
   pharmacy_logo?: string | null;
   is_open?: boolean;
   branch_name?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   accepted_payment_methods: ('platform' | 'direct')[];
   accepted_payment_labels: string[];
   items: CartItemApiResponse[];

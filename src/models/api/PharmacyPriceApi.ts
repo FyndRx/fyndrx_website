@@ -40,6 +40,8 @@ export interface PharmacyPriceApiResponse {
   pharmacy_logo?: string | null;
   is_open?: boolean;
   branch_name?: string;
+  latitude?: number;
+  longitude?: number;
 
   // Optional nested pharmacy (when withPharmacy() is called)
   pharmacy?: {
@@ -52,6 +54,8 @@ export interface PharmacyPriceApiResponse {
     distance?: number | string;
     branch_id?: number;
     branch_name?: string;
+    latitude?: number;
+    longitude?: number;
   };
 }
 

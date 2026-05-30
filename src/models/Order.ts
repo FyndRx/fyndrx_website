@@ -26,6 +26,7 @@ export interface Order {
   pharmacyPhone: string;
   pharmacyAddress: string;
   pharmacyImage?: string;
+  pharmacyBanner?: string;
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;
@@ -33,6 +34,10 @@ export interface Order {
   paymentMethod: 'platform' | 'direct';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   deliveryAddress?: string;
+  deliveryLat?: number;
+  deliveryLng?: number;
+  pharmacyLat?: number;
+  pharmacyLng?: number;
   deliveryMethod: 'pickup' | 'delivery';
   phoneNumber: string;
   status: 'pending' | 'confirmed' | 'processing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
