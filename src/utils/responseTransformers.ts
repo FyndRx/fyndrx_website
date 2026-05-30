@@ -169,19 +169,242 @@ export function transformPharmacyDrug(drug: any): Medication {
 }
 
 /**
+ * Formats a time string (e.g., "08:00" or "20:00") to 12-hour format with AM/PM (e.g., "8:00 AM" or "8:00 PM")
+ */
+export function formatTimeTo12Hour(timeStr: string): string {
+  if (!timeStr) return '';
+  timeStr = timeStr.trim();
+  
+  // If it already has AM/PM, return it
+  if (/[a-zA-Z]/.test(timeStr)) {
+    return timeStr;
+  }
+
+  const parts = timeStr.split(':');
+  if (parts.length >= 2) {
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].substring(0, 2);
+    if (isNaN(hours)) return timeStr;
+    
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+    
+    return `${hours}:${minutes} ${ampm}`;
+  }
+  
+  return timeStr;
+}
+
+/**
+ * Determines if a pharmacy is open now based on its working hours
+ */
+export function isPharmacyOpenNow(workingHours: PharmacyWorkingHours): boolean {
+  if (!workingHours) return false;
+  
+  const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as keyof PharmacyWorkingHours;
+  const hoursStr = workingHours[currentDay];
+  if (!hoursStr) return false;
+  
+  const cleanHours = hoursStr.trim().toLowerCase();
+  if (cleanHours === '24 hours' || cleanHours === '24/7') {
+    return true;
+  }
+  if (cleanHours === 'closed' || !cleanHours) {
+    return false;
+  }
+  
+  if (cleanHours.includes('-')) {
+    const parts = cleanHours.split('-').map(p => p.trim());
+    if (parts.length === 2) {
+      const convertTimeToMinutes = (timeStr: string): number | null => {
+        let hours = 0;
+        let minutes = 0;
+        
+        const isPM = timeStr.includes('pm') || timeStr.includes('p');
+        const isAM = timeStr.includes('am') || timeStr.includes('a');
+        
+        const timeDigits = timeStr.replace(/[a-zA-Z]/g, '').trim();
+        const timeParts = timeDigits.split(':');
+        if (timeParts.length >= 2) {
+          hours = parseInt(timeParts[0], 10);
+          minutes = parseInt(timeParts[1], 10);
+        } else if (timeParts.length === 1) {
+          hours = parseInt(timeParts[0], 10);
+          minutes = 0;
+        } else {
+          return null;
+        }
+        
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        
+        if (isPM && hours !== 12) {
+          hours += 12;
+        } else if (isAM && hours === 12) {
+          hours = 0;
+        }
+        
+        return hours * 60 + minutes;
+      };
+      
+      const openMinutes = convertTimeToMinutes(parts[0]);
+      const closeMinutes = convertTimeToMinutes(parts[1]);
+      
+      if (openMinutes === null || closeMinutes === null) {
+        return false;
+      }
+      
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      
+      if (openMinutes <= closeMinutes) {
+        return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+      } else {
+        // Overnight hours (e.g. 8:00 PM - 2:00 AM)
+        return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
+      }
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Helper to parse working hours from any api format to standard PharmacyWorkingHours
+ */
+export function parseWorkingHours(workingHoursInput: any): PharmacyWorkingHours {
+  const defaultHours: PharmacyWorkingHours = {
+    monday: '',
+    tuesday: '',
+    wednesday: '',
+    thursday: '',
+    friday: '',
+    saturday: '',
+    sunday: '',
+  };
+
+  if (!workingHoursInput) {
+    return defaultHours;
+  }
+
+  const normalizeDay = (day: string): keyof PharmacyWorkingHours | null => {
+    const d = day.trim().toLowerCase();
+    if (d.startsWith('mon')) return 'monday';
+    if (d.startsWith('tue')) return 'tuesday';
+    if (d.startsWith('wed')) return 'wednesday';
+    if (d.startsWith('thu')) return 'thursday';
+    if (d.startsWith('fri')) return 'friday';
+    if (d.startsWith('sat')) return 'saturday';
+    if (d.startsWith('sun')) return 'sunday';
+    return null;
+  };
+
+  const formatWorkingHoursValue = (val: string): string => {
+    if (!val) return '';
+    if (val.includes('-')) {
+      const parts = val.split('-').map(p => p.trim());
+      if (parts.length === 2) {
+        return `${formatTimeTo12Hour(parts[0])} - ${formatTimeTo12Hour(parts[1])}`;
+      }
+    }
+    return formatTimeTo12Hour(val);
+  };
+
+  let source = workingHoursInput;
+
+  if (typeof source === 'string') {
+    try {
+      source = JSON.parse(source);
+    } catch (e) {
+      const formattedVal = formatWorkingHoursValue(source);
+      return {
+        monday: formattedVal,
+        tuesday: formattedVal,
+        wednesday: formattedVal,
+        thursday: formattedVal,
+        friday: formattedVal,
+        saturday: formattedVal,
+        sunday: formattedVal,
+      };
+    }
+  }
+
+  if (Array.isArray(source)) {
+    const firstItem = source[0];
+    if (firstItem && typeof firstItem === 'object' && ('day' in firstItem || 'day_name' in firstItem)) {
+      source.forEach((item: any) => {
+        const dayKey = normalizeDay(item.day || item.day_name);
+        if (dayKey) {
+          if (item.is_24_hours || item.is24Hours) {
+            defaultHours[dayKey] = '24 Hours';
+          } else if (item.is_closed || item.isClosed) {
+            defaultHours[dayKey] = 'Closed';
+          } else {
+            const open = item.open_time || item.openTime || '';
+            const close = item.close_time || item.closeTime || '';
+            if (open && close) {
+              const formattedOpen = formatTimeTo12Hour(open);
+              const formattedClose = formatTimeTo12Hour(close);
+              defaultHours[dayKey] = `${formattedOpen} - ${formattedClose}`;
+            } else {
+              defaultHours[dayKey] = 'Closed';
+            }
+          }
+        }
+      });
+      return defaultHours;
+    }
+
+    const days: (keyof PharmacyWorkingHours)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    source.forEach((hoursStr: any, index: number) => {
+      if (index < days.length && typeof hoursStr === 'string') {
+        defaultHours[days[index]] = formatWorkingHoursValue(hoursStr);
+      }
+    });
+    return defaultHours;
+  }
+
+  if (typeof source === 'object' && source !== null) {
+    Object.entries(source).forEach(([key, value]) => {
+      const valStr = String(value);
+      const formattedVal = formatWorkingHoursValue(valStr);
+      if (key.includes('-')) {
+        const parts = key.split('-').map(p => p.trim().toLowerCase());
+        if (parts.length === 2) {
+          const startDay = parts[0];
+          const endDay = parts[1];
+          const dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+          const startIndex = dayNames.findIndex(d => startDay.startsWith(d));
+          const endIndex = dayNames.findIndex(d => endDay.startsWith(d));
+          
+          if (startIndex !== -1 && endIndex !== -1) {
+            const daysList: (keyof PharmacyWorkingHours)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            let i = startIndex;
+            for (let count = 0; count < 7; count++) {
+              defaultHours[daysList[i]] = formattedVal;
+              if (i === endIndex) break;
+              i = (i + 1) % 7;
+            }
+          }
+        }
+      } else {
+        const dayKey = normalizeDay(key);
+        if (dayKey) {
+          defaultHours[dayKey] = formattedVal;
+        }
+      }
+    });
+    return defaultHours;
+  }
+
+  return defaultHours;
+}
+
+/**
  * Pharmacy Transformers
  */
 export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
-  const workingHoursSource = (apiPharmacy.working_hours || apiPharmacy.workingHours || {}) as Record<string, string | undefined>;
-  const workingHours: PharmacyWorkingHours = {
-    monday: workingHoursSource.monday ?? '',
-    tuesday: workingHoursSource.tuesday ?? '',
-    wednesday: workingHoursSource.wednesday ?? '',
-    thursday: workingHoursSource.thursday ?? '',
-    friday: workingHoursSource.friday ?? '',
-    saturday: workingHoursSource.saturday ?? '',
-    sunday: workingHoursSource.sunday ?? '',
-  };
+  const workingHours = parseWorkingHours(apiPharmacy.working_hours || apiPharmacy.workingHours);
 
   return {
     id: apiPharmacy.id,
@@ -192,7 +415,7 @@ export function transformPharmacy(apiPharmacy: PharmacyApiResponse): Pharmacy {
     reviews: [],
     image: apiPharmacy.image || apiPharmacy.logo || '',
     logo: apiPharmacy.logo || apiPharmacy.image || '',
-    isOpen: apiPharmacy.is_open ?? apiPharmacy.isOpen ?? true,
+    isOpen: workingHours && Object.values(workingHours).some(val => val !== '') ? isPharmacyOpenNow(workingHours) : (apiPharmacy.is_open ?? apiPharmacy.isOpen ?? true),
     isActive: apiPharmacy.is_active ?? true,
     distance: apiPharmacy.distance || '',
     services: apiPharmacy.services || [],
@@ -275,6 +498,8 @@ export function transformPharmacyPrice(apiPrice: PharmacyPriceApiResponse): Phar
     uom: apiPrice.uom ?? '',
     branch_id: apiPrice.pharmacy_branch_id ?? apiPrice.pharmacy?.branch_id ?? 0,
     image: apiPrice.image ?? undefined,
+    latitude: apiPrice.latitude ?? apiPrice.pharmacy?.latitude,
+    longitude: apiPrice.longitude ?? apiPrice.pharmacy?.longitude,
   };
 }
 
@@ -312,6 +537,8 @@ export function transformCartItem(apiItem: CartItemApiResponse, acceptedPaymentM
     requiresPrescription: apiItem.requires_prescription,
     pharmacyDrugPriceId: Number(apiItem.id),
     acceptedPaymentMethods: acceptedPaymentMethods || apiItem.pharmacy?.accepted_payment_methods,
+    latitude: (apiItem.latitude ?? apiItem.pharmacy?.latitude ?? apiItem.pharmacy?.location?.lat) ? Number(apiItem.latitude ?? apiItem.pharmacy?.latitude ?? apiItem.pharmacy?.location?.lat) : undefined,
+    longitude: (apiItem.longitude ?? apiItem.pharmacy?.longitude ?? apiItem.pharmacy?.location?.lng) ? Number(apiItem.longitude ?? apiItem.pharmacy?.longitude ?? apiItem.pharmacy?.location?.lng) : undefined,
   };
 }
 
@@ -326,6 +553,8 @@ export function transformCart(apiCart: CartApiResponse): Cart {
       if (item.isOpen === undefined) item.isOpen = group.is_open ?? false;
       if (!item.pharmacyBranchId) item.pharmacyBranchId = group.pharmacy_branch_id;
       if (!item.branchName) item.branchName = group.branch_name || '';
+      if (!item.latitude && group.latitude) item.latitude = Number(group.latitude);
+      if (!item.longitude && group.longitude) item.longitude = Number(group.longitude);
       return item;
     });
   });
@@ -402,7 +631,9 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     pharmacyName: apiOrder.pharmacy_name ?? '',
     pharmacyPhone: apiOrder.pharmacy_phone ?? '',
     pharmacyAddress: apiOrder.pharmacy_address ?? '',
-    pharmacyImage: undefined,
+    pharmacyImage: apiOrder.pharmacy_logo ?? undefined,
+    pharmacyBanner: apiOrder.pharmacy_banner ?? undefined,
+    branchName: apiOrder.branch_name,
     items: (apiOrder.items ?? []).map(transformOrderItem),
     subtotal: Number(apiOrder.subtotal),
     deliveryFee: Number(apiOrder.delivery_fee ?? 0),
@@ -410,6 +641,10 @@ export function transformOrder(apiOrder: OrderApiResponse): Order {
     paymentMethod: apiOrder.payment_method,
     paymentStatus: apiOrder.payment_status,
     deliveryAddress: apiOrder.delivery_address,
+    deliveryLat: apiOrder.delivery_lat ? Number(apiOrder.delivery_lat) : undefined,
+    deliveryLng: apiOrder.delivery_lng ? Number(apiOrder.delivery_lng) : undefined,
+    pharmacyLat: (apiOrder.pharmacy_lat !== null && apiOrder.pharmacy_lat !== undefined) ? Number(apiOrder.pharmacy_lat) : undefined,
+    pharmacyLng: (apiOrder.pharmacy_lng !== null && apiOrder.pharmacy_lng !== undefined) ? Number(apiOrder.pharmacy_lng) : undefined,
     deliveryMethod: apiOrder.delivery_method,
     phoneNumber: apiOrder.phone_number,
     status: apiOrder.status,
