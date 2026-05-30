@@ -1,5 +1,7 @@
 import { apiService } from './api';
 
+import { unwrapArrayResponse } from '@/utils/responseTransformers';
+
 export interface PaymentInitializationResponse {
   authorization_url: string;
   access_code: string;
@@ -57,7 +59,8 @@ export const paymentService = {
   },
 
   async getTransactions(): Promise<Transaction[]> {
-    return await apiService.getAuth<Transaction[]>('/transactions');
+    const response = await apiService.getAuth<Transaction[]>('/transactions');
+    return unwrapArrayResponse(response);
   },
 
   async getTransaction(id: string): Promise<Transaction> {
