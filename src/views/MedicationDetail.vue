@@ -289,7 +289,9 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     image: medication.value.image,
     inStock: pharmacy.inStock,
     requiresPrescription: medication.value.requiresPrescription,
-    pharmacyDrugPriceId: pharmacy.priceId // Added for API compatibility
+    pharmacyDrugPriceId: pharmacy.priceId,
+    latitude: pharmacy.latitude || pharmacy.pharmacy?.latitude,
+    longitude: pharmacy.longitude || pharmacy.pharmacy?.longitude
   });
 
   notification.success(

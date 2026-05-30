@@ -152,7 +152,9 @@ const loadReceipt = async () => {
          // Optionally try to find transaction for this order (optional, for completeness)
          try {
             const allTxs = await paymentService.getTransactions();
-            const foundTx = allTxs.find(t => String(t.order_id) === String(order.value!.id));
+            const foundTx = Array.isArray(allTxs) 
+              ? allTxs.find(t => String(t.order_id) === String(order.value!.id))
+              : null;
             if (foundTx) transaction.value = foundTx;
          } catch (e) { /* ignore */ }
        }

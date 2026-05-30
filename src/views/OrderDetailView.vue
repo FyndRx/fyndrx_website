@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
+import OrderTrackingMap from '@/components/OrderTrackingMap.vue';
 import { reviewService } from '@/services/reviewService';
 import type { Order } from '@/models/Order';
 import LazyImage from '@/components/LazyImage.vue';
@@ -127,7 +128,9 @@ const loadOrder = async () => {
       try {
         const transactions = await paymentService.getTransactions();
         // Use loose comparison to ensure match (api might return number vs string)
-        const transactionData = transactions.find(t => String(t.order_id) === String(orderId));
+        const transactionData = Array.isArray(transactions) 
+          ? transactions.find(t => String(t.order_id) === String(orderId))
+          : null;
         if (transactionData) {
           transaction.value = transactionData;
         } else {
@@ -176,9 +179,17 @@ onMounted(() => {
 
         <!-- Pharmacy & Order Header -->
         <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-xl">
-          <!-- Decorative Background -->
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20"></div>
-          <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <!-- Banner Background -->
+          <div class="absolute inset-0 overflow-hidden">
+            <LazyImage 
+              v-if="order.pharmacyBanner"
+              :src="order.pharmacyBanner" 
+              alt="Pharmacy Banner"
+              className="w-full h-full object-cover opacity-20 dark:opacity-30 blur-[2px]"
+            />
+            <div v-else class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20"></div>
+            <div class="absolute inset-0 bg-white/40 dark:bg-gray-800/40 backdrop-blur-[1px]"></div>
+          </div>
           
           <div class="relative p-6 sm:p-8">
             <div class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
@@ -385,6 +396,35 @@ onMounted(() => {
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ order.notes }}</p>
                   </div>
+                </div>
+              </div>
+
+              <!-- Live Tracking Map Section -->
+              <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    Live Location Tracking
+                  </h3>
+                  <span class="text-[10px] font-bold text-[#246BFD] bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg uppercase tracking-wider">Real-time</span>
+                </div>
+                
+                <div v-if="order" class="h-[480px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-150 dark:border-gray-700/70 bg-gray-50 dark:bg-gray-900/10">
+                  <OrderTrackingMap 
+                    :pharmacyLocations="order.pharmacyLat && order.pharmacyLng ? [{ lat: Number(order.pharmacyLat), lng: Number(order.pharmacyLng), name: order.branchName ? `${order.pharmacyName} - ${order.branchName}` : order.pharmacyName }] : []"
+                    :deliveryLocation="order.deliveryLat && order.deliveryLng ? { lat: Number(order.deliveryLat), lng: Number(order.deliveryLng) } : undefined"
+                    :pharmacyName="order.branchName ? `${order.pharmacyName} - ${order.branchName}` : order.pharmacyName"
+                    :deliveryMethod="order.deliveryMethod"
+                    class="w-full h-full"
+                  />
+                </div>
+                <div v-else-if="!order && !loading" class="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                   <svg class="w-10 h-10 text-gray-400 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Location coordinates not available for this order.</p>
                 </div>
               </div>
             </div>

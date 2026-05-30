@@ -217,28 +217,39 @@ onMounted(() => {
                       {{ statusLabels[order.status] || order.status }}
                     </span>
                   </div>
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-4">
+                    <!-- Pharmacy Logo -->
                     <div 
-                      v-if="order.pharmacyImage" 
                       @click.stop="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
-                      class="w-10 h-10 overflow-hidden bg-white dark:bg-gray-700 rounded-lg shadow-sm flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-[#246BFD] transition-all"
+                      class="w-9 h-9 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-[#246BFD]/30 transition-all"
                     >
                       <LazyImage
-                        :src="order.pharmacyImage"
+                        :src="order.pharmacyImage || ''"
                         :alt="order.pharmacyName"
                         aspectRatio="square"
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover"
                       />
                     </div>
-                    <div>
+                    
+                    <div class="min-w-0">
                       <p 
                         @click.stop="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
-                        class="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer hover:text-[#246BFD] transition-colors"
+                        class="text-base font-bold text-gray-900 dark:text-white cursor-pointer hover:text-[#246BFD] transition-colors truncate"
                       >
                         {{ order.pharmacyName }}
-                        <span v-if="order.branchName" class="text-gray-500 font-medium">• {{ order.branchName }}</span>
                       </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ formatDate(order.createdAt) }}</p>
+                      
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <div v-if="order.branchName" class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
+                          <svg class="w-3 h-3 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                          </svg>
+                          <span class="text-[10px] font-bold text-[#246BFD] uppercase tracking-wide">
+                            {{ order.branchName }}
+                          </span>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-500">{{ formatDate(order.createdAt) }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -251,7 +262,7 @@ onMounted(() => {
                   @click.stop="router.push({ name: 'MedicationDetail', params: { id: item.medicationId } })"
                   class="flex items-center gap-3 p-2 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer group/item"
                 >
-                  <div class="w-10 h-10 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-lg flex-shrink-0 group-hover/item:scale-105 transition-transform">
+                  <div class="w-14 h-14 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-xl flex-shrink-0 group-hover/item:scale-105 transition-transform">
                     <LazyImage
                       v-if="item.image"
                       :src="item.image"
