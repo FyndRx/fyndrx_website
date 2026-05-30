@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { cartService } from '@/services/cartService';
 import type { CartItem, Cart, CartPharmacyGroup } from '@/models/Cart';
+import { useAuthStore } from '@/store/auth';
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([]);
@@ -100,9 +101,9 @@ export const useCartStore = defineStore('cart', () => {
 
     // Sync with API if user is authenticated
     try {
-      const token = localStorage.getItem('access_token');
+      const authStore = useAuthStore();
       // Crucial change: We now REQUIRE pharmacyDrugPriceId for API sync
-      if (token && item.pharmacyDrugPriceId) {
+      if (authStore.isAuthenticated && item.pharmacyDrugPriceId) {
         const addedItem = await cartService.addToCart({
           pharmacy_drug_price_id: item.pharmacyDrugPriceId,
           quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
@@ -123,7 +124,7 @@ export const useCartStore = defineStore('cart', () => {
         } else {
           console.warn('Server returned invalid ID for new cart item:', addedItem);
         }
-      } else if (token) {
+      } else if (authStore.isAuthenticated) {
         console.warn('Skipping API sync for cart item: Missing pharmacyDrugPriceId', item);
       }
     } catch (err) {
@@ -140,8 +141,8 @@ export const useCartStore = defineStore('cart', () => {
     // Sync with API if user is authenticated
     if (item) {
       try {
-        const token = localStorage.getItem('access_token');
-        if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
+        const authStore = useAuthStore();
+        if (authStore.isAuthenticated && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
           // Try to remove from API - item.id might be the API cart item ID
           // Check for local temp IDs (containing '-') to avoid sending them
           await cartService.removeFromCart(item.id);
@@ -164,10 +165,10 @@ export const useCartStore = defineStore('cart', () => {
 
         // Sync with API if user is authenticated
         try {
-          const token = localStorage.getItem('access_token');
+          const authStore = useAuthStore();
           // Start of Changed Logic
           // Only sync if we have a valid server ID
-          if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
+          if (authStore.isAuthenticated && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
              await cartService.updateCartItem(item.id, quantity);
           } else {
              console.warn('Skipping API sync for updateQuantity: Invalid or Local ID', item.id);
@@ -208,8 +209,8 @@ export const useCartStore = defineStore('cart', () => {
   };
 
   const syncWithAPI = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
 
     try {
       const apiCart = await cartService.getCart();

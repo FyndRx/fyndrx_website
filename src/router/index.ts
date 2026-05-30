@@ -463,9 +463,11 @@ router.beforeEach(async (to, _, next) => {
 
   const authStore = useAuthStore();
 
-  // Initialize auth if needed (check token existence)
-  // We don't await checkAuth() here to avoid blocking every navigation on an API call
-  // Instead we rely on the store's state which should be hydrated from localStorage
+  // Initialize auth if needed (wait for silent refresh to complete on app boot)
+  if (!authStore.isInitialized) {
+    await authStore.checkAuth();
+  }
+
   const isAuthenticated = authStore.isAuthenticated;
 
   // Check if route requires authentication

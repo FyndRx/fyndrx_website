@@ -6,12 +6,14 @@
 export interface LoginApiResponse {
   message: string;
   access_token: string;
+  refresh_token?: string;
   user?: UserApiResponse;
 }
 
 export interface RegisterApiResponse {
   message: string;
   access_token: string;
+  refresh_token?: string;
   user?: UserApiResponse;
 }
 
@@ -45,7 +47,17 @@ export interface OtpResponse {
 }
 
 export interface ProfilePictureResponse {
-  message: string;
-  profile_picture: string;
+  user: UserApiResponse;
+  image_url: string;
+}
+
+export interface UserSession {
+  id: number;
+  device_name: string | null;
+  ip_address: string | null;
+  user_agent?: string | null;
+  last_active: string;
+  expires_at: string;
+  is_current: boolean;
 }
 

@@ -4,13 +4,17 @@ import { authService } from '@/services/auth.service';
 import type { User } from '@/models/User';
 import type { LoginCredentials, RegisterCredentials } from '@/services/auth.service';
 import { handleApiError, isNetworkError } from '@/utils/errorHandler';
+import { setAccessToken } from '@/services/api';
+import type { UserSession } from '@/models/api';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
-  const accessToken = ref<string | null>(localStorage.getItem('access_token') || localStorage.getItem('token'));
+  const accessToken = ref<string | null>(null);
+  const isInitialized = ref(false);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const lastTokenRefresh = ref<number | null>(null);
+  const activeSessions = ref<UserSession[]>([]);
 
   const isAuthenticated = computed(() => !!accessToken.value);
 
@@ -21,7 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const setToken = (newToken: string) => {
     accessToken.value = newToken;
-    localStorage.setItem('access_token', newToken);
+    setAccessToken(newToken);
+    localStorage.setItem('logged_in', 'true');
     lastTokenRefresh.value = Date.now();
     // console.log('Token set:', newToken);
   };
@@ -29,7 +34,8 @@ export const useAuthStore = defineStore('auth', () => {
   const clearAuth = () => {
     user.value = null;
     accessToken.value = null;
-    localStorage.removeItem('access_token');
+    setAccessToken(null);
+    localStorage.removeItem('logged_in');
     lastTokenRefresh.value = null;
   };
 
@@ -169,15 +175,10 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         loading.value = true;
         error.value = null;
-        // Use updateProfilePicture as it seems to be the one for updates, or uploadProfilePicture if it's for initial
-        // The service has both, let's use uploadProfilePicture as requested by the view, but maybe check if we should leverage update
-        // The view calls uploadProfilePicture.
         const response = await authService.uploadProfilePicture(file);
         
-        // Update user profile picture in state
-        if (user.value) {
-            user.value = { ...user.value, profile_picture: response.profile_picture };
-        }
+        // Fetch fresh user details to correctly populate all profile picture fields (including profile_picture_full)
+        await fetchUserDetails();
         
         return response;
       } catch (err) {
@@ -284,25 +285,85 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const checkAuth = async () => {
-    if (!accessToken.value || !isAuthenticated.value) {
-      clearAuth();
-      return false;
-    }
+  const fetchActiveSessions = async () => {
     try {
-      await fetchUserDetails();
-      return true;
-    } catch {
+      loading.value = true;
+      error.value = null;
+      activeSessions.value = await authService.getActiveSessions();
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = apiError.message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const revokeSession = async (sessionId: number) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      await authService.revokeSession(sessionId);
+      activeSessions.value = activeSessions.value.filter(s => s.id !== sessionId);
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = apiError.message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  let activeCheckAuthPromise: Promise<boolean> | null = null;
+
+  const checkAuth = async () => {
+    if (isInitialized.value) {
+      return isAuthenticated.value;
+    }
+
+    if (activeCheckAuthPromise) {
+      return activeCheckAuthPromise;
+    }
+
+    // If guest (never logged in), skip refresh entirely!
+    if (localStorage.getItem('logged_in') !== 'true') {
       clearAuth();
+      isInitialized.value = true;
       return false;
     }
+
+    activeCheckAuthPromise = (async () => {
+      try {
+        // If we don't have token in memory, try silent refresh
+        if (!accessToken.value) {
+          const response = await authService.refresh();
+          if (response && response.access_token) {
+            setToken(response.access_token);
+            await fetchUserDetails();
+          }
+        } else {
+          await fetchUserDetails();
+        }
+      } catch (err) {
+        console.log('Initial checkAuth / silent refresh failed:', err);
+        clearAuth();
+      } finally {
+        isInitialized.value = true;
+        activeCheckAuthPromise = null;
+      }
+      return isAuthenticated.value;
+    })();
+
+    return activeCheckAuthPromise;
   };
 
   return {
     user,
     accessToken,
+    isInitialized,
     loading,
     error,
+    activeSessions,
     isAuthenticated,
     userInitials,
     login,
@@ -313,6 +374,7 @@ export const useAuthStore = defineStore('auth', () => {
     checkAuth,
     fetchUserDetails,
     setToken,
+    clearAuth,
     updateUserDetails,
     uploadProfilePicture,
     addAddress,
@@ -322,5 +384,7 @@ export const useAuthStore = defineStore('auth', () => {
     addMedicalRecord,
     updateMedicalRecord,
     deleteMedicalRecord,
+    fetchActiveSessions,
+    revokeSession,
   };
 });
