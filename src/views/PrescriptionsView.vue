@@ -28,6 +28,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const filteredPrescriptions = computed(() => {
+  if (selectedFilter.value === 'all') return prescriptions.value;
   return prescriptions.value.filter(p => p.status === selectedFilter.value);
 });
 
@@ -204,7 +205,7 @@ onMounted(() => {
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ prescription.prescription_number }}
                   </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Dr. {{ prescription.doctor_name }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ prescription.doctor_name }}</p>
                 </div>
                 <span
                   :class="[
@@ -269,7 +270,7 @@ onMounted(() => {
         <div class="sticky top-0 z-10 flex items-center justify-between p-6 bg-gradient-to-r from-[#246BFD] to-[#5089FF]">
           <div>
             <h2 class="text-2xl font-bold text-white">{{ selectedPrescription.prescription_number }}</h2>
-            <p class="text-white/80">Dr. {{ selectedPrescription.doctor_name }}</p>
+            <p class="text-white/80">{{ selectedPrescription.doctor_name }}</p>
           </div>
           <button
             @click="closeModal"

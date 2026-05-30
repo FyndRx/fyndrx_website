@@ -7,7 +7,8 @@ export interface PrescriptionDrugApiResponse {
   id: number;
   prescription_id: number;
   drug_id: number;
-  name: string;
+  drug_name?: string;  // returned by PrescriptionDrugResource
+  name?: string;       // legacy / alternative field name
   brand_id?: number;
   brand_name?: string;
   form_id: number;

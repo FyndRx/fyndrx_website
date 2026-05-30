@@ -778,7 +778,7 @@ export function transformPrescription(apiPrescription: PrescriptionApiResponse):
       id: drug.id,
       prescription_id: drug.prescription_id,
       drug_id: drug.drug_id,
-      name: drug.name,
+      name: drug.drug_name ?? drug.name ?? '',
       brand_id: drug.brand_id,
       brand_name: drug.brand_name,
       form_id: drug.form_id,
