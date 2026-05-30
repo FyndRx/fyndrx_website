@@ -42,6 +42,8 @@ const reviewsLoading = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = ref(12);
 
+const currentDayName = computed(() => new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase());
+
 const SERVICE_LABELS: Record<string, string> = {
   consultation: 'Consultation',
   delivery: 'Medicine Delivery',
@@ -478,15 +480,15 @@ onMounted(() => {
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-12">
           <!-- Information & Tabs -->
-          <div class="bg-white shadow-2xl dark:bg-gray-800 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-700/50">
-            <div class="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50 px-8">
+          <div class="bg-white shadow-xl dark:bg-gray-800 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
+            <div class="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50 px-6 sm:px-8">
               <nav class="flex overflow-x-auto no-scrollbar gap-8">
                 <button
                   v-for="tab in ['overview', 'services', 'branches', 'reviews']"
                   :key="tab"
                   v-show="tab !== 'branches' || (pharmacy?.branchesCount || 0) > 0"
                   @click="switchTab(tab)"
-                  class="px-2 py-6 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 whitespace-nowrap relative group"
+                  class="px-1 py-4 text-sm font-semibold capitalize transition-all border-b-2 whitespace-nowrap relative group"
                   :class="[
                     activeTab === tab
                       ? 'border-[#246BFD] text-[#246BFD]'
@@ -499,57 +501,83 @@ onMounted(() => {
               </nav>
             </div>
             
-            <div class="p-10">
+            <div class="p-6 sm:p-8">
               <!-- Overview Tab -->
-              <div v-if="activeTab === 'overview'" class="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div class="space-y-6">
-                  <div class="flex items-center gap-4">
-                    <div class="w-1.5 h-8 bg-[#246BFD] rounded-full"></div>
-                    <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Facility Profile</h3>
+              <div v-if="activeTab === 'overview'" class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div class="space-y-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-1 h-6 bg-[#246BFD] rounded-full"></div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Facility Profile</h3>
                   </div>
-                  <div class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-10 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700/50 leading-relaxed font-medium" v-html="pharmacy.description"></div>
+                  <div class="prose prose-base dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 sm:p-8 rounded-2xl border border-gray-100 dark:border-gray-700/50 leading-relaxed" v-html="pharmacy.description"></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  <div class="space-y-8">
-                    <div class="flex items-center gap-4">
-                      <div class="w-1.5 h-8 bg-green-500 rounded-full"></div>
-                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Operating Hours</h3>
+                <div class="space-y-10">
+                  <!-- Operating Hours (Full Width Stacked) -->
+                  <div class="space-y-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-1 h-6 bg-green-500 rounded-full"></div>
+                      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Operating Hours</h3>
                     </div>
-                    <div class="space-y-3 bg-gray-50 dark:bg-gray-900/40 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700/50">
+                    <div class="space-y-2 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-700/50">
                       <div
                         v-for="(hours, day) in pharmacy.workingHours"
                         :key="day"
-                        class="flex justify-between items-center group"
+                        class="flex justify-between items-center group p-2 rounded-xl transition-all"
+                        :class="[
+                          day === currentDayName
+                            ? 'bg-blue-50/70 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 shadow-sm'
+                            : 'border border-transparent'
+                        ]"
                       >
-                        <span class="font-black text-xs uppercase tracking-widest text-gray-400 group-hover:text-[#246BFD] transition-colors">{{ day }}</span>
-                        <div class="h-px flex-1 mx-4 bg-gray-200 dark:bg-gray-700/50 border-dashed border-t"></div>
-                        <span class="font-bold text-gray-900 dark:text-white">{{ hours }}</span>
+                        <span
+                          class="font-semibold text-sm transition-colors flex items-center gap-2"
+                          :class="[
+                            day === currentDayName
+                              ? 'text-[#246BFD]'
+                              : 'text-gray-500 dark:text-gray-400 group-hover:text-[#246BFD]'
+                          ]"
+                        >
+                          <span class="capitalize">{{ day }}</span>
+                          <span v-if="day === currentDayName" class="text-[9px] lowercase font-semibold text-white bg-[#246BFD] px-2 py-0.5 rounded-full">today</span>
+                        </span>
+                        <div class="h-0 flex-1 mx-4 border-dashed border-t border-gray-300/50 dark:border-gray-600/50"></div>
+                        <span
+                          class="font-bold text-sm transition-colors"
+                          :class="[
+                            hours.toLowerCase() === 'closed'
+                              ? 'text-red-500 dark:text-red-400'
+                              : (day === currentDayName ? 'text-[#246BFD]' : 'text-gray-900 dark:text-white')
+                          ]"
+                        >
+                          {{ hours }}
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  <div class="space-y-8">
-                     <div class="flex items-center gap-4">
-                      <div class="w-1.5 h-8 bg-orange-500 rounded-full"></div>
-                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Quick Connect</h3>
+                  <!-- Quick Connect (Side-by-side Grid) -->
+                  <div class="space-y-4">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-1 h-6 bg-orange-500 rounded-full"></div>
+                      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Quick Connect</h3>
                     </div>
-                    <div class="grid grid-cols-1 gap-4">
-                      <a :href="`tel:${pharmacy.phone}`" class="flex items-center gap-4 p-6 rounded-[1.5rem] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <a :href="`tel:${pharmacy.phone}`" class="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
                          <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-[#246BFD] flex items-center justify-center group-hover:bg-[#246BFD] group-hover:text-white transition-colors">
                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                          </div>
                          <div>
-                           <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone Support</p>
+                           <p class="text-xs font-semibold text-gray-400">Phone Support</p>
                            <p class="font-bold text-gray-900 dark:text-white">{{ pharmacy.phone }}</p>
                          </div>
                       </a>
-                      <a :href="`mailto:${pharmacy.email}`" class="flex items-center gap-4 p-6 rounded-[1.5rem] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                      <a :href="`mailto:${pharmacy.email}`" class="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
                          <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                          </div>
                          <div>
-                           <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Email Address</p>
+                           <p class="text-xs font-semibold text-gray-400">Email Address</p>
                            <p class="font-bold text-gray-900 dark:text-white truncate max-w-[150px] md:max-w-none">{{ pharmacy.email }}</p>
                          </div>
                       </a>
@@ -563,16 +591,16 @@ onMounted(() => {
                 <div
                   v-for="service in pharmacy.services"
                   :key="service"
-                  class="group p-8 rounded-[2rem] bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
+                  class="group p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-500"
                 >
                   <div class="flex items-center gap-6">
-                    <div class="flex items-center justify-center w-16 h-16 rounded-[1.5rem] bg-white shadow-xl dark:bg-gray-800 text-[#246BFD] group-hover:bg-[#246BFD] group-hover:text-white transition-all duration-500">
-                      <svg v-if="service === 'delivery'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                      <svg v-else-if="service === '24/7'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                      <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-md dark:bg-gray-800 text-[#246BFD] group-hover:bg-[#246BFD] group-hover:text-white transition-all duration-500">
+                      <svg v-if="service === 'delivery'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                      <svg v-else-if="service === '24/7'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                      <svg v-else class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                     </div>
                     <div>
-                      <h4 class="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">{{ SERVICE_LABELS[service] || service }}</h4>
+                      <h4 class="text-lg font-bold text-gray-900 dark:text-white">{{ SERVICE_LABELS[service] || service }}</h4>
                       <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Available at this location</p>
                     </div>
                   </div>
@@ -581,39 +609,39 @@ onMounted(() => {
 
               <!-- Branches Tab -->
               <div v-if="activeTab === 'branches'" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div v-if="pharmacy.branches && pharmacy.branches.length > 0" class="grid grid-cols-1 gap-8">
+                <div v-if="pharmacy.branches && pharmacy.branches.length > 0" class="grid grid-cols-1 gap-6">
                   <div
                     v-for="branch in pharmacy.branches"
                     :key="branch.id"
-                    class="p-10 rounded-[2.5rem] bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700/50 hover:shadow-2xl transition-all duration-500 overflow-hidden relative group"
+                    class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 shadow-lg border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all duration-500 overflow-hidden relative group"
                   >
                     <div class="absolute top-0 right-0 w-32 h-32 bg-[#246BFD]/5 rounded-bl-full -z-0"></div>
-                    <div class="flex flex-col md:flex-row justify-between gap-10 relative z-10">
-                      <div class="space-y-6">
-                        <div class="flex items-center gap-4">
-                          <div class="w-14 h-14 rounded-2xl bg-[#246BFD]/10 text-[#246BFD] flex items-center justify-center">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 01-1 1H2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    <div class="flex flex-col md:flex-row justify-between gap-6 relative z-10">
+                      <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                          <div class="w-12 h-12 rounded-xl bg-[#246BFD]/10 text-[#246BFD] flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 01-1 1H2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                           </div>
-                          <h4 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">{{ branch.branchName }}</h4>
+                          <h4 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">{{ branch.branchName }}</h4>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div class="space-y-1">
-                            <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD]">Location</p>
-                            <p class="font-bold text-gray-700 dark:text-gray-300 leading-snug">{{ branch.address }}</p>
-                            <p v-if="branch.digitalAddress" class="text-xs font-black text-gray-400 uppercase mt-2">{{ branch.digitalAddress }}</p>
+                            <p class="text-xs font-semibold text-[#246BFD]">Location</p>
+                            <p class="font-medium text-sm text-gray-700 dark:text-gray-300 leading-snug">{{ branch.address }}</p>
+                            <p v-if="branch.digitalAddress" class="text-xs font-bold text-gray-400 mt-2">{{ branch.digitalAddress }}</p>
                           </div>
                           <div class="space-y-1">
-                            <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD]">Contact</p>
-                            <p class="font-bold text-gray-700 dark:text-gray-300 leading-snug">{{ branch.phone }}</p>
-                            <p v-if="branch.managerName" class="text-xs font-medium text-gray-400 mt-2">Mgr: {{ branch.managerName }}</p>
+                            <p class="text-xs font-semibold text-[#246BFD]">Contact</p>
+                            <p class="font-medium text-sm text-gray-700 dark:text-gray-300 leading-snug">{{ branch.phone }}</p>
+                            <p v-if="branch.managerName" class="text-xs text-gray-400 mt-1">Manager: {{ branch.managerName }}</p>
                           </div>
                         </div>
                       </div>
                       
-                      <div class="flex flex-col gap-3 min-w-[180px]">
-                        <a :href="`tel:${branch.phone}`" class="px-6 py-4 rounded-[1rem] bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest text-center shadow-lg shadow-blue-500/30 hover:shadow-[#246BFD]/50 hover:-translate-y-1 transition-all">Call Branch</a>
-                        <a v-if="branch.latitude && branch.longitude" :href="`https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`" target="_blank" class="px-6 py-4 rounded-[1rem] bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-xs font-black uppercase tracking-widest text-center hover:bg-gray-100 transition-all border border-gray-100 dark:border-gray-700">Get Directions</a>
+                      <div class="flex flex-col gap-2.5 min-w-[160px] justify-center">
+                        <a :href="`tel:${branch.phone}`" class="px-5 py-3 rounded-xl bg-[#246BFD] text-white text-xs font-bold text-center shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">Call Branch</a>
+                        <a v-if="branch.latitude && branch.longitude" :href="`https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`" target="_blank" class="px-5 py-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white text-xs font-bold text-center hover:bg-gray-100 transition-all border border-gray-100 dark:border-gray-700">Get Directions</a>
                       </div>
                     </div>
                   </div>
@@ -621,57 +649,57 @@ onMounted(() => {
               </div>
 
               <!-- Reviews Tab -->
-              <div v-if="activeTab === 'reviews'" class="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div v-if="reviewsLoading" class="py-20 text-center">
-                  <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#246BFD] mx-auto"></div>
-                  <p class="mt-6 text-xs font-black uppercase tracking-widest text-gray-400">Syncing Testimonials...</p>
+              <div v-if="activeTab === 'reviews'" class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div v-if="reviewsLoading" class="py-16 text-center">
+                  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#246BFD] mx-auto"></div>
+                  <p class="mt-6 text-sm font-semibold text-gray-500">Syncing Testimonials...</p>
                 </div>
 
-                <div v-else class="space-y-12">
+                <div v-else class="space-y-10">
                    <!-- Statistics Summary -->
-                  <div v-if="reviewStats" class="p-10 bg-gray-50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-gray-700/50">
-                    <div class="flex flex-col gap-12 lg:flex-row lg:items-center">
+                   <div v-if="reviewStats" class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+                    <div class="flex flex-col gap-8 lg:flex-row lg:items-center">
                       <div class="text-center lg:text-left">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD] mb-2">Aggregate Rating</p>
+                        <p class="text-xs font-semibold text-[#246BFD] mb-1">Aggregate Rating</p>
                         <div class="flex items-center justify-center lg:justify-start gap-4">
-                          <span class="text-7xl font-black tracking-tighter text-gray-900 dark:text-white">
+                          <span class="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
                             {{ (reviewStats.averageRating || 0).toFixed(1) }}
                           </span>
                           <div class="text-left">
                             <RatingStars :rating="reviewStats.averageRating || 0" size="lg" />
-                            <p class="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                            <p class="text-xs font-semibold text-gray-400 mt-1">
                               From {{ reviewStats.totalReviews || 0 }} Experience{{ (reviewStats.totalReviews || 0) !== 1 ? 's' : '' }}
                             </p>
                           </div>
                         </div>
                       </div>
                       
-                      <div class="flex-1 space-y-3">
-                        <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-4">
-                          <span class="text-[10px] font-black text-gray-400 w-4">{{ rating }}</span>
-                          <div class="flex-1 h-2.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <div class="flex-1 space-y-2">
+                        <div v-for="rating in [5, 4, 3, 2, 1]" :key="rating" class="flex items-center gap-3">
+                          <span class="text-xs font-semibold text-gray-400 w-3">{{ rating }}</span>
+                          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div class="h-full bg-yellow-400 rounded-full transition-all duration-1000" :style="{ width: `${reviewStats.totalReviews ? (((reviewStats.ratingDistribution as any)?.[rating] || 0) / reviewStats.totalReviews) * 100 : 0}%` }"></div>
                           </div>
-                          <span class="text-[10px] font-black text-gray-400 w-8 text-right">{{ (reviewStats.ratingDistribution as any)?.[rating] || 0 }}</span>
+                          <span class="text-xs font-semibold text-gray-400 w-6 text-right">{{ (reviewStats.ratingDistribution as any)?.[rating] || 0 }}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div class="flex items-center gap-4">
-                      <div class="w-1.5 h-8 bg-[#246BFD] rounded-full"></div>
-                      <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Verified Testimonials</h3>
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-1 h-6 bg-[#246BFD] rounded-full"></div>
+                      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Verified Testimonials</h3>
                     </div>
-                    <button @click="showAddReviewModal = true" class="px-8 py-4 bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 transition-all">Submit Review</button>
+                    <button @click="showAddReviewModal = true" class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-xl shadow-md transition-all active:scale-95">Submit Review</button>
                   </div>
 
-                  <div v-if="reviews.length > 0" class="grid grid-cols-1 gap-8">
+                  <div v-if="reviews.length > 0" class="grid grid-cols-1 gap-6">
                     <ReviewCard
                       v-for="review in reviews"
                       :key="review.id"
                       :review="review"
-                      class="!rounded-[2.5rem] !bg-white dark:!bg-gray-800 !p-10 !shadow-xl !border !border-gray-50 dark:!border-gray-700/50"
+                      class="!rounded-2xl !bg-white dark:!bg-gray-800 !p-6 sm:!p-8 !shadow-md !border !border-gray-50 dark:!border-gray-700/50"
                       @helpful="handleReviewHelpful"
                       @not-helpful="handleReviewNotHelpful"
                     />
@@ -683,68 +711,68 @@ onMounted(() => {
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-12">
+        <div class="space-y-6">
           <!-- Compliance & Trust -->
-          <div class="bg-gray-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+          <div class="bg-gray-900 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden group">
              <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-             <h3 class="text-xl font-black uppercase tracking-widest mb-8 relative z-10">Facility Trust</h3>
+             <h3 class="text-lg font-bold mb-6 relative z-10">Facility Trust</h3>
              
-             <div class="space-y-8 relative z-10">
+             <div class="space-y-6 relative z-10">
                <div v-if="pharmacy.licenseNumber" class="flex items-start gap-4">
                  <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-green-400">
                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                  </div>
                  <div>
-                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">License Verified</p>
-                   <p class="font-bold tracking-tight">{{ pharmacy.licenseNumber }}</p>
+                   <p class="text-xs font-semibold text-gray-400">License Verified</p>
+                   <p class="font-bold text-sm text-white tracking-tight">{{ pharmacy.licenseNumber }}</p>
                  </div>
                </div>
 
                <div class="flex items-start gap-4">
                  <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#246BFD]">
-                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 01-1 1H2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-12-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-12v6m0 0a3 3 0 0 0 3 3h3m0 0a3 3 0 0 0 3-3v-3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                  </div>
                  <div>
-                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Branch Network</p>
-                   <p class="font-bold tracking-tight">{{ pharmacy.branchesCount || 1 }} Active Locations</p>
+                   <p class="text-xs font-semibold text-gray-400">Branch Network</p>
+                   <p class="font-bold text-sm text-white tracking-tight">{{ pharmacy.branchesCount || 1 }} Active Locations</p>
                  </div>
                </div>
 
-               <div class="pt-6 border-t border-white/10">
-                 <p class="text-[10px] font-medium text-gray-500 leading-relaxed uppercase tracking-widest">Ensuring you receive only genuine, certified medications through our verified pharmacy network.</p>
+               <div class="pt-5 border-t border-white/10">
+                 <p class="text-xs font-medium text-gray-450 dark:text-gray-400 leading-relaxed">Ensuring you receive only genuine, certified medications through our verified pharmacy network.</p>
                </div>
              </div>
           </div>
 
           <!-- Help Widget -->
-          <div class="bg-[#246BFD] p-10 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/40">
-             <h3 class="text-xl font-black uppercase tracking-widest mb-4">Need Help?</h3>
-             <p class="text-sm font-medium mb-8 text-blue-100">Our support team is available to assist you with your orders and health inquiries.</p>
-             <button class="w-full py-4 bg-white text-[#246BFD] rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-50 transition-colors">Start Chat</button>
+          <div class="bg-[#246BFD] p-6 sm:p-8 rounded-3xl text-white shadow-lg shadow-blue-500/10">
+             <h3 class="text-lg font-bold mb-3">Need Help?</h3>
+             <p class="text-sm font-medium mb-6 text-blue-100">Our support team is available to assist you with your orders and health inquiries.</p>
+             <button class="w-full py-2.5 bg-white text-[#246BFD] rounded-xl font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">Start Chat</button>
           </div>
         </div>
       </div>
 
       <!-- Full Width Location Hub -->
-      <div class="mt-16 bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
+      <div class="mt-16 bg-white dark:bg-gray-800 rounded-3xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700/50">
         <div class="grid grid-cols-1 lg:grid-cols-2">
-          <div class="p-12 lg:p-20 space-y-12">
-            <div class="space-y-6">
-              <div class="flex items-center gap-4">
-                <div class="w-1.5 h-10 bg-[#246BFD] rounded-full"></div>
-                <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 dark:text-white leading-none">Presence Hub</h2>
+          <div class="p-6 sm:p-8 lg:p-12 space-y-8">
+            <div class="space-y-4">
+              <div class="flex items-center gap-3">
+                <div class="w-1 h-8 bg-[#246BFD] rounded-full"></div>
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-none">Presence Hub</h2>
               </div>
-              <p class="text-xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed">Visit us at our primary location or navigate through our extensive branch network across the region.</p>
+              <p class="text-base text-gray-500 dark:text-gray-400 font-medium leading-relaxed">Visit us at our primary location or navigate through our extensive branch network across the region.</p>
             </div>
 
-            <div class="space-y-8">
-              <div class="flex items-center gap-6 p-8 bg-gray-50 dark:bg-gray-900/40 rounded-[2rem] border border-gray-100 dark:border-gray-700/50">
-                 <div class="w-16 h-16 rounded-2xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center text-[#246BFD]">
-                   <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+            <div class="space-y-6">
+              <div class="flex items-center gap-5 p-6 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                 <div class="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-md flex items-center justify-center text-[#246BFD] flex-shrink-0">
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                  </div>
                  <div>
-                   <p class="text-[10px] font-black uppercase tracking-widest text-[#246BFD] mb-1">Primary Headquarters</p>
-                   <p class="text-xl font-black text-gray-900 dark:text-white tracking-tight">{{ pharmacy.address }}</p>
+                   <p class="text-xs font-semibold text-[#246BFD] mb-1">Primary Headquarters</p>
+                   <p class="text-base font-bold text-gray-900 dark:text-white leading-tight">{{ pharmacy.address }}</p>
                  </div>
               </div>
 
@@ -752,7 +780,7 @@ onMounted(() => {
                 <a 
                   :href="pharmacy.location ? `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.lat},${pharmacy.location.lng}` : '#'" 
                   target="_blank"
-                  class="flex-1 py-5 bg-gray-900 text-white dark:bg-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest text-center shadow-xl hover:-translate-y-1 transition-all"
+                  class="flex-1 py-3 bg-[#246BFD] hover:bg-[#1a56d6] text-white rounded-xl text-sm font-bold text-center shadow-md hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5 active:scale-95 transition-all"
                 >
                   Launch Navigation
                 </a>
@@ -778,14 +806,14 @@ onMounted(() => {
       </div>
 
       <!-- Full Width Inventory Explorer -->
-      <div id="inventory" class="mt-16 space-y-12 pb-12">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div class="space-y-4">
-            <div class="flex items-center gap-4">
-              <div class="w-1.5 h-10 bg-[#246BFD] rounded-full shadow-[0_0_15px_rgba(36,107,253,0.5)]"></div>
-              <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-gray-900 dark:text-white leading-none">Inventory Explorer</h2>
+      <div id="inventory" class="mt-16 space-y-8 pb-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <div class="w-1 h-8 bg-[#246BFD] rounded-full"></div>
+              <h2 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-none">Inventory Explorer</h2>
             </div>
-            <p class="text-xl text-gray-500 font-medium tracking-tight">Browse and secure medications available at this facility.</p>
+            <p class="text-sm text-gray-500 font-medium tracking-tight">Browse and secure medications available at this facility.</p>
           </div>
 
           <!-- Search & Filter in Inventory -->
@@ -795,80 +823,80 @@ onMounted(() => {
                 v-model="medicationSearchQuery"
                 type="text"
                 placeholder="Search medications at this facility..."
-                class="w-full h-16 pl-14 pr-6 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-2xl focus:ring-4 focus:ring-[#246BFD]/20 text-lg font-bold transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                class="w-full h-12 pl-12 pr-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm focus:ring-2 focus:ring-[#246BFD]/20 text-sm font-semibold transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
-              <svg class="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </div>
           </div>
         </div>
 
-        <div v-if="loading" class="py-32 text-center">
-          <div class="w-20 h-20 border-t-4 border-b-4 border-[#246BFD] rounded-full animate-spin mx-auto shadow-2xl shadow-blue-500/20"></div>
-          <p class="mt-8 text-xs font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">Scanning Inventory Database...</p>
+        <div v-if="loading" class="py-24 text-center">
+          <div class="w-12 h-12 border-t-2 border-b-2 border-[#246BFD] rounded-full animate-spin mx-auto shadow-md shadow-blue-500/20"></div>
+          <p class="mt-6 text-sm font-semibold text-gray-500">Scanning Inventory Database...</p>
         </div>
 
         <div v-else>
           <div v-if="filteredPrices.length > 0">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div
                 v-for="price in paginatedPrices"
                 :key="price.id"
                 @click="viewMedicationDetails(price)"
-                class="group bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-50 dark:border-gray-700/50 hover:-translate-y-2 relative cursor-pointer"
+                class="group bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-700/50 hover:-translate-y-1 relative cursor-pointer"
               >
                <!-- Stock Badge Overlay -->
-               <div class="absolute top-4 left-4 z-10">
+               <div class="absolute top-3 left-3 z-10">
                  <div 
-                   class="px-3 py-1.5 backdrop-blur-md rounded-xl shadow-xl border flex items-center gap-2"
-                   :class="price.in_stock ? 'bg-green-500/90 border-white/20' : 'bg-red-500/90 border-white/20'"
+                   class="px-2.5 py-1 backdrop-blur-md rounded-lg shadow-md border flex items-center gap-1.5"
+                   :class="price.in_stock ? 'bg-green-500/90 border-green-400/20 text-white' : 'bg-red-500/90 border-red-400/20 text-white'"
                  >
-                    <span class="w-2 h-2 rounded-full animate-pulse bg-white"></span>
-                    <span class="text-[10px] font-black text-white uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full animate-pulse bg-white"></span>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-white">
                       {{ price.in_stock ? 'In Stock' : 'Restocking' }}
                     </span>
                  </div>
                </div>
 
                <!-- Image Section -->
-               <div class="relative h-64 overflow-hidden bg-gray-100 dark:bg-gray-900">
+               <div class="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
                  <LazyImage
                    :src="price.image || price.medication_image || price.drug_image || '/placeholder-med.png'"
                    :alt="price.name || ''"
                    aspectRatio="square"
-                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                  />
-                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                 <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                </div>
 
                <!-- Content Section -->
-               <div class="p-8 space-y-6">
+               <div class="p-6 space-y-4">
                  <div>
-                    <div class="flex items-center gap-2 mb-2">
-                       <h4 class="text-lg font-black uppercase tracking-tight text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors">
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                       <h4 class="text-base font-bold text-gray-900 dark:text-white group-hover:text-[#246BFD] transition-colors line-clamp-1">
                          {{ price.name }}
                        </h4>
-                       <span v-if="price.requires_prescription" class="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-[#246BFD] bg-blue-50 dark:bg-blue-900/30 rounded-md border border-[#246BFD]/20">Rx</span>
+                       <span v-if="price.requires_prescription" class="px-1.5 py-0.5 text-[9px] font-bold text-[#246BFD] bg-blue-50 dark:bg-blue-900/30 rounded border border-[#246BFD]/20 flex-shrink-0">Rx</span>
                     </div>
                  </div>
 
                  <!-- Pricing & Stock Hub -->
-                 <div class="pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Price per unit</span>
+                 <div class="pt-3.5 border-t border-gray-100 dark:border-gray-700/50">
+                    <span class="text-xs font-semibold text-gray-400 block mb-1">Price per unit</span>
                     <div class="flex items-center justify-between">
-                      <div class="flex items-baseline gap-2">
-                        <span class="text-2xl font-black text-[#246BFD] tracking-tighter">
+                      <div class="flex items-baseline gap-1.5">
+                        <span class="text-xl font-bold text-[#246BFD] tracking-tight">
                           {{ formatCurrency(price.discount_price || price.price) }}
                         </span>
-                        <span v-if="price.discount_price" class="text-xs font-bold text-gray-400 line-through">
+                        <span v-if="price.discount_price" class="text-xs font-medium text-gray-400 line-through">
                           {{ formatCurrency(price.price) }}
                         </span>
                       </div>
                       
                       <!-- Inline Stock Indicator -->
                       <span 
-                        class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border"
+                        class="px-2 py-0.5 rounded-md text-[10px] font-semibold border"
                         :class="price.in_stock ? 'bg-green-50 border-green-100 text-green-700 dark:bg-green-900/10 dark:border-green-800' : 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/10 dark:border-red-800'"
                       >
                         {{ price.in_stock ? (price.stock_quantity !== undefined ? `Stock: ${price.stock_quantity}` : 'In Stock') : 'Out of Stock' }}
@@ -877,35 +905,35 @@ onMounted(() => {
                  </div>
 
                  <!-- Add to Cart Control -->
-                 <div class="pt-6 border-t border-gray-50 dark:border-gray-700/50 flex flex-col gap-3">
+                 <div class="pt-4 border-t border-gray-50 dark:border-gray-700/50 flex flex-col gap-2.5" @click.stop>
                     <div class="flex gap-3">
-                      <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl flex items-center px-1 h-12 w-32 border border-gray-100 dark:border-gray-700">
+                      <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg flex items-center px-1 h-10 w-28 border border-gray-100 dark:border-gray-700">
                         <button 
                           @click="setCustomQuantity(price.id, Math.max(1, (customQuantities[price.id] || 1) - 1))"
-                          class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
+                          class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
                         >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
                         </button>
                         <input 
                           type="number"
                           :value="customQuantities[price.id] || 1"
                           @input="setCustomQuantity(price.id, Math.max(1, parseInt(($event.target as HTMLInputElement).value) || 1))"
-                          class="w-full bg-transparent text-center text-xs font-black text-gray-900 dark:text-white border-none focus:ring-0 p-0"
+                          class="w-full bg-transparent text-center text-xs font-bold text-gray-900 dark:text-white border-none focus:ring-0 p-0"
                         />
                         <button 
                           @click="setCustomQuantity(price.id, (customQuantities[price.id] || 1) + 1)"
-                          class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
+                          class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#246BFD] transition-colors"
                         >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
                         </button>
                       </div>
                       
                       <button 
                         @click="addToCart(price)"
                         :disabled="!price.in_stock || (price.stock_quantity !== undefined && (customQuantities[price.id] || 1) > price.stock_quantity)"
-                        class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-30 disabled:translate-y-0 flex items-center justify-center gap-2"
+                        class="flex-1 h-10 bg-[#246BFD] hover:bg-[#1a56d6] text-white rounded-lg text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-30 disabled:translate-y-0 flex items-center justify-center gap-1.5"
                       >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                         Add to Cart
@@ -915,17 +943,17 @@ onMounted(() => {
                     <!-- Stock Error Message -->
                     <p 
                       v-if="price.stock_quantity !== undefined && (customQuantities[price.id] || 1) > price.stock_quantity"
-                      class="text-[9px] font-black text-red-500 uppercase tracking-widest animate-pulse"
+                      class="text-[10px] font-semibold text-red-500 animate-pulse text-center"
                     >
                       Maximum available: {{ price.stock_quantity }} units
                     </p>
                  </div>
-                 </div>
+               </div>
               </div>
             </div>
 
             <!-- Pagination -->
-            <div class="mt-16 pt-12 border-t border-gray-100 dark:border-gray-700/50">
+            <div class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700/50">
               <Pagination
                 :current-page="currentPage"
                 :total-pages="totalPages"
@@ -938,12 +966,12 @@ onMounted(() => {
           </div>
 
           <!-- Empty State -->
-          <div v-else class="py-32 text-center bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl border border-gray-50 dark:border-gray-700/50">
-            <div class="w-24 h-24 bg-[#246BFD]/5 rounded-full flex items-center justify-center mx-auto mb-8">
-              <svg class="w-12 h-12 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+          <div v-else class="py-24 text-center bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-50 dark:border-gray-700/50">
+            <div class="w-20 h-20 bg-[#246BFD]/5 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </div>
-            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-2">No Matching Assets</h3>
-            <p class="text-gray-500 font-medium font-inter uppercase tracking-widest text-[10px]">Adjust your search query to explore other inventory items.</p>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No Matching Assets</h3>
+            <p class="text-sm text-gray-500 font-medium tracking-tight">Adjust your search query to explore other inventory items.</p>
           </div>
         </div>
       </div>
@@ -951,17 +979,17 @@ onMounted(() => {
 
     <!-- Not Found State -->
     <div v-else class="flex flex-col items-center justify-center min-h-[60vh]">
-      <div class="p-12 text-center bg-white dark:bg-gray-800 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-gray-700/50 max-w-lg mx-auto">
-        <div class="w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-8">
-          <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="p-8 text-center bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-100 dark:border-gray-700/50 max-w-lg mx-auto">
+        <div class="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
           </svg>
         </div>
-        <h2 class="text-3xl font-black uppercase tracking-tight text-gray-900 dark:text-white mb-4">Pharmacy Not Found</h2>
-        <p class="text-gray-500 dark:text-gray-400 font-medium mb-8 leading-relaxed">The pharmacy profile you're looking for might have been moved or removed from our network.</p>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Pharmacy Not Found</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium mb-6 leading-relaxed">The pharmacy profile you're looking for might have been moved or removed from our network.</p>
         <button 
           @click="router.push({ name: 'pharmacies' })"
-          class="inline-flex items-center gap-2 px-8 py-4 bg-[#246BFD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-1 transition-all"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246BFD] text-white text-sm font-bold rounded-xl shadow-md hover:-translate-y-0.5 transition-all"
         >
           Explore All Pharmacies
         </button>
