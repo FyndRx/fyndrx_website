@@ -31,6 +31,12 @@
             "value": "8c3436fcf398bab6c635c6985839d174defb666de992d76ab7a28a03484445c4",
             "type": "string",
             "description": "API key for public endpoints (set in .env as API_KEY)"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string",
+            "description": "Rotating refresh token for renewing access tokens"
         }
     ],
     "item": [
@@ -169,6 +175,10 @@
                                     "if (jsonData.access_token) {",
                                     "    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
                                     "    console.log(\"Access Token Updated\");",
+                                    "}",
+                                    "if (jsonData.refresh_token) {",
+                                    "    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+                                    "    console.log(\"Refresh Token Updated\");",
                                     "}"
                                 ]
                             }
@@ -284,6 +294,9 @@
                                     "var jsonData = pm.response.json();",
                                     "if (jsonData.access_token) {",
                                     "    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+                                    "}",
+                                    "if (jsonData.refresh_token) {",
+                                    "    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
                                     "}"
                                 ]
                             }
@@ -313,6 +326,107 @@
                             ]
                         },
                         "description": "# \ud83e\uddea Test Registration\n\n**DEVELOPMENT ONLY**\n\nSkip SMS verification to quickly create a test user."
+                    }
+                },
+                {
+                    "name": "Refresh Access Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.access_token) {",
+                                    "    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+                                    "}",
+                                    "if (jsonData.refresh_token) {",
+                                    "    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "json",
+                            "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/refresh",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "description": "# \ud83d\udd04 Refresh Access Token\n\nRequest a new short-lived access token using a rotating refresh token.\n\n### Web (SPA) Flow\nFor browsers, the `refresh_token` is sent automatically in an `HttpOnly` cookie. No body payload is required.\n\n### Mobile / Native Flow\nPass the `refresh_token` in the request body as JSON.\n\n### Post-Request Script\nAutomatically updates the `access_token` and `refresh_token` variables in your Postman collection upon success."
+                    }
+                },
+                {
+                    "name": "Get Active Sessions",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/sessions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "sessions"
+                            ]
+                        },
+                        "description": "# \ud83d\udcf1 Get Active Sessions\n\nRetrieve a list of all active login sessions and devices associated with the authenticated user."
+                    }
+                },
+                {
+                    "name": "Revoke Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/sessions/:id/revoke",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "sessions",
+                                ":id",
+                                "revoke"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "12",
+                                    "description": "The unique session ID to revoke"
+                                }
+                            ]
+                        },
+                        "description": "# \ud83d\udeab Revoke Session\n\nRevoke a specific active session, forcing that device to log out.\n\n### URL Parameters\n*   `id`: The unique session ID (obtained from the `Get Active Sessions` response)."
                     }
                 }
             ]
