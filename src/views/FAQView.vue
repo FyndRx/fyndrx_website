@@ -42,14 +42,39 @@ const categories = ref([
 
 const selectedCategory = ref('General');
 
+const staticFaqs: HelpArticle[] = [
+  // General
+  { id: 's1', title: 'What is FyndRx?', content: 'FyndRx is Ghana\'s most convenient online pharmacy platform. You can search for medications, compare prices across verified partner pharmacies, upload prescriptions, book teleconsultations with licensed doctors, and have your medications delivered to your doorstep — all in one place.', category: 'General' },
+  { id: 's2', title: 'Is FyndRx available across Ghana?', content: 'Yes. FyndRx partners with licensed pharmacies across multiple cities in Ghana including Accra, Kumasi, Tamale, Takoradi, and more. Coverage is expanding continuously. You can use the Pharmacy Finder to locate partners near you.', category: 'General' },
+  { id: 's3', title: 'Do I need an account to use FyndRx?', content: 'You can browse medications and pharmacies without an account. However, placing orders, uploading prescriptions, booking consultations, and tracking orders requires a free FyndRx account. Creating an account takes less than a minute.', category: 'General' },
+  { id: 's4', title: 'Is FyndRx safe to use?', content: 'Yes. All partner pharmacies are licensed by the Ghana Pharmacy Council and the Food and Drugs Authority (FDA). Your personal and health data is encrypted and handled in compliance with the Ghana Data Protection Act, 2012 (Act 843). We never sell your data.', category: 'General' },
+  // Orders & Delivery
+  { id: 's5', title: 'How do I place an order?', content: 'Search for your medication, select your preferred pharmacy, add it to your cart, and proceed to checkout. Choose between home delivery and pharmacy pickup. Complete payment and you\'ll receive an order confirmation immediately.', category: 'Orders & Delivery' },
+  { id: 's6', title: 'How long does delivery take?', content: 'Delivery timelines depend on your location and the pharmacy. Most orders within the same city are delivered within 2–4 hours. Same-day delivery is available at participating pharmacies. You will receive estimated delivery time at checkout.', category: 'Orders & Delivery' },
+  { id: 's7', title: 'How do I track my order?', content: 'Once your order is confirmed, you can track it in real-time from your FyndRx dashboard under "My Orders". You will also receive SMS and push notifications at each stage: order confirmed, dispensed, out for delivery, and delivered.', category: 'Orders & Delivery' },
+  { id: 's8', title: 'What if my order doesn\'t arrive or is incorrect?', content: 'Contact our support team within 48 hours via the Help Center, email support@fyndrx.com, or call us on +233 53 051 0839. For incorrect items, we will arrange a replacement at no cost. Please do not return opened medication packaging before contacting us.', category: 'Orders & Delivery' },
+  // Prescriptions
+  { id: 's9', title: 'Which medications require a prescription?', content: 'Prescription-only medicines (POM) — such as antibiotics, controlled pain medications, certain antimalarials, and chronic disease medications — require a valid prescription from a licensed Ghanaian medical practitioner before they can be dispensed.', category: 'Prescriptions' },
+  { id: 's10', title: 'How do I upload my prescription?', content: 'Go to "Upload Prescription" from the home page or your dashboard. Take a clear photo or scan of your prescription and upload it. A pharmacist will verify it, typically within 1–3 hours. You will be notified once it\'s approved and ready to fulfill.', category: 'Prescriptions' },
+  { id: 's11', title: 'Is my prescription data kept private?', content: 'Absolutely. Your prescription images and medical information are encrypted, stored securely, and are only shared with the pharmacist or doctor fulfilling or reviewing your order. We never share health data with third parties for advertising purposes.', category: 'Prescriptions' },
+  { id: 's12', title: 'Can I get a refill through FyndRx?', content: 'Yes. Your prescription history is saved in your account under "My Prescriptions". For repeat prescriptions, you can request a refill directly from your history. Your prescribing doctor or our teleconsultation service can issue a new prescription if yours has expired.', category: 'Prescriptions' },
+  // Payments & Security
+  { id: 's13', title: 'What payment methods does FyndRx accept?', content: 'We accept MTN Mobile Money, Vodafone Cash, AirtelTigo Money, Visa, Mastercard, and bank transfers. Payment is required at the time of order placement to confirm your order. All transactions are processed through regulated, secure payment gateways.', category: 'Payments & Security' },
+  { id: 's14', title: 'Is it safe to pay online on FyndRx?', content: 'Yes. We use TLS/SSL encryption for all transactions and do not store card or mobile money credentials on our servers. Payments are processed by PCI-DSS compliant third-party gateways. Look for the padlock icon in your browser address bar to confirm a secure connection.', category: 'Payments & Security' },
+  { id: 's15', title: 'Can I get a refund?', content: 'Refunds are available for orders where the wrong item was delivered, items arrived damaged, or the pharmacy could not fulfil the order. Due to health and safety regulations, opened medication packaging cannot be returned. Submit refund requests within 48 hours to support@fyndrx.com.', category: 'Payments & Security' },
+  { id: 's16', title: 'How do I report a payment problem?', content: 'If you were charged but did not receive a confirmation, or if a payment failed but your account was debited, contact us immediately at support@fyndrx.com with your transaction reference. We resolve payment disputes within 3–5 business days.', category: 'Payments & Security' },
+];
+
 onMounted(async () => {
   const elements = document.querySelectorAll('.scroll-animate');
   elements.forEach((element) => registerElement(element as HTMLElement));
 
   try {
-    allFaqs.value = await informationService.getFAQs();
+    const fetched = await informationService.getFAQs();
+    allFaqs.value = fetched.length > 0 ? fetched : staticFaqs;
   } catch (error) {
     console.error('Failed to load FAQs:', error);
+    allFaqs.value = staticFaqs;
   } finally {
     loading.value = false;
   }

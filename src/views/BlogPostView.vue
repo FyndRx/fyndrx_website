@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { formatDate } from '@/utils/date';
 import { blogService } from '@/services/blogService';
+import { useAuthStore } from '@/store/auth';
 import type { BlogPost, Comment } from '@/types/blog';
 import LazyImage from '@/components/LazyImage.vue';
 import ErrorState from '@/components/ErrorState.vue';
@@ -12,93 +13,175 @@ import LinkedInIcon from '@/components/icons/LinkedInIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+
 const isLoading = ref(true);
 const post = ref<BlogPost | null>(null);
 const relatedPosts = ref<BlogPost[]>([]);
 const comments = ref<Comment[]>([]);
-const newComment = ref('');
-const newReply = ref('');
-const activeReplyId = ref<number | null>(null);
-const postLiked = ref(false);
 const error = ref<string | null>(null);
 
+// Like state
+const postLiked = ref(false);
+const isLiking = ref(false);
+
+// Comment form state
+const newComment = ref('');
+const isSubmittingComment = ref(false);
+const commentError = ref('');
+const linkCopied = ref(false);
+
+// Reply state (per-comment box)
+const newReply = ref('');
+const activeReplyId = ref<string | null>(null);
+const isSubmittingReply = ref(false);
+const replyError = ref('');
+
 const currentUrl = computed(() => window.location.href);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-const submitComment = () => {
-  if (!newComment.value.trim()) return;
+// ─── Post Like ────────────────────────────────────────────────────────────────
 
-  const comment: Comment = {
-    id: Date.now(),
-    author: {
-      name: 'Guest User',
-      avatar: 'https://ui-avatars.com/api/?name=Guest+User&background=246BFD&color=fff'
-    },
-    content: newComment.value,
-    date: new Date().toISOString(),
-    likes: 0,
-    replies: []
-  };
+const togglePostLike = async () => {
+  if (!post.value) return;
 
-  comments.value = [...(comments.value || []), comment];
-  newComment.value = '';
-};
-
-const submitReply = (commentId: number) => {
-  if (!newReply.value.trim()) return;
-
-  const reply: Comment = {
-    id: Date.now(),
-    author: {
-      name: 'Guest User',
-      avatar: 'https://ui-avatars.com/api/?name=Guest+User&background=246BFD&color=fff'
-    },
-    content: newReply.value,
-    date: new Date().toISOString(),
-    likes: 0
-  };
-
-  const comment = comments.value?.find(c => c.id === commentId);
-  if (comment) {
-    comment.replies = [...(comment.replies || []), reply];
+  if (!isAuthenticated.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
   }
 
-  newReply.value = '';
-  activeReplyId.value = null;
-};
+  if (isLiking.value) return;
+  isLiking.value = true;
 
-const toggleReply = (commentId: number) => {
-  activeReplyId.value = activeReplyId.value === commentId ? null : commentId;
-};
+  // Optimistic update
+  const wasLiked = postLiked.value;
+  postLiked.value = !wasLiked;
+  post.value.likes = (post.value.likes ?? 0) + (wasLiked ? -1 : 1);
 
-const likeComment = (commentId: number, isReply = false, parentId?: number) => {
-  if (!isReply) {
-    const comment = comments.value?.find(c => c.id === commentId);
-    if (comment) {
-      comment.likes = (comment.likes || 0) + 1;
-    }
-  } else if (parentId) {
-    const parentComment = comments.value?.find(c => c.id === parentId);
-    const reply = parentComment?.replies?.find(r => r.id === commentId);
-    if (reply) {
-      reply.likes = (reply.likes || 0) + 1;
-    }
+  try {
+    const { liked, likes } = await blogService.likePost(post.value.id);
+    // Sync with server truth
+    postLiked.value = liked;
+    post.value.likes = likes;
+  } catch {
+    // Revert on failure
+    postLiked.value = wasLiked;
+    post.value.likes = (post.value.likes ?? 0) + (wasLiked ? 1 : -1);
+  } finally {
+    isLiking.value = false;
   }
 };
 
-const togglePostLike = () => {
-  if (post.value) {
-    if (postLiked.value) {
-      post.value.likes = (post.value.likes || 0) - 1;
-    } else {
-      post.value.likes = (post.value.likes || 0) + 1;
-    }
-    postLiked.value = !postLiked.value;
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+const submitComment = async () => {
+  if (!newComment.value.trim() || !post.value) return;
+  commentError.value = '';
+
+  if (!isAuthenticated.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
+  }
+
+  isSubmittingComment.value = true;
+  try {
+    const created = await blogService.commentOnPost(post.value.id, newComment.value.trim());
+    comments.value = [created, ...(comments.value ?? [])];
+    if (post.value) post.value = { ...post.value, comments: comments.value };
+    newComment.value = '';
+  } catch (err: any) {
+    commentError.value = err?.response?.data?.message ?? 'Failed to post comment. Please try again.';
+  } finally {
+    isSubmittingComment.value = false;
   }
 };
+
+// ─── Replies ──────────────────────────────────────────────────────────────────
+
+const toggleReply = (commentId: string) => {
+  if (activeReplyId.value === commentId) {
+    activeReplyId.value = null;
+    newReply.value = '';
+    replyError.value = '';
+  } else {
+    activeReplyId.value = commentId;
+    newReply.value = '';
+    replyError.value = '';
+  }
+};
+
+const submitReply = async (parentCommentId: string) => {
+  if (!newReply.value.trim() || !post.value) return;
+  replyError.value = '';
+
+  if (!isAuthenticated.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
+  }
+
+  isSubmittingReply.value = true;
+  try {
+    const created = await blogService.commentOnPost(post.value.id, newReply.value.trim(), parentCommentId);
+    const parent = comments.value?.find(c => c.id === parentCommentId);
+    if (parent) {
+      parent.replies = [...(parent.replies ?? []), created];
+    }
+    newReply.value = '';
+    activeReplyId.value = null;
+  } catch (err: any) {
+    replyError.value = err?.response?.data?.message ?? 'Failed to post reply. Please try again.';
+  } finally {
+    isSubmittingReply.value = false;
+  }
+};
+
+// ─── Comment likes ────────────────────────────────────────────────────────────
+
+// Map of commentId → liked boolean (persisted state from API)
+const commentLikeState = ref<Map<string, boolean>>(new Map());
+const commentLikeLoading = ref<Set<string>>(new Set());
+
+const findComment = (commentId: string, parentId?: string) => {
+  if (parentId == null) return comments.value?.find(c => c.id === commentId) ?? null;
+  const parent = comments.value?.find(c => c.id === parentId);
+  return parent?.replies?.find(r => r.id === commentId) ?? null;
+};
+
+const likeComment = async (commentId: string, parentId?: string) => {
+  if (commentLikeLoading.value.has(commentId)) return;
+
+  if (!isAuthenticated.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
+  }
+
+  commentLikeLoading.value.add(commentId);
+
+  const target = findComment(commentId, parentId);
+  const wasLiked = commentLikeState.value.get(commentId) ?? false;
+
+  // Optimistic update
+  commentLikeState.value.set(commentId, !wasLiked);
+  if (target) target.likes = (target.likes ?? 0) + (wasLiked ? -1 : 1);
+
+  try {
+    const { liked, likes } = await blogService.likeComment(commentId);
+    commentLikeState.value.set(commentId, liked);
+    if (target) target.likes = likes;
+  } catch {
+    // Revert on failure
+    commentLikeState.value.set(commentId, wasLiked);
+    if (target) target.likes = (target.likes ?? 0) + (wasLiked ? 1 : -1);
+  } finally {
+    commentLikeLoading.value.delete(commentId);
+  }
+};
+
+// ─── Share ────────────────────────────────────────────────────────────────────
 
 const shareArticle = (platform: string) => {
   const url = currentUrl.value;
-  const title = post.value?.title || '';
+  const title = post.value?.title ?? '';
 
   switch (platform) {
     case 'twitter':
@@ -111,36 +194,56 @@ const shareArticle = (platform: string) => {
       window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, '_blank');
       break;
     case 'copy':
-      navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      navigator.clipboard.writeText(url).then(() => {
+        linkCopied.value = true;
+        setTimeout(() => { linkCopied.value = false; }, 2000);
+      });
       break;
   }
 };
 
+// ─── Related post navigation ──────────────────────────────────────────────────
+
 const viewPost = (slug: string) => {
   router.push({ name: 'blog-post', params: { slug } });
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  loadPost();
 };
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
 
 const loadPost = async () => {
   isLoading.value = true;
   error.value = null;
-  
+  postLiked.value = false;
+  commentLikeState.value = new Map();
+  commentLikeLoading.value = new Set();
+
   try {
     const slug = route.params.slug as string;
     const fetchedPost = await blogService.getPost(slug);
-    
+
     if (!fetchedPost) {
       error.value = 'Blog post not found';
       return;
     }
-    
+
     post.value = fetchedPost;
-    comments.value = fetchedPost.comments || [];
-    
-    const related = await blogService.getRelatedPosts(fetchedPost.id, 3);
-    relatedPosts.value = related;
+    postLiked.value = fetchedPost.liked ?? false;
+
+    // Use embedded comments from the post response; fall back to dedicated endpoint
+    const loadedComments = fetchedPost.comments?.length
+      ? fetchedPost.comments
+      : await blogService.getComments(fetchedPost.id);
+
+    comments.value = loadedComments;
+
+    // Seed comment like state from server so hearts are filled on refresh
+    loadedComments.forEach(c => {
+      if (c.liked) commentLikeState.value.set(c.id, true);
+      c.replies?.forEach(r => { if (r.liked) commentLikeState.value.set(r.id, true); });
+    });
+
+    relatedPosts.value = await blogService.getRelatedPosts(fetchedPost.id, 3);
   } catch (err) {
     console.error('Error loading post:', err);
     error.value = 'Failed to load blog post';
@@ -149,9 +252,10 @@ const loadPost = async () => {
   }
 };
 
-onMounted(() => {
-  loadPost();
-});
+// Reload when navigating between posts (e.g. related post clicks)
+watch(() => route.params.slug, (slug) => { if (slug) loadPost(); });
+
+onMounted(() => { loadPost(); });
 </script>
 
 <template>
@@ -278,50 +382,40 @@ onMounted(() => {
               <div class="flex items-center gap-4">
                 <button
                   @click="togglePostLike"
+                  :disabled="isLiking"
+                  :title="isAuthenticated ? (postLiked ? 'Unlike' : 'Like') : 'Sign in to like'"
                   :class="[
                     'flex items-center gap-2 px-4 py-2 rounded-full transition-all',
                     postLiked
                       ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20',
+                    isLiking ? 'opacity-60 cursor-wait' : 'cursor-pointer'
                   ]"
                 >
-                  <svg class="w-5 h-5" :fill="postLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 transition-transform" :class="{ 'scale-125': postLiked }" :fill="postLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                   </svg>
-                  <span class="font-medium">{{ post.likes }}</span>
+                  <span class="font-medium">{{ post.likes ?? 0 }}</span>
                 </button>
               </div>
 
               <div class="flex items-center gap-3">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Share:</span>
-                <button
-                  @click="shareArticle('twitter')"
-                  class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all"
-                  title="Share on Twitter"
-                >
+                <button @click="shareArticle('twitter')" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all" title="Share on Twitter">
                   <TwitterIcon class="w-5 h-5" />
                 </button>
-                <button
-                  @click="shareArticle('facebook')"
-                  class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all"
-                  title="Share on Facebook"
-                >
+                <button @click="shareArticle('facebook')" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all" title="Share on Facebook">
                   <FacebookIcon class="w-5 h-5" />
                 </button>
-                <button
-                  @click="shareArticle('linkedin')"
-                  class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all"
-                  title="Share on LinkedIn"
-                >
+                <button @click="shareArticle('linkedin')" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 hover:text-blue-600 transition-all" title="Share on LinkedIn">
                   <LinkedInIcon class="w-5 h-5" />
                 </button>
-                <button
-                  @click="shareArticle('copy')"
-                  class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                  title="Copy link"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="shareArticle('copy')" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 transition-all" :class="linkCopied ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'" :title="linkCopied ? 'Copied!' : 'Copy link'">
+                  <svg v-if="!linkCopied" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </button>
               </div>
@@ -337,22 +431,47 @@ onMounted(() => {
             </svg>
             Comments ({{ comments.length }})
           </h2>
-          
-          <!-- Comment Form -->
+
+          <!-- Comment Form / Auth gate -->
           <div class="mb-8">
-            <textarea
-              v-model="newComment"
-              placeholder="Share your thoughts..."
-              class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
-              rows="4"
-            ></textarea>
-            <button
-              @click="submitComment"
-              :disabled="!newComment.trim()"
-              class="mt-3 px-6 py-3 bg-[#246BFD] text-white rounded-xl hover:bg-[#5089FF] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Post Comment
-            </button>
+            <template v-if="isAuthenticated">
+              <textarea
+                v-model="newComment"
+                placeholder="Share your thoughts..."
+                :disabled="isSubmittingComment"
+                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all disabled:opacity-60"
+                rows="4"
+              ></textarea>
+              <p v-if="commentError" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ commentError }}</p>
+              <button
+                @click="submitComment"
+                :disabled="!newComment.trim() || isSubmittingComment"
+                class="mt-3 px-6 py-3 bg-[#246BFD] text-white rounded-xl hover:bg-[#5089FF] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <svg v-if="isSubmittingComment" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                {{ isSubmittingComment ? 'Posting…' : 'Post Comment' }}
+              </button>
+            </template>
+
+            <!-- Not signed in -->
+            <div v-else class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700">
+              <svg class="w-8 h-8 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <div>
+                <p class="font-medium text-gray-800 dark:text-gray-200">Sign in to join the conversation</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">You need an account to post comments.</p>
+              </div>
+              <button
+                @click="router.push({ name: 'login', query: { redirect: route.fullPath } })"
+                class="ml-auto shrink-0 px-4 py-2 bg-[#246BFD] text-white text-sm font-semibold rounded-lg hover:bg-[#5089FF] transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
           </div>
 
           <!-- Comments List -->
@@ -373,46 +492,64 @@ onMounted(() => {
                 </div>
                 <button
                   @click="likeComment(comment.id)"
-                  class="flex items-center gap-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  :disabled="commentLikeLoading.has(comment.id)"
+                  class="flex items-center gap-1 transition-colors"
+                  :class="commentLikeState.get(comment.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'"
+                  :title="commentLikeState.get(comment.id) ? 'Unlike' : 'Like'"
                 >
-                  <svg class="w-5 h-5" :class="{ 'text-red-500 fill-current': (comment.likes ?? 0) > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5" :fill="commentLikeState.get(comment.id) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                   </svg>
-                  <span v-if="comment.likes">{{ comment.likes }}</span>
+                  <span v-if="(comment.likes ?? 0) > 0" class="text-sm font-medium">{{ comment.likes }}</span>
                 </button>
               </div>
-              
-              <p class="text-gray-700 dark:text-gray-300 mb-3">{{ comment.content }}</p>
-              
+
+              <p class="text-gray-700 dark:text-gray-300 mb-4">{{ comment.content }}</p>
+
               <button
                 @click="toggleReply(comment.id)"
-                class="text-sm text-[#246BFD] hover:text-[#5089FF] font-medium transition-colors"
+                class="text-sm font-medium transition-colors"
+                :class="activeReplyId === comment.id ? 'text-gray-500 dark:text-gray-400' : 'text-[#246BFD] hover:text-[#5089FF]'"
               >
-                Reply
+                {{ activeReplyId === comment.id ? 'Cancel' : 'Reply' }}
               </button>
 
               <!-- Reply Form -->
               <div v-if="activeReplyId === comment.id" class="mt-4 pl-6 border-l-2 border-[#246BFD]">
-                <textarea
-                  v-model="newReply"
-                  placeholder="Write a reply..."
-                  class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white"
-                  rows="3"
-                ></textarea>
-                <div class="mt-2 flex gap-2">
-                  <button
-                    @click="submitReply(comment.id)"
-                    :disabled="!newReply.trim()"
-                    class="px-4 py-2 bg-[#246BFD] text-white rounded-lg hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Post Reply
-                  </button>
-                  <button
-                    @click="activeReplyId = null"
-                    class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    Cancel
-                  </button>
+                <template v-if="isAuthenticated">
+                  <textarea
+                    v-model="newReply"
+                    placeholder="Write a reply…"
+                    :disabled="isSubmittingReply"
+                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white disabled:opacity-60"
+                    rows="3"
+                  ></textarea>
+                  <p v-if="replyError" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ replyError }}</p>
+                  <div class="mt-2 flex gap-2">
+                    <button
+                      @click="submitReply(comment.id)"
+                      :disabled="!newReply.trim() || isSubmittingReply"
+                      class="px-4 py-2 bg-[#246BFD] text-white rounded-lg hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
+                    >
+                      <svg v-if="isSubmittingReply" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                      </svg>
+                      {{ isSubmittingReply ? 'Posting…' : 'Post Reply' }}
+                    </button>
+                    <button
+                      @click="toggleReply(comment.id)"
+                      class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </template>
+                <div v-else class="flex items-center gap-3 p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
+                  <span class="text-sm text-gray-600 dark:text-gray-300">
+                    <button @click="router.push({ name: 'login', query: { redirect: route.fullPath } })" class="text-[#246BFD] font-semibold hover:underline">Sign in</button>
+                    to reply to this comment.
+                  </span>
                 </div>
               </div>
 
@@ -433,13 +570,16 @@ onMounted(() => {
                       </div>
                     </div>
                     <button
-                      @click="likeComment(reply.id, true, comment.id)"
-                      class="flex items-center gap-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      @click="likeComment(reply.id, comment.id)"
+                      :disabled="commentLikeLoading.has(reply.id)"
+                      class="flex items-center gap-1 transition-colors"
+                      :class="commentLikeState.get(reply.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'"
+                      :title="commentLikeState.get(reply.id) ? 'Unlike' : 'Like'"
                     >
-                      <svg class="w-4 h-4" :class="{ 'text-red-500 fill-current': (reply.likes ?? 0) > 0 }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4" :fill="commentLikeState.get(reply.id) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                       </svg>
-                      <span v-if="reply.likes" class="text-xs">{{ reply.likes }}</span>
+                      <span v-if="(reply.likes ?? 0) > 0" class="text-xs font-medium">{{ reply.likes }}</span>
                     </button>
                   </div>
                   <p class="text-gray-700 dark:text-gray-300 text-sm">{{ reply.content }}</p>
@@ -447,7 +587,7 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Empty Comments State -->
+            <!-- Empty state -->
             <div v-if="comments.length === 0" class="text-center py-12">
               <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>

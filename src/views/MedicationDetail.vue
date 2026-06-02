@@ -22,20 +22,20 @@ const notification = useNotification();
 const route = useRoute();
 
 interface Pharmacy {
-  id: number;
+  id: string;
   name: string;
   logo: string | null;
   price: number;
   discountPrice?: number;
   inStock: boolean;
   stockQuantity?: number;
-  branch_id?: number;
+  branch_id?: string;
   branch_name?: string | null;
   latitude?: number;
   longitude?: number;
   is_open?: boolean;
-  priceId?: number;
-  pharmacyBranchId?: number;
+  priceId?: string;
+  pharmacyBranchId?: string;
   pharmacy?: {
     name: string;
     logo: string | null;
@@ -85,7 +85,7 @@ const relatedShowOpenOnly = ref(false);
 const relatedShowInStockOnly = ref(false);
 const itemsPerPage = ref(12);
 
-const customQuantities = ref<Map<number, number>>(new Map());
+const customQuantities = ref<Map<string, number>>(new Map());
 
 const paginatedPharmacies = computed(() => {
   if (!exactMatch.value || !exactMatch.value.pharmacies) return [];
@@ -193,7 +193,7 @@ const loadRelatedDrugs = async () => {
   }
 };
 
-const loadMedicationData = async (medicationId: number) => {
+const loadMedicationData = async (medicationId: string | number) => {
   loading.value = true;
   error.value = null;
   // Reset pagination and clear previous results for a fresh start
@@ -245,11 +245,11 @@ watch([relatedSearch, relatedSort, relatedShowOpenOnly, relatedShowInStockOnly],
 });
 
 
-const getCustomQuantity = (pharmacyId: number): number => {
+const getCustomQuantity = (pharmacyId: string): number => {
   return customQuantities.value.get(pharmacyId) || 1;
 };
 
-const setCustomQuantity = (pharmacyId: number, quantity: number) => {
+const setCustomQuantity = (pharmacyId: string, quantity: number) => {
   customQuantities.value.set(pharmacyId, quantity);
 };
 
@@ -303,18 +303,15 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
 
 
 onMounted(async () => {
-  const medicationId = route.params.id ? parseInt(route.params.id as string) : 1;
-  console.log('MedicationDetail mounted, id:', medicationId);
+  const medicationId = (route.params.id as string) || '';
   await loadMedicationData(medicationId);
 });
 
-// Watch for route changes (both ID and query params/variants) 
-// to reload medication when navigating between different medications or variants
 watch(
   () => [route.params.id, route.query.brand_id, route.query.form_id, route.query.strength_id, route.query.uom_id],
   async ([newId]) => {
     if (newId) {
-      await loadMedicationData(parseInt(newId as string));
+      await loadMedicationData(newId as string);
     }
   },
   { deep: true }

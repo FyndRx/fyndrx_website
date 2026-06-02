@@ -65,13 +65,12 @@ const categoryOptions = computed(() => {
 const formOptions = computed(() => {
   const forms = new Set<string>();
   let meds = baseFilteredMedications.value;
-  
+
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
-      if (Array.isArray(med.category)) {
-        return (med.category as any[]).some(cat => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
-      }
-      return (typeof med.category === 'string' ? med.category : (med.category as any)?.name) === selectedCategory.value;
+      const cats = Array.isArray(med.category) ? med.category : (med.category ? [med.category] : []);
+      if (cats.length === 0) return true;
+      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
     });
   }
   
@@ -92,13 +91,12 @@ const formOptions = computed(() => {
 const brandOptions = computed(() => {
   const brands = new Set<string>();
   let meds = baseFilteredMedications.value;
-  
+
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
-      if (Array.isArray(med.category)) {
-        return (med.category as any[]).some(cat => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
-      }
-      return (typeof med.category === 'string' ? med.category : (med.category as any)?.name) === selectedCategory.value;
+      const cats = Array.isArray(med.category) ? med.category : (med.category ? [med.category] : []);
+      if (cats.length === 0) return true;
+      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
     });
   }
   
@@ -145,20 +143,27 @@ const sortOptions = [
   { label: 'Category', value: 'category' }
 ];
 
+const matchesCategorySlug = (cat: any, slug: string): boolean => {
+  if (typeof cat === 'string') return cat.toLowerCase() === slug.toLowerCase();
+  return cat.slug === slug || cat.name?.toLowerCase() === slug.toLowerCase();
+};
+
 const filteredMedications = computed(() => {
   let meds = [...allMedications.value];
-  
-  // 1. Category Filter
+
+  // 1. Category — already filtered server-side by the API; only re-filter client-side
+  //    when medications carry category data so we can do accurate slug comparison.
   if (selectedCategory.value !== 'all') {
     meds = meds.filter(med => {
-      if (Array.isArray(med.category)) {
-        return med.category.some((cat: any) => (typeof cat === 'string' ? cat : cat.name) === selectedCategory.value);
-      }
-      const name = typeof med.category === 'string' ? med.category : (med.category as any)?.name;
-      return name === selectedCategory.value;
+      const cats = Array.isArray(med.category)
+        ? med.category
+        : (med.category ? [med.category] : []);
+      // If the medication has no category data, trust the API result and keep it.
+      if (cats.length === 0) return true;
+      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
     });
   }
-  
+
   // 2. Form Filter
   if (selectedForm.value !== 'all') {
     meds = meds.filter(med => 
