@@ -87,7 +87,7 @@ const getColorClass = computed(() => colorClasses[props.color]);
 
 <template>
   <!-- Default Variant -->
-  <div v-if="variant === 'default'" class="inline-flex items-start">
+  <div v-if="variant === 'default'" class="inline-flex items-center">
     <div class="relative flex items-center">
       <input
         type="checkbox"
@@ -251,17 +251,6 @@ const getColorClass = computed(() => colorClasses[props.color]);
       </div>
     </div>
 
-    <!-- Selected Badge -->
-    <div
-      v-if="isChecked"
-      :class="[
-        'absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold',
-        getColorClass.bg,
-        'text-white'
-      ]"
-    >
-      ✓ Selected
-    </div>
   </div>
 
   <!-- Error Message -->
