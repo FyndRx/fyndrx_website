@@ -44,6 +44,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/pharmacy/onboard',
+      name: 'pharmacy-onboard',
+      component: () => import('../views/Pharmacy/PharmacyOnboardingView.vue'),
+      meta: {
+        title: 'Join FyndRx as a Partner Pharmacy | FyndRx',
+        description: 'Register your pharmacy on FyndRx and reach thousands of patients across Ghana.',
+        requiresAuth: false,
+      },
+    },
+    {
       path: '/contact',
       name: 'contact',
       component: () => import('../views/Contact/ContactView.vue'),
@@ -181,6 +191,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/pharmacy/:pharmacyId/branch/:branchId',
+      name: 'pharmacy-branch',
+      component: () => import('../views/PharmacyBranchView.vue'),
+      meta: {
+        title: 'Branch Details | FyndRX',
+        description: 'View branch-specific details, services, hours, and contact information.',
+      },
+    },
+    {
       path: '/medications',
       name: 'medications',
       component: () => import('@/views/MedicationsView.vue'),
@@ -258,6 +277,15 @@ const router = createRouter({
           component: () => import('@/views/Public/PublicCreateConsultationView.vue'),
           meta: {
             title: 'New Consultation | FyndRX',
+            requiresAuth: false
+          }
+        },
+        {
+          path: 'result',
+          name: 'public-consultation-result',
+          component: () => import('@/views/Public/PublicConsultationResultView.vue'),
+          meta: {
+            title: 'Consultation Details | FyndRX',
             requiresAuth: false
           }
         }
@@ -444,8 +472,11 @@ const router = createRouter({
   ],
 });
 
-// Navigation guard
-router.beforeEach(async (to, _, next) => {
+// Navigation guard — uses Vue Router 4 return-value pattern (not the legacy next() callback).
+// Mixing async/await with next() causes a double-resolve race: the async function's Promise
+// resolves with `undefined` at the same time next() is called, leaving the router in a stale
+// state where the URL updates but the component tree does not swap.
+router.beforeEach(async (to) => {
   // Update page title
   document.title = (to.meta.title as string) || 'FyndRx';
 
@@ -472,31 +503,26 @@ router.beforeEach(async (to, _, next) => {
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' });
-    return;
+    return { name: 'login' };
   }
 
   // Check if route requires guest (not authenticated)
   if (to.meta.requiresGuest && isAuthenticated) {
-    next({ name: 'home' });
-    return;
+    return { name: 'home' };
   }
 
-  // If authenticated but user details are missing (e.g. page reload), fetch them in background
-  // or block if critical. For now we let it happen in background or App.vue
+  // If authenticated but user details are missing after a page reload, fetch them now.
+  // This runs in-guard rather than background so the page has user data when it mounts.
   if (isAuthenticated && !authStore.user) {
     try {
       await authStore.fetchUserDetails();
-    } catch (error) {
-      // If fetching user details fails (e.g. token expired), let the interceptor handle it
-      // or redirect to login
-      console.error('Failed to fetch user details during navigation:', error);
-      // Optional: authStore.logout(); next({ name: 'login' }); 
-      // But we generally prefer the global error handler to do this.
+    } catch {
+      // Token may have expired; the 401 interceptor dispatches auth:unauthorized which
+      // triggers logout + redirect — no manual handling needed here.
     }
   }
 
-  next();
+  // Returning undefined (implicit) = proceed normally
 });
 
 export default router;
