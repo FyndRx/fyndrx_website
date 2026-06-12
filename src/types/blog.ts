@@ -5,7 +5,7 @@ export interface Author {
 }
 
 export interface BlogPost {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   excerpt: string;
@@ -18,15 +18,17 @@ export interface BlogPost {
   readTime?: number;
   likes?: number;
   views?: number;
+  liked?: boolean;
   comments?: Comment[];
 }
 
 export interface Comment {
-  id: number;
+  id: string;
   author: Author;
   content: string;
   date: string;
   likes?: number;
+  liked?: boolean;
   replies?: Comment[];
 }
 

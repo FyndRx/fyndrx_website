@@ -29,7 +29,7 @@ const receiptData = computed(() => {
   const txRef = transaction.value?.reference || `ORD-${order.value.orderNumber || order.value.id}`;
   const txId = transaction.value?.id || `N/A`;
   const paymentMethod = transaction.value?.payment_method 
-    ? (transaction.value.payment_method === 'platform' ? 'Online Payment (Paystack)' : 'Pay at Pharmacy')
+    ? (transaction.value.payment_method === 'platform' ? 'Online Payment' : 'Pay at Pharmacy')
     : (order.value.paymentMethod === 'platform' ? 'Online Payment' : 'Pay at Pharmacy');
     
   const amountPaid = transaction.value?.amount || order.value.total;
@@ -152,7 +152,9 @@ const loadReceipt = async () => {
          // Optionally try to find transaction for this order (optional, for completeness)
          try {
             const allTxs = await paymentService.getTransactions();
-            const foundTx = allTxs.find(t => String(t.order_id) === String(order.value!.id));
+            const foundTx = Array.isArray(allTxs) 
+              ? allTxs.find(t => String(t.order_id) === String(order.value!.id))
+              : null;
             if (foundTx) transaction.value = foundTx;
          } catch (e) { /* ignore */ }
        }
@@ -334,10 +336,10 @@ onMounted(() => {
                      <span class="text-2xl font-extrabold text-[#246BFD]">{{ formatCurrency(receiptData.total) }}</span>
                   </div>
                   
-                  <div v-if="receiptData.paymentMethod.includes('Paystack')" class="mt-6 p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
+                  <div v-if="receiptData.paymentMethod === 'Online Payment'" class="mt-6 p-3 bg-gray-50 rounded-lg flex items-center justify-between border border-gray-100">
                      <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span class="text-xs font-bold text-gray-600 uppercase">Paid via Paystack</span>
+                        <span class="text-xs font-bold text-gray-600 uppercase">Paid Online</span>
                      </div>
                      <span class="font-mono text-sm font-bold text-gray-900">{{ formatCurrency(receiptData.amountPaid) }}</span>
                   </div>

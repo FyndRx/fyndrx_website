@@ -49,7 +49,7 @@ export default {
 </script>
 
 <template>
-  <section class="py-16 bg-white dark:bg-gray-900">
+  <section class="py-16 bg-gray-50 dark:bg-gray-800/50">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mx-auto max-w-4xl">
         <div class="mb-12 text-center">

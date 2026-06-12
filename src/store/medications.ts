@@ -18,6 +18,7 @@ export const useMedicationsStore = defineStore('medications', () => {
   const showFilters = ref(false);
 
   const allMedications = ref<Medication[]>([]);
+  const categories = ref<any[]>([]);
   const liveSearchMeta = ref<PaginationMeta | null>(null);
   const pagination = reactive({
     page: 1,
@@ -112,11 +113,20 @@ export const useMedicationsStore = defineStore('medications', () => {
     }
   };
 
+  const fetchCategories = async () => {
+    const { pharmacyService } = await import('@/services/pharmacyService');
+    const cats = await pharmacyService.getCategories();
+    categories.value = cats;
+  };
+
   const initializeMedications = async (initialSearch?: string) => {
     if (initialSearch) {
       searchQuery.value = initialSearch;
     }
-    await loadMedications();
+    await Promise.all([
+      loadMedications(),
+      fetchCategories()
+    ]);
     initialized.value = true;
   };
 
@@ -250,6 +260,7 @@ export const useMedicationsStore = defineStore('medications', () => {
     showQuickView,
     comparisonList,
     comparisonModalOpen,
+    categories,
     hasMoreRemoteResults,
     activeFiltersCount,
     // actions

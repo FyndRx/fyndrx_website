@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
 import LazyImage from '@/components/LazyImage.vue';
@@ -15,8 +15,40 @@ const activeTab = ref('personal');
 const tabs = [
   { id: 'personal', label: 'Personal Information', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   { id: 'addresses', label: 'Delivery Addresses', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' },
-  { id: 'medical', label: 'Medical History', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
+  { id: 'medical', label: 'Medical History', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { id: 'sessions', label: 'Active Sessions', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' }
 ];
+
+const sessionsLoading = ref(false);
+const sessionsError = ref<string | null>(null);
+
+const fetchSessions = async () => {
+  try {
+    sessionsLoading.value = true;
+    sessionsError.value = null;
+    await authStore.fetchActiveSessions();
+  } catch (err: any) {
+    sessionsError.value = err.message || 'Failed to load active sessions';
+  } finally {
+    sessionsLoading.value = false;
+  }
+};
+
+const handleRevokeSession = async (id: number) => {
+  if (confirm('Are you sure you want to revoke this session? The device will be logged out immediately.')) {
+    try {
+      await authStore.revokeSession(id);
+    } catch (err: any) {
+      alert(err.message || 'Failed to revoke session');
+    }
+  }
+};
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'sessions') {
+    fetchSessions();
+  }
+});
 </script>
 
 <template>
@@ -192,6 +224,107 @@ const tabs = [
               <!-- Medical History Tab -->
               <div v-else-if="activeTab === 'medical'">
                 <MedicalHistorySection />
+              </div>
+
+              <!-- Active Sessions Tab -->
+              <div v-else-if="activeTab === 'sessions'" class="space-y-8">
+                <div class="flex items-center justify-between pb-4 border-b border-gray-150 dark:border-gray-700">
+                  <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Active Sessions</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                      Manage the devices logged into your account.
+                    </p>
+                  </div>
+                  <button 
+                    @click="fetchSessions"
+                    :disabled="sessionsLoading"
+                    class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+                    title="Refresh Sessions"
+                  >
+                    <svg 
+                      class="w-5 h-5" 
+                      :class="sessionsLoading ? 'animate-spin' : ''" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <div v-if="sessionsLoading && !authStore.activeSessions.length" class="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div class="w-10 h-10 border-4 border-[#246BFD] border-t-transparent rounded-full animate-spin"></div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Loading your active sessions...</p>
+                </div>
+
+                <div v-else-if="sessionsError" class="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 p-6 rounded-2xl border border-red-100 dark:border-red-900/20 flex items-start space-x-3">
+                  <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <div>
+                    <p class="font-bold text-sm">Failed to load sessions</p>
+                    <p class="text-xs opacity-90 mt-1">{{ sessionsError }}</p>
+                    <button @click="fetchSessions" class="mt-2 text-xs font-bold underline hover:no-underline">Try again</button>
+                  </div>
+                </div>
+
+                <div v-else-if="!authStore.activeSessions.length" class="text-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+                  <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  <p class="mt-4 text-sm text-gray-500 dark:text-gray-400 font-medium">No active sessions found.</p>
+                </div>
+
+                <div v-else class="space-y-4">
+                  <div 
+                    v-for="session in authStore.activeSessions" 
+                    :key="session.id"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between p-6 rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 hover:border-[#246BFD]/20 dark:hover:border-[#246BFD]/20 transition-all duration-300 gap-4"
+                  >
+                    <div class="flex items-start space-x-4">
+                      <div class="p-3.5 bg-gray-50 dark:bg-gray-800/80 rounded-xl text-gray-500 dark:text-gray-400 shrink-0">
+                        <!-- Render generic device/browser icons based on device name -->
+                        <svg v-if="session.device_name?.toLowerCase().includes('phone') || session.device_name?.toLowerCase().includes('iphone') || session.device_name?.toLowerCase().includes('android')" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <h4 class="font-bold text-gray-900 dark:text-white capitalize">
+                            {{ session.device_name || 'Unknown Device' }}
+                          </h4>
+                          <span 
+                            v-if="session.is_current" 
+                            class="px-2 py-0.5 text-[10px] font-bold text-[#246BFD] bg-[#246BFD]/10 rounded-full border border-[#246BFD]/20 tracking-wider uppercase"
+                          >
+                            Current Device
+                          </span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                          IP: {{ session.ip_address || 'Unknown' }}
+                          <span v-if="session.user_agent" class="opacity-60 hidden md:inline ml-2">• {{ session.user_agent }}</span>
+                        </p>
+                        <p class="text-[11px] text-gray-400 dark:text-gray-500">
+                          Last active: {{ new Date(session.last_active).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div v-if="!session.is_current" class="flex items-center shrink-0 self-end sm:self-center">
+                      <button
+                        @click="handleRevokeSession(session.id)"
+                        class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl transition-all shadow-sm"
+                      >
+                        Revoke Access
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </transition>

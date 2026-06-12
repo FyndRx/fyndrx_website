@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import type { Pharmacy } from '@/models/Pharmacy';
+import type { Pharmacy, PharmacyDeliveryOptions, PharmacyServiceGroup } from '@/models/Pharmacy';
 import type { PharmacyPrice } from '@/models/PharmacyPrice';
 import type { Medication } from '@/models/Medication';
 import type {
@@ -19,7 +19,8 @@ import {
   transformPharmacies,
   transformPharmacyPrices,
   transformPharmacyPrice,
-  transformPharmacyDrug
+  transformPharmacyDrug,
+  transformBranch
 } from '@/utils/responseTransformers';
 
 export interface DrugSearchQuery {
@@ -33,22 +34,10 @@ export interface DrugSearchQuery {
 export type { PharmacyPrice } from '@/models/PharmacyPrice';
 
 export const pharmacyService = {
-  /**
-   * Get all pharmacies (without drugs parameter)
-   * Note: This endpoint may not exist - API might require drugs parameter
-   */
   async getAllPharmacies(): Promise<Pharmacy[]> {
-    try {
-      const response = await apiService.get<PharmaciesApiResponse>('/pharmacies');
-      const apiPharmacies = unwrapArrayResponse(response);
-      return transformPharmacies(apiPharmacies);
-    } catch (error: any) {
-      // If endpoint doesn't exist or requires drugs parameter, return empty array
-      if (error?.response?.status === 404 || error?.message?.includes('404')) {
-        return [];
-      }
-      throw error;
-    }
+    const response = await apiService.get<PharmaciesApiResponse>('/pharmacies');
+    const apiPharmacies = unwrapArrayResponse(response);
+    return transformPharmacies(apiPharmacies);
   },
 
   /**
@@ -81,7 +70,7 @@ export const pharmacyService = {
    * @param id - Pharmacy ID
    * @returns Pharmacy details
    */
-  async getPharmacy(id: number): Promise<Pharmacy> {
+  async getPharmacy(id: string | number): Promise<Pharmacy> {
     try {
       const response = await apiService.get<PharmacyDetailApiResponse>(`/pharmacies/${id}`);
       const apiPharmacy = unwrapApiResponse(response);
@@ -92,6 +81,84 @@ export const pharmacyService = {
       }
       throw error;
     }
+  },
+
+  async getPharmacyBranch(pharmacyId: string | number, branchId: string): Promise<import('@/models/Pharmacy').PharmacyBranch> {
+    const response = await apiService.get<any>(`/pharmacies/${pharmacyId}/branches/${branchId}`);
+    const data = (response as any).data ?? response;
+    return transformBranch(data);
+  },
+
+  /**
+   * Get all branches for a pharmacy, with full details (services, hours, delivery, payment).
+   */
+  async getPharmacyBranches(pharmacyId: string | number): Promise<import('@/models/Pharmacy').PharmacyBranch[]> {
+    const response = await apiService.get<{ data: any[] }>(`/pharmacies/${pharmacyId}/branches`);
+    const arr = (response as any).data ?? [];
+    return arr.map(transformBranch);
+  },
+
+  /**
+   * Get delivery options for a pharmacy, with optional distance-based fee estimates.
+   * Returns pickup (always free), pharmacy self-delivery, and FyndRx platform delivery.
+   * @param pharmacyId - Pharmacy ID
+   * @param lat - User latitude (for fee estimation)
+   * @param lng - User longitude (for fee estimation)
+   */
+  async getDeliveryOptions(pharmacyId: string | number, lat?: number, lng?: number): Promise<PharmacyDeliveryOptions> {
+    let url = `/pharmacies/${pharmacyId}/delivery-options`;
+    const params = new URLSearchParams();
+    if (lat !== undefined) params.set('lat', String(lat));
+    if (lng !== undefined) params.set('lng', String(lng));
+    const qs = params.toString();
+    if (qs) url += `?${qs}`;
+
+    const response = await apiService.get<{ data: any }>(url);
+    const d = (response as any).data ?? response;
+
+    const mapOption = (raw: any) => ({
+      available: Boolean(raw.available),
+      fee: raw.fee !== null && raw.fee !== undefined ? Number(raw.fee) : null,
+      baseFee: raw.base_fee !== undefined ? Number(raw.base_fee) : undefined,
+      feePerKm: raw.fee_per_km !== undefined ? Number(raw.fee_per_km) : undefined,
+      radiusKm: raw.radius_km !== undefined ? (raw.radius_km !== null ? Number(raw.radius_km) : null) : undefined,
+      maxRadiusKm: raw.max_radius_km !== undefined ? Number(raw.max_radius_km) : undefined,
+      distanceKm: raw.distance_km !== null && raw.distance_km !== undefined ? Number(raw.distance_km) : null,
+      label: raw.label ?? '',
+      note: raw.note,
+      unavailableReason: raw.unavailable_reason ?? null,
+    });
+
+    // Response: { data: { pharmacy_id, pharmacy_name, distance_km, options: { pickup, pharmacy_delivery, fyndrx_delivery } } }
+    const opts = d.options ?? d; // backwards-compat if options not yet nested
+    return {
+      pharmacyId: d.pharmacy_id,
+      pharmacyName: d.pharmacy_name,
+      pickup: mapOption(opts.pickup ?? {}),
+      pharmacyDelivery: mapOption(opts.pharmacy_delivery ?? {}),
+      fyndrxDelivery: mapOption(opts.fyndrx_delivery ?? {}),
+    };
+  },
+
+  /**
+   * Get the full pharmacy services catalog grouped by category.
+   * Call once on boot to populate service pickers.
+   */
+  async getServicesCatalog(): Promise<PharmacyServiceGroup[]> {
+    const response = await apiService.get<{ data: any[] }>('/pharmacies/services');
+    const groups = (response as any).data ?? [];
+    return groups.map((g: any) => ({
+      category: g.category,
+      label: g.label,
+      services: (g.services ?? []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        category: s.category ?? g.category,
+        description: s.description,
+        icon: s.icon,
+      })),
+    }));
   },
 
   /**
@@ -109,7 +176,7 @@ export const pharmacyService = {
    * @param pharmacyId - Pharmacy ID
    * @returns Array of prices for the pharmacy
    */
-  async getPricesByPharmacy(pharmacyId: number, params?: Record<string, any>): Promise<PharmacyPrice[]> {
+  async getPricesByPharmacy(pharmacyId: string | number, params?: Record<string, any>): Promise<PharmacyPrice[]> {
     let url = `/pharmacy-prices/${pharmacyId}`;
     if (params) {
       const queryString = new URLSearchParams(params).toString();
@@ -143,16 +210,22 @@ export const pharmacyService = {
       page?: number;
       per_page?: number;
       services?: string[];
+      product_id?: number | string;
     }
   ): Promise<PharmacyPricesByDrugApiResponse['data']> {
     let url = `/prices`; // NEW ENDPOINT
     const params = new URLSearchParams();
     
-    // Ensure drug_id is always passed
-    params.append('drug_id', drugId.toString());
+    // Support both legacy drugId and new productId
+    if (filters?.product_id) {
+      params.append('product_id', filters.product_id.toString());
+    } else {
+      params.append('drug_id', drugId.toString());
+    }
 
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
+        if (key === 'product_id') return; // already handled
         if (value !== undefined && value !== null && value !== '') {
           if (Array.isArray(value)) {
             value.forEach(v => params.append(`${key}[]`, v.toString()));
@@ -171,6 +244,19 @@ export const pharmacyService = {
     const response = await apiService.get<PharmacyPricesByDrugApiResponse>(url);
     // Return the structured object: { exact_match, related_drugs? }
     return response.data;
+  },
+
+  /**
+   * Get all medication categories
+   */
+  async getCategories(): Promise<any[]> {
+    try {
+      const response = await apiService.get<any>('/categories');
+      return unwrapArrayResponse(response);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
   },
 
   /**
@@ -220,7 +306,7 @@ export const pharmacyService = {
    * @param pharmacyId - Pharmacy ID (optional, for filtering)
    * @returns Array of medications available at the pharmacy
    */
-  async getPharmacyMedications(pharmacyId?: number): Promise<Medication[]> {
+  async getPharmacyMedications(pharmacyId?: string | number): Promise<Medication[]> {
     try {
       let url = '/pharmacy-drugs';
       if (pharmacyId) {
@@ -249,7 +335,7 @@ export const pharmacyService = {
    * @returns Hierarchical data structure
    */
   async getMedicationDetailsWithPrices(drugId: number, filters?: any): Promise<MedicationPricingHierarchy> {
-    const [medication, responseData] = await Promise.all([
+    const [medication, responseData]: [Medication, PharmacyPricesByDrugApiResponse['data']] = await Promise.all([
       import('@/services/medicationService').then(m => m.medicationService.getMedicationById(drugId)),
       this.getPricesByDrug(drugId, filters)
     ]);
@@ -336,20 +422,24 @@ export const pharmacyService = {
     if (responseData.related_drugs) {
       responseData.related_drugs.forEach(related => {
         const brandId = related.brand_id;
+        if (!brandId) return;
+
         if (!hierarchyBrands.has(brandId)) {
           hierarchyBrands.set(brandId, {
             id: brandId,
-            name: related.brand || 'Unknown Brand',
+            name: related.brand_name || 'Unknown Brand',
             forms: new Map()
           });
         }
         const brandNode = hierarchyBrands.get(brandId)!;
 
         const formId = related.form_id;
+        if (!formId) return;
+
         if (!brandNode.forms.has(formId)) {
           brandNode.forms.set(formId, {
             id: formId,
-            name: related.form || 'Unknown Form',
+            name: related.form_name || 'Unknown Form',
             variants: []
           });
         }
@@ -362,12 +452,12 @@ export const pharmacyService = {
 
         if (!existingVariant) {
           formNode.variants.push({
-            strengthId: related.strength_id,
+            strengthId: related.strength_id ?? 0,
             strength: related.strength || '',
-            uomId: related.uom_id,
+            uomId: related.uom_id ?? 0,
             uom: related.uom || '',
-            label: `${related.form} ${related.strength} ${related.uom || ''}`.trim(),
-            value: `${formId}_${related.strength_id}_${related.uom_id}`,
+            label: `${related.form_name || ''} ${related.strength || ''} ${related.uom || ''}`.trim(),
+            value: `${formId}_${related.strength_id ?? 0}_${related.uom_id ?? 0}`,
             pharmacyCount: 0, // Unknown from summary
             minPrice: related.price,
             maxPrice: related.price

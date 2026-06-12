@@ -6,12 +6,14 @@
 export interface LoginApiResponse {
   message: string;
   access_token: string;
+  refresh_token?: string;
   user?: UserApiResponse;
 }
 
 export interface RegisterApiResponse {
   message: string;
   access_token: string;
+  refresh_token?: string;
   user?: UserApiResponse;
 }
 
@@ -24,8 +26,8 @@ export interface UserApiResponse {
   dob: string | null;
   gender: string | null;
   email: string;
-  pharmacy_id: number | null;
-  pharmacy_branch_id: number | null;
+  pharmacy_id: string | null;
+  pharmacy_branch_id: string | null;
   phone_number: string;
   status: string | null;
   member_id: string;
@@ -45,7 +47,17 @@ export interface OtpResponse {
 }
 
 export interface ProfilePictureResponse {
-  message: string;
-  profile_picture: string;
+  user: UserApiResponse;
+  image_url: string;
+}
+
+export interface UserSession {
+  id: number;
+  device_name: string | null;
+  ip_address: string | null;
+  user_agent?: string | null;
+  last_active: string;
+  expires_at: string;
+  is_current: boolean;
 }
 

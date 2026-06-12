@@ -1,10 +1,11 @@
 import type { BlogPost, Comment, BlogCategory } from '@/types/blog';
 import { apiService } from './api';
-import { 
-  unwrapApiResponse, 
+import {
+  unwrapApiResponse,
   unwrapArrayResponse,
-  transformBlogPost, 
-  transformBlogPosts
+  transformBlogPost,
+  transformBlogPosts,
+  transformComment,
 } from '@/utils/responseTransformers';
 
 export const blogService = {
@@ -22,31 +23,23 @@ export const blogService = {
       url += `&search=${encodeURIComponent(search)}`;
     }
 
-    // The API likely returns a Laravel paginated response { data: [...], meta: { total: ... } }
-    // but the component expects { posts: [...], total: ... }
     const response = await apiService.get<any>(url);
 
-    // Check if it's a paginated response
     if (response.data && Array.isArray(response.data)) {
       return {
         posts: transformBlogPosts(response.data),
-        total: response.meta?.total || response.total || response.data.length
+        total: response.meta?.total ?? response.total ?? response.data.length,
       };
     }
 
-    // Fallback for direct array or other structures
     if (Array.isArray(response)) {
-      return {
-        posts: transformBlogPosts(response),
-        total: response.length
-      };
+      return { posts: transformBlogPosts(response), total: response.length };
     }
 
-    // If it matches the expected structure already (unlikely for Laravel but possible)
     if (response.posts) {
       return {
         posts: transformBlogPosts(response.posts),
-        total: response.total || response.posts.length
+        total: response.total ?? response.posts.length,
       };
     }
 
@@ -60,9 +53,7 @@ export const blogService = {
 
   async getRelatedPosts(slugOrId: string | number, limit?: number): Promise<BlogPost[]> {
     let url = `/blog/posts/${slugOrId}/related`;
-    if (limit) {
-      url += `?limit=${limit}`;
-    }
+    if (limit) url += `?limit=${limit}`;
     const response = await apiService.get<BlogPost[]>(url);
     return transformBlogPosts(unwrapArrayResponse(response));
   },
@@ -77,37 +68,31 @@ export const blogService = {
     return unwrapArrayResponse(response);
   },
 
-  async getComments(postId: number): Promise<Comment[]> {
-    const response = await apiService.get<Comment[]>(`/blog/posts/${postId}/comments`);
-    return unwrapArrayResponse(response);
+  async getComments(postId: string | number): Promise<Comment[]> {
+    const response = await apiService.get<any>(`/blog/posts/${postId}/comments`);
+    const arr = unwrapArrayResponse(response) as any[];
+    return arr.map(transformComment);
   },
 
-  async likePost(postId: number): Promise<void> {
-    return await apiService.postAuth<void>(`/blog/posts/${postId}/like`);
+  /** Toggle like. Returns the new like count and whether the post is now liked. */
+  async likePost(postId: string | number): Promise<{ liked: boolean; likes: number }> {
+    const response = await apiService.postAuth<any>(`/blog/posts/${postId}/like`);
+    return response;
   },
 
-  async commentOnPost(postId: number, comment: string): Promise<Comment> {
-    const response = await apiService.postAuth<Comment>(`/blog/posts/${postId}/comments`, { comment });
-    return unwrapApiResponse(response);
+  /** Toggle like on a comment. Returns new liked state and count. */
+  async likeComment(commentId: string | number): Promise<{ liked: boolean; likes: number }> {
+    const response = await apiService.postAuth<any>(`/blog/comments/${commentId}/like`);
+    return response;
   },
 
-  getAllPosts(): BlogPost[] {
-    console.warn('getAllPosts() is deprecated. Use getPosts() instead.');
-    return [];
+  /** Post a top-level comment or a reply (pass parentId for replies). */
+  async commentOnPost(postId: string | number, comment: string, parentId?: string | number): Promise<Comment> {
+    const body: Record<string, unknown> = { comment };
+    if (parentId != null) body.parent_id = parentId;
+    const response = await apiService.postAuth<any>(`/blog/posts/${postId}/comments`, body);
+    // Backend returns { message: '...', comment: { ...with user + replies } }
+    const commentData = response?.comment ?? unwrapApiResponse(response);
+    return transformComment(commentData);
   },
-
-  getPostById(): BlogPost | undefined {
-    console.warn('getPostById() is deprecated. Use getPost() with slug instead.');
-    return undefined;
-  },
-
-  getAllTags(): string[] {
-    console.warn('getAllTags() is deprecated. Use getTags() async method instead.');
-    return [];
-  },
-
-  searchPosts(): BlogPost[] {
-    console.warn('searchPosts() is deprecated. Use getPosts() with search parameter instead.');
-    return [];
-  }
 };

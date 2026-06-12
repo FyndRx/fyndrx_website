@@ -14,15 +14,17 @@ import {
 } from '@/utils/responseTransformers';
 
 export interface CreateOrderPayload {
-  pharmacy_branch_id?: number | null; // Made optional/nullable
-  payment_methods?: Record<number, 'platform' | 'direct'>; // NEW: Map for mixed payments
+  pharmacy_branch_id?: number | null;
+  payment_methods?: Record<string, 'platform' | 'direct'>;
+  payment_method?: 'platform' | 'direct';
   delivery_method?: 'delivery' | 'pickup';
-  delivery_methods?: Record<number, 'delivery' | 'pickup'>; // Map for mixed delivery methods
+  delivery_methods?: Record<string, 'delivery' | 'pickup'>;
+  delivery_provider?: 'pharmacy' | 'fyndrx' | null;
+  delivery_providers?: Record<string, 'pharmacy' | 'fyndrx'>;
   delivery_address?: string;
   delivery_lat?: number;
   delivery_lng?: number;
   phone_number: string;
-  payment_method?: 'platform' | 'direct'; // Global fallback
   notes?: string;
 }
 
@@ -67,12 +69,18 @@ export const orderService = {
     const response = await apiService.postAuth<any>('/orders', payload);
     const data = unwrapApiResponse(response) as any;
 
-    // specific check for bulk orders array
+    // Backend returns { data: [...] } for bulk — unwrapApiResponse strips the wrapper
+    // leaving a plain array directly
+    if (Array.isArray(data)) {
+      return transformOrders(data);
+    }
+
+    // Explicit { orders: [...] } shape (legacy / alternative endpoint)
     if (data.orders && Array.isArray(data.orders)) {
       return transformOrders(data.orders);
     }
-    
-    // Fallback for single order (could be regular wrapped or {order: ...})
+
+    // Single order — may be wrapped in { order: ... } or bare
     const singleOrder = data.order || data;
     return transformOrder(singleOrder);
   },

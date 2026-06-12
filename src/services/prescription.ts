@@ -25,18 +25,13 @@ export interface MedicationItem {
 
 export interface CreatePrescriptionRequest {
   prescription_picture?: File | null;
-  prescriptionImage?: string | null;
-  prescriptionNumber?: string;
-  patientName?: string;
-  patient_email?: string; // Added
-  patient_phone?: string; // Added
-  doctorName?: string;
-  prescriptionDate?: string;
-  expiryDate?: string;
+  title?: string;
+  doctor_name?: string;
+  prescription_date?: string;
+  expiry_date?: string;
+  notes?: string;
   status?: string;
   medications?: MedicationItem[];
-  notes?: string;
-  title?: string;
 }
 
 export interface UpdatePrescriptionRequest {
@@ -79,19 +74,14 @@ export const prescriptionService = {
   async createPrescription(data: CreatePrescriptionRequest): Promise<Prescription> {
     if (data.prescription_picture) {
       const formData = new FormData();
-      if (data.prescription_picture instanceof File) {
-        formData.append('prescription_picture', data.prescription_picture);
-      }
-      if (data.prescriptionImage) formData.append('prescriptionImage', data.prescriptionImage);
-      if (data.prescriptionNumber) formData.append('prescriptionNumber', data.prescriptionNumber);
-      if (data.patientName) formData.append('patientName', data.patientName);
-      if (data.doctorName) formData.append('doctorName', data.doctorName);
-      if (data.prescriptionDate) formData.append('prescriptionDate', data.prescriptionDate);
-      if (data.expiryDate) formData.append('expiryDate', data.expiryDate);
-      if (data.status) formData.append('status', data.status);
-      if (data.medications) formData.append('medications', JSON.stringify(data.medications));
-      if (data.notes) formData.append('notes', data.notes);
-      if (data.title) formData.append('title', data.title);
+      formData.append('prescription_picture', data.prescription_picture);
+      if (data.title)             formData.append('title', data.title);
+      if (data.doctor_name)       formData.append('doctor_name', data.doctor_name);
+      if (data.prescription_date) formData.append('prescription_date', data.prescription_date);
+      if (data.expiry_date)       formData.append('expiry_date', data.expiry_date);
+      if (data.notes)             formData.append('notes', data.notes);
+      if (data.status)            formData.append('status', data.status);
+      if (data.medications)       formData.append('medications', JSON.stringify(data.medications));
 
       const response = await apiService.postAuth<PrescriptionDetailApiResponse>(
         '/prescriptions', 

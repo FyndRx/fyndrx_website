@@ -102,10 +102,27 @@ const updateDropdownPosition = () => {
   }
 };
 
+const isToday = (date: Date) => {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+};
+
 const togglePicker = async () => {
   if (!props.disabled) {
     isOpen.value = !isOpen.value;
     if (isOpen.value) {
+      // Pre-select today when no value has been chosen yet
+      if (!selectedDate.value) {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        selectedDate.value = today;
+        currentMonth.value = new Date(today);
+        updateValue();
+      }
       await nextTick();
       updateDropdownPosition();
     }
@@ -337,122 +354,113 @@ onUnmounted(() => {
       <div
         v-if="isOpen"
         ref="dropdownRef"
-        class="fixed z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-72 sm:w-80"
+        class="fixed z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-60"
         :style="dropdownPosition"
       >
         <!-- Date Picker -->
-        <div v-if="format !== 'time'" class="p-4">
+        <div v-if="format !== 'time'" class="p-3">
           <!-- Calendar header -->
-          <div class="flex items-center justify-between mb-4">
-            <button 
-                @click.stop="changeMonth(-1)"
-                :disabled="isPrevDisabled"
-                class="p-2 rounded-lg transition-colors"
-                :class="isPrevDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
+          <div class="flex items-center justify-between mb-2">
+            <button
+              @click.stop="changeMonth(-1)"
+              :disabled="isPrevDisabled"
+              class="p-1 rounded-lg transition-colors"
+              :class="isPrevDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
             >
-              <ChevronLeftIcon class="w-5 h-5" />
+              <ChevronLeftIcon class="w-4 h-4" />
             </button>
-            
-            <div class="flex items-center gap-2">
-                <!-- Month Selector -->
-                <select 
-                    :value="currentMonth.getMonth()"
-                    @change="(e) => changeMonthSelect(parseInt((e.target as HTMLSelectElement).value))"
-                    class="bg-transparent font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-[#246BFD]"
-                    @click.stop
-                >
-                    <option v-for="(month, index) in monthNames" :key="index" :value="index">
-                        {{ month }}
-                    </option>
-                </select>
 
-                <!-- Year Selector -->
-                <select 
-                    :value="currentMonth.getFullYear()"
-                    @change="(e) => changeYearSelect(parseInt((e.target as HTMLSelectElement).value))"
-                    class="bg-transparent font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-[#246BFD]"
-                    @click.stop
-                >
-                    <option v-for="year in availableYears" :key="year" :value="year">
-                        {{ year }}
-                    </option>
-                </select>
+            <div class="flex items-center gap-1">
+              <!-- Month Selector -->
+              <select
+                :value="currentMonth.getMonth()"
+                @change="(e) => changeMonthSelect(parseInt((e.target as HTMLSelectElement).value))"
+                class="bg-transparent font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-[#246BFD]"
+                @click.stop
+              >
+                <option v-for="(month, index) in monthNames" :key="index" :value="index">{{ month }}</option>
+              </select>
+              <!-- Year Selector -->
+              <select
+                :value="currentMonth.getFullYear()"
+                @change="(e) => changeYearSelect(parseInt((e.target as HTMLSelectElement).value))"
+                class="bg-transparent font-semibold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-[#246BFD]"
+                @click.stop
+              >
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+              </select>
             </div>
 
-            <button 
-                @click.stop="changeMonth(1)"
-                :disabled="isNextDisabled"
-                class="p-2 rounded-lg transition-colors"
-                :class="isNextDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
+            <button
+              @click.stop="changeMonth(1)"
+              :disabled="isNextDisabled"
+              class="p-1 rounded-lg transition-colors"
+              :class="isNextDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
             >
-              <ChevronRightIcon class="w-5 h-5" />
+              <ChevronRightIcon class="w-4 h-4" />
             </button>
           </div>
-          
-          <div class="grid grid-cols-7 gap-1 mb-2">
-            <div 
-              v-for="day in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']" 
+
+          <div class="grid grid-cols-7 mb-1">
+            <div
+              v-for="day in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']"
               :key="day"
-              class="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1"
+              class="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-0.5"
             >
               {{ day }}
             </div>
           </div>
-          
-          <div class="grid grid-cols-7 gap-1">
-            <div 
-              v-for="(date, index) in getDaysInMonth(currentMonth)" 
+
+          <div class="grid grid-cols-7 gap-0.5">
+            <div
+              v-for="(date, index) in getDaysInMonth(currentMonth)"
               :key="index"
-              class="aspect-square flex items-center justify-center p-1"
+              class="aspect-square flex items-center justify-center"
             >
-                <button
-                    v-if="date"
-                    type="button"
-                    @click.stop="selectDate(date)"
-                    :disabled="isDisabled(date)"
-                    class="w-full h-full rounded-full flex items-center justify-center text-sm transition-all"
-                    :class="[
-                        selectedDate?.toDateString() === date.toDateString() 
-                            ? 'bg-[#246BFD] text-white font-medium shadow-md shadow-blue-200 dark:shadow-none' 
-                            : isDisabled(date)
-                                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700',
-                    ]"
-                >
-                    {{ date.getDate() }}
-                </button>
+              <button
+                v-if="date"
+                type="button"
+                @click.stop="selectDate(date)"
+                :disabled="isDisabled(date)"
+                class="w-full h-full rounded-full flex items-center justify-center text-sm transition-all"
+                :class="[
+                  selectedDate?.toDateString() === date.toDateString()
+                    ? 'bg-[#246BFD] text-white font-semibold shadow-sm shadow-blue-200 dark:shadow-none'
+                    : isDisabled(date)
+                      ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                      : isToday(date)
+                        ? 'text-[#246BFD] font-semibold ring-1 ring-[#246BFD]/50 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ]"
+              >
+                {{ date.getDate() }}
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Time Picker -->
-        <div v-if="format !== 'date'" class="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-center space-x-2">
-            <!-- Hours -->
+        <div v-if="format !== 'date'" class="px-3 py-2.5 border-t border-gray-100 dark:border-gray-700">
+          <div class="flex items-center justify-center gap-1.5">
             <select
               v-model="selectedHour"
               @change="updateValue"
-              class="px-2 py-1.5 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
             </select>
-
             <span class="text-gray-500 font-medium">:</span>
-
-            <!-- Minutes -->
             <select
               v-model="selectedMinute"
               @change="updateValue"
-              class="px-2 py-1.5 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option v-for="minute in minutes" :key="minute" :value="minute">{{ minute }}</option>
             </select>
-
-            <!-- AM/PM -->
             <select
               v-model="selectedPeriod"
               @change="updateValue"
-              class="px-2 py-1.5 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option value="AM">AM</option>
               <option value="PM">PM</option>

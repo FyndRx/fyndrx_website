@@ -2,15 +2,16 @@ export type ConsultationStatus = 'pending' | 'in_review' | 'responded' | 'comple
 export type ConsultationPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type ConsultationType = 'general' | 'medication_review' | 'chronic_disease' | 'acute_illness' | 'wellness' | 'vaccination';
 
+/** Measured by pharmacy staff during the encounter — not patient self-report. */
 export interface Vitals {
-    blood_pressure_systolic?: string; // JSON shows string "120"
-    blood_pressure_diastolic?: string;
-    heart_rate?: string;
-    temperature?: string;
-    oxygen_saturation?: string;
-    respiratory_rate?: string;
-    weight?: string;
-    height?: string;
+    blood_pressure_systolic?: string | number;
+    blood_pressure_diastolic?: string | number;
+    heart_rate?: string | number;
+    temperature?: string | number;
+    oxygen_saturation?: string | number;
+    respiratory_rate?: string | number;
+    weight?: string | number;
+    height?: string | number;
 }
 
 export interface Diagnosis {
@@ -22,9 +23,11 @@ export interface Diagnosis {
 }
 
 export interface Drug {
-    id: number;
-    prescription_id: number;
+    id: string;
+    prescription_id: string;
     drug_id?: number;
+    display_name?: string;
+    drug_name?: string;
     name: string;
     brand_id?: number | null;
     brand_name?: string | null;
@@ -42,7 +45,7 @@ export interface Drug {
 }
 
 export interface Prescription {
-    id: number;
+    id: string;
     title?: string | null;
     prescription_number: string;
     doctor_name?: string;
@@ -52,22 +55,32 @@ export interface Prescription {
     notes?: string | null;
     prescription_picture?: string | null;
     has_request: boolean;
-    user_id: number;
+    user_id: string;
     created_at: string;
     updated_at: string;
     drugs: Drug[];
-    pdf_url?: string; // Kept for backward compatibility if needed, though not in JSON
+    pdf_url?: string;
+}
+
+export interface ConsultationRef {
+    id: string;
+    consultation_number: string;
+    status: ConsultationStatus;
+    created_at: string;
 }
 
 export interface Consultation {
-    id: number;
+    id: string;
     consultation_number: string;
     user?: {
-        id: number;
+        id: string;
         name: string;
         email: string;
     };
-    user_id?: number; // Kept for payload compatibility
+    user_id?: string;
+    parent_consultation_id?: string | null;
+    parent_consultation?: ConsultationRef;
+    follow_up_consultations?: ConsultationRef[];
     patient_name: string;
     patient_email: string;
     patient_phone: string;
@@ -76,16 +89,18 @@ export interface Consultation {
     vitals?: Vitals;
     consultation_type: ConsultationType;
     consultation_type_label?: string;
-    symptoms?: string;
-    medical_history?: string;
-    current_medications?: string;
-    allergies?: string;
+    /** Plain-language reason submitted by the patient at booking. */
+    chief_complaint?: string | null;
+    /** Structured clinical presentation documented by staff. */
+    symptoms?: string | null;
+    medical_history?: string | null;
+    current_medications?: string | null;
+    allergies?: string | null;
     diagnoses?: Diagnosis[];
     consultation_notes?: string;
     pharmacist_notes?: string | null;
     recommendations?: string;
-    prescription?: Prescription; // JSON has singular object
-    // prescriptions?: Prescription[]; // Keeping commented out just in case of conflict with other parts of app temporarily
+    prescription?: Prescription;
     status: ConsultationStatus;
     status_label?: string;
     priority: ConsultationPriority;
@@ -105,12 +120,12 @@ export interface Consultation {
     created_at: string;
     updated_at: string;
     pharmacy?: {
-        id: number;
+        id: string;
         name: string;
         logo?: string;
     };
     assigned_pharmacist?: {
-        id: number;
+        id: string;
         name: string;
         email: string;
         phone_number: string;
@@ -130,33 +145,33 @@ export interface ConsultationStats {
     total_rated: number;
 }
 
-export interface CreateConsultationPayload {
+/** Fields patients may submit when booking a consultation. */
+export interface PatientConsultationIntake {
     consultation_type: ConsultationType;
-    symptoms?: string;
-    medical_history?: string;
-    current_medications?: string;
-    allergies?: string;
+    chief_complaint: string;
     consultation_notes?: string;
-    priority: ConsultationPriority;
     patient_name: string;
     patient_email: string;
     patient_phone: string;
     patient_date_of_birth?: string;
-    patient_gender: string;
-    vitals?: Vitals;
-    pharmacy_id: number;
-    pharmacy_branch_id?: number;
+    patient_gender?: string;
+    pharmacy_id?: string;
+    pharmacy_branch_id?: string;
     scheduled_at?: string;
     source?: string;
     attachments?: File[];
-    user_id: number;
+    user_id?: string;
+    parent_consultation_id?: string;
 }
+
+/** @deprecated Use PatientConsultationIntake — kept for gradual migration */
+export type CreateConsultationPayload = PatientConsultationIntake;
 
 export interface ConsultationFilters {
     status?: ConsultationStatus;
     priority?: ConsultationPriority;
     type?: ConsultationType;
-    pharmacy_id?: number;
+    pharmacy_id?: string;
     requires_followup?: boolean;
     search?: string;
     sort_by?: string;
@@ -166,17 +181,18 @@ export interface ConsultationFilters {
 }
 
 export interface PublicConsultationSearchResponse {
-    id: number;
+    id: string;
     consultation_number: string;
-    user: { id: number; name: string; email: string } | null;
+    user: { id: string; name: string; email: string } | null;
     patient_name: string;
     patient_email: string | null;
     patient_phone: string | null;
     patient_date_of_birth: string | null;
     patient_gender: string | null;
-    vitals: Vitals[] | Vitals | null;
+    vitals: Vitals | null;
     consultation_type: ConsultationType;
     consultation_type_label: string;
+    chief_complaint: string | null;
     symptoms: string | null;
     medical_history: string | null;
     current_medications: string | null;

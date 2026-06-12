@@ -3,11 +3,13 @@ import { computed } from 'vue';
 import type { Consultation } from '@/types/consultation';
 import { format } from 'date-fns';
 import Badge from '@/components/Badge.vue';
-import { 
-  CalendarIcon, 
-  BoltIcon, 
-  PaperClipIcon, 
-  ChevronRightIcon
+import {
+  CalendarIcon,
+  BoltIcon,
+  PaperClipIcon,
+  ChevronRightIcon,
+  ArrowPathIcon,
+  ArrowUturnRightIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -84,6 +86,12 @@ const formattedDate = computed(() => {
            Scheduled
          </div>
 
+         <!-- Follow-up child indicator -->
+         <div v-if="consultation.parent_consultation_id" class="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 px-2 py-1 rounded-lg" title="This is a follow-up consultation">
+           <ArrowUturnRightIcon class="w-3.5 h-3.5" />
+           Follow-up
+         </div>
+
          <div v-if="consultation.consultation_type" class="px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700 capitalize">
             {{ consultation.consultation_type.replace('_', ' ') }}
          </div>
@@ -134,15 +142,32 @@ const formattedDate = computed(() => {
              {{ consultation.vitals.height }}cm
           </div>
        </div>
-       <div v-else class="text-xs text-gray-400 italic">
-          No vitals recorded
-       </div>
+       <p
+         v-else
+         class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 max-w-[65%] italic"
+       >
+         {{ consultation.chief_complaint || consultation.symptoms || 'Awaiting pharmacist review' }}
+       </p>
 
        <!-- Right Side Metadata -->
        <div class="flex items-center gap-3">
           <!-- Diagnoses Count -->
           <div v-if="consultation.diagnoses?.length" class="flex items-center text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-md" title="Diagnoses">
               <span class="text-xs font-bold">{{ consultation.diagnoses.length }} DX</span>
+          </div>
+
+          <!-- Follow-up threads count -->
+          <div v-if="consultation.follow_up_consultations?.length" class="flex items-center gap-1 text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-md" :title="`${consultation.follow_up_consultations.length} follow-up(s)`">
+              <ArrowPathIcon class="w-3.5 h-3.5" />
+              <span class="text-xs font-bold">{{ consultation.follow_up_consultations.length }}</span>
+          </div>
+
+          <!-- Requires follow-up dot -->
+          <div v-else-if="consultation.requires_followup" class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400" title="Follow-up required">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
           </div>
 
           <!-- Attachments Count -->

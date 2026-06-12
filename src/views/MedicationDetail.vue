@@ -14,6 +14,7 @@ import { formatCurrency } from '@/utils/currency';
 
 import type { Medication } from '@/models/Medication';
 import LazyImage from '@/components/LazyImage.vue';
+import FavoriteButton from '@/components/FavoriteButton.vue';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
@@ -21,43 +22,29 @@ const notification = useNotification();
 const route = useRoute();
 
 interface Pharmacy {
-  id: number;
+  id: string;
   name: string;
-  logo: string;
+  logo: string | null;
   price: number;
   discountPrice?: number;
   inStock: boolean;
   stockQuantity?: number;
-  distance?: string;
-  rating?: number;
-  // Additional fields for cart operations
-  priceId?: number;
-
-  pharmacyBranchId?: number;
-  formId?: number;
-  strengthId?: number;
-  uomId?: number;
-  
-  // Medication Details
-  medication_name?: string;
-  brand_name?: string;
-  form_name?: string;
-  strength?: string;
-  uom?: string;
-  // For filtering
-  pharmacy?: {
-    name: string;
-    logo: string;
-    distance?: string;
-    rating?: number;
-    is_open?: boolean;
-    branch_name?: string; // Branch Name
-  };
-  pharmacy_name?: string; // Fallback for pharmacy name
-  branch_id?: number; // Branch ID
-  branch_name?: string; // Branch Name
+  branch_id?: string;
+  branch_name?: string | null;
   latitude?: number;
   longitude?: number;
+  is_open?: boolean;
+  priceId?: string;
+  pharmacyBranchId?: string;
+  pharmacy?: {
+    name: string;
+    logo: string | null;
+    is_open?: boolean;
+    branch_name?: string | null;
+    pharmacy_image?: string | null;
+    latitude?: number;
+    longitude?: number;
+  };
 }
 
 // State
@@ -98,40 +85,40 @@ const relatedShowOpenOnly = ref(false);
 const relatedShowInStockOnly = ref(false);
 const itemsPerPage = ref(12);
 
-const customQuantities = ref<Map<number, number>>(new Map());
+const customQuantities = ref<Map<string, number>>(new Map());
 
 const paginatedPharmacies = computed(() => {
   if (!exactMatch.value || !exactMatch.value.pharmacies) return [];
   
   // New structure: exactMatch.pharmacies.data
-  let rawData = exactMatch.value.pharmacies.data || [];
+  let rawData: any[] = exactMatch.value.pharmacies.data || [];
   
   // Client-side filtering as fallback/augmentation
-  if (showOpenOnly.value) rawData = rawData.filter((p: any) => p.is_open);
-  if (showInStockOnly.value) rawData = rawData.filter((p: any) => p.in_stock);
+  if (showOpenOnly.value) rawData = rawData.filter((p) => p.is_open);
+  if (showInStockOnly.value) rawData = rawData.filter((p) => p.in_stock);
   
-  return rawData.map((p: any) => ({
+  return rawData.map((p: any): Pharmacy => ({
     id: p.pharmacy_id,
     priceId: p.id,
     name: p.pharmacy_name,
-    logo: p.logoPath,
+    logo: p.pharmacy_logo,
     price: p.price,
     discountPrice: p.discount_price,
     inStock: p.in_stock ?? true,
     stockQuantity: p.stock_quantity,
-    branch_id: p.branch_id,
-    branch_name: p.branch_name,
+    branch_id: p.pharmacy_branch_id || p.branch_id,
     
     // For compatibility with cart/filtering
     pharmacy: {
       name: p.pharmacy_name,
-      logo: p.logoPath,
+      logo: p.pharmacy_logo,
       is_open: p.is_open,
       branch_name: p.branch_name,
-      pharmacy_image: p.pharmacy_image,
+      pharmacy_image: p.pharmacy_image || p.image,
       latitude: p.latitude,
       longitude: p.longitude
-    }
+    },
+    branch_name: p.branch_name // Ensure it's at the top level for the template
   }));
 });
 
@@ -163,10 +150,7 @@ const loadPharmacies = async () => {
   loadingPharmacies.value = true;
   try {
     const filters = {
-      brand_id: route.query.brand_id ? String(route.query.brand_id) : undefined,
-      form_id: route.query.form_id ? String(route.query.form_id) : undefined,
-      strength_id: route.query.strength_id ? String(route.query.strength_id) : undefined,
-      uom_id: route.query.uom_id ? String(route.query.uom_id) : undefined,
+      product_id: medication.value.product_id || medication.value.id,
       include_pharmacy: true,
       q: pharmacySearch.value || undefined,
       sort: pharmacySort.value === 'price_asc' ? 'price' : (pharmacySort.value === 'distance' ? 'distance' : undefined),
@@ -193,16 +177,13 @@ const loadRelatedDrugs = async () => {
   loadingRelated.value = true;
   try {
     const filters = {
-      brand_id: route.query.brand_id ? String(route.query.brand_id) : undefined,
-      form_id: route.query.form_id ? String(route.query.form_id) : undefined,
-      strength_id: route.query.strength_id ? String(route.query.strength_id) : undefined,
-      uom_id: route.query.uom_id ? String(route.query.uom_id) : undefined,
+      product_id: medication.value.product_id || medication.value.id,
       q: relatedSearch.value || undefined,
       sort: relatedSort.value.includes('price') ? 'price' : (relatedSort.value.includes('distance') ? 'distance' : undefined),
       page: relatedPage.value,
       per_page: itemsPerPage.value
     };
-    const response = await pharmacyService.getRelatedDrugs(medication.value.id, filters as any);
+    const response = await pharmacyService.getRelatedDrugs(medication.value.drug_id || medication.value.id, filters as any);
     relatedDrugs.value = response.data || [];
     relatedMeta.value = response.meta;
   } catch (err) {
@@ -212,7 +193,7 @@ const loadRelatedDrugs = async () => {
   }
 };
 
-const loadMedicationData = async (medicationId: number) => {
+const loadMedicationData = async (medicationId: string | number) => {
   loading.value = true;
   error.value = null;
   // Reset pagination and clear previous results for a fresh start
@@ -237,7 +218,7 @@ const loadMedicationData = async (medicationId: number) => {
     ]);
     
     if (medication.value && authStore.isAuthenticated) {
-        await recentlyViewedService.addToRecentlyViewed(medication.value.id);
+        await recentlyViewedService.addToRecentlyViewed(medication.value.product_id || medication.value.id);
     }
 
   } catch (err) {
@@ -264,11 +245,11 @@ watch([relatedSearch, relatedSort, relatedShowOpenOnly, relatedShowInStockOnly],
 });
 
 
-const getCustomQuantity = (pharmacyId: number): number => {
+const getCustomQuantity = (pharmacyId: string): number => {
   return customQuantities.value.get(pharmacyId) || 1;
 };
 
-const setCustomQuantity = (pharmacyId: number, quantity: number) => {
+const setCustomQuantity = (pharmacyId: string, quantity: number) => {
   customQuantities.value.set(pharmacyId, quantity);
 };
 
@@ -294,8 +275,8 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     medicationName: medication.value.name,
     pharmacyId: pharmacy.id,
     pharmacyName: pharmacy.name,
-    pharmacyLogo: pharmacy.logo,
-
+    pharmacyLogo: pharmacy.logo || undefined,
+    pharmacyBranchId: cartBranchId,
     formId: exactMatch.value.form_id,
     formName: exactMatch.value.form || '',
     strengthId: exactMatch.value.strength_id,
@@ -308,9 +289,9 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     image: medication.value.image,
     inStock: pharmacy.inStock,
     requiresPrescription: medication.value.requiresPrescription,
-    // Store pharmacy_branch_id for API calls
-    pharmacyBranchId: cartBranchId,
-    pharmacyDrugPriceId: pharmacy.priceId // Added for API compatibility
+    pharmacyDrugPriceId: pharmacy.priceId,
+    latitude: pharmacy.latitude || pharmacy.pharmacy?.latitude,
+    longitude: pharmacy.longitude || pharmacy.pharmacy?.longitude
   });
 
   notification.success(
@@ -322,18 +303,15 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
 
 
 onMounted(async () => {
-  const medicationId = route.params.id ? parseInt(route.params.id as string) : 1;
-  console.log('MedicationDetail mounted, id:', medicationId);
+  const medicationId = (route.params.id as string) || '';
   await loadMedicationData(medicationId);
 });
 
-// Watch for route changes (both ID and query params/variants) 
-// to reload medication when navigating between different medications or variants
 watch(
   () => [route.params.id, route.query.brand_id, route.query.form_id, route.query.strength_id, route.query.uom_id],
   async ([newId]) => {
     if (newId) {
-      await loadMedicationData(parseInt(newId as string));
+      await loadMedicationData(newId as string);
     }
   },
   { deep: true }
@@ -390,20 +368,20 @@ watch(
                   </div>
                   
                   <!-- Categories -->
-                  <div v-if="exactMatch?.categories?.length || medication.category?.length" class="flex flex-wrap gap-2 mb-4">
+                  <div v-if="(exactMatch?.categories && exactMatch.categories.length) || (medication.category && (Array.isArray(medication.category) ? medication.category.length : true))" class="flex flex-wrap gap-2 mb-4">
                     <template v-if="exactMatch?.categories">
                       <span v-for="cat in exactMatch.categories" :key="cat.id" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
                         {{ cat.name }}
                       </span>
                     </template>
                     <template v-else-if="Array.isArray(medication.category)">
-                      <span v-for="cat in medication.category" :key="String(cat)" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                      <span v-for="cat in medication.category" :key="typeof cat === 'string' ? cat : (cat as any).id" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
                         {{ typeof cat === 'string' ? cat : (cat as any).name }}
                       </span>
                     </template>
                     <template v-else-if="medication.category">
                       <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
-                        {{ medication.category }}
+                        {{ typeof medication.category === 'string' ? medication.category : (medication.category as any).name }}
                       </span>
                     </template>
                   </div>
@@ -468,7 +446,7 @@ watch(
                 <div class="p-4 pb-0">
                   <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
                     <LazyImage
-                      :src="pharmacyItem.pharmacy?.pharmacy_image || '/images/pharmacies/default-pharmacy.jpg'"
+                      :src="pharmacyItem.pharmacy?.pharmacy_image || pharmacyItem.logo || '/images/pharmacies/default-pharmacy.jpg'"
                       :alt="pharmacyItem.name"
                       aspectRatio="landscape"
                       className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
@@ -494,17 +472,13 @@ watch(
                   <!-- Pharmacy Info Header -->
                   <div class="flex items-center gap-3 mb-4">
                     <!-- Logo -->
-                    <div class="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm">
+                    <div class="flex-shrink-0 w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
                       <LazyImage
-                        v-if="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image"
-                        :src="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image"
+                        :src="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image || '/images/pharmacies/default-pharmacy.jpg'"
                         :alt="pharmacyItem.name"
                         aspectRatio="square"
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain rounded-full"
                       />
-                      <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                      </div>
                     </div>
                     <!-- Name + Branch -->
                     <div class="min-w-0 flex-1">
@@ -657,15 +631,9 @@ watch(
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <router-link
               v-for="drug in relatedDrugs"
-              :key="`${drug.drug_id}_${drug.form_id}_${drug.strength_id}_${drug.uom_id}`"
+              :key="drug.product_id"
               :to="{
-                path: `/medication/${drug.drug_id}`,
-                query: { 
-                  brand_id: drug.brand_id,
-                  form_id: drug.form_id,
-                  strength_id: drug.strength_id,
-                  uom_id: drug.uom_id
-                }
+                path: `/medication/${drug.product_id}`
               }"
               class="group block h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-[#1a2235] rounded-2xl hover:shadow-2xl hover:-translate-y-2"
             >
@@ -706,25 +674,28 @@ watch(
 
                   <!-- Pharmacy Info Section -->
                   <div v-if="drug.pharmacy_name" class="flex items-center gap-3 mb-4 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 dark:border-gray-700">
+                    <div class="flex-shrink-0 w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+                      <!-- Logo -->
                       <LazyImage
-                        v-if="drug.logoPath"
-                        :src="drug.logoPath"
+                        :src="drug.pharmacy_logo || '/images/pharmacies/default-pharmacy.jpg'"
                         :alt="drug.pharmacy_name"
                         aspectRatio="square"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain rounded-full"
                       />
-                      <div v-else class="w-full h-full flex items-center justify-center bg-[#246BFD]/10 text-[#246BFD] text-sm font-medium">
-                        {{ drug.pharmacy_name.charAt(0) }}
-                      </div>
                     </div>
-                    <div class="flex flex-col flex-1 min-w-0">
-                      <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <div class="min-w-0 flex-1">
+                      <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate leading-tight">
                         {{ drug.pharmacy_name }}
-                      </span>
-                      <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {{ drug.branch_name || 'Main Branch' }}
-                      </span>
+                      </h3>
+                      <div class="flex items-center gap-2 mt-1">
+                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                          {{ drug.branch_name || 'Main Branch' }}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

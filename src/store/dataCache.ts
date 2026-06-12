@@ -9,29 +9,29 @@ import type { PharmacyPrice } from '@/models/PharmacyPrice';
  * Caches medications, pharmacies, and pharmacy prices to minimize API calls
  */
 export const useDataCacheStore = defineStore('dataCache', () => {
-  // Medications cache
+  // Medications cache — drug IDs stay as number (drugs table not migrated)
   const medications = ref<Map<number, Medication>>(new Map());
   const medicationsLoading = ref<Set<number>>(new Set());
-  
-  // Pharmacies cache
-  const pharmacies = ref<Map<number, Pharmacy>>(new Map());
-  const pharmaciesLoading = ref<Set<number>>(new Set());
-  
-  // Pharmacy prices cache
+
+  // Pharmacies cache — pharmacy IDs are now UUIDs (strings)
+  const pharmacies = ref<Map<string, Pharmacy>>(new Map());
+  const pharmaciesLoading = ref<Set<string>>(new Set());
+
+  // Pharmacy prices cache — pharmacy_id is UUID, drug_id is still number
   const pharmacyPrices = ref<PharmacyPrice[]>([]);
-  const pharmacyPricesByPharmacy = ref<Map<number, PharmacyPrice[]>>(new Map());
+  const pharmacyPricesByPharmacy = ref<Map<string, PharmacyPrice[]>>(new Map());
   const pharmacyPricesByDrug = ref<Map<number, PharmacyPrice[]>>(new Map());
-  
+
   // Computed getters
   const getMedication = computed(() => (id: number): Medication | undefined => {
     return medications.value.get(id);
   });
-  
-  const getPharmacy = computed(() => (id: number): Pharmacy | undefined => {
+
+  const getPharmacy = computed(() => (id: string): Pharmacy | undefined => {
     return pharmacies.value.get(id);
   });
-  
-  const getPharmacyPrices = computed(() => (pharmacyId?: number, drugId?: number): PharmacyPrice[] => {
+
+  const getPharmacyPrices = computed(() => (pharmacyId?: string, drugId?: number): PharmacyPrice[] => {
     if (pharmacyId) {
       return pharmacyPricesByPharmacy.value.get(pharmacyId) || [];
     }
@@ -134,24 +134,24 @@ export const useDataCacheStore = defineStore('dataCache', () => {
   
   // Extract unique pharmacies from pharmacy prices
   const extractPharmaciesFromPrices = (prices: PharmacyPrice[]): Pharmacy[] => {
-    const pharmacyMap = new Map<number, Pharmacy>();
-    
+    const pharmacyMap = new Map<string, Pharmacy>();
+
     prices.forEach(price => {
       const pharmacyId = price.pharmacy_id;
-      if (!pharmacyId || isNaN(Number(pharmacyId))) return;
-      
-      const id = Number(pharmacyId);
-      
+      if (!pharmacyId) return;
+
+      const id = String(pharmacyId);
+
       // Check if already in cache
       if (pharmacies.value.has(id)) {
         pharmacyMap.set(id, pharmacies.value.get(id)!);
         return;
       }
-      
+
       // Build pharmacy from price data
       if (!pharmacyMap.has(id)) {
         const pharmacy: Pharmacy = {
-          id: id,
+          id,
           name: price.pharmacy?.name || price.pharmacy_name || `Pharmacy ${id}`,
           image: price.pharmacy?.logo || (price as any).pharmacy_image || price.pharmacy_logo || '',
           logo: price.pharmacy?.logo || (price as any).pharmacy_image || price.pharmacy_logo || '',
@@ -186,7 +186,7 @@ export const useDataCacheStore = defineStore('dataCache', () => {
         pharmacyMap.set(id, pharmacy);
       }
     });
-    
+
     return Array.from(pharmacyMap.values());
   };
   

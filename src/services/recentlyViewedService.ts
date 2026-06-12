@@ -37,7 +37,7 @@ export const recentlyViewedService = {
    * @param drugId - Drug ID
    * @returns Success response
    */
-  async addToRecentlyViewed(drugId: number): Promise<any> {
+  async addToRecentlyViewed(drugId: string | number): Promise<any> {
     return await apiService.postAuth<any>('/recently-viewed', { drug_id: drugId });
   },
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import Hero from '@/views/Home/landing/Hero.vue';
 import QuickSearch from '@/views/Home/landing/QuickSearch.vue';
@@ -12,19 +11,11 @@ import CTA from '@/views/Home/landing/CTA.vue';
 import BlogPosts from '@/views/Home/landing/BlogPosts.vue';
 import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
 import ConsultationSection from '@/views/Home/landing/ConsultationSection.vue';
-
-const isVisible = ref(false);
-
 import PromotionsCarousel from '@/views/Home/landing/PromotionsCarousel.vue';
 import PartnershipBanner from '@/views/Home/landing/PartnershipBanner.vue';
-// import AppDownloadBanner from '@/views/Home/landing/AppDownloadBanner.vue';
-
-onMounted(() => {
-  isVisible.value = true;
-});
 
 useSeoMeta({
-  title: 'FYNDRX | SAFEST AND MOST CONVENIENT ONLINE PHARMACY IN GHANA',
+  title: 'FyndRx | Safest and Most Convenient Online Pharmacy in Ghana',
   description: 'Order your prescription medicine the most convenient way and have them delivered to your doorstep. Get online prescriptions through our free online consultation service and buy medicines at anytime and from anywhere you are in need. Search for medicines, upload prescriptions and find pharmacies near you. With multiple price options and flexible payments, there are no limits for you.',
   keywords: 'order medicines online, online pharmacy Ghana, ePharmacy, upload prescription, pharmacist consultation, find pharmacy, medicine delivery, FyndRx, Ghana',
   ogType: 'website',
@@ -40,128 +31,65 @@ useSeoMeta({
     </section>
 
     <!-- Quick Search Section -->
-    <section 
-      class="relative z-10"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative z-10">
       <QuickSearch />
     </section>
 
-    <!-- Features Section -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <Features />
-    </section>
-
-    <!-- How It Works -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <div class="absolute inset-0 bg-[#FE9615]/5"></div>
+    <!-- How It Works — mental model first, before feature detail -->
+    <section class="relative">
       <HowItWorks />
     </section>
 
+    <!-- Features Section -->
+    <section class="relative">
+      <Features />
+    </section>
+
     <!-- Consultation Section -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative">
       <ConsultationSection />
     </section>
 
     <!-- Pharmacy List -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <div class="absolute inset-0 bg-[#246BFD]/5"></div>
+    <section class="relative">
       <PharmacyList />
     </section>
 
-    <!-- Service Banner -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <PromotionsCarousel />
-    </section>
-
     <!-- Stats Section -->
-    <section 
-      class="relative overflow-hidden"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative overflow-hidden">
       <Stats />
     </section>
 
     <!-- Partnership Section -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative">
       <PartnershipBanner />
     </section>
 
     <!-- Testimonials Section -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative">
       <Testimonials />
     </section>
 
-    <!-- App Download Section -->
-    <!-- <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <AppDownloadBanner />
-    </section> -->
+    <!-- Featured Health Programs — contextualised after core trust is established -->
+    <section class="relative">
+      <PromotionsCarousel />
+    </section>
 
-    <!-- CTA Section -->
-    <section 
-      class="relative overflow-hidden"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <!-- CTA Section — conversion moment before lower-engagement content -->
+    <section class="relative overflow-hidden">
       <CTA />
     </section>
 
     <!-- Blog Posts -->
-    <section 
-      class="relative"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
+    <section class="relative">
       <BlogPosts />
     </section>
 
     <!-- Newsletter Signup -->
-    <section 
-      class="relative overflow-hidden"
-      :class="{ 'animate-fade-in': isVisible }"
-    >
-      <div class="absolute inset-0 bg-gradient-to-r from-[#FE9615]/10 to-[#246BFD]/10"></div>
+    <section class="relative overflow-hidden">
       <NewsletterSignup />
     </section>
   </div>
 </template>
 
-<style scoped>
-
-.animate-fade-in {
-  animation: fadeIn 1s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style> 
+ 

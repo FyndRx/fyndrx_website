@@ -5,7 +5,8 @@ import type {
   RegisterApiResponse,
   UserApiResponse,
   OtpResponse,
-  ProfilePictureResponse 
+  ProfilePictureResponse,
+  UserSession
 } from '@/models/api';
 import { unwrapApiResponse, transformUser } from '@/utils/responseTransformers';
 
@@ -140,11 +141,38 @@ class AuthService {
   }
 
   /**
+   * Refresh access token
+   * @returns Login response with new access token
+   */
+  async refresh(): Promise<LoginResponse> {
+    const response = await apiService.post<LoginApiResponse>('/auth/refresh');
+    return {
+      message: response.message,
+      access_token: response.access_token,
+    };
+  }
+
+  /**
+   * Get active sessions
+   */
+  async getActiveSessions(): Promise<UserSession[]> {
+    const response = await apiService.getAuth<{ success: boolean; sessions: UserSession[] }>('/auth/sessions');
+    return response.sessions;
+  }
+
+  /**
+   * Revoke a specific session
+   * @param sessionId - Session ID to revoke
+   */
+  async revokeSession(sessionId: number): Promise<void> {
+    await apiService.postAuth<void>(`/auth/sessions/${sessionId}/revoke`);
+  }
+
+  /**
    * Logout user
    */
   async logout(): Promise<void> {
     await apiService.postAuth<void>('/auth/logout');
-    localStorage.removeItem('access_token');
   }
 
   /**
@@ -181,7 +209,7 @@ class AuthService {
    * @param file - Image file
    * @returns Response with profile picture URL
    */
-  async uploadProfilePicture(file: File): Promise<{ message: string; profile_picture: string }> {
+  async uploadProfilePicture(file: File): Promise<ProfilePictureResponse> {
     const formData = new FormData();
     formData.append('profile_picture', file);
     return await apiService.postAuth<ProfilePictureResponse>(
@@ -196,7 +224,7 @@ class AuthService {
    * @param file - Image file
    * @returns Response with profile picture URL
    */
-  async updateProfilePicture(file: File): Promise<{ message: string; profile_picture: string }> {
+  async updateProfilePicture(file: File): Promise<ProfilePictureResponse> {
     const formData = new FormData();
     formData.append('profile_picture', file);
     return await apiService.postAuth<ProfilePictureResponse>(

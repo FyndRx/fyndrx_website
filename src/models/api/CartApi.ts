@@ -1,94 +1,90 @@
 /**
  * Cart API Response Models
- * Based on actual API responses from /cart/* endpoints
+ * Based on PharmacyDrugPriceResource output embedded in CartController@index
  */
 
+// A single cart item: PharmacyDrugPrice fields + cart overlay (cart_item_id, quantity, subtotal)
 export interface CartItemApiResponse {
-  id: string | number;
-  drug_id: number;
-  drug_brand_id: number;
-  drug_brand_form_id: number;
-  dosage_id: number;
-  strength_uom_id: number;
-  pharmacy_branch_id: number;
-  pharmacy_id?: number; // Top level pharmacy ID
-  pharmacy_drug_price_id: number;
+  // Cart overlay fields
+  cart_item_id: string | number;
   quantity: number;
+  subtotal: number;
+
+  // From PharmacyDrugPriceResource
+  id: string;                    // pharmacy_drug_price_id (UUID)
+  pharmacy_id: string;
+  pharmacy_branch_id: string | null;
+  product_id: string | null;
+  drug_id: number | null;
+  brand_id: number | null;
+  form_id: number | null;
+  strength_id: number | null;
+  uom_id: number | null;
+
+  // Flattened product metadata
+  name: string;
+  description?: string | null;
+  image?: string | null;
+  requires_prescription: boolean;
+
+  // Pricing
   price: number;
-  discount_price?: number;
-  created_at?: string;
-  updated_at?: string;
+  discount_price?: number | null;
+  in_stock: boolean;
+  stock_quantity: number;
 
-  // Flattened fields from CartController@index
-  name?: string;
-  brand_name?: string;
-  form_name?: string;
-  strength?: string | { strength: string }; // Handle both string and object
-  strength_uom?: string | { uom: string }; // Handle both string and object
-  image?: string; // Top-level image from Flattened response
-  accepted_payment_methods?: ('platform' | 'direct')[]; // Added to fix build
+  // Display strings
+  brand_name?: string | null;
+  form_name?: string | null;
+  strength?: string | null;
+  uom?: string | null;
 
-  // Branch info
-  branch_name?: string; // Flattened branch name
-  pharmacy_branch?: {
-    id: number;
-    name?: string;
-    branch_name?: string;
-  };
+  // Pharmacy & Branch Info (Flattened from API)
+  pharmacy_name?: string;
+  pharmacy_logo?: string | null;
+  is_open?: boolean;
+  branch_name?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 
-  // Optional nested medication data
-  medication?: {
-    id: number;
-    name: string;
-    image?: string;
-    requires_prescription?: boolean;
-  };
-
-  // Optional nested pharmacy data
+  // Optional nested pharmacy (when included)
   pharmacy?: {
-    id: number;
+    id: string;
     name: string;
-    logo?: string;
-  };
-
-  // Optional nested brand/form/strength data
-  brand?: {
-    id: number;
-    name: string;
-    image?: string | null;
-  };
-  form?: {
-    id: number;
-    form_name: string;
-  };
-  strength_obj?: { // Renamed from strength to avoid conflict
-    id: number;
-    strength: string;
-  };
-  uom?: {
-    id: number;
-    uom: string;
+    logo?: string | null;
+    address?: string;
+    is_open?: boolean;
+    distance?: number | string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    location?: { lat: number; lng: number };
+    branch_id?: string;
+    branch_name?: string;
+    accepted_payment_methods?: ('platform' | 'direct')[];
+    accepted_payment_labels?: string[];
   };
 }
 
-export interface CartApiResponse {
-  items?: CartItemApiResponse[]; // Legacy or flattened
-  pharmacies?: {
-    pharmacy_id: number;
-    pharmacy_name: string;
-    pharmacy_logo?: string | null;
-    items: CartItemApiResponse[];
-    subtotal: number;
-    payment_method?: string;
-    accepted_payment_methods?: ('platform' | 'direct')[];
-  }[];
-  total_items?: number;
-  totalItems?: number;
+export interface CartPharmacyGroup {
+  pharmacy_id: string;
+  pharmacy_branch_id: string;
+  pharmacy_name?: string;
+  pharmacy_logo?: string | null;
+  is_open?: boolean;
+  branch_name?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  accepted_payment_methods: ('platform' | 'direct')[];
+  accepted_payment_labels: string[];
+  items: CartItemApiResponse[];
   subtotal: number;
-  discount?: number;
+}
+
+export interface CartApiResponse {
+  pharmacies: CartPharmacyGroup[];
+  total_items: number;
+  subtotal: number;
   total: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
 // Response from /cart
@@ -98,11 +94,10 @@ export type GetCartApiResponse = CartApiResponse | { data: CartApiResponse };
 export type AddToCartApiResponse = {
   message: string;
   cart_item: CartItemApiResponse;
-} | CartItemApiResponse;
+};
 
 // Response from /cart/items/:id (PUT)
 export type UpdateCartItemApiResponse = {
   message: string;
   cart_item: CartItemApiResponse;
-} | CartItemApiResponse;
-
+};

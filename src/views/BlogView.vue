@@ -237,8 +237,14 @@ watch(currentPage, () => {
               <span>{{ formatDate(featuredPost.date) }}</span>
               <span>{{ featuredPost.readTime }} min read</span>
               <div class="flex items-center gap-1">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                <svg
+                  class="w-5 h-5 transition-colors"
+                  :fill="featuredPost.liked ? 'currentColor' : 'none'"
+                  :class="featuredPost.liked ? 'text-red-400' : 'text-white/70'"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
                 <span>{{ featuredPost.likes }}</span>
               </div>
@@ -402,8 +408,14 @@ watch(currentPage, () => {
               
               <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                 <div class="flex items-center gap-1">
-                  <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  <svg
+                    class="w-4 h-4 transition-colors"
+                    :class="post.liked ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'"
+                    :fill="post.liked ? 'currentColor' : 'none'"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                   </svg>
                   <span>{{ post.likes }}</span>
                 </div>

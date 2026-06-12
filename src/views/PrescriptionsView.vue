@@ -2,384 +2,579 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { prescriptionService } from '@/services/prescription';
-import LazyImage from '@/components/LazyImage.vue';
+import { consultationService } from '@/services/consultationService';
+import type { Prescription, PrescriptionDrug } from '@/models/Prescription';
+import {
+  DocumentTextIcon,
+  PlusIcon,
+  BeakerIcon,
+  CalendarIcon,
+  ClockIcon,
+  UserIcon,
+  XMarkIcon,
+  SparklesIcon,
+  ArrowUpTrayIcon,
+  ShoppingCartIcon,
+  InformationCircleIcon,
+  ChevronRightIcon,
+  ArrowTopRightOnSquareIcon,
+  ChatBubbleLeftRightIcon,
+} from '@heroicons/vue/24/outline';
 
-import type { Prescription } from '@/models/Prescription';
+type StatusKey = 'active' | 'dispensed' | 'pending' | 'expired' | 'cancelled' | 'completed';
+type FilterKey = 'all' | StatusKey;
 
 const router = useRouter();
 const prescriptions = ref<Prescription[]>([]);
-const selectedFilter = ref<'all' | 'active' | 'expired' | 'completed' | 'cancelled'>('all');
+const selectedFilter = ref<FilterKey>('all');
 const selectedPrescription = ref<Prescription | null>(null);
-const showDetailModal = ref(false);
 const loading = ref(true);
 
-const statusColors: Record<string, { bg: string; text: string; border: string }> = {
-  active: { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-800 dark:text-green-200', border: 'border-green-200 dark:border-green-800' },
-  expired: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', border: 'border-gray-200 dark:border-gray-600' },
-  completed: { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-800 dark:text-blue-200', border: 'border-blue-200 dark:border-blue-800' },
-  cancelled: { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-800 dark:text-red-200', border: 'border-red-200 dark:border-red-800' }
+// ── Status config ─────────────────────────────────────────────
+const statusConfig: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
+  active:    { label: 'Active',    bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700/40', dot: 'bg-emerald-500' },
+  dispensed: { label: 'Dispensed', bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-blue-700 dark:text-blue-300',       border: 'border-blue-200 dark:border-blue-700/40',    dot: 'bg-blue-500'    },
+  pending:   { label: 'Pending',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-300',     border: 'border-amber-200 dark:border-amber-700/40',  dot: 'bg-amber-500'   },
+  expired:   { label: 'Expired',   bg: 'bg-gray-100 dark:bg-gray-700/40',    text: 'text-gray-600 dark:text-gray-400',       border: 'border-gray-200 dark:border-gray-600',       dot: 'bg-gray-400'    },
+  cancelled: { label: 'Cancelled', bg: 'bg-red-50 dark:bg-red-900/20',       text: 'text-red-700 dark:text-red-300',         border: 'border-red-200 dark:border-red-700/40',      dot: 'bg-red-500'     },
+  completed: { label: 'Completed', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300',   border: 'border-indigo-200 dark:border-indigo-700/40',dot: 'bg-indigo-500'  },
 };
 
-const statusLabels: Record<string, string> = {
-  active: 'Active',
-  expired: 'Expired',
-  completed: 'Completed',
-  cancelled: 'Cancelled'
+const getStatus = (status: string) =>
+  statusConfig[status] ?? { label: status, bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200', dot: 'bg-gray-400' };
+
+// ── Filters ───────────────────────────────────────────────────
+const filters: { key: FilterKey; label: string }[] = [
+  { key: 'all',       label: 'All'       },
+  { key: 'active',    label: 'Active'    },
+  { key: 'pending',   label: 'Pending'   },
+  { key: 'dispensed', label: 'Dispensed' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'expired',   label: 'Expired'   },
+  { key: 'cancelled', label: 'Cancelled' },
+];
+
+const filterCount = (key: FilterKey) =>
+  key === 'all' ? prescriptions.value.length : prescriptions.value.filter(p => p.status === key).length;
+
+const filteredPrescriptions = computed(() =>
+  selectedFilter.value === 'all'
+    ? prescriptions.value
+    : prescriptions.value.filter(p => p.status === selectedFilter.value)
+);
+
+// ── Helpers ───────────────────────────────────────────────────
+const formatDate = (d?: string | null) => {
+  if (!d) return 'N/A';
+  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const filteredPrescriptions = computed(() => {
-  return prescriptions.value.filter(p => p.status === selectedFilter.value);
-});
-
-const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric'
-  });
+const getDrugLabel = (drug: PrescriptionDrug & { display_name?: string; drug_name?: string }) => {
+  if (drug.brand_name) return drug.brand_name;
+  const raw = (drug as any).display_name || (drug as any).drug_name || drug.name || '';
+  return raw.split('•')[0].trim() || raw;
 };
 
-const isExpiringSoon = (expiryDate?: string) => {
-  if (!expiryDate) return false;
-  const expiry = new Date(expiryDate);
-  const today = new Date();
-  const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+const originConfig = (origin?: string) => {
+  if (origin === 'consultation') return { label: 'Consultation', icon: SparklesIcon, bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400' };
+  if (origin === 'uploaded')     return { label: 'Uploaded',     icon: ArrowUpTrayIcon, bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' };
+  return                                { label: 'Manual',       icon: DocumentTextIcon, bg: 'bg-slate-100 dark:bg-slate-700/40', text: 'text-slate-600 dark:text-slate-400' };
 };
 
-const viewDetails = (prescription: Prescription) => {
-  selectedPrescription.value = prescription;
-  showDetailModal.value = true;
-};
-
-const closeModal = () => {
-  showDetailModal.value = false;
-  selectedPrescription.value = null;
-};
-
-const uploadNewPrescription = () => {
-  router.push({ name: 'upload-prescription' });
-};
-
+// ── Data ──────────────────────────────────────────────────────
 const loadPrescriptions = async () => {
   loading.value = true;
   try {
     const data = await prescriptionService.getPrescriptions();
-    prescriptions.value = data.sort((a, b) => 
-      new Date(b.created_at || new Date()).getTime() - new Date(a.created_at || new Date()).getTime()
+    prescriptions.value = data.sort(
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     );
-  } catch (err) {
-    console.error('Error loading prescriptions:', err);
-    prescriptions.value = [];
-  } finally {
-    loading.value = false;
-  }
+  } catch { prescriptions.value = []; }
+  finally { loading.value = false; }
 };
 
-onMounted(() => {
-  loadPrescriptions();
-});
+// ── Consultation link ─────────────────────────────────────────
+const consultationLoading = ref(false);
+
+const extractConsultationNumber = (notes?: string | null): string | null => {
+  if (!notes) return null;
+  const match = notes.match(/CONS-[A-Z0-9-]+/i);
+  return match ? match[0].toUpperCase() : null;
+};
+
+const openConsultation = async (rx: Prescription) => {
+  const consultationNumber = extractConsultationNumber(rx.notes);
+  if (!consultationNumber) return;
+  try {
+    consultationLoading.value = true;
+    const results = await consultationService.getConsultations({ search: consultationNumber } as any);
+    const list = Array.isArray(results) ? results : (results as any).data ?? [];
+    const found = list.find((c: any) =>
+      c.consultation_number?.toUpperCase() === consultationNumber
+    ) ?? list[0];
+    if (found) {
+      selectedPrescription.value = null;
+      router.push({ name: 'consultation-detail', params: { id: found.id } });
+    }
+  } catch { /* silently ignore */ }
+  finally { consultationLoading.value = false; }
+};
+
+// ── Order modal ───────────────────────────────────────────────
+const showOrderModal = ref(false);
+const orderPrescription = ref<Prescription | null>(null);
+
+const openOrderModal = (rx: Prescription) => {
+  orderPrescription.value = rx;
+  showOrderModal.value = true;
+};
+
+const goToMedication = (drug: PrescriptionDrug) => {
+  showOrderModal.value = false;
+  selectedPrescription.value = null;
+  const id = drug.product_id ?? drug.drug_id;
+  router.push({ name: 'MedicationDetail', params: { id } });
+};
+
+onMounted(loadPrescriptions);
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between mb-8">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- ── Header ──────────────────────────────────────────── -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
         <div>
-          <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">My Prescriptions</h1>
-          <p class="text-gray-600 dark:text-gray-300">Manage and view your medical prescriptions</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Prescriptions</h1>
+          <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">Track, manage and order from your medical prescriptions.</p>
         </div>
         <button
-          @click="uploadNewPrescription"
-          class="flex items-center gap-2 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 hover:shadow-lg"
+          @click="router.push({ name: 'upload-prescription' })"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white font-medium text-sm transition-all shadow-sm shadow-blue-200 dark:shadow-none shrink-0"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Upload New
+          <PlusIcon class="w-4 h-4" />
+          Upload Prescription
         </button>
       </div>
 
-      <div class="mb-6">
-        <div class="flex gap-2 overflow-x-auto pb-2">
-          <button
-            @click="selectedFilter = 'all'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'all'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            All ({{ prescriptions.length }})
-          </button>
-          <button
-            @click="selectedFilter = 'active'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'active'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Active ({{ prescriptions.filter(p => p.status === 'active').length }})
-          </button>
-          <button
-            @click="selectedFilter = 'expired'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'expired'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Expired ({{ prescriptions.filter(p => p.status === 'expired').length }})
-          </button>
-          <button
-            @click="selectedFilter = 'cancelled'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'cancelled'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Cancelled ({{ prescriptions.filter(p => p.status === 'cancelled').length }})
-          </button>
-          <button
-            @click="selectedFilter = 'completed'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'completed'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Completed ({{ prescriptions.filter(p => p.status === 'completed').length }})
-          </button>
-        </div>
-      </div>
-
-      <div v-if="loading" class="py-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-        <p class="mt-4 text-gray-600 dark:text-gray-300">Loading prescriptions...</p>
-      </div>
-
-      <div v-else-if="filteredPrescriptions.length === 0" class="py-16 text-center">
-        <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No prescriptions found</h3>
-        <p class="mb-6 text-gray-600 dark:text-gray-300">Upload your first prescription to get started</p>
+      <!-- ── Filter tabs ─────────────────────────────────────── -->
+      <div class="flex gap-2 overflow-x-auto pb-1 mb-8 scrollbar-none">
         <button
-          @click="uploadNewPrescription"
-          class="inline-block px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
+          v-for="f in filters"
+          :key="f.key"
+          @click="selectedFilter = f.key"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border"
+          :class="selectedFilter === f.key
+            ? 'bg-[#246BFD] text-white border-[#246BFD] shadow-sm'
+            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/40'"
+        >
+          {{ f.label }}
+          <span
+            class="text-xs px-1.5 py-0.5 rounded-full font-bold"
+            :class="selectedFilter === f.key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
+          >{{ filterCount(f.key) }}</span>
+        </button>
+      </div>
+
+      <!-- ── Loading ─────────────────────────────────────────── -->
+      <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div v-for="i in 4" :key="i" class="animate-pulse h-44 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
+      </div>
+
+      <!-- ── Empty state ─────────────────────────────────────── -->
+      <div v-else-if="filteredPrescriptions.length === 0" class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+          <DocumentTextIcon class="w-10 h-10 text-gray-400" />
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">No prescriptions found</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-6">
+          {{ selectedFilter === 'all' ? 'Upload your first prescription to get started.' : `You have no ${selectedFilter} prescriptions.` }}
+        </p>
+        <button
+          v-if="selectedFilter === 'all'"
+          @click="router.push({ name: 'upload-prescription' })"
+          class="px-5 py-2.5 rounded-xl bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
         >
           Upload Prescription
         </button>
       </div>
 
-      <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- ── Cards grid ──────────────────────────────────────── -->
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div
-          v-for="prescription in filteredPrescriptions"
-          :key="prescription.id"
-          class="p-6 transition-all duration-300 bg-white cursor-pointer dark:bg-gray-800 rounded-2xl hover:shadow-xl hover:-translate-y-1"
-          @click="viewDetails(prescription)"
+          v-for="rx in filteredPrescriptions"
+          :key="rx.id"
+          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/30 hover:shadow-lg dark:hover:shadow-none transition-all duration-200 overflow-hidden cursor-pointer"
+          @click="selectedPrescription = rx"
         >
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 w-20 h-20 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-lg">
-              <LazyImage
-                :src="prescription.prescription_picture || '/placeholder-rx.png'"
-                :alt="`Prescription ${prescription.prescription_number}`"
-                aspectRatio="square"
-                className="w-full h-full object-cover"
-              />
+          <!-- Top accent strip by origin -->
+          <div
+            class="h-1 w-full"
+            :class="(rx as any).origin === 'consultation' ? 'bg-gradient-to-r from-violet-400 to-purple-500' : 'bg-gradient-to-r from-[#246BFD] to-sky-400'"
+          />
+
+          <div class="p-5">
+            <!-- Row 1: origin + status -->
+            <div class="flex items-center justify-between mb-3">
+              <div
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                :class="[originConfig((rx as any).origin).bg, originConfig((rx as any).origin).text]"
+              >
+                <component :is="originConfig((rx as any).origin).icon" class="w-3.5 h-3.5" />
+                {{ originConfig((rx as any).origin).label }}
+              </div>
+              <div
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+                :class="[getStatus(rx.status).bg, getStatus(rx.status).text, getStatus(rx.status).border]"
+              >
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getStatus(rx.status).dot" />
+                {{ getStatus(rx.status).label }}
+              </div>
             </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between mb-2">
-                <div>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ prescription.prescription_number }}
-                  </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Dr. {{ prescription.doctor_name }}</p>
-                </div>
-                <span
-                  :class="[
-                    'px-3 py-1 text-xs font-semibold rounded-full',
-                    statusColors[prescription.status].bg,
-                    statusColors[prescription.status].text
-                  ]"
-                >
-                  {{ statusLabels[prescription.status] }}
-                </span>
-              </div>
+            <!-- Row 2: title + Rx number -->
+            <div class="mb-3">
+              <h3 class="font-bold text-gray-900 dark:text-white text-base leading-snug">
+                {{ rx.title || 'Prescription' }}
+              </h3>
+              <p class="text-xs font-mono text-gray-400 dark:text-gray-500 mt-0.5">{{ rx.prescription_number }}</p>
+            </div>
 
-              <div class="mb-3">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medications:</p>
+            <!-- Row 3: doctor + date -->
+            <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+              <div class="flex items-center gap-1.5">
+                <div class="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <UserIcon class="w-3 h-3" />
+                </div>
+                <span class="truncate max-w-[140px]">{{ rx.doctor_name }}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <CalendarIcon class="w-3.5 h-3.5" />
+                {{ formatDate(rx.prescription_date) }}
+              </div>
+            </div>
+
+            <!-- Row 4: drugs or empty state -->
+            <div class="mb-4">
+              <template v-if="rx.drugs && rx.drugs.length">
                 <div class="flex flex-wrap gap-2">
                   <span
-                    v-for="(drug, index) in prescription.drugs.slice(0, 2)"
-                    :key="index"
-                    class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
+                    v-for="(drug, i) in rx.drugs.slice(0, 3)"
+                    :key="i"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-100 dark:border-blue-800/30"
                   >
-                    {{ drug.name }} {{ drug.dose }}
+                    <BeakerIcon class="w-3 h-3" />
+                    {{ getDrugLabel(drug as any) }}
                   </span>
                   <span
-                    v-if="prescription.drugs.length > 2"
-                    class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full"
+                    v-if="rx.drugs.length > 3"
+                    class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs font-medium"
                   >
-                    +{{ prescription.drugs.length - 2 }} more
+                    +{{ rx.drugs.length - 3 }} more
                   </span>
                 </div>
+              </template>
+              <div v-else class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 italic">
+                <InformationCircleIcon class="w-3.5 h-3.5 shrink-0" />
+                No medications listed
               </div>
+            </div>
 
-              <div class="flex items-center justify-between text-sm">
-                <div class="text-gray-600 dark:text-gray-400">
-                  <span class="font-medium">Issued:</span> {{ formatDate(prescription.prescription_date) }}
-                </div>
-                <div class="text-gray-600 dark:text-gray-400">
-                  <span class="font-medium">Expires:</span> {{ formatDate(prescription.expiry_date) }}
-                </div>
-              </div>
-
-              <div v-if="isExpiringSoon(prescription.expiry_date) && prescription.status === 'active'" class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <p class="text-xs text-yellow-800 dark:text-yellow-200 flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                  </svg>
-                  Expiring soon! Renew your prescription
-                </p>
-              </div>
+            <!-- Row 5: actions -->
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+              <button
+                class="text-xs text-[#246BFD] font-medium flex items-center gap-1 hover:gap-2 transition-all"
+                @click.stop="selectedPrescription = rx"
+              >
+                View details <ChevronRightIcon class="w-3.5 h-3.5" />
+              </button>
+              <button
+                v-if="rx.status === 'active' && rx.drugs?.length"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-xs font-semibold transition-all shadow-sm"
+                @click.stop="openOrderModal(rx)"
+              >
+                <ShoppingCartIcon class="w-3.5 h-3.5" />
+                Order
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Prescription Detail Modal -->
-    <div
-      v-if="showDetailModal && selectedPrescription"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-      @click.self="closeModal"
-    >
-      <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
-        <div class="sticky top-0 z-10 flex items-center justify-between p-6 bg-gradient-to-r from-[#246BFD] to-[#5089FF]">
-          <div>
-            <h2 class="text-2xl font-bold text-white">{{ selectedPrescription.prescription_number }}</h2>
-            <p class="text-white/80">Dr. {{ selectedPrescription.doctor_name }}</p>
-          </div>
-          <button
-            @click="closeModal"
-            class="p-2 transition-colors rounded-full text-white hover:bg-white/20"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
+    <!-- ── Detail drawer ───────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="drawer">
+        <div
+          v-if="selectedPrescription"
+          class="fixed inset-0 z-50 flex justify-end"
+        >
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="selectedPrescription = null" />
 
-        <div class="p-6 space-y-6">
-          <!-- Prescription Image -->
-          <div class="overflow-hidden rounded-xl">
-            <LazyImage
-              :src="selectedPrescription.prescription_picture || '/placeholder-rx.png'"
-              :alt="`Prescription ${selectedPrescription.prescription_number}`"
-              aspectRatio="landscape"
-              className="w-full object-cover"
-            />
-          </div>
+          <!-- Panel -->
+          <div class="relative w-full max-w-xl h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col overflow-hidden">
 
-          <!-- Status and Dates -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Status</p>
-              <span
-                :class="[
-                  'inline-block px-3 py-1 text-sm font-semibold rounded-full',
-                  statusColors[selectedPrescription.status].bg,
-                  statusColors[selectedPrescription.status].text
-                ]"
-              >
-                {{ statusLabels[selectedPrescription.status] }}
-              </span>
-            </div>
-            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Issued Date</p>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.prescription_date) }}</p>
-            </div>
-            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Expiry Date</p>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ formatDate(selectedPrescription.expiry_date) }}</p>
-            </div>
-            <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Patient</p>
-              <p class="font-semibold text-gray-900 dark:text-white">ID: {{ selectedPrescription.user_id }}</p>
-            </div>
-          </div>
-
-          <!-- Medications -->
-          <div>
-            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Prescribed Medications</h3>
-            <div class="space-y-3">
-              <div
-                v-for="(drug, index) in selectedPrescription.drugs"
-                :key="index"
-                class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
-              >
-                <div class="flex items-start justify-between mb-2">
-                  <h4 class="font-semibold text-blue-900 dark:text-blue-100">{{ drug.name }}</h4>
-                  <span class="px-2 py-1 text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 rounded-full">
-                    {{ drug.dose }}
-                  </span>
+            <!-- Sticky header -->
+            <div class="shrink-0 bg-gradient-to-r from-[#1A2233] to-[#246BFD] px-6 pt-6 pb-5">
+              <div class="flex items-start justify-between mb-3">
+                <div
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white"
+                >
+                  <component :is="originConfig((selectedPrescription as any).origin).icon" class="w-3.5 h-3.5" />
+                  {{ originConfig((selectedPrescription as any).origin).label }}
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span class="text-gray-600 dark:text-gray-400">Frequency:</span>
-                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ drug.frequency }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600 dark:text-gray-400">Duration:</span>
-                    <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ drug.duration }}</span>
-                  </div>
-                </div>
-                <div class="mt-2 text-sm">
-                  <span class="text-gray-600 dark:text-gray-400">Instructions:</span>
-                  <p class="mt-1 text-gray-900 dark:text-white">{{ drug.instruction }}</p>
-                </div>
+                <button
+                  @click="selectedPrescription = null"
+                  class="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <XMarkIcon class="w-4 h-4" />
+                </button>
+              </div>
+              <h2 class="text-xl font-bold text-white leading-tight">{{ selectedPrescription.title || 'Prescription' }}</h2>
+              <p class="text-sm font-mono text-white/60 mt-0.5">{{ selectedPrescription.prescription_number }}</p>
+              <!-- Status chip -->
+              <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20">
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getStatus(selectedPrescription.status).dot" />
+                {{ getStatus(selectedPrescription.status).label }}
               </div>
             </div>
-          </div>
 
-          <!-- Doctor's Notes -->
-          <div v-if="selectedPrescription.notes" class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
-            <h3 class="mb-2 text-sm font-semibold text-yellow-900 dark:text-yellow-100">Doctor's Notes</h3>
-            <p class="text-sm text-yellow-800 dark:text-yellow-200">{{ selectedPrescription.notes }}</p>
-          </div>
+            <!-- Scrollable body -->
+            <div class="flex-1 overflow-y-auto">
 
-          <!-- Actions -->
-          <div class="flex gap-3">
-            <button
-              @click="closeModal"
-              class="flex-1 px-6 py-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Close
-            </button>
-            <button
-              v-if="selectedPrescription.status === 'active'"
-              class="flex-1 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
-            >
-              Order Medications
-            </button>
+              <!-- Meta grid -->
+              <div class="grid grid-cols-2 gap-3 p-5 border-b border-gray-100 dark:border-gray-800">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Prescriber</p>
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-[#246BFD]/10 flex items-center justify-center shrink-0">
+                      <UserIcon class="w-4 h-4 text-[#246BFD]" />
+                    </div>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white leading-tight">{{ selectedPrescription.doctor_name }}</p>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Issued</p>
+                  <div class="flex items-center gap-2">
+                    <CalendarIcon class="w-4 h-4 text-gray-400 shrink-0" />
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.prescription_date) }}</p>
+                  </div>
+                </div>
+
+                <div v-if="selectedPrescription.expiry_date" class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Expires</p>
+                  <div class="flex items-center gap-2">
+                    <ClockIcon class="w-4 h-4 text-gray-400 shrink-0" />
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.expiry_date) }}</p>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Issued</p>
+                  <div class="flex items-center gap-2">
+                    <CalendarIcon class="w-4 h-4 text-gray-400 shrink-0" />
+                    <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.created_at) }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Medications -->
+              <div class="p-5">
+                <h3 class="text-xs uppercase font-bold text-gray-400 tracking-wider mb-4 flex items-center gap-2">
+                  <BeakerIcon class="w-4 h-4" />
+                  Medications
+                  <span class="ml-auto bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {{ selectedPrescription.drugs?.length ?? 0 }}
+                  </span>
+                </h3>
+
+                <div v-if="selectedPrescription.drugs?.length" class="space-y-3">
+                  <div
+                    v-for="(drug, i) in selectedPrescription.drugs"
+                    :key="i"
+                    class="rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+                  >
+                    <!-- Drug header -->
+                    <div class="bg-blue-50 dark:bg-blue-900/10 px-4 py-3 flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="font-bold text-gray-900 dark:text-white text-sm leading-snug">
+                          {{ getDrugLabel(drug as any) }}
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                          {{ (drug as any).display_name || (drug as any).drug_name || drug.name }}
+                        </p>
+                      </div>
+                      <span class="shrink-0 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 text-xs font-bold text-[#246BFD] border border-blue-100 dark:border-blue-800/30 shadow-sm">
+                        {{ drug.dose }}
+                      </span>
+                    </div>
+
+                    <!-- Drug details grid -->
+                    <div class="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                      <div class="px-3 py-2.5 text-center">
+                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Frequency</p>
+                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.frequency }}</p>
+                      </div>
+                      <div class="px-3 py-2.5 text-center">
+                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Duration</p>
+                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.duration }}</p>
+                      </div>
+                      <div class="px-3 py-2.5 text-center">
+                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Qty</p>
+                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.quantity }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Instruction -->
+                    <div v-if="drug.instruction" class="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-700">
+                      <p class="text-xs text-gray-500 dark:text-gray-400 italic">"{{ drug.instruction }}"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="flex flex-col items-center py-8 text-center">
+                  <BeakerIcon class="w-10 h-10 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p class="text-sm text-gray-400 dark:text-gray-500">No medications listed on this prescription.</p>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div v-if="selectedPrescription.notes" class="px-5 pb-5">
+                <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 p-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <InformationCircleIcon class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <p class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Clinical Notes</p>
+                  </div>
+                  <p class="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">{{ selectedPrescription.notes }}</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Sticky footer actions -->
+            <div class="shrink-0 border-t border-gray-100 dark:border-gray-800 px-5 py-4 bg-white dark:bg-gray-900 space-y-2">
+              <!-- Consultation link (only for consultation-origin prescriptions) -->
+              <button
+                v-if="selectedPrescription.origin === 'consultation' && extractConsultationNumber(selectedPrescription.notes)"
+                class="w-full py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/40 bg-violet-50 dark:bg-violet-900/10 text-violet-700 dark:text-violet-300 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/20 disabled:opacity-60"
+                :disabled="consultationLoading"
+                @click="openConsultation(selectedPrescription)"
+              >
+                <span v-if="consultationLoading" class="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                <ChatBubbleLeftRightIcon v-else class="w-4 h-4" />
+                {{ consultationLoading ? 'Opening…' : `View Consultation · ${extractConsultationNumber(selectedPrescription.notes)}` }}
+                <ArrowTopRightOnSquareIcon v-if="!consultationLoading" class="w-3.5 h-3.5 opacity-60" />
+              </button>
+
+              <div class="flex gap-3">
+                <button
+                  @click="selectedPrescription = null"
+                  class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  v-if="selectedPrescription.status === 'active' && selectedPrescription.drugs?.length"
+                  class="flex-1 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  @click="openOrderModal(selectedPrescription)"
+                >
+                  <ShoppingCartIcon class="w-4 h-4" />
+                  Order Medications
+                </button>
+                <button
+                  v-if="selectedPrescription.status === 'active' && !selectedPrescription.drugs?.length"
+                  class="flex-1 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  @click="router.push({ name: 'upload-prescription' })"
+                >
+                  <ArrowUpTrayIcon class="w-4 h-4" />
+                  Add Medications
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── Order drug picker modal ──────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="fade-up">
+        <div
+          v-if="showOrderModal && orderPrescription"
+          class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          @click.self="showOrderModal = false"
+        >
+          <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 pt-5 pb-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-gray-900 dark:text-white">Order Medications</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Select a medication to find pharmacies &amp; prices</p>
+              </div>
+              <button @click="showOrderModal = false" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <XMarkIcon class="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <!-- Drug list -->
+            <div class="p-4 space-y-2 max-h-80 overflow-y-auto">
+              <button
+                v-for="(drug, i) in orderPrescription.drugs"
+                :key="i"
+                class="w-full flex items-center gap-3 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/40 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all text-left group"
+                @click="goToMedication(drug)"
+              >
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                  <BeakerIcon class="w-5 h-5 text-[#246BFD]" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-sm text-gray-900 dark:text-white leading-snug">{{ drug.display_name || drug.name }}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ drug.dose }} · {{ drug.frequency }} · {{ drug.duration }}</p>
+                </div>
+                <ChevronRightIcon class="w-4 h-4 text-gray-400 group-hover:text-[#246BFD] transition-colors shrink-0" />
+              </button>
+            </div>
+
+            <!-- Footer note -->
+            <div class="px-6 pb-5">
+              <p class="text-xs text-gray-400 dark:text-gray-500 text-center">
+                You'll be able to compare pharmacy prices and add to cart on the next page.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-</style>
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.25s ease;
+}
+.drawer-enter-active .relative,
+.drawer-leave-active .relative {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+.drawer-enter-from .relative {
+  transform: translateX(100%);
+}
+.drawer-leave-to .relative {
+  transform: translateX(100%);
+}
 
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+.fade-up-enter-active, .fade-up-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.fade-up-enter-from, .fade-up-leave-to { opacity: 0; transform: translateY(12px); }
+</style>

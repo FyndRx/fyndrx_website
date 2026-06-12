@@ -47,8 +47,8 @@ const features = ref([
   },
   {
     id: 6,
-    title: 'Verified Pharmacies',
-    description: 'All partner pharmacies are verified and licensed. Shop with confidence knowing you\'re getting authentic medications.',
+    title: 'FDA-Verified Pharmacies',
+    description: 'Every partner pharmacy is licensed by the Ghana Food and Drugs Authority (FDA) and Ghana Pharmacy Council. Zero tolerance for counterfeit medications.',
     icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
     color: 'from-teal-500 to-cyan-500'
   }
@@ -69,7 +69,7 @@ export default {
           Why Choose <span class="text-[#246BFD]">FyndRx</span>?
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-300">
-          Your complete ePharmacy solution with everything you need for convenient healthcare
+          Your complete ePharmacy solution — FDA-compliant, secure, and built for the Ghanaian healthcare system
         </p>
       </div>
 

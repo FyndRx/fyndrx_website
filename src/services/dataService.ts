@@ -58,16 +58,16 @@ export const dataService = {
   },
 
   getAllPharmacies(): Pharmacy[] {
-    return pharmaciesData as Pharmacy[];
+    return pharmaciesData as unknown as Pharmacy[];
   },
 
-  getPharmacyById(id: number): Pharmacy | undefined {
-    const pharmacies = pharmaciesData as Pharmacy[];
-    return pharmacies.find(p => p.id === id);
+  getPharmacyById(id: string | number): Pharmacy | undefined {
+    const pharmacies = pharmaciesData as unknown as Pharmacy[];
+    return pharmacies.find(p => String(p.id) === String(id));
   },
 
   searchPharmacies(query: string): Pharmacy[] {
-    const pharmacies = pharmaciesData as Pharmacy[];
+    const pharmacies = pharmaciesData as unknown as Pharmacy[];
     if (!query) return pharmacies;
     
     const searchTerm = query.toLowerCase();
@@ -75,7 +75,7 @@ export const dataService = {
       pharmacy.name.toLowerCase().includes(searchTerm) ||
       pharmacy.address.toLowerCase().includes(searchTerm) ||
       pharmacy.description.toLowerCase().includes(searchTerm) ||
-      pharmacy.services.some(service => service.toLowerCase().includes(searchTerm))
+      pharmacy.services.some(service => service.name.toLowerCase().includes(searchTerm) || service.slug.includes(searchTerm))
     );
   },
 

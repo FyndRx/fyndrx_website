@@ -7,25 +7,30 @@ import type { Consultation } from '@/types/consultation';
 import Badge from '@/components/Badge.vue';
 import Button from '@/components/Button.vue';
 import Card from '@/components/Card.vue';
-import { 
+import {
   UserCircleIcon,
-  CalendarIcon, 
-  ClockIcon, 
-  DocumentTextIcon, 
-  ArrowLeftIcon, 
+  CalendarIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ArrowLeftIcon,
   ArrowDownTrayIcon,
   BuildingStorefrontIcon,
   SparklesIcon,
   BeakerIcon,
   HeartIcon,
-  BoltIcon
+  BoltIcon,
+  CheckCircleIcon,
+  ArrowUturnRightIcon,
+  ArrowPathIcon,
+  ChatBubbleLeftEllipsisIcon
 } from '@heroicons/vue/24/outline';
-import { 
-  StarIcon as StarIconSolid, 
+import {
+  StarIcon as StarIconSolid,
   ClipboardDocumentCheckIcon,
   PrinterIcon
 } from '@heroicons/vue/24/solid';
 import { StarIcon as StarIconOutline } from '@heroicons/vue/24/outline';
+import CreateConsultationModal from '@/components/Consultations/CreateConsultationModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -37,6 +42,12 @@ const error = ref('');
 const userRating = ref(0);
 const userFeedback = ref('');
 const isSubmittingRating = ref(false);
+
+// Follow-up modal state
+const showFollowUpModal = ref(false);
+
+const openFollowUpModal = () => { showFollowUpModal.value = true; };
+const onFollowUpCreated = () => { fetchConsultation(); };
 
 const getFileUrl = (path: string) => {
   if (!path) return '#';
@@ -96,7 +107,7 @@ const submitReview = async () => {
 const fetchConsultation = async () => {
   try {
     loading.value = true;
-    const id = Number(route.params.id);
+    const id = route.params.id as string;
     const response = await consultationService.getConsultationById(id);
     consultation.value = (response as any).data || response;
     
@@ -150,15 +161,26 @@ const printConsultation = () => {
     }
 };
 
-const formatDrugDisplay = (drug: any) => {
-  const parts = [
-    drug.name,
-    drug.brand_name,
-    drug.form_name,
-    drug.dose,
-    drug.uom
-  ];
-  return parts.filter(p => p && p.toString().trim() !== '').join(' • ').toUpperCase();
+const formatDrugDisplay = (drug: {
+  display_name?: string;
+  drug_name?: string;
+  name?: string;
+  brand_name?: string | null;
+  form_name?: string;
+}) => {
+  const productLine =
+    drug.display_name?.trim() ||
+    drug.drug_name?.trim() ||
+    drug.name?.trim();
+
+  if (productLine) {
+    return productLine.toUpperCase();
+  }
+
+  const parts = [drug.brand_name, drug.form_name].filter(
+    (p) => p && p.toString().trim() !== ''
+  );
+  return parts.join(' • ').toUpperCase();
 };
 
 onMounted(() => {
@@ -167,6 +189,14 @@ onMounted(() => {
 </script>
 
 <template>
+  <CreateConsultationModal
+    :is-open="showFollowUpModal"
+    :parent-consultation-id="consultation?.id"
+    :parent-consultation-number="consultation?.consultation_number"
+    @close="showFollowUpModal = false"
+    @created="onFollowUpCreated"
+  />
+
   <div class="min-h-screen bg-gray-50/50 dark:bg-gray-900 pt-28 pb-20">
     <iframe v-if="printUrl" :src="printUrl" class="hidden" title="Print Frame"></iframe>
     <div class="container mx-auto px-4 max-w-7xl">
@@ -214,18 +244,41 @@ onMounted(() => {
                 #{{ consultation?.consultation_number }}
               </h1>
               
-              <div class="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-                <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-3">
+                <!-- Submitted (plain) -->
+                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <div class="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
                     <CalendarIcon class="w-4 h-4" />
                   </div>
-                  <span>{{ formatDate(consultation.created_at) }}</span>
+                  <span>Submitted {{ formatDate(consultation.created_at) }}</span>
                 </div>
-                <div class="flex items-center gap-2">
-                   <div class="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
-                     <ClockIcon class="w-4 h-4" />
-                   </div>
-                   <span>Priority: <span class="uppercase font-bold text-gray-700 dark:text-gray-300">{{ consultation?.priority }}</span></span>
+
+                <!-- Responded (emerald pill chip) -->
+                <div v-if="consultation?.responded_at" class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/40 px-3 py-1.5 rounded-full text-xs font-medium">
+                  <CheckCircleIcon class="w-3.5 h-3.5" />
+                  <span>Responded · <span class="font-bold">{{ formatDate(consultation.responded_at) }}</span></span>
+                </div>
+
+                <!-- Priority (color-coded pill chip) -->
+                <div
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase border"
+                  :class="{
+                    'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/40': ['urgent','critical'].includes(consultation?.priority || ''),
+                    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-700/40': consultation?.priority === 'high',
+                    'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-700/40': consultation?.priority === 'low',
+                    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600': !consultation?.priority || consultation?.priority === 'normal'
+                  }"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full shrink-0"
+                    :class="{
+                      'bg-red-500': ['urgent','critical'].includes(consultation?.priority || ''),
+                      'bg-orange-500': consultation?.priority === 'high',
+                      'bg-sky-500': consultation?.priority === 'low',
+                      'bg-gray-400': !consultation?.priority || consultation?.priority === 'normal'
+                    }"
+                  ></span>
+                  <span>{{ consultation?.priority || 'normal' }}</span>
                 </div>
               </div>
             </div>
@@ -241,8 +294,28 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- Parent Consultation Banner (this is a follow-up) -->
+        <div v-if="consultation?.parent_consultation" class="flex items-center gap-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/40 rounded-2xl px-6 py-4">
+          <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0">
+            <ArrowUturnRightIcon class="w-5 h-5" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-0.5">Follow-up Consultation</p>
+            <p class="text-sm text-gray-700 dark:text-gray-200">
+              This is a follow-up to
+              <button
+                class="font-mono font-bold text-purple-700 dark:text-purple-300 hover:underline"
+                @click="router.push(`/consultations/${consultation.parent_consultation!.id}`)"
+              >#{{ consultation.parent_consultation.consultation_number }}</button>
+              <span class="text-gray-500 dark:text-gray-400 ml-2 text-xs">
+                ({{ consultation.parent_consultation.status.replace('_', ' ') }})
+              </span>
+            </p>
+          </div>
+        </div>
+
         <!-- Timeline / Metadata Bar -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-if="consultation?.scheduled_at || consultation?.requires_followup || consultation?.response_time_minutes" class="grid grid-cols-2 lg:grid-cols-3 gap-4">
            <!-- Scheduled -->
            <div v-if="consultation?.scheduled_at" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
@@ -253,21 +326,18 @@ onMounted(() => {
                  <p class="font-semibold text-gray-900 dark:text-white text-sm leading-tight">{{ formatDate(consultation?.scheduled_at) }}</p>
               </div>
            </div>
-           
-           <!-- Response Time -->
-           <div v-if="consultation?.responded_at || consultation?.response_time_minutes" class="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl flex items-center gap-3">
+
+           <!-- Response Time (minutes) — shown only if a numeric value is available -->
+           <div v-if="consultation?.response_time_minutes" class="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center text-green-600 dark:text-green-300">
                  <ClockIcon class="w-5 h-5" />
               </div>
               <div>
                  <p class="text-[10px] uppercase font-bold text-green-600">Response Time</p>
-                 <p class="font-semibold text-gray-900 dark:text-white">
-                   <span v-if="consultation?.response_time_minutes">{{ consultation?.response_time_minutes }} mins</span>
-                   <span v-else>Responded</span>
-                 </p>
+                 <p class="font-semibold text-gray-900 dark:text-white">{{ consultation?.response_time_minutes }} mins</p>
               </div>
            </div>
-           
+
            <!-- Follow Up -->
            <div v-if="consultation?.requires_followup" class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-2xl flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-300">
@@ -341,36 +411,23 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- Diagnoses Section (Standalone Grid) -->
-        <div 
-           v-if="consultation.diagnoses && consultation.diagnoses.length > 0" 
-           class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700"
+        <!-- Diagnoses Section -->
+        <div
+           v-if="consultation.diagnoses && consultation.diagnoses.length > 0"
+           class="bg-white dark:bg-gray-800 rounded-[2rem] px-6 py-5 shadow-sm border border-gray-100 dark:border-gray-700"
         >
             <h4 class="text-xs uppercase font-bold text-gray-400 mb-4 tracking-wider flex items-center gap-2">
                 <ClipboardDocumentCheckIcon class="w-4 h-4" />
                 Medical Diagnoses
             </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div 
-                   v-for="diagnosis in consultation?.diagnoses" 
+            <div class="flex flex-wrap gap-2.5">
+                <div
+                   v-for="diagnosis in consultation?.diagnoses"
                    :key="diagnosis.id"
-                   class="group relative overflow-hidden bg-fuchsia-50 dark:bg-fuchsia-900/10 p-5 rounded-2xl border border-fuchsia-100 dark:border-fuchsia-800/30 transition-all hover:shadow-md hover:border-fuchsia-200 dark:hover:border-fuchsia-700"
+                   class="inline-flex items-center gap-2 bg-fuchsia-50 dark:bg-fuchsia-900/15 px-4 py-2.5 rounded-full border border-fuchsia-100 dark:border-fuchsia-800/30 hover:border-fuchsia-300 dark:hover:border-fuchsia-600 transition-colors"
                 >
-                   <div class="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 text-fuchsia-600 dark:text-fuchsia-400"></div>
-                   
-                   <div class="relative z-10">
-                      <div class="flex justify-between items-start mb-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400 shadow-sm border border-fuchsia-100 dark:border-fuchsia-900/50">
-                           {{ diagnosis.icd_code || 'DX' }}
-                        </span>
-                        <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider bg-white/50 dark:bg-gray-800/50 px-2 py-1 rounded-md">{{ diagnosis.type }}</span>
-                      </div>
-                      
-                      <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-1 group-hover:text-fuchsia-700 dark:group-hover:text-fuchsia-300 transition-colors">
-                        {{ diagnosis.name }}
-                      </h3>
-                      <p class="text-sm text-gray-500 dark:text-gray-400">{{ diagnosis.category }}</p>
-                   </div>
+                   <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-500 shrink-0"></span>
+                   <span class="font-semibold text-gray-800 dark:text-white text-sm">{{ diagnosis.name }}</span>
                 </div>
             </div>
         </div>
@@ -382,9 +439,18 @@ onMounted(() => {
             
             <!-- Web: Clinical Details Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
-                  <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Symptoms</h4>
-                  <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ consultation?.symptoms || 'No symptoms recorded.' }}</p>
+               <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800 md:col-span-2">
+                  <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Your request</h4>
+                  <p class="text-gray-700 dark:text-gray-300 leading-relaxed italic">
+                    "{{ consultation?.chief_complaint || consultation?.symptoms || 'No reason provided.' }}"
+                  </p>
+               </Card>
+               <Card
+                 v-if="consultation?.symptoms && consultation?.chief_complaint && consultation.symptoms !== consultation.chief_complaint"
+                 class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800 md:col-span-2"
+               >
+                  <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Clinical notes (pharmacist)</h4>
+                  <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ consultation?.symptoms }}</p>
                </Card>
                <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Medical History</h4>
@@ -417,6 +483,14 @@ onMounted(() => {
                     <h4 class="font-bold text-teal-800 dark:text-teal-200 mb-3 text-sm uppercase">Private Notes</h4>
                     <div class="text-gray-700 dark:text-gray-300 italic">{{ consultation?.pharmacist_notes }}</div>
                  </div>
+
+                 <div v-if="consultation?.followup_notes" class="bg-amber-50/80 dark:bg-amber-900/20 rounded-2xl p-6 border border-amber-200/60 dark:border-amber-700/30">
+                    <h4 class="font-bold text-amber-800 dark:text-amber-200 mb-2 text-sm uppercase flex items-center gap-2">
+                      <ArrowPathIcon class="w-4 h-4" />
+                      Follow-up Instructions
+                    </h4>
+                    <div class="text-amber-900 dark:text-amber-100">{{ consultation?.followup_notes }}</div>
+                 </div>
                </div>
             </div>
             
@@ -443,6 +517,9 @@ onMounted(() => {
                         <h4 class="font-bold text-gray-900 dark:text-white text-base leading-snug">
                            {{ formatDrugDisplay(drug) }}
                         </h4>
+                        <p v-if="drug.dose" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                           Dose: {{ drug.dose }}
+                        </p>
                      </div>
                      
                      <div class="flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 p-3 rounded-xl">
@@ -467,6 +544,93 @@ onMounted(() => {
                   </div>
                </div>
                </div>
+
+            <!-- Follow-up CTA — shown when pharmacist has flagged follow-up required -->
+            <div
+              v-if="consultation?.requires_followup"
+              class="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-[2rem] p-8 border border-amber-200 dark:border-amber-700/40"
+            >
+              <div class="absolute -top-6 -right-6 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl"></div>
+              <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-300 shrink-0">
+                  <ArrowPathIcon class="w-7 h-7" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-amber-900 dark:text-amber-100 text-lg mb-1">Follow-up recommended</p>
+                  <p v-if="consultation?.followup_date" class="text-sm text-amber-700 dark:text-amber-300 mb-1">
+                    Scheduled for <span class="font-semibold">{{ formatDate(consultation.followup_date) }}</span>
+                  </p>
+                  <p v-if="consultation?.followup_notes" class="text-sm text-amber-700 dark:text-amber-300 italic">
+                    "{{ consultation.followup_notes }}"
+                  </p>
+                  <p v-if="!consultation?.followup_date && !consultation?.followup_notes" class="text-sm text-amber-700 dark:text-amber-300">
+                    Your pharmacist recommends a follow-up consultation.
+                  </p>
+                </div>
+                <button
+                  v-if="!consultation?.follow_up_consultations?.length"
+                  @click="openFollowUpModal"
+                  class="shrink-0 flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-5 py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+                >
+                  <ArrowUturnRightIcon class="w-4 h-4" />
+                  Book Follow-up
+                </button>
+                <div v-else class="shrink-0 flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold px-4 py-2 rounded-xl text-sm">
+                  <CheckCircleIcon class="w-4 h-4" />
+                  Follow-up booked
+                </div>
+              </div>
+            </div>
+
+            <!-- Follow-up Consultations Thread -->
+            <div v-if="consultation?.follow_up_consultations?.length" class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+              <h4 class="text-xs uppercase font-bold text-gray-400 mb-5 tracking-wider flex items-center gap-2">
+                <ChatBubbleLeftEllipsisIcon class="w-4 h-4" />
+                Follow-up Consultations ({{ consultation.follow_up_consultations.length }})
+              </h4>
+              <div class="relative space-y-0">
+                <!-- Vertical connector line -->
+                <div class="absolute left-4 top-2 bottom-2 w-px bg-indigo-100 dark:bg-indigo-800/40"></div>
+                <div
+                  v-for="(fu, idx) in consultation.follow_up_consultations"
+                  :key="fu.id"
+                  class="relative flex items-center gap-4 pl-10 pb-4 last:pb-0 cursor-pointer group"
+                  @click="router.push(`/consultations/${fu.id}`)"
+                >
+                  <!-- Timeline dot -->
+                  <div
+                    class="absolute left-2.5 top-2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shrink-0 z-10"
+                    :class="{
+                      'bg-amber-400': fu.status === 'pending',
+                      'bg-blue-500': fu.status === 'in_review',
+                      'bg-emerald-500': fu.status === 'responded' || fu.status === 'completed',
+                      'bg-gray-400': fu.status === 'cancelled',
+                    }"
+                  ></div>
+
+                  <div class="flex-1 flex items-center justify-between bg-gray-50 dark:bg-gray-700/30 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 px-4 py-3 rounded-xl transition-colors">
+                    <div>
+                      <p class="font-mono font-bold text-sm text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        #{{ fu.consultation_number }}
+                      </p>
+                      <p class="text-xs text-gray-500 mt-0.5">{{ formatDate(fu.created_at) }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[10px] font-bold uppercase px-2 py-1 rounded-full"
+                        :class="{
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300': fu.status === 'pending',
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': fu.status === 'in_review',
+                          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300': fu.status === 'responded' || fu.status === 'completed',
+                          'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': fu.status === 'cancelled',
+                        }"
+                      >{{ fu.status.replace('_', ' ') }}</span>
+                      <span class="text-[10px] text-gray-400 font-medium">#{{ idx + 1 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           </div>
 

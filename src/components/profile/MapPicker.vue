@@ -10,7 +10,7 @@ const props = defineProps<{
   };
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'address-components']);
 
 const mapContainer = ref<HTMLElement | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -20,6 +20,7 @@ const autocomplete = ref<any>(null);
 const loading = ref(true);
 
 const { loadGoogleMapsScript, error } = useGoogleMaps();
+const gettingLocation = ref(false);
 
 onMounted(async () => {
   try {
@@ -36,9 +37,13 @@ onMounted(async () => {
 const initializeMap = () => {
   if (!mapContainer.value) return;
 
+  const lat = Number(props.modelValue.lat);
+  const lng = Number(props.modelValue.lng);
+  const hasCustomCoords = lat && lng && !(lat === 5.6037 && lng === -0.187);
+
   const initialLocation = {
-    lat: props.modelValue.lat || 5.6037, // Default to Accra
-    lng: props.modelValue.lng || -0.1870
+    lat: lat || 5.6037,
+    lng: lng || -0.187
   };
 
   map.value = new (google.maps as any).Map(mapContainer.value, {
@@ -49,13 +54,6 @@ const initializeMap = () => {
     mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: false,
-    styles: [
-      {
-        featureType: 'poi',
-        elementType: 'labels',
-        stylers: [{ visibility: 'off' }]
-      }
-    ]
   });
 
   marker.value = new (google.maps as any).Marker({
@@ -88,13 +86,27 @@ const initializeMap = () => {
       updateLocation(pos.lat(), pos.lng());
     }
   });
+
+  // Auto-center on user's location if no custom coords are set
+  if (!hasCustomCoords && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.value?.setCenter({ lat: latitude, lng: longitude });
+        map.value?.setZoom(17);
+        await updateLocation(latitude, longitude);
+      },
+      () => { /* keep Accra default */ },
+      { timeout: 8000 }
+    );
+  }
 };
 
 const initializeAutocomplete = () => {
   if (!searchInput.value) return;
 
   autocomplete.value = new (google.maps as any).places.Autocomplete(searchInput.value, {
-    fields: ['formatted_address', 'geometry'],
+    fields: ['formatted_address', 'geometry', 'address_components'],
     componentRestrictions: { country: 'GH' }
   });
 
@@ -104,27 +116,44 @@ const initializeAutocomplete = () => {
       const lat = place.geometry.location.lat();
       const lng = place.geometry.location.lng();
       const address = place.formatted_address || '';
-      
+
       updateLocation(lat, lng, address);
-      
+
       if (map.value) {
         map.value.setCenter({ lat, lng });
         map.value.setZoom(17);
+      }
+
+      if (place.address_components) {
+        emit('address-components', parseAddressComponents(place.address_components));
       }
     }
   });
 };
 
+function parseAddressComponents(components: any[]): Record<string, string> {
+  const get = (type: string) =>
+    components.find((c: any) => c.types.includes(type))?.long_name ?? '';
+  return {
+    street_number:  get('street_number'),
+    route:          get('route'),
+    area_suburb:    get('sublocality_level_1') || get('sublocality') || get('neighborhood'),
+    city:           get('locality') || get('administrative_area_level_2'),
+    region:         get('administrative_area_level_1'),
+  };
+}
+
 const updateLocation = async (lat: number, lng: number, address?: string) => {
   let finalAddress = address;
-  
+  let components: any[] | null = null;
+
   if (!finalAddress) {
-    // Reverse geocode to get address if not provided
     const geocoder = new (google.maps as any).Geocoder();
     try {
       const response = await geocoder.geocode({ location: { lat, lng } });
       if (response.results[0]) {
         finalAddress = response.results[0].formatted_address;
+        components = response.results[0].address_components ?? null;
       }
     } catch (err) {
       console.error('Geocoding failed:', err);
@@ -132,22 +161,39 @@ const updateLocation = async (lat: number, lng: number, address?: string) => {
   }
 
   marker.value?.setPosition({ lat, lng });
-  
-  emit('update:modelValue', {
-    lat,
-    lng,
-    address: finalAddress || ''
-  });
+
+  emit('update:modelValue', { lat, lng, address: finalAddress || '' });
+
+  if (components) {
+    emit('address-components', parseAddressComponents(components));
+  }
 };
+
+async function useMyLocation() {
+  if (!navigator.geolocation) return;
+  gettingLocation.value = true;
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      map.value?.setCenter({ lat: latitude, lng: longitude });
+      map.value?.setZoom(17);
+      await updateLocation(latitude, longitude);
+      gettingLocation.value = false;
+    },
+    () => { gettingLocation.value = false; },
+    { timeout: 10000 }
+  );
+}
 
 // Handle external value changes (e.g. when editing an address)
 watch(() => props.modelValue, (newVal) => {
   if (!map.value || !marker.value) return;
-  
-  // Only update map if coordinates actually changed and are different from current marker
+  const lat = Number(newVal.lat);
+  const lng = Number(newVal.lng);
+  if (!lat || !lng) return;
   const currentPos = marker.value.getPosition();
-  if (newVal.lat !== currentPos?.lat() || newVal.lng !== currentPos?.lng()) {
-    const pos = { lat: newVal.lat, lng: newVal.lng };
+  if (lat !== currentPos?.lat() || lng !== currentPos?.lng()) {
+    const pos = { lat, lng };
     marker.value.setPosition(pos);
     map.value.setCenter(pos);
   }
@@ -189,7 +235,25 @@ watch(() => props.modelValue, (newVal) => {
       </div>
 
       <div ref="mapContainer" class="w-full h-[350px] rounded-2xl shadow-inner border border-gray-100 dark:border-gray-700"></div>
-      
+
+      <!-- My Location button -->
+      <button
+        type="button"
+        @click="useMyLocation"
+        :disabled="gettingLocation"
+        class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <svg v-if="!gettingLocation" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" stroke-width="2" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+        </svg>
+        <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        {{ gettingLocation ? 'Locating...' : 'My Location' }}
+      </button>
+
       <!-- Overlay Tip -->
       <div class="absolute bottom-4 left-4 right-4 pointer-events-none">
         <div class="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
@@ -201,20 +265,5 @@ watch(() => props.modelValue, (newVal) => {
       </div>
     </div>
 
-    <!-- Selected Address Display -->
-    <div v-if="modelValue.address" class="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/20 animate-in fade-in slide-in-from-top-2">
-      <div class="flex items-start space-x-3">
-        <div class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-[#246BFD]">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-        </div>
-        <div class="flex-1">
-          <p class="text-[10px] font-black text-[#246BFD] uppercase tracking-widest mb-0.5">Verified Address</p>
-          <p class="text-sm font-bold text-gray-900 dark:text-white leading-relaxed">{{ modelValue.address }}</p>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
