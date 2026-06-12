@@ -8,7 +8,7 @@ const apiService: AxiosInstance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    "X-API-Key": "8c3436fcf398bab6c635c6985839d174defb666de992d76ab7a28a03484445c4",
+    "X-API-Key": import.meta.env.VITE_API_KEY,
   },
 });
 
