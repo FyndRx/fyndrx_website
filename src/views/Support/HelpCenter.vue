@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from 'vue';
 import { informationService, type HelpCategory, type AppSettings } from '@/services/informationService';
 import { useSeoMeta } from '@/composables/useSeoMeta';
-import TextInput from '@/components/TextInput.vue';
 
 useSeoMeta({
   title: 'Help Center | FyndRx',

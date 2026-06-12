@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { format } from 'date-fns';
 import { consultationService } from '@/services/consultationService';
@@ -7,7 +7,6 @@ import type { Consultation } from '@/types/consultation';
 import {
   UserCircleIcon,
   CalendarIcon,
-  ClockIcon,
   HeartIcon,
   BoltIcon,
   SparklesIcon,
@@ -36,17 +35,6 @@ const fetchConsultation = async () => {
   }
 };
 
-const statusColor = computed(() => {
-  if (!consultation.value) return 'default';
-  switch (consultation.value.status) {
-    case 'pending': return 'warning';
-    case 'in_review': return 'primary';
-    case 'responded': return 'success';
-    case 'completed': return 'success';
-    case 'cancelled': return 'error';
-    default: return 'default';
-  }
-});
 
 const formatDate = (dateStr?: string | null) => {
   if (!dateStr) return 'N/A';

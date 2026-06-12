@@ -316,6 +316,7 @@ const submitConsultation = async () => {
     if (isProfileIncomplete.value && form.booking_for === 'myself') {
       await authService.updateUserDetails({ dob: form.patient_date_of_birth, gender: form.patient_gender });
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { booking_for, user_id, ...intake } = form;
     const response = await consultationService.createConsultation(intake) as any;
     const apiMessage = response?.message || response?.data?.message;

@@ -192,7 +192,7 @@ async function handleReviewHelpful(reviewId: string | number) {
     await reviewService.markHelpful(reviewId, true);
     const r = reviews.value.find(x => x.id === reviewId);
     if (r) (r as any).helpful = ((r as any).helpful || 0) + 1;
-  } catch {}
+  } catch { /* optimistic update — ignore API errors */ }
 }
 
 async function handleReviewNotHelpful(reviewId: string | number) {
@@ -200,7 +200,7 @@ async function handleReviewNotHelpful(reviewId: string | number) {
     await reviewService.markHelpful(reviewId, false);
     const r = reviews.value.find(x => x.id === reviewId);
     if (r) (r as any).notHelpful = ((r as any).notHelpful || 0) + 1;
-  } catch {}
+  } catch { /* optimistic update — ignore API errors */ }
 }
 
 // ── Branch distance ──

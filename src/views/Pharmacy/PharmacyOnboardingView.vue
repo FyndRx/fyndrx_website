@@ -320,7 +320,7 @@ async function resumeDraft() {
       Array.isArray(form.operating_hours) ? form.operating_hours : []
     );
     form.operating_hours.splice(0, form.operating_hours.length, ...normalized);
-  } catch (_) {}
+  } catch { /* draft not found — proceed with blank form */ }
 
   // Silently refresh operating hours from the server so any admin-side changes
   // (e.g. hours entered in Filament after the draft was last saved) are picked up.

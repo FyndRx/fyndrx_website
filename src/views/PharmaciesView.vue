@@ -144,10 +144,6 @@ const handleSort = () => {
   loadPharmacies();
 };
 
-const handleOpenNowFilter = () => {
-  isOpenNow.value = !isOpenNow.value;
-};
-
 const clearAllFilters = () => {
   searchQuery.value = '';
   searchBarQuery.value = '';
