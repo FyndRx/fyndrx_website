@@ -102,7 +102,7 @@ const steps = [
 
 const stats = [
   { label: 'Active Users', value: '10K+' },
-  { label: 'Partner Pharmacies', value: '500+' },
+  { label: 'Partner Pharmacies', value: '100+' },
   { label: 'Cities Covered', value: '20+' },
   { label: 'Customer Satisfaction', value: '98%' },
 ];
@@ -226,23 +226,44 @@ const stats = [
           <!-- Right: Mission visual -->
           <div class="relative" :class="{ 'animate-fade-in': isVisible }">
             <div class="grid grid-cols-2 gap-4">
+              <!-- Vision -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-                <div class="text-3xl font-bold text-[#246BFD] mb-2">🎯</div>
+                <div class="w-10 h-10 rounded-xl bg-[#246BFD]/10 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Vision</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.vision || 'A world where quality healthcare is just a tap away for everyone.' }}</p>
               </div>
+              <!-- Mission -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mt-8">
-                <div class="text-3xl font-bold text-[#FE9615] mb-2">💡</div>
+                <div class="w-10 h-10 rounded-xl bg-[#FE9615]/10 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-[#FE9615]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Mission</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.mission || 'Using technology to simplify and transform how people access medicine.' }}</p>
               </div>
+              <!-- Trust -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-                <div class="text-3xl font-bold text-[#10B981] mb-2">🤝</div>
+                <div class="w-10 h-10 rounded-xl bg-[#10B981]/10 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Trust</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Partnering with verified pharmacies to ensure safety and quality.</p>
               </div>
+              <!-- Impact -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mt-8">
-                <div class="text-3xl font-bold text-[#8B5CF6] mb-2">🌍</div>
+                <div class="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 flex items-center justify-center mb-3">
+                  <svg class="w-5 h-5 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Impact</h4>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Reaching communities across Ghana with accessible healthcare solutions.</p>
               </div>
@@ -341,7 +362,7 @@ const stats = [
           >
             <!-- Step number -->
             <div
-              class="relative inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 text-2xl font-extrabold text-white transition-transform duration-300 group-hover:scale-110"
+              class="relative z-10 inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 text-2xl font-extrabold text-white transition-transform duration-300 group-hover:scale-110"
               :style="{ background: `linear-gradient(135deg, ${item.color}, ${item.color}CC)` }"
             >
               {{ item.step }}
@@ -355,7 +376,7 @@ const stats = [
             <!-- Connector line (hidden on last item and mobile) -->
             <div
               v-if="index < steps.length - 1"
-              class="absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-gray-300 to-transparent dark:from-gray-600 hidden lg:block"
+              class="absolute top-10 left-[calc(50%+44px)] right-[-20%] h-0.5 bg-gradient-to-r from-gray-300 to-transparent dark:from-gray-600 hidden lg:block"
             ></div>
 
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ item.title }}</h3>

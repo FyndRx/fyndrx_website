@@ -268,10 +268,20 @@ export default {
 
       <!-- Partners Section -->
       <div v-if="partners.length > 0" class="mt-16 pt-8 border-t border-gray-800">
-        <h4 class="text-center text-gray-500 text-sm font-semibold uppercase tracking-widest mb-8">Our Partners</h4>
-        <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-          <a v-for="partner in partners" :key="partner.id" :href="partner.website" target="_blank" :title="partner.name">
-            <img :src="partner.logo" :alt="partner.name" class="h-8 md:h-10 object-contain" />
+        <h4 class="text-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em] mb-10">
+          Trusted Partners
+        </h4>
+        <div class="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+          <a
+            v-for="partner in partners"
+            :key="partner.id"
+            :href="partner.website"
+            target="_blank"
+            rel="noopener noreferrer"
+            :title="partner.name"
+            class="flex items-center justify-center h-14 md:h-16 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300"
+          >
+            <img :src="partner.logo" :alt="partner.name" class="max-h-8 md:max-h-10 max-w-full w-auto object-contain" />
           </a>
         </div>
       </div>

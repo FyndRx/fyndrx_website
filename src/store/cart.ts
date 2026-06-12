@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { cartService } from '@/services/cartService';
 import type { CartItem, Cart, CartPharmacyGroup } from '@/models/Cart';
+import { useAuthStore } from '@/store/auth';
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([]);
@@ -38,21 +39,30 @@ export const useCartStore = defineStore('cart', () => {
   }));
 
   const groupedByPharmacy = computed<CartPharmacyGroup[]>(() => {
-    const groups = new Map<number, CartPharmacyGroup>();
+    const groups = new Map<string, CartPharmacyGroup>();
 
     items.value.forEach(item => {
-      if (!groups.has(item.pharmacyId)) {
-        groups.set(item.pharmacyId, {
+      // Group by branch if available, otherwise by pharmacy ID
+      // We use a string key to safely handle both cases
+      const groupKey = item.pharmacyBranchId ? `branch-${item.pharmacyBranchId}` : `pharmacy-${item.pharmacyId}`;
+      
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
           pharmacyId: item.pharmacyId,
+          pharmacyBranchId: item.pharmacyBranchId || '',
           pharmacyName: item.pharmacyName,
           pharmacyLogo: item.pharmacyLogo,
+          isOpen: item.isOpen,
+          branchName: item.branchName,
+          latitude: item.latitude,
+          longitude: item.longitude,
           items: [],
           subtotal: 0,
           acceptedPaymentMethods: item.acceptedPaymentMethods || ['platform', 'direct']
         });
       }
 
-      const group = groups.get(item.pharmacyId)!;
+      const group = groups.get(groupKey)!;
       group.items.push(item);
       const price = item.discountPrice || item.price;
       group.subtotal += price * item.quantity;
@@ -91,11 +101,11 @@ export const useCartStore = defineStore('cart', () => {
 
     // Sync with API if user is authenticated
     try {
-      const token = localStorage.getItem('access_token');
+      const authStore = useAuthStore();
       // Crucial change: We now REQUIRE pharmacyDrugPriceId for API sync
-      if (token && item.pharmacyDrugPriceId) {
+      if (authStore.isAuthenticated && item.pharmacyDrugPriceId) {
         const addedItem = await cartService.addToCart({
-          pharmacy_drug_price_id: item.pharmacyDrugPriceId,
+          pharmacy_drug_price_id: String(item.pharmacyDrugPriceId),
           quantity: existingItemIndex !== -1 ? items.value[existingItemIndex].quantity : item.quantity
         });
         
@@ -114,7 +124,7 @@ export const useCartStore = defineStore('cart', () => {
         } else {
           console.warn('Server returned invalid ID for new cart item:', addedItem);
         }
-      } else if (token) {
+      } else if (authStore.isAuthenticated) {
         console.warn('Skipping API sync for cart item: Missing pharmacyDrugPriceId', item);
       }
     } catch (err) {
@@ -131,8 +141,8 @@ export const useCartStore = defineStore('cart', () => {
     // Sync with API if user is authenticated
     if (item) {
       try {
-        const token = localStorage.getItem('access_token');
-        if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
+        const authStore = useAuthStore();
+        if (authStore.isAuthenticated && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
           // Try to remove from API - item.id might be the API cart item ID
           // Check for local temp IDs (containing '-') to avoid sending them
           await cartService.removeFromCart(item.id);
@@ -155,10 +165,10 @@ export const useCartStore = defineStore('cart', () => {
 
         // Sync with API if user is authenticated
         try {
-          const token = localStorage.getItem('access_token');
+          const authStore = useAuthStore();
           // Start of Changed Logic
           // Only sync if we have a valid server ID
-          if (token && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
+          if (authStore.isAuthenticated && item.id && item.id !== 'undefined' && !item.id.includes('-')) {
              await cartService.updateCartItem(item.id, quantity);
           } else {
              console.warn('Skipping API sync for updateQuantity: Invalid or Local ID', item.id);
@@ -177,7 +187,7 @@ export const useCartStore = defineStore('cart', () => {
     saveToLocalStorage();
   };
 
-  const clearPharmacyItems = (pharmacyId: number) => {
+  const clearPharmacyItems = (pharmacyId: string) => {
     items.value = items.value.filter(item => item.pharmacyId !== pharmacyId);
     saveToLocalStorage();
   };
@@ -190,7 +200,14 @@ export const useCartStore = defineStore('cart', () => {
     const stored = localStorage.getItem('cart');
     if (stored) {
       try {
-        items.value = JSON.parse(stored);
+        const parsed: CartItem[] = JSON.parse(stored);
+        // Coerce UUID fields that were stored as numbers before the UUID migration
+        items.value = parsed.map(item => ({
+          ...item,
+          pharmacyId: item.pharmacyId != null ? String(item.pharmacyId) : item.pharmacyId,
+          pharmacyBranchId: item.pharmacyBranchId != null ? String(item.pharmacyBranchId) : item.pharmacyBranchId,
+          pharmacyDrugPriceId: item.pharmacyDrugPriceId != null ? String(item.pharmacyDrugPriceId) : item.pharmacyDrugPriceId,
+        }));
       } catch (error) {
         console.error('Error loading cart from localStorage:', error);
         items.value = [];
@@ -199,8 +216,8 @@ export const useCartStore = defineStore('cart', () => {
   };
 
   const syncWithAPI = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return;
 
     try {
       const apiCart = await cartService.getCart();
@@ -214,11 +231,11 @@ export const useCartStore = defineStore('cart', () => {
     }
   };
 
-  const hasItemsFromPharmacy = (pharmacyId: number) => {
+  const hasItemsFromPharmacy = (pharmacyId: string) => {
     return items.value.some(item => item.pharmacyId === pharmacyId);
   };
 
-  const getPharmacyItemsCount = (pharmacyId: number) => {
+  const getPharmacyItemsCount = (pharmacyId: string) => {
     return items.value
       .filter(item => item.pharmacyId === pharmacyId)
       .reduce((total, item) => total + item.quantity, 0);

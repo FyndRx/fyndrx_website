@@ -15,7 +15,7 @@ import {
 
 export interface GetReviewsParams {
   type?: 'medication' | 'pharmacy';
-  id?: number;
+  id?: string | number;
   rating?: number;
   sort_by?: string;
   sort_direction?: 'asc' | 'desc';
@@ -25,7 +25,7 @@ export interface GetReviewsParams {
 
 export interface CreateReviewRequest {
   reviewable_type: 'pharmacy' | 'medication';
-  reviewable_id: number;
+  reviewable_id: string | number;
   rating: number;
   title: string;
   comment: string;
@@ -75,7 +75,7 @@ class ReviewService {
    * @param id - Target ID
    * @returns Review statistics
    */
-  async getReviewStats(type: 'medication' | 'pharmacy', id: number): Promise<ReviewStats> {
+  async getReviewStats(type: 'medication' | 'pharmacy', id: string | number): Promise<ReviewStats> {
     const response = await apiService.get<ReviewStatsDetailApiResponse>(
       `/reviews/stats?type=${type}&id=${id}`
     );
@@ -140,7 +140,7 @@ class ReviewService {
    */
   async getReviewsByTarget(
     targetType: 'medication' | 'pharmacy',
-    targetId: number,
+    targetId: string | number,
     params?: Omit<GetReviewsParams, 'type' | 'id'>
   ): Promise<Review[]> {
     return this.getReviews({

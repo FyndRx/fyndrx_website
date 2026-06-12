@@ -2,10 +2,54 @@ import { apiService as api } from './api';
 import type {
     Consultation,
     ConsultationStats,
-    CreateConsultationPayload,
+    PatientConsultationIntake,
     ConsultationFilters,
     PublicConsultationSearchResponse
 } from '@/types/consultation';
+
+const PATIENT_INTAKE_KEYS: (keyof PatientConsultationIntake)[] = [
+    'consultation_type',
+    'chief_complaint',
+    'consultation_notes',
+    'patient_name',
+    'patient_email',
+    'patient_phone',
+    'patient_date_of_birth',
+    'patient_gender',
+    'pharmacy_id',
+    'pharmacy_branch_id',
+    'scheduled_at',
+    'source',
+    'user_id',
+    'parent_consultation_id',
+];
+
+export function buildPatientIntakePayload(
+    form: Partial<PatientConsultationIntake> & { symptoms?: string }
+): Record<string, string | number | undefined> {
+    const payload: Record<string, string | number | undefined> = {};
+
+    for (const key of PATIENT_INTAKE_KEYS) {
+        const value = form[key];
+        if (value !== undefined && value !== null && value !== '') {
+            payload[key] = value as string | number;
+        }
+    }
+
+    if (!payload.chief_complaint && form.symptoms) {
+        payload.chief_complaint = form.symptoms;
+    }
+
+    return payload;
+}
+
+function appendIntakeToFormData(formData: FormData, payload: Record<string, string | number | undefined>) {
+    Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+            formData.append(key, String(value));
+        }
+    });
+}
 
 export const consultationService = {
     async getConsultations(filters: ConsultationFilters = {}) {
@@ -16,95 +60,68 @@ export const consultationService = {
             }
         });
 
-        const response = await api.getAuth<{ data: Consultation[]; meta: any }>(`/consultations?${params.toString()}`);
-        return response;
+        return api.getAuth<{ data: Consultation[]; meta: unknown }>(`/consultations?${params.toString()}`);
     },
 
     async getConsultationStats() {
-        const response = await api.getAuth<ConsultationStats>('/consultations/stats');
-        return response;
+        return api.getAuth<ConsultationStats>('/consultations/stats');
     },
 
-    async getConsultationById(id: number) {
-        const response = await api.getAuth<Consultation>(`/consultations/${id}`);
-        return response;
+    async getConsultationById(id: string | number) {
+        return api.getAuth<Consultation>(`/consultations/${id}`);
     },
 
-    async createConsultation(payload: CreateConsultationPayload) {
+    async createConsultation(payload: PatientConsultationIntake) {
+        const body = buildPatientIntakePayload(payload);
+
         if (payload.attachments && payload.attachments.length > 0) {
             const formData = new FormData();
-            Object.entries(payload).forEach(([key, value]) => {
-                if (key === 'attachments') {
-                    (value as File[]).forEach(file => formData.append('attachments[]', file));
-                } else if (key === 'vitals' && value) {
-                    // Handle nested vitals object
-                    Object.entries(value).forEach(([vitalKey, vitalValue]) => {
-                        if (vitalValue !== undefined && vitalValue !== null && vitalValue !== '') {
-                            formData.append(`vitals[${vitalKey}]`, String(vitalValue));
-                        }
-                    });
-                } else if (value !== undefined && value !== null && value !== '') {
-                    // Convert boolean/numbers to string, explicit check to avoid "undefined" string
-                    formData.append(key, String(value));
-                }
+            appendIntakeToFormData(formData, body);
+            payload.attachments.forEach((file) => formData.append('attachments[]', file));
+
+            return api.postAuth<Consultation>('/consultations', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-            
-            const response = await api.postAuth<Consultation>('/consultations', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            return response;
         }
 
-        // For non-multipart requests, we can just pass the payload directly
-        // The API should handle the JSON structure for vitals
-        const response = await api.postAuth<Consultation>('/consultations', payload);
-        return response;
+        return api.postAuth<Consultation>('/consultations', body);
     },
 
-    async updateConsultation(id: number, payload: Partial<CreateConsultationPayload>) {
-        const response = await api.putAuth<Consultation>(`/consultations/${id}`, payload);
-        return response;
+    async updateConsultation(id: string | number, payload: Partial<PatientConsultationIntake>) {
+        const body = buildPatientIntakePayload(payload);
+        return api.putAuth<Consultation>(`/consultations/${id}`, body);
     },
 
-    async cancelConsultation(id: number, reason: string) {
-        const response = await api.postAuth<Consultation>(`/consultations/${id}/cancel`, { reason });
-        return response;
+    async cancelConsultation(id: string | number, reason: string) {
+        return api.postAuth<Consultation>(`/consultations/${id}/cancel`, { reason });
     },
 
-    async rateConsultation(id: number, rating: number, feedback?: string) {
-        const response = await api.postAuth<Consultation>(`/consultations/${id}/rate`, { rating, feedback });
-        return response;
+    async rateConsultation(id: string | number, rating: number, feedback?: string) {
+        return api.postAuth<Consultation>(`/consultations/${id}/rate`, { rating, feedback });
     },
 
-    async createPublicConsultation(payload: CreateConsultationPayload) {
+    async createPublicConsultation(payload: PatientConsultationIntake) {
+        const body = buildPatientIntakePayload(payload);
+
         if (payload.attachments && payload.attachments.length > 0) {
             const formData = new FormData();
-            Object.entries(payload).forEach(([key, value]) => {
-                if (key === 'attachments') {
-                    (value as File[]).forEach(file => formData.append('attachments[]', file));
-                } else if (key === 'vitals' && value) {
-                    Object.entries(value).forEach(([vitalKey, vitalValue]) => {
-                        if (vitalValue !== undefined && vitalValue !== null && vitalValue !== '') {
-                            formData.append(`vitals[${vitalKey}]`, String(vitalValue));
-                        }
-                    });
-                } else if (value !== undefined && value !== null && value !== '') {
-                    formData.append(key, String(value));
-                }
-            });
-            
-            // Use base api (no auth header, but has API Key)
-            return await api.post<Consultation>('/consultations', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            appendIntakeToFormData(formData, body);
+            payload.attachments.forEach((file) => formData.append('attachments[]', file));
+
+            return api.post<Consultation>('/consultations', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
         }
-        return await api.post<Consultation>('/consultations', payload);
+
+        return api.post<Consultation>('/consultations', body);
     },
 
-    async searchPublicConsultation(params: { consultation_number: string; patient_phone?: string; patient_email?: string }) {
+    async searchPublicConsultation(params: {
+        consultation_number: string;
+        patient_phone?: string;
+        patient_email?: string;
+    }) {
         const response = await api.get<{ data: PublicConsultationSearchResponse }>('/consultations/search', { params });
         return response.data;
-    }
+    },
 };

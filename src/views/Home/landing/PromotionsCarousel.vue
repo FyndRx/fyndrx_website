@@ -120,7 +120,23 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="py-16 px-4 sm:px-6 lg:px-8">
+  <div class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900/50">
+    <!-- Section Header -->
+    <div class="max-w-7xl mx-auto mb-10">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <span class="inline-block px-3 py-1 mb-3 text-xs font-bold uppercase tracking-widest text-[#FE9615] bg-[#FE9615]/10 rounded-full">
+            Featured Health Programs
+          </span>
+          <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+            In-Person <span class="text-[#246BFD]">Clinical Services</span>
+          </h2>
+          <p class="mt-2 text-gray-600 dark:text-gray-400">
+            Specialist health programs available at our partner clinic locations
+          </p>
+        </div>
+      </div>
+    </div>
     <div class="relative overflow-hidden rounded-[2.5rem] shadow-2xl transition-all duration-700 ease-in-out"
        :class="`bg-gradient-to-br ${slides[currentSlide].theme.bg}`"
        @mouseenter="stopAutoplay"

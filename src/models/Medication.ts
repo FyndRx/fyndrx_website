@@ -29,6 +29,8 @@ export interface MedicationForm {
 
 export interface Medication {
   id: number;
+  product_id?: string;
+  drug_id?: number;
   name: string;
   description: string;
   brands: MedicationBrand[];
@@ -41,9 +43,20 @@ export interface Medication {
   price?: number;
   discount_price?: number;
   brand_id?: number;
+  brand_name?: string;
   form_id?: number;
+  form_name?: string;
   strength_id?: number;
+  strength?: string;
   uom_id?: number;
+  uom?: string;
+  starting_price?: number;
+  pharmacy_id?: string;
+  pharmacy_name?: string;
+  pharmacy_logo?: string;
+  branch_id?: string;
+  branch_name?: string;
+  is_open?: boolean;
 }
 
 export interface PharmacyMedicationPrice {

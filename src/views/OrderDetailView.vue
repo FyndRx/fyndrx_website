@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNotification } from '@/composables/useNotification';
+import OrderTrackingMap from '@/components/OrderTrackingMap.vue';
 import { reviewService } from '@/services/reviewService';
 import type { Order } from '@/models/Order';
 import LazyImage from '@/components/LazyImage.vue';
@@ -25,9 +26,16 @@ const payNow = async () => {
     } else {
       notification.error('Payment Error', 'Could not initialize payment. Please try again.');
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error initializing payment:', err);
-    notification.error('Payment Error', 'Failed to initialize payment.');
+    const errList: string[] = Array.isArray(err.errors)
+      ? err.errors
+      : err.errors && typeof err.errors === 'object'
+        ? (Object.values(err.errors) as string[][]).flat()
+        : [];
+    const title = err.message || 'Payment Error';
+    const detail = errList.length ? errList.join(' ') : 'Failed to initialize payment. Please try again.';
+    notification.error(title, detail);
   } finally {
     loading.value = false;
   }
@@ -127,7 +135,9 @@ const loadOrder = async () => {
       try {
         const transactions = await paymentService.getTransactions();
         // Use loose comparison to ensure match (api might return number vs string)
-        const transactionData = transactions.find(t => String(t.order_id) === String(orderId));
+        const transactionData = Array.isArray(transactions) 
+          ? transactions.find(t => String(t.order_id) === String(orderId))
+          : null;
         if (transactionData) {
           transaction.value = transactionData;
         } else {
@@ -176,9 +186,17 @@ onMounted(() => {
 
         <!-- Pharmacy & Order Header -->
         <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl shadow-xl">
-          <!-- Decorative Background -->
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20"></div>
-          <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <!-- Banner Background -->
+          <div class="absolute inset-0 overflow-hidden">
+            <LazyImage 
+              v-if="order.pharmacyBanner"
+              :src="order.pharmacyBanner" 
+              alt="Pharmacy Banner"
+              className="w-full h-full object-cover opacity-20 dark:opacity-30 blur-[2px]"
+            />
+            <div v-else class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20"></div>
+            <div class="absolute inset-0 bg-white/40 dark:bg-gray-800/40 backdrop-blur-[1px]"></div>
+          </div>
           
           <div class="relative p-6 sm:p-8">
             <div class="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
@@ -313,19 +331,16 @@ onMounted(() => {
                   </div>
                   
                   <div class="flex-1 min-w-0">
-                    <h4 class="mb-1 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors">
+                    <h4 class="mb-2 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors leading-tight">
                       {{ item.medicationName }}
                     </h4>
-                    <div class="mb-2 space-y-1">
-                      <p v-if="item.brandName" class="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                        {{ item.brandName }}
-                      </p>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ item.formName }} • {{ item.strength }} • {{ item.uom }}
-                      </p>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="flex items-center gap-3">
+                      <span class="px-2 py-0.5 rounded-lg bg-[#246BFD]/10 text-[#246BFD] text-[10px] font-bold uppercase tracking-wider">
                         Qty: {{ item.quantity }}
-                      </p>
+                      </span>
+                      <span class="text-xs font-medium text-gray-500">
+                        Unit Price: {{ formatCurrency(item.discountPrice || item.price) }}
+                      </span>
                     </div>
                   </div>
 
@@ -390,6 +405,35 @@ onMounted(() => {
                   </div>
                 </div>
               </div>
+
+              <!-- Live Tracking Map Section -->
+              <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    Live Location Tracking
+                  </h3>
+                  <span class="text-[10px] font-bold text-[#246BFD] bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg uppercase tracking-wider">Real-time</span>
+                </div>
+                
+                <div v-if="order" class="h-[480px] w-full rounded-2xl overflow-hidden shadow-sm border border-gray-150 dark:border-gray-700/70 bg-gray-50 dark:bg-gray-900/10">
+                  <OrderTrackingMap 
+                    :pharmacyLocations="order.pharmacyLat && order.pharmacyLng ? [{ lat: Number(order.pharmacyLat), lng: Number(order.pharmacyLng), name: order.branchName ? `${order.pharmacyName} - ${order.branchName}` : order.pharmacyName }] : []"
+                    :deliveryLocation="order.deliveryLat && order.deliveryLng ? { lat: Number(order.deliveryLat), lng: Number(order.deliveryLng) } : undefined"
+                    :pharmacyName="order.branchName ? `${order.pharmacyName} - ${order.branchName}` : order.pharmacyName"
+                    :deliveryMethod="order.deliveryMethod"
+                    class="w-full h-full"
+                  />
+                </div>
+                <div v-else-if="!order && !loading" class="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                   <svg class="w-10 h-10 text-gray-400 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Location coordinates not available for this order.</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -412,7 +456,7 @@ onMounted(() => {
                     <span class="text-[#246BFD]">{{ formatCurrency(order.total) }}</span>
                   </div>
                   
-                  <button 
+                  <button
                     v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
                     @click="payNow"
                     class="w-full py-3 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -422,6 +466,19 @@ onMounted(() => {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                   </button>
+
+                  <div
+                    v-else-if="order.paymentMethod === 'direct'"
+                    class="w-full p-3.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 flex items-center gap-3"
+                  >
+                    <svg class="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <div>
+                      <p class="text-sm font-semibold text-orange-800 dark:text-orange-200">Pay at Pharmacy</p>
+                      <p class="text-xs text-orange-600 dark:text-orange-400">Payment collected {{ order.deliveryMethod === 'pickup' ? 'when you pick up' : 'upon delivery' }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -447,14 +504,16 @@ onMounted(() => {
                         : 'Pay at Pharmacy' 
                     }}
                   </span>
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                  <span
+                    v-if="order.paymentMethod === 'platform'"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
                     :class="{
                       'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800': order.paymentStatus === 'paid',
                       'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800': order.paymentStatus === 'pending',
                       'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800': order.paymentStatus === 'failed',
-                       'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600': order.paymentStatus === 'refunded'
+                      'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600': order.paymentStatus === 'refunded'
                     }">
-                     {{ order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) }}
+                    {{ order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) }}
                   </span>
                 </div>
               </div>

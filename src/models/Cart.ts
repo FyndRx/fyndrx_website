@@ -2,10 +2,10 @@ export interface CartItem {
   id: string;
   medicationId: number;
   medicationName: string;
-  pharmacyId: number;
+  pharmacyId: string;
   pharmacyName: string;
   pharmacyLogo?: string;
-  pharmacyBranchId?: number; // For API cart operations
+  pharmacyBranchId?: string;
   branchName?: string;
   brandId?: number;
   brandName?: string;
@@ -21,8 +21,11 @@ export interface CartItem {
   image?: string;
   inStock: boolean;
   requiresPrescription?: boolean;
-  pharmacyDrugPriceId?: number; // Added for API compatibility
+  pharmacyDrugPriceId?: string;
   acceptedPaymentMethods?: ('platform' | 'direct')[];
+  isOpen?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Cart {
@@ -34,13 +37,19 @@ export interface Cart {
 }
 
 export interface CartPharmacyGroup {
-  pharmacyId: number;
+  pharmacyId: string;
+  pharmacyBranchId: string;
   pharmacyName: string;
   pharmacyLogo?: string;
+  isOpen?: boolean;
+  branchName?: string;
+  latitude?: number;
+  longitude?: number;
   items: CartItem[];
   subtotal: number;
   paymentMethod?: 'platform' | 'direct';
   acceptedPaymentMethods?: ('platform' | 'direct')[];
+  acceptedPaymentLabels?: string[];
 }
 
 export interface CheckoutPaymentOption {

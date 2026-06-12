@@ -1,14 +1,35 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { pharmacyService } from '@/services/pharmacyService';
 import type { Pharmacy } from '@/models/Pharmacy';
 import PharmacyCard from '@/components/PharmacyCard.vue';
 
 const pharmacies = ref<Pharmacy[]>([]);
+const sectionRef = ref<HTMLElement | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
+let scrollObserver: IntersectionObserver | null = null;
+
+const observeScrollElements = () => {
+  if (scrollObserver) scrollObserver.disconnect();
+  scrollObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          scrollObserver?.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.05, rootMargin: '0px 0px -5% 0px' }
+  );
+  sectionRef.value?.querySelectorAll('.scroll-animate').forEach(el => {
+    scrollObserver!.observe(el);
+  });
+};
 
 const loadPharmacies = async () => {
   try {
-    const allPharmacies = await pharmacyService.searchPharmaciesByDrugs([]);
+    const allPharmacies = await pharmacyService.getAllPharmacies();
     pharmacies.value = allPharmacies.slice(0, 6);
   } catch (err) {
     console.error('Error loading pharmacies:', err);
@@ -16,10 +37,15 @@ const loadPharmacies = async () => {
   }
 };
 
-onMounted(() => {
-  loadPharmacies();
+onMounted(async () => {
+  await loadPharmacies();
+  await nextTick();
+  observeScrollElements();
 });
-const containerRef = ref<HTMLElement | null>(null);
+
+onUnmounted(() => {
+  scrollObserver?.disconnect();
+});
 
 const scrollLeft = () => {
   if (containerRef.value) {
@@ -47,7 +73,7 @@ const scrollRight = () => {
 </script>
 
 <template>
-    <section class="py-20 bg-gray-50 dark:bg-gray-900">
+    <section ref="sectionRef" class="py-20 bg-gray-50 dark:bg-gray-900">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       
       <div class="mb-12 text-center scroll-animate slide-up">
@@ -88,8 +114,8 @@ const scrollRight = () => {
           <div
             v-for="(pharmacy, index) in pharmacies"
             :key="pharmacy.id"
-            class="flex-none w-[360px] md:w-[385px] scroll-animate slide-up snap-center"
-            :class="`delay-${(index + 1) * 100}`"
+            class="flex-none w-[360px] md:w-[385px] pharmacy-card-enter snap-center"
+            :style="{ animationDelay: `${index * 80}ms` }"
           >
             <PharmacyCard :pharmacy="pharmacy" />
           </div>
@@ -109,16 +135,24 @@ const scrollRight = () => {
 </template>
 
 <style scoped>
-
+/* Static elements (section header, view-all button) use JS-triggered .visible */
 .scroll-animate {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
-
 .scroll-animate.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Pharmacy cards: pure CSS keyframe, no JS dependency */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pharmacy-card-enter {
+  animation: cardEnter 0.45s ease-out both;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

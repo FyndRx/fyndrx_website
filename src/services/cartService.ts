@@ -12,7 +12,7 @@ import {
 } from '@/utils/responseTransformers';
 
 export interface AddToCartRequest {
-  pharmacy_drug_price_id: number;
+  pharmacy_drug_price_id: string;
   quantity: number;
 }
 

@@ -3,6 +3,14 @@ import { ref } from 'vue';
 import TextInput from '@/components/TextInput.vue';
 import Dropdown from '@/components/Dropdown.vue';
 import { informationService } from '@/services/informationService';
+import { useSeoMeta } from '@/composables/useSeoMeta';
+
+useSeoMeta({
+  title: 'Share Feedback | FyndRx',
+  description: 'Share your experience with FyndRx. Your feedback helps us improve our online pharmacy platform, delivery service, and teleconsultation quality.',
+  keywords: 'FyndRx feedback, share experience, rate FyndRx, online pharmacy review Ghana',
+  ogType: 'website',
+});
 
 const feedbackType = ref('');
 const feedback = ref('');
@@ -59,15 +67,24 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen py-12 mt-12 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-3xl px-4 mx-auto sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mb-12 text-center">
-        <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-white">Feedback</h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300">
-          We value your feedback! Help us improve FyndRx by sharing your thoughts and suggestions.
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+
+    <!-- Hero -->
+    <div class="py-16 bg-gradient-to-br from-[#FE9615] to-[#f97316]">
+      <div class="px-4 mx-auto max-w-3xl sm:px-6 lg:px-8 text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/10 mb-6">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-white mb-3">Share Your Feedback</h1>
+        <p class="text-orange-100 text-lg">
+          Every piece of feedback shapes how we build FyndRx. Tell us what's working and what isn't.
         </p>
       </div>
+    </div>
+
+    <div class="max-w-3xl px-4 mx-auto sm:px-6 lg:px-8 py-12">
 
       <!-- Success Message -->
       <div

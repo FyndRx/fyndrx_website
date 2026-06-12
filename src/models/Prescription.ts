@@ -1,7 +1,9 @@
 export interface PrescriptionDrug {
-  id: number;
-  prescription_id: number;
+  id: string;
+  prescription_id: string;
   drug_id: number;
+  product_id?: string;
+  display_name?: string;
   name: string;
   brand_id?: number;
   brand_name?: string;
@@ -19,7 +21,7 @@ export interface PrescriptionDrug {
 }
 
 export interface Prescription {
-  id: number;
+  id: string;
   title?: string;
   prescription_number: string;
   doctor_name: string;
@@ -29,9 +31,10 @@ export interface Prescription {
   notes?: string;
   prescription_picture?: string;
   has_request: boolean;
-  user_id: number;
-  pharmacy_id?: number;
-  pharmacy_branch_id?: number;
+  origin?: string;
+  user_id: string;
+  pharmacy_id?: string;
+  pharmacy_branch_id?: string;
   created_at: string;
   updated_at: string;
   drugs: PrescriptionDrug[];
