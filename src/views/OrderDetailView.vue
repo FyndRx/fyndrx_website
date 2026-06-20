@@ -450,6 +450,14 @@ onMounted(() => {
                   <span>Delivery Fee</span>
                   <span>{{ formatCurrency(order.deliveryFee) }}</span>
                 </div>
+                <div v-if="order.discount && order.discount > 0" class="flex justify-between text-green-600 dark:text-green-400">
+                  <span>Discount</span>
+                  <span>-{{ formatCurrency(order.discount) }}</span>
+                </div>
+                <div v-if="order.taxRate" class="flex justify-between text-gray-600 dark:text-gray-300">
+                  <span>Tax ({{ Math.round(order.taxRate * 100) }}%)</span>
+                  <span>{{ formatCurrency(order.taxAmount ?? 0) }}</span>
+                </div>
                 <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     <span>Total</span>

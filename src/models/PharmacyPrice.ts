@@ -11,6 +11,7 @@ export interface PharmacyPrice {
   uom_id?: number;
   price: number;
   discount_price?: number;
+  discount_percentage?: number;
   stock_quantity?: number;
   in_stock?: boolean;
   created_at: string;

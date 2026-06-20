@@ -29,6 +29,7 @@ export interface PharmacyPriceApiResponse {
   max_discounted_price?: number | null;
   price?: number; // legacy / other endpoints
   discount_price?: number | null; // legacy
+  discount_percentage?: number | null;
   is_active?: boolean;
   in_stock: boolean;
   stock_quantity: number;

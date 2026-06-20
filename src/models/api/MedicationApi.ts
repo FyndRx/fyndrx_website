@@ -48,6 +48,7 @@ export interface MedicationApiResponse {
   pharmacy_count?: number;
   price?: number;
   discount_price?: number;
+  discount_percentage?: number;
   created_at?: string;
   updated_at?: string;
 }

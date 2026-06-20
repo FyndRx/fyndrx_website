@@ -28,9 +28,9 @@
         },
         {
             "key": "api_key",
-            "value": "8c3436fcf398bab6c635c6985839d174defb666de992d76ab7a28a03484445c4",
+            "value": "",
             "type": "string",
-            "description": "API key for public endpoints (set in .env as API_KEY)"
+            "description": "API key for public endpoints (set in .env as API_KEY) — do not hardcode here"
         },
         {
             "key": "refresh_token",

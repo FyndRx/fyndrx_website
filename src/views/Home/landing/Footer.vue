@@ -79,10 +79,12 @@ const supportLinks = [
   { name: 'Feedback', path: '/feedback' }
 ];
 
+const isProduction = import.meta.env.PROD;
+
 const informationLinks = [
   { name: 'Terms of Service', path: '/terms' },
   { name: 'Privacy Policy', path: '/privacy' },
-  { name: 'Email Gallery', path: '/email-gallery' },
+  { name: 'Email Gallery', path: '/email-gallery', devOnly: true },
   { name: 'Cookie Policy', path: '/cookies' },
   { name: 'Accessibility', path: '/accessibility' }
 ];
@@ -197,8 +199,8 @@ export default {
         <div class="lg:col-span-1">
           <h4 class="mb-6 text-lg font-semibold">Information</h4>
           <ul class="space-y-3">
-            <li v-for="link in informationLinks" :key="link.name">
-              <router-link 
+            <li v-for="link in informationLinks" :key="link.name" v-show="!link.devOnly || !isProduction">
+              <router-link
                 :to="link.path"
                 custom
                 v-slot="{ href, navigate, isActive }"
