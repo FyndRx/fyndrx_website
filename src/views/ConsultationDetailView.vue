@@ -51,9 +51,7 @@ const onFollowUpCreated = () => { fetchConsultation(); };
 
 const getFileUrl = (path: string) => {
   if (!path) return '#';
-  if (path.startsWith('http')) return path;
-  const storageUrl = import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage/';
-  return `${storageUrl}${path.replace(/^\/+/, '')}`;
+  return path;
 };
 
 const openFile = (url: string) => window.open(url, '_blank');

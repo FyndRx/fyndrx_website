@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 import TextInput from '@/components/TextInput.vue';
+import { authService } from '@/services/auth.service';
 
 const loading = ref(false);
 const email = ref('');
@@ -20,8 +21,7 @@ const handleSubmit = async () => {
 
   try {
     loading.value = true;
-    // TODO: Implement the actual password reset request logic here
-    // await authStore.requestPasswordReset(email.value);
+    await authService.requestPasswordReset(email.value);
     successMessage.value = 'If an account exists with this email, you will receive password reset instructions.';
   } catch (error) {
     console.error('Password reset request failed:', error);

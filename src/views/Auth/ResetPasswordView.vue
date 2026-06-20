@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import TextInput from '@/components/TextInput.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
+import { authService } from '@/services/auth.service';
 
 const router = useRouter();
+const route = useRoute();
+
+const token = computed(() => route.query.token as string | undefined);
+const email = computed(() => route.query.email as string | undefined);
+
 const loading = ref(false);
 const form = ref({
   password: '',
@@ -18,13 +24,12 @@ const validationErrors = ref({
 const successMessage = ref('');
 
 const handleSubmit = async () => {
-  // Reset validation errors
-  validationErrors.value = {
-    password: '',
-    confirmPassword: '',
-  };
+  validationErrors.value = { password: '', confirmPassword: '' };
 
-  // Validate form
+  if (!token.value || !email.value) {
+    validationErrors.value.password = 'Invalid or missing reset link. Please request a new one.';
+    return;
+  }
   if (!form.value.password) {
     validationErrors.value.password = 'Password is required';
     return;
@@ -40,18 +45,19 @@ const handleSubmit = async () => {
 
   try {
     loading.value = true;
-    // TODO: Implement the actual password reset logic here
-    // await authStore.resetPassword({
-    //   token: route.query.token as string,
-    //   password: form.value.password,
-    // });
+    await authService.resetPasswordWithToken(
+      token.value,
+      email.value!,
+      form.value.password,
+      form.value.confirmPassword
+    );
     successMessage.value = 'Your password has been reset successfully.';
     setTimeout(() => {
       router.push('/login');
     }, 2000);
   } catch (error) {
     console.error('Password reset failed:', error);
-    validationErrors.value.password = 'Failed to reset password. Please try again.';
+    validationErrors.value.password = 'Failed to reset password. The link may have expired — please request a new one.';
   } finally {
     loading.value = false;
   }
@@ -81,8 +87,24 @@ const handleSubmit = async () => {
         </p>
       </div>
 
+      <!-- Invalid / missing token state -->
+      <div
+        v-if="!token || !email"
+        class="px-4 py-8 mt-8 bg-white shadow-xl dark:bg-gray-800 rounded-2xl sm:px-10 text-center space-y-4"
+      >
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          This reset link is invalid or has expired.
+        </p>
+        <router-link
+          to="/forgot-password"
+          class="inline-block font-medium text-[#246BFD] hover:text-[#5089FF]"
+        >
+          Request a new reset link
+        </router-link>
+      </div>
+
       <!-- Reset Password Form -->
-      <div class="px-4 py-8 mt-8 bg-white shadow-xl dark:bg-gray-800 rounded-2xl sm:px-10">
+      <div v-else class="px-4 py-8 mt-8 bg-white shadow-xl dark:bg-gray-800 rounded-2xl sm:px-10">
         <form class="space-y-6" @submit.prevent="handleSubmit">
           <TextInput
             v-model="form.password"

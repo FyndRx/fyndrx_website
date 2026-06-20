@@ -37,7 +37,6 @@ export const medicationService = {
    * @returns Medications plus optional pagination meta
    */
   async liveSearch(params: string | LiveSearchFilters): Promise<LiveSearchResult> {
-    console.log('medicationService.liveSearch called with:', params);
     try {
       const filters: LiveSearchFilters = typeof params === 'string' ? { query: params } : params;
       const query = filters.query?.trim() || '';
@@ -55,17 +54,13 @@ export const medicationService = {
 
       const queryString = searchParams.toString();
       const url = `/search/smart${queryString ? `?${queryString}` : ''}`;
-      console.log('Fetching from Smart Search URL:', url);
-
       const response = await apiService.get<any>(url);
-      console.log('Raw API response:', response);
 
       let medications: Medication[] = [];
       const meta = response.meta;
 
       // Check if it's the grouped Smart Search structure (typically when q is present)
       if (response && response.results) {
-        console.log('Processing as grouped Smart Search results');
         const products = response.results.products || [];
         const generics = response.results.generics || [];
         
@@ -90,7 +85,6 @@ export const medicationService = {
         ];
       } else {
         // Standard paginated list structure (typically when no q is present)
-        console.log('Processing as standard paginated list');
         const apiMeds = unwrapArrayResponse(response) as any[];
         medications = transformMedications(apiMeds);
       }
