@@ -161,11 +161,11 @@ onMounted(() => {
                     <span v-if="medication.discount_price" class="text-lg text-gray-400 line-through">
                       {{ formatCurrency(medication.price) }}
                     </span>
-                    <span 
-                      v-if="medication.discount_price" 
+                    <span
+                      v-if="medication.discount_price"
                       class="px-2 py-0.5 text-xs font-bold bg-green-100 text-green-700 rounded"
                     >
-                      -{{ Math.round((1 - medication.discount_price / medication.price) * 100) }}%
+                      -{{ medication.discount_percentage ? Math.round(medication.discount_percentage) : Math.round((1 - medication.discount_price / medication.price) * 100) }}%
                     </span>
                   </div>
                 </div>

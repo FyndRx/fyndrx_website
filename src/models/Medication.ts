@@ -42,6 +42,7 @@ export interface Medication {
   pharmacy_count?: number;
   price?: number;
   discount_price?: number;
+  discount_percentage?: number;
   brand_id?: number;
   brand_name?: string;
   form_id?: number;

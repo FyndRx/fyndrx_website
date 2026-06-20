@@ -369,14 +369,14 @@ const router = createRouter({
       }
     },
     {
-      path: '/receipt/:id',
+      path: '/receipt/:reference',
       name: 'receipt',
       component: () => import('@/views/ReceiptView.vue'),
       meta: {
-        title: 'Receipt | FyndRX',
-        description: 'View payment receipt',
-        requiresAuth: true
-      }
+        title: 'Receipt | FyndRx',
+        description: 'View your FyndRx digital receipt for POS and online transactions.',
+        requiresAuth: false,
+      },
     },
     {
       path: '/payment/callback',

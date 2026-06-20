@@ -9,6 +9,10 @@ interface SettingsState {
   maxCartItems: number;
   onlinePaymentEnabled: boolean;
   offlinePaymentEnabled: boolean;
+  paystackEnabled: boolean;
+  taxEnabled: boolean;
+  taxRate: number;
+  taxLabel: string;
   isLoaded: boolean;
 }
 
@@ -21,16 +25,24 @@ export const useSettingsStore = defineStore('settings', {
     maxCartItems: 20,
     onlinePaymentEnabled: true,
     offlinePaymentEnabled: true,
+    paystackEnabled: true,
+    taxEnabled: false,
+    taxRate: 0.20,
+    taxLabel: 'VAT',
     isLoaded: false,
   }),
 
   getters: {
     enabledPaymentMethods: (state): ('platform' | 'direct')[] => {
       const methods: ('platform' | 'direct')[] = [];
-      if (state.onlinePaymentEnabled)  methods.push('platform');
+      if (state.onlinePaymentEnabled && state.paystackEnabled) methods.push('platform');
       if (state.offlinePaymentEnabled) methods.push('direct');
       return methods;
     },
+    paystackGatewayDown: (state): boolean =>
+      state.onlinePaymentEnabled && !state.paystackEnabled,
+    taxIncludedLabel: (state): string =>
+      state.taxEnabled ? state.taxLabel : '',
   },
 
   actions: {
@@ -46,6 +58,10 @@ export const useSettingsStore = defineStore('settings', {
           this.maxCartItems = Number(s.max_cart_items) || 20;
           this.onlinePaymentEnabled  = s.online_payment_enabled  !== false && s.online_payment_enabled  !== 'false';
           this.offlinePaymentEnabled = s.offline_payment_enabled !== false && s.offline_payment_enabled !== 'false';
+          this.paystackEnabled = s.paystack_enabled !== false && s.paystack_enabled !== 'false';
+          this.taxEnabled      = s.tax_enabled === true || s.tax_enabled === 'true';
+          this.taxRate         = Number(s.tax_rate) || 0.20;
+          this.taxLabel        = s.tax_label || 'VAT';
           this.isLoaded = true;
         }
       } catch (error) {

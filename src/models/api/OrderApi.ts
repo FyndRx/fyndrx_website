@@ -33,6 +33,9 @@ export interface OrderApiResponse {
   items: OrderItemApiResponse[];
   subtotal: number;
   delivery_fee: number;
+  discount?: number;
+  tax_rate?: number | null;
+  tax_amount?: number;
   total: number;
   payment_method: 'platform' | 'direct';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';

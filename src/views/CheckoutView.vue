@@ -601,6 +601,12 @@ const placeAllOrders = async () => {
   }
 };
 
+function estimatedTaxFor(): number {
+  if (!settingsStore.taxEnabled) return 0;
+  const base = grandTotal.value;
+  return Math.round(base * settingsStore.taxRate / (1 + settingsStore.taxRate) * 100) / 100;
+}
+
 const payNow = async (orderId: string | string[]) => {
   const isBulk = Array.isArray(orderId);
   if (isBulk) bulkPaymentLoading.value = true;
@@ -1202,6 +1208,12 @@ const payNow = async (orderId: string | string[]) => {
                     Online payment is temporarily unavailable platform-wide. Only cash/POS accepted at this time.
                   </span>
                 </div>
+                <div v-else-if="settingsStore.paystackGatewayDown" class="mb-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/60 text-xs text-amber-800 dark:text-amber-300">
+                  <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Online payments (Paystack) are temporarily unavailable. Please choose Pay at Pharmacy instead.</span>
+                </div>
 
                 <!-- Selectable methods (more than one effective option) -->
                 <template v-if="effectivePaymentMethods(pharmacy).length > 1">
@@ -1394,6 +1406,10 @@ const payNow = async (orderId: string | string[]) => {
                   <span v-if="deliveryFee > 0">{{ formatCurrency(deliveryFee) }}</span>
                   <span v-else-if="showDeliveryAddressInput" class="text-xs text-gray-400 italic">Calculating…</span>
                   <span v-else class="text-emerald-600 dark:text-emerald-400 font-medium">Free</span>
+                </div>
+                <div v-if="settingsStore.taxEnabled" class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <span>Incl. {{ settingsStore.taxLabel }}</span>
+                  <span>~{{ formatCurrency(estimatedTaxFor()) }}</span>
                 </div>
                 <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">

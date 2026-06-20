@@ -30,6 +30,9 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;
+  discount?: number;
+  taxRate?: number | null;
+  taxAmount?: number;
   total: number;
   paymentMethod: 'platform' | 'direct';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
