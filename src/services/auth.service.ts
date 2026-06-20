@@ -132,12 +132,38 @@ class AuthService {
   }
 
   /**
-   * Reset password
+   * Reset password (OTP flow)
    * @param credentials - Phone number, OTP, and new password
    * @returns Success message
    */
   async resetPassword(credentials: ResetPasswordCredentials): Promise<{ message: string }> {
     return await apiService.post<OtpResponse>('/auth/password-reset', credentials);
+  }
+
+  /**
+   * Request a password reset email link.
+   * Backend: POST /auth/forgot-password { email }
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    return await apiService.post<{ message: string }>('/auth/forgot-password', { email });
+  }
+
+  /**
+   * Complete a token-based password reset (from email link).
+   * Backend: POST /auth/reset-password { token, email, password, password_confirmation }
+   */
+  async resetPasswordWithToken(
+    token: string,
+    email: string,
+    password: string,
+    password_confirmation: string
+  ): Promise<{ message: string }> {
+    return await apiService.post<{ message: string }>('/auth/reset-password', {
+      token,
+      email,
+      password,
+      password_confirmation,
+    });
   }
 
   /**

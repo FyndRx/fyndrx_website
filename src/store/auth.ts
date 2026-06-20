@@ -345,7 +345,6 @@ export const useAuthStore = defineStore('auth', () => {
           await fetchUserDetails();
         }
       } catch (err) {
-        console.log('Initial checkAuth / silent refresh failed:', err);
         clearAuth();
       } finally {
         isInitialized.value = true;
