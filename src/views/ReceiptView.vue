@@ -2,9 +2,15 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { fetchReceipt, type Receipt, type PosReceipt, type OnlineReceipt } from '@/services/receiptService';
+import SpotlightCardAd from '@/components/ads/formats/SpotlightCardAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
 
 const route = useRoute();
 const reference = route.params.reference as string;
+
+const adsStore = useAdsStore();
+const { resolved: receiptAd } = useAds({ zone: 'Z7-post-checkout', route: 'receipt', isAuthed: false });
 
 const receipt = ref<Receipt | null>(null);
 const loading = ref(true);
@@ -122,6 +128,8 @@ function retry() {
 function printReceipt() {
   window.print();
 }
+
+onMounted(() => adsStore.load());
 </script>
 
 <template>
@@ -445,6 +453,11 @@ function printReceipt() {
 
         </div><!-- /body -->
       </div><!-- /receipt -->
+
+      <!-- Z7: Post-checkout contextual spotlight ad -->
+      <div v-if="receiptAd && !loading" class="w-full max-w-2xl mx-auto px-4 pb-10">
+        <SpotlightCardAd :ad="receiptAd" zone="Z7-post-checkout" />
+      </div>
 
     </div><!-- /max-w-2xl -->
   </div>

@@ -13,6 +13,7 @@ import NewsletterSignup from '@/views/Home/landing/NewsletterSignup.vue';
 import ConsultationSection from '@/views/Home/landing/ConsultationSection.vue';
 import PromotionsCarousel from '@/views/Home/landing/PromotionsCarousel.vue';
 import PartnershipBanner from '@/views/Home/landing/PartnershipBanner.vue';
+import AdZone from '@/components/ads/AdZone.vue';
 
 useSeoMeta({
   title: 'FyndRx | Safest and Most Convenient Online Pharmacy in Ghana',
@@ -38,6 +39,11 @@ useSeoMeta({
     <!-- How It Works — mental model first, before feature detail -->
     <section class="relative">
       <HowItWorks />
+    </section>
+
+    <!-- Z2: Mid-feed banner ad -->
+    <section class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <AdZone zone="Z2-home-midfeed" route="home" />
     </section>
 
     <!-- Features Section -->
