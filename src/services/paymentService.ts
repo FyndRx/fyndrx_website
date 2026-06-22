@@ -16,6 +16,11 @@ export interface PaymentVerification {
   status: 'success' | 'failed' | 'pending';
   paid_at?: string;
   order_id: string;
+  message?: string;
+  orders?: Array<{ id: string; order_number?: string; total?: number; pharmacy?: { logo?: string | null; name: string } }>;
+  is_bulk?: boolean;
+  orderId?: string;
+  order?: { id: string };
 }
 
 export interface Transaction {

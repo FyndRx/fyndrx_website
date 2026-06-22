@@ -7,6 +7,7 @@ export type User = {
   dob: string | null;
   gender: string | null;
   email: string;
+  role?: string;
   pharmacy_id: string | null;
   pharmacy_branch_id: string | null;
   phone_number: string;

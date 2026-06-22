@@ -1,6 +1,25 @@
 import { defineStore } from 'pinia';
 import { apiService } from '@/services/api';
 
+interface RawSettings {
+  maintenance_mode?: boolean | string;
+  maintenance_message?: string;
+  delivery_fee_flat?: number | string;
+  free_delivery_threshold?: number | string;
+  max_cart_items?: number | string;
+  online_payment_enabled?: boolean | string;
+  offline_payment_enabled?: boolean | string;
+  paystack_enabled?: boolean | string;
+  tax_enabled?: boolean | string;
+  tax_rate?: number | string;
+  tax_label?: string;
+}
+
+interface ApiSettingsResponse {
+  status: string;
+  settings?: RawSettings;
+}
+
 interface SettingsState {
   maintenanceMode: boolean;
   maintenanceMessage: string;
@@ -48,7 +67,7 @@ export const useSettingsStore = defineStore('settings', {
   actions: {
     async fetchSettings() {
       try {
-        const response: any = await apiService.get('/settings/status');
+        const response = await apiService.get('/settings/status') as ApiSettingsResponse;
         if (response && response.status === 'ok' && response.settings) {
           const s = response.settings;
           this.maintenanceMode = s.maintenance_mode === true || s.maintenance_mode === '1';
