@@ -16,9 +16,16 @@ import ErrorState from '@/components/ErrorState.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import SearchAutocomplete from '@/components/SearchAutocomplete.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
+import NativeCardAd from '@/components/ads/formats/NativeCardAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
 
 const route = useRoute();
 const dataCache = useDataCacheStore();
+
+const adsStore = useAdsStore();
+onMounted(() => adsStore.load());
+const { resolved: pharmaInlineAd } = useAds({ zone: 'Z4-pharma-inline', route: 'pharmacies', isAuthed: false });
 
 useSeoMeta({
   title: 'Find Pharmacies Near You | FyndRx',
@@ -446,6 +453,12 @@ onMounted(async () => {
 
           <!-- Pharmacy Grid -->
           <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <!-- Z4: Featured partner ad at top of grid -->
+            <NativeCardAd
+              v-if="pharmaInlineAd"
+              :ad="pharmaInlineAd"
+              zone="Z4-pharma-inline"
+            />
             <PharmacyCard
               v-for="(pharmacy, index) in pharmacies"
               :key="pharmacy.id"

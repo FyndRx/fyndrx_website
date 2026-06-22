@@ -13,6 +13,9 @@ import { orderService } from '@/services/orderService';
 import LazyImage from '@/components/LazyImage.vue';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
+import SpotlightCardAd from '@/components/ads/formats/SpotlightCardAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -112,7 +115,13 @@ const loadDashboardData = async () => {
   }
 };
 
-onMounted(() => { loadDashboardData(); });
+const adsStore = useAdsStore();
+const { resolved: dashboardAd } = useAds({ zone: 'Z6-dashboard-spotlight', route: 'dashboard', isAuthed: true });
+
+onMounted(() => {
+  loadDashboardData();
+  adsStore.load();
+});
 </script>
 
 <template>
@@ -187,6 +196,11 @@ onMounted(() => { loadDashboardData(); });
           <p v-else class="text-3xl font-black text-white">{{ formatCurrency(totalSpent) }}</p>
           <p class="mt-1 text-xs text-blue-100">lifetime value</p>
         </div>
+      </div>
+
+      <!-- Z6: Dashboard spotlight ad — once per session, auth-only -->
+      <div v-if="dashboardAd" class="mb-6">
+        <SpotlightCardAd :ad="dashboardAd" zone="Z6-dashboard-spotlight" />
       </div>
 
       <!-- ── Main content grid ── -->

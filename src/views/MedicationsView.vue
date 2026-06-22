@@ -15,6 +15,10 @@ import MedicationQuickViewModal from '@/components/MedicationQuickViewModal.vue'
 import MedicationComparison from '@/components/MedicationComparison.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import Pagination from '@/components/Pagination.vue';
+import NativeCardAd from '@/components/ads/formats/NativeCardAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
+import type { Medication } from '@/models/Medication';
 
 useSeoMeta({
   title: 'Browse Medications | FyndRx',
@@ -43,6 +47,17 @@ const {
   pagination,
   categories: storeCategories,
 } = storeToRefs(medicationsStore);
+
+// ── Ad system ────────────────────────────────────────────────────────────────
+const adsStore = useAdsStore();
+onMounted(() => adsStore.load());
+
+const { resolved: medInlineAd } = useAds({
+  zone: 'Z3-meds-inline',
+  route: 'medications',
+  isAuthed: false,
+});
+
 
 // Local query for the search bar only
 const searchBarQuery = ref(storeSearchQuery.value);
@@ -216,12 +231,11 @@ const commitSearch = (query: string) => {
   medicationsStore.searchQuery = query;
 };
 
-const viewMedication = (medication: any, event?: Event) => {
+const viewMedication = (medication: Medication, event?: Event) => {
   if (event) {
     event.stopPropagation();
   }
   const productId = medication.product_id || medication.id;
-  console.log(`NAVIGATING TO PRODUCT ID: ${productId}`);
   router.push({ 
     path: `/medication/${productId}`
   });
@@ -449,10 +463,15 @@ onMounted(async () => {
 
       <!-- Medications Grid -->
       <div v-else :key="`medications-grid-${filteredMedications.length}-${loading}`" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="medication in filteredMedications"
-          :key="`med-${medication.id}-${selectedCategory}-${selectedForm}-${selectedBrand}`"
-          @click="viewMedication(medication)"
+        <template v-for="(medication, index) in filteredMedications" :key="`med-${medication.id}-${selectedCategory}-${selectedForm}-${selectedBrand}`">
+          <!-- Z3: inject ad at position 4 (before index 3) -->
+          <NativeCardAd
+            v-if="index === 3 && medInlineAd"
+            :ad="medInlineAd"
+            zone="Z3-meds-inline"
+          />
+          <div
+            @click="viewMedication(medication)"
           class="relative p-6 bg-white rounded-2xl shadow-lg transition-all duration-300 cursor-pointer dark:bg-gray-800 hover:shadow-2xl hover:-translate-y-2 group"
         >
           <!-- Action Buttons Overlay -->
@@ -563,7 +582,8 @@ onMounted(async () => {
               </button>
             </div>
           </div>
-        </div>
+          </div><!-- closes medication card -->
+        </template><!-- end medication template -->
       </div>
 
       <div v-if="!loading && !error && filteredMedications.length > 0" class="mt-8">

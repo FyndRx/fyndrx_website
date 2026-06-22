@@ -1,0 +1,398 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-06-21T00:00:00Z",
+  "ads": [
+    {
+      "id": "ad_pharma_lifeplus_001",
+      "advertiser": "Life Plus Pharmacy",
+      "tier": "featured",
+      "format": "hero-banner",
+      "priority": 9,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Ghana's most trusted pharmacy, now on FyndRx",
+        "subline": "Same-day delivery across Accra. Licensed pharmacists on call 24/7.",
+        "imageUrl": "https://images.unsplash.com/photo-1585435557343-3b092031a831?w=1200&q=80",
+        "logoUrl": "",
+        "accentColor": "#10B981",
+        "cta": {
+          "label": "Explore Life Plus",
+          "href": "/pharmacies",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z1-hero-carousel", "Z2-home-midfeed"],
+        "routes": ["home"],
+        "authRequired": null,
+        "categoryTags": [],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_lifeplus_hero",
+        "clickEvent": "ad_click_lifeplus_hero"
+      }
+    },
+    {
+      "id": "ad_med_diabetes_001",
+      "advertiser": "Novartis Ghana",
+      "tier": "standard",
+      "format": "native-card",
+      "priority": 8,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Metfree 500mg — Extended Release",
+        "subline": "Metformin HCl · Available at 12+ verified pharmacies across Ghana",
+        "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80",
+        "logoUrl": "",
+        "accentColor": "#246BFD",
+        "cta": {
+          "label": "Compare prices",
+          "href": "/medications",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z3-meds-inline"],
+        "routes": ["medications"],
+        "authRequired": null,
+        "categoryTags": ["diabetes", "metformin", "chronic", "blood-sugar"],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-09-30" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_metfree_native",
+        "clickEvent": "ad_click_metfree_native"
+      }
+    },
+    {
+      "id": "ad_pharma_medplus_inline_001",
+      "advertiser": "MedPlus Pharmacy",
+      "tier": "standard",
+      "format": "native-card",
+      "priority": 7,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "MedPlus Pharmacy — Featured Partner",
+        "subline": "Same-day dispensing · Online prescriptions accepted · Cold chain storage available",
+        "imageUrl": "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=600&q=80",
+        "logoUrl": "",
+        "accentColor": "#FE9615",
+        "cta": {
+          "label": "View pharmacy",
+          "href": "/pharmacies",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z4-pharma-inline"],
+        "routes": ["pharmacies"],
+        "authRequired": null,
+        "categoryTags": [],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_medplus_pharma_inline",
+        "clickEvent": "ad_click_medplus_pharma_inline"
+      }
+    },
+    {
+      "id": "ad_sidebar_diabetes_care_001",
+      "advertiser": "FyndRx Chronic Care",
+      "tier": "featured",
+      "format": "sidebar",
+      "priority": 8,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Managing diabetes? Get a free pharmacist review.",
+        "subline": "Our licensed pharmacists review your medication regimen and flag interactions — at no cost.",
+        "imageUrl": "https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?w=600&q=80",
+        "logoUrl": "",
+        "accentColor": "#246BFD",
+        "cta": {
+          "label": "Book free review",
+          "href": "/consultations/new",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z5-med-detail-sidebar"],
+        "routes": ["medication-detail"],
+        "authRequired": null,
+        "categoryTags": ["diabetes", "hypertension", "chronic", "blood-pressure"],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_diabetes_sidebar",
+        "clickEvent": "ad_click_diabetes_sidebar"
+      }
+    },
+    {
+      "id": "ad_sidebar_general_001",
+      "advertiser": "FyndRx",
+      "tier": "standard",
+      "format": "sidebar",
+      "priority": 5,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Get it delivered today",
+        "subline": "Order before 2 PM and receive your medications same day. Partnered with 50+ verified pharmacies.",
+        "imageUrl": "https://images.unsplash.com/photo-1545912452-8aea7e25a3d3?w=600&q=80",
+        "logoUrl": "",
+        "accentColor": "#FE9615",
+        "cta": {
+          "label": "Find nearby pharmacies",
+          "href": "/pharmacies",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z5-med-detail-sidebar"],
+        "routes": ["medication-detail"],
+        "authRequired": null,
+        "categoryTags": [],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_delivery_sidebar",
+        "clickEvent": "ad_click_delivery_sidebar"
+      }
+    },
+    {
+      "id": "ad_tele_docnow_001",
+      "advertiser": "DocNow Telehealth",
+      "tier": "featured",
+      "format": "spotlight-card",
+      "priority": 7,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "See a doctor in under 5 minutes",
+        "subline": "Board-certified physicians available now. Consultations from GH₵ 30. No waiting rooms.",
+        "imageUrl": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=800&q=80",
+        "logoUrl": "",
+        "accentColor": "#8B5CF6",
+        "cta": {
+          "label": "Start a consultation",
+          "href": "/consultations/new",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z6-dashboard-spotlight"],
+        "routes": ["dashboard"],
+        "authRequired": true,
+        "categoryTags": [],
+        "excludeRoutes": ["checkout", "cart", "payment"],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_docnow_spotlight",
+        "clickEvent": "ad_click_docnow_spotlight"
+      }
+    },
+    {
+      "id": "ad_chronic_care_001",
+      "advertiser": "FyndRx Chronic Care Program",
+      "tier": "featured",
+      "format": "spotlight-card",
+      "priority": 10,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Managing a chronic condition? We've got a plan for that.",
+        "subline": "Join FyndRx Chronic Care for monthly medication refills, pharmacist check-ins, and health tracking — all in one place.",
+        "imageUrl": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800&q=80",
+        "logoUrl": "",
+        "accentColor": "#FE9615",
+        "cta": {
+          "label": "Learn about Chronic Care",
+          "href": "/services",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z7-post-checkout"],
+        "routes": ["receipt", "order-detail"],
+        "authRequired": true,
+        "categoryTags": ["diabetes", "hypertension", "chronic", "asthma", "blood-pressure"],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2027-06-01" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_chronic_postcheckout",
+        "clickEvent": "ad_click_chronic_postcheckout"
+      }
+    },
+    {
+      "id": "ad_postcheckout_general_001",
+      "advertiser": "FyndRx",
+      "tier": "standard",
+      "format": "spotlight-card",
+      "priority": 6,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Your prescription on repeat? Set up auto-refill.",
+        "subline": "Never run out of your regular medications. FyndRx auto-refill reminds you and reorders automatically before you run out.",
+        "imageUrl": "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=800&q=80",
+        "logoUrl": "",
+        "accentColor": "#246BFD",
+        "cta": {
+          "label": "Set up auto-refill",
+          "href": "/dashboard",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z7-post-checkout"],
+        "routes": ["receipt", "order-detail"],
+        "authRequired": true,
+        "categoryTags": [],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2027-06-01" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_autorefill_postcheckout",
+        "clickEvent": "ad_click_autorefill_postcheckout"
+      }
+    },
+    {
+      "id": "ad_blog_vaccination_001",
+      "advertiser": "Ghana Health Service",
+      "tier": "standard",
+      "format": "inline-feed",
+      "priority": 7,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "National Immunization Week — Find a vaccination centre near you",
+        "subline": "Free childhood vaccines available at all partner pharmacies. Walk-ins welcome Monday through Saturday.",
+        "imageUrl": "https://images.unsplash.com/photo-1584118624012-df056829fbd0?w=800&q=80",
+        "logoUrl": "",
+        "accentColor": "#10B981",
+        "cta": {
+          "label": "Find a centre",
+          "href": "/pharmacies",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z8-blog-inline"],
+        "routes": ["blog", "blog-post"],
+        "authRequired": null,
+        "categoryTags": ["vaccination", "immunization", "children", "health", "prevention"],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-09-30" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_vaccination_blog",
+        "clickEvent": "ad_click_vaccination_blog"
+      }
+    },
+    {
+      "id": "ad_blog_general_001",
+      "advertiser": "FyndRx",
+      "tier": "basic",
+      "format": "inline-feed",
+      "priority": 5,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "Upload your prescription and skip the queue",
+        "subline": "Send your prescription to a licensed pharmacist, get it verified in minutes, and have it delivered to your door.",
+        "imageUrl": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&q=80",
+        "logoUrl": "",
+        "accentColor": "#246BFD",
+        "cta": {
+          "label": "Upload a prescription",
+          "href": "/upload-prescription",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z8-blog-inline"],
+        "routes": ["blog", "blog-post"],
+        "authRequired": null,
+        "categoryTags": [],
+        "excludeRoutes": [],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_uploadrx_blog",
+        "clickEvent": "ad_click_uploadrx_blog"
+      }
+    },
+    {
+      "id": "ad_nhis_sticky_001",
+      "advertiser": "NHIS Ghana",
+      "tier": "basic",
+      "format": "sticky-bar",
+      "priority": 6,
+      "isActive": false,
+      "status": "paused",
+      "creative": {
+        "headline": "Renew your NHIS card — accepted at all FyndRx partner pharmacies",
+        "logoUrl": "",
+        "accentColor": "#10B981",
+        "cta": {
+          "label": "Learn more",
+          "href": "https://nhis.gov.gh",
+          "external": true
+        }
+      },
+      "targeting": {
+        "zones": ["Z9-mobile-sticky"],
+        "routes": ["home", "medications", "pharmacies", "blog"],
+        "authRequired": false,
+        "categoryTags": [],
+        "excludeRoutes": ["checkout", "cart", "payment-callback"],
+        "dateRange": { "start": "2026-06-01", "end": "2026-09-30" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_nhis_sticky",
+        "clickEvent": "ad_click_nhis_sticky"
+      }
+    },
+    {
+      "id": "ad_fyndrx_app_sticky_001",
+      "advertiser": "FyndRx",
+      "tier": "basic",
+      "format": "sticky-bar",
+      "priority": 8,
+      "isActive": true,
+      "status": "active",
+      "creative": {
+        "headline": "FyndRx app is coming soon — be the first to know",
+        "logoUrl": "",
+        "accentColor": "#246BFD",
+        "cta": {
+          "label": "Notify me",
+          "href": "/#newsletter",
+          "external": false
+        }
+      },
+      "targeting": {
+        "zones": ["Z9-mobile-sticky"],
+        "routes": ["home", "medications", "pharmacies", "blog", "about"],
+        "authRequired": null,
+        "categoryTags": [],
+        "excludeRoutes": ["checkout", "cart", "payment-callback"],
+        "dateRange": { "start": "2026-06-01", "end": "2026-12-31" }
+      },
+      "analytics": {
+        "impressionEvent": "ad_impression_app_sticky",
+        "clickEvent": "ad_click_app_sticky"
+      }
+    }
+  ]
+}

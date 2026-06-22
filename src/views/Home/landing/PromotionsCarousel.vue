@@ -1,18 +1,32 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { 
-  CalendarIcon, 
-  ClockIcon, 
-  MapPinIcon, 
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import {
+  CalendarIcon,
+  ClockIcon,
+  MapPinIcon,
   HeartIcon,
-  ChevronLeftIcon, 
+  ChevronLeftIcon,
   ChevronRightIcon,
   SparklesIcon,
   ShieldCheckIcon
 } from '@heroicons/vue/24/outline';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
+import { useAdSession } from '@/composables/useAdSession';
+import AdLabel from '@/components/ads/AdLabel.vue';
+
+const adsStore = useAdsStore();
+const adSession = useAdSession();
+const { resolved: heroAd } = useAds({ zone: 'Z1-hero-carousel', route: 'home', isAuthed: false });
+
+onMounted(() => adsStore.load());
 
 const currentSlide = ref(0);
 const autoplayInterval = ref<any>(null);
+
+// Total slide count includes the sponsored slide when an ad is active
+const totalSlides = computed(() => heroAd.value ? slides.length + 1 : slides.length);
+const sponsoredSlideIndex = computed(() => heroAd.value ? slides.length : -1);
 
 const slides = [
   {
@@ -87,15 +101,21 @@ const slides = [
 ];
 
 const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % slides.length;
+  currentSlide.value = (currentSlide.value + 1) % totalSlides.value;
 };
 
 const prevSlide = () => {
-  currentSlide.value = (currentSlide.value - 1 + slides.length) % slides.length;
+  currentSlide.value = (currentSlide.value - 1 + totalSlides.value) % totalSlides.value;
 };
 
 const goToSlide = (index: number) => {
   currentSlide.value = index;
+};
+
+const isAdSlide = computed(() => heroAd.value && currentSlide.value === sponsoredSlideIndex.value);
+
+const handleAdClick = () => {
+  if (heroAd.value) adSession.recordClick(heroAd.value.id, 'Z1-hero-carousel');
 };
 
 const startAutoplay = () => {
@@ -137,28 +157,70 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <div class="relative overflow-hidden rounded-[2.5rem] shadow-2xl transition-all duration-700 ease-in-out"
-       :class="`bg-gradient-to-br ${slides[currentSlide].theme.bg}`"
-       @mouseenter="stopAutoplay"
-       @mouseleave="startAutoplay"
+    <div
+      class="relative overflow-hidden rounded-[2.5rem] shadow-2xl transition-all duration-700 ease-in-out"
+      :class="isAdSlide ? 'bg-gradient-to-br from-[#0D1529] to-[#131E38]' : `bg-gradient-to-br ${slides[currentSlide].theme.bg}`"
+      @mouseenter="stopAutoplay"
+      @mouseleave="startAutoplay"
     >
-      
+
       <!-- Background Decorations (Dynamic Colors) -->
-      <div 
+      <div
         class="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 transition-colors duration-700 opacity-20"
-        :style="{ backgroundColor: slides[currentSlide].theme.accent }"
+        :style="{ backgroundColor: isAdSlide ? (heroAd?.creative.accentColor ?? '#246BFD') : slides[currentSlide].theme.accent }"
       ></div>
-      <div 
+      <div
         class="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 transition-colors duration-700 opacity-20"
-        :style="{ backgroundColor: slides[currentSlide].theme.secondary }"
+        :style="{ backgroundColor: isAdSlide ? (heroAd?.creative.accentColor ?? '#FE9615') : slides[currentSlide].theme.secondary }"
       ></div>
       
       <!-- Slide Content -->
       <div class="relative z-10 px-6 py-12 md:py-16 md:px-12 lg:px-20 min-h-[600px] flex items-center">
         <!-- Transition wrapper -->
         <transition mode="out-in" enter-active-class="duration-500 ease-out" enter-from-class="opacity-0 translate-x-4" enter-to-class="opacity-100 translate-x-0" leave-active-class="duration-300 ease-in" leave-from-class="opacity-100 translate-x-0" leave-to-class="opacity-0 -translate-x-4">
-          
-          <div :key="currentSlide" class="w-full">
+
+          <!-- ── Sponsored Ad Slide ────────────────────────────── -->
+          <div v-if="isAdSlide && heroAd" :key="'ad-slide'" class="w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div class="space-y-6">
+                <div class="flex items-center gap-3">
+                  <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <span class="w-2 h-2 rounded-full animate-pulse" :style="{ backgroundColor: heroAd.creative.accentColor ?? '#FE9615' }"></span>
+                    <span class="text-xs font-bold uppercase tracking-wider" :style="{ color: heroAd.creative.accentColor ?? '#FE9615' }">
+                      {{ heroAd.advertiser }}
+                    </span>
+                  </div>
+                  <AdLabel variant="sponsored" />
+                </div>
+                <h2 class="text-3xl md:text-5xl font-bold text-white leading-tight">
+                  {{ heroAd.creative.headline }}
+                </h2>
+                <p v-if="heroAd.creative.subline" class="text-lg text-gray-300 leading-relaxed max-w-xl">
+                  {{ heroAd.creative.subline }}
+                </p>
+                <a
+                  :href="heroAd.creative.cta.href"
+                  :target="heroAd.creative.cta.external ? '_blank' : undefined"
+                  class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+                  :style="{ backgroundColor: heroAd.creative.accentColor ?? '#FE9615' }"
+                  @click="handleAdClick"
+                >
+                  {{ heroAd.creative.cta.label }}
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                  </svg>
+                </a>
+              </div>
+              <div v-if="heroAd.creative.imageUrl" class="lg:pl-10">
+                <div class="rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+                  <img :src="heroAd.creative.imageUrl" :alt="heroAd.creative.headline" class="w-full h-64 object-cover" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Regular Slides ─────────────────────────────────── -->
+          <div v-else :key="currentSlide" class="w-full">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               
               <!-- Content Left -->
@@ -251,13 +313,13 @@ onUnmounted(() => {
           <ChevronLeftIcon class="w-5 h-5" />
         </button>
         
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center">
           <button
-            v-for="(_, index) in slides"
-            :key="index"
-            @click="goToSlide(index)"
-            class="w-2.5 h-2.5 rounded-full transition-all duration-300"
-            :class="currentSlide === index ? 'bg-white w-8' : 'bg-white/30 hover:bg-white/50'"
+            v-for="index in totalSlides"
+            :key="index - 1"
+            @click="goToSlide(index - 1)"
+            class="h-2.5 rounded-full transition-all duration-300"
+            :class="currentSlide === index - 1 ? 'bg-white w-8' : 'bg-white/30 hover:bg-white/50 w-2.5'"
           ></button>
         </div>
 
