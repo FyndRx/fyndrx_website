@@ -20,6 +20,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline';
+import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
 
 type StatusKey = 'active' | 'dispensed' | 'pending' | 'expired' | 'cancelled' | 'completed';
 type FilterKey = 'all' | StatusKey;
@@ -178,8 +179,8 @@ onMounted(loadPrescriptions);
       </div>
 
       <!-- ── Loading ─────────────────────────────────────────── -->
-      <div v-if="loading" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div v-for="i in 4" :key="i" class="animate-pulse h-44 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
+      <div v-if="loading">
+        <ListSkeleton type="prescription" :count="4" :columns="2" />
       </div>
 
       <!-- ── Empty state ─────────────────────────────────────── -->

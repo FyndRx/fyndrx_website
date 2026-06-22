@@ -6,6 +6,7 @@ import { orderService } from '@/services/orderService';
 import { paymentService } from '@/services/paymentService';
 import LazyImage from '@/components/LazyImage.vue';
 import { formatCurrency } from '@/utils/currency';
+import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
 
 const router = useRouter();
 const orders = ref<Order[]>([]);
@@ -18,10 +19,10 @@ const payNow = async (order: Order) => {
   try {
     loading.value = true;
     const response = await paymentService.initializePayment(order.id);
-    if (response && response.authorization_url) {
+    if (response?.authorization_url?.startsWith('https://checkout.paystack.com')) {
       window.location.href = response.authorization_url;
     } else {
-      console.error('No authorization URL in response');
+      console.error('Invalid or missing payment authorization URL');
     }
   } catch (err) {
     console.error('Error initializing payment:', err);
@@ -173,9 +174,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="loading" class="py-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-        <p class="mt-4 text-gray-600 dark:text-gray-300">Loading orders...</p>
+      <div v-if="loading">
+        <ListSkeleton type="order" :count="4" :columns="1" />
       </div>
 
       <div v-else-if="filteredOrders.length === 0" class="py-16 text-center">

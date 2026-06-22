@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// HMR Trigger Final
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
@@ -11,15 +10,25 @@ import PharmacySearchFilter from '@/components/PharmacySearchFilter.vue';
 import Pagination from '@/components/Pagination.vue';
 import { recentlyViewedService } from '@/services/recentlyViewedService';
 import { formatCurrency } from '@/utils/currency';
+import SidebarAd from '@/components/ads/formats/SidebarAd.vue';
+import InlineFeedAd from '@/components/ads/formats/InlineFeedAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
 
 import type { Medication } from '@/models/Medication';
 import LazyImage from '@/components/LazyImage.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
+import MedicationDetailSkeleton from '@/components/skeletons/MedicationDetailSkeleton.vue';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const notification = useNotification();
 const route = useRoute();
+
+const adsStore = useAdsStore();
+onMounted(() => adsStore.load());
+const { resolved: detailSidebarAd } = useAds({ zone: 'Z5-med-detail-sidebar', route: 'medication-detail', isAuthed: false });
 
 interface Pharmacy {
   id: string;
@@ -57,17 +66,7 @@ const exactMatch = ref<any>(null);
 const relatedDrugs = ref<any[]>([]);
 const pharmacyMeta = ref<any>(null);
 const relatedMeta = ref<any>(null);
-const dummyDescription = `
-  <div class="space-y-4">
-    <p>This medication is primarily used to treat various bacterial infections. It works by stopping the growth of bacteria.</p>
-    <ul class="list-disc pl-5 space-y-2">
-      <li><strong>Effective against:</strong> Ear infections, pneumonia, skin infections, and urinary tract infections.</li>
-      <li><strong>Dosage:</strong> Typically taken every 8 to 12 hours as prescribed by your doctor.</li>
-      <li><strong>Precautions:</strong> Inform your doctor if you have allergies to penicillin or cephalosporin antibiotics.</li>
-    </ul>
-    <p class="text-sm italic text-gray-500">Note: This is a sample medical description for demonstration purposes.</p>
-  </div>
-`;
+
 
 
 // Pharmacy Filtering State
@@ -323,10 +322,7 @@ watch(
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
       <!-- Loading State -->
-      <div v-if="loading" class="py-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-        <p class="mt-4 text-gray-600 dark:text-gray-300">Loading medication details...</p>
-      </div>
+      <MedicationDetailSkeleton v-if="loading" />
 
       <!-- Medication Details -->
       <div v-else-if="medication" class="py-12 space-y-8">
@@ -386,7 +382,7 @@ watch(
                     </template>
                   </div>
 
-                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="exactMatch?.description || medication.description || dummyDescription"></div>
+                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="sanitizeHtml(exactMatch?.description || medication.description || '')"></div>
                 </div>
               </div>
             </div>
@@ -421,9 +417,19 @@ watch(
           </div>
 
           <div class="p-8">
-            <div v-if="loadingPharmacies" class="py-20 text-center">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-              <p class="mt-4 text-gray-600 dark:text-gray-300 font-medium tracking-tight">Updating local pharmacy prices...</p>
+            <div v-if="loadingPharmacies" class="space-y-3 animate-pulse py-4">
+              <div
+                v-for="i in 4"
+                :key="i"
+                class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800"
+              >
+                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/5"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                </div>
+                <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-xl w-28 shrink-0"></div>
+              </div>
             </div>
 
             <div v-else-if="paginatedPharmacies.length === 0" class="py-20 text-center">
@@ -575,6 +581,16 @@ watch(
                 @update:current-page="handlePharmacyPageChange"
               />
             </div>
+          </div>
+        </div>
+
+        <!-- Z5: Sidebar ad — desktop inline, mobile full-width banner -->
+        <div v-if="detailSidebarAd" class="py-8 border-t border-gray-200 dark:border-gray-700">
+          <div class="hidden lg:block max-w-sm">
+            <SidebarAd :ad="detailSidebarAd" zone="Z5-med-detail-sidebar" />
+          </div>
+          <div class="lg:hidden">
+            <InlineFeedAd :ad="detailSidebarAd" zone="Z5-med-detail-sidebar" />
           </div>
         </div>
 

@@ -3,9 +3,11 @@ import { defineProps } from 'vue';
 import MedicationCardSkeleton from './MedicationCardSkeleton.vue';
 import PharmacyCardSkeleton from './PharmacyCardSkeleton.vue';
 import OrderCardSkeleton from './OrderCardSkeleton.vue';
+import BlogCardSkeleton from './BlogCardSkeleton.vue';
+import PrescriptionCardSkeleton from './PrescriptionCardSkeleton.vue';
 
 interface Props {
-  type: 'medication' | 'pharmacy' | 'order' | 'prescription';
+  type: 'medication' | 'pharmacy' | 'order' | 'prescription' | 'blog';
   count?: number;
   columns?: 1 | 2 | 3;
 }
@@ -18,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 const getGridCols = () => {
   const colsMap = {
     1: 'grid-cols-1',
-    2: 'grid-cols-1 md:grid-cols-2',
+    2: 'grid-cols-1 lg:grid-cols-2',
     3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
   };
   return colsMap[props.columns];
@@ -29,7 +31,8 @@ const getComponent = () => {
     medication: MedicationCardSkeleton,
     pharmacy: PharmacyCardSkeleton,
     order: OrderCardSkeleton,
-    prescription: OrderCardSkeleton
+    prescription: PrescriptionCardSkeleton,
+    blog: BlogCardSkeleton,
   };
   return components[props.type];
 };
