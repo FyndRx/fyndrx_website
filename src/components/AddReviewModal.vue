@@ -76,10 +76,15 @@ const handleClose = () => {
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
         @click.self="handleClose"
       >
-        <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div
+          class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-modal-title"
+        >
           <div class="sticky top-0 z-10 flex items-center justify-between p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Write a Review</h3>
+              <h3 id="review-modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Write a Review</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Share your experience with {{ targetName }}
               </p>

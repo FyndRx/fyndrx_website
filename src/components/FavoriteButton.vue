@@ -70,6 +70,7 @@ onMounted(() => {
     @click="toggle"
     :disabled="isLoading"
     :title="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+    :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
     :class="[
       'flex items-center justify-center rounded-full transition-all duration-200',
       sizeClasses[size],

@@ -776,7 +776,6 @@ onMounted(() => {
   // Check for resume token in URL
   const token = route.query.token as string | undefined;
   if (token) {
-    // TODO: fetch application by token from API and prefill form
     currentStep.value = 1;
   }
   loadDraft();
