@@ -457,7 +457,7 @@ const router = createRouter({
       meta: {
         title: 'Email Template Gallery | FyndRX',
         description: 'Preview and manage system email templates.',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {

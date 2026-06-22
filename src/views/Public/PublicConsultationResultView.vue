@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { consultationService } from '@/services/consultationService';
 import type { PublicConsultationSearchResponse, Drug } from '@/types/consultation';
 import {
@@ -287,7 +288,7 @@ function drugName(drug: Drug): string {
             </div>
             <div v-if="hasRichContent(consultation.medical_history)">
               <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Medical History</p>
-              <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="consultation.medical_history"></div>
+              <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="sanitizeHtml(consultation.medical_history)"></div>
             </div>
           </div>
         </div>
@@ -331,11 +332,11 @@ function drugName(drug: Drug): string {
           </div>
           <div v-if="hasRichContent(consultation.consultation_notes)">
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Doctor's Notes</p>
-            <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="consultation.consultation_notes"></div>
+            <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="sanitizeHtml(consultation.consultation_notes)"></div>
           </div>
           <div v-if="hasRichContent(consultation.pharmacist_notes)" :class="hasRichContent(consultation.consultation_notes) ? 'mt-4 pt-4 border-t border-gray-100 dark:border-gray-700' : ''">
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Pharmacist's Notes</p>
-            <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="consultation.pharmacist_notes"></div>
+            <div class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="sanitizeHtml(consultation.pharmacist_notes)"></div>
           </div>
         </div>
 
@@ -347,7 +348,7 @@ function drugName(drug: Drug): string {
             </div>
             <h2 class="text-sm font-bold text-gray-900 dark:text-white">Treatment Plan</h2>
           </div>
-          <div v-if="hasRichContent(consultation.recommendations)" class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="consultation.recommendations"></div>
+          <div v-if="hasRichContent(consultation.recommendations)" class="text-sm text-gray-700 dark:text-gray-300 rich-content" v-html="sanitizeHtml(consultation.recommendations)"></div>
           <div v-if="consultation.requires_followup" class="mt-4 flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
             <ClockIcon class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
             <div>

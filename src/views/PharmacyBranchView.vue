@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { pharmacyService, type PharmacyPrice } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
 import type { PharmacyBranch } from '@/models/Pharmacy';
@@ -425,7 +426,7 @@ const displayReviewCount = computed(() => {
             <h2 class="text-xl font-black text-gray-900 dark:text-white">About This Branch</h2>
           </div>
           <div
-            v-html="branch.description"
+            v-html="sanitizeHtml(branch.description)"
             class="prose prose-sm dark:prose-invert max-w-3xl prose-p:text-gray-600 dark:prose-p:text-gray-400 prose-headings:text-gray-900 dark:prose-headings:text-white prose-a:text-[#246BFD] prose-li:text-gray-600 dark:prose-li:text-gray-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
           ></div>
         </section>
