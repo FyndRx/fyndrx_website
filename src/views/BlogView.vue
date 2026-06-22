@@ -9,6 +9,10 @@ import { blogService } from '@/services/blogService';
 import LazyImage from '@/components/LazyImage.vue';
 import Dropdown from '@/components/Dropdown.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import InlineFeedAd from '@/components/ads/formats/InlineFeedAd.vue';
+import { useAds } from '@/composables/useAds';
+import { useAdsStore } from '@/store/ads';
+import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -58,7 +62,12 @@ onMounted(async () => {
     console.error('Failed to initialize blog view:', error);
     isLoading.value = false;
   }
+
+  adsStore.load();
 });
+
+const adsStore = useAdsStore();
+const { resolved: blogAd } = useAds({ zone: 'Z8-blog-inline', route: 'blog', isAuthed: false });
 
 const sortOptions = [
   { label: 'Newest First', value: 'date-desc' },
@@ -327,16 +336,8 @@ watch(currentPage, () => {
       </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="i in 9" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden animate-pulse">
-          <div class="h-48 bg-gray-200 dark:bg-gray-700"></div>
-          <div class="p-6 space-y-3">
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-          </div>
-        </div>
+      <div v-if="isLoading">
+        <ListSkeleton type="blog" :count="9" :columns="3" />
       </div>
 
       <!-- Empty State -->
@@ -349,10 +350,13 @@ watch(currentPage, () => {
 
       <!-- Blog Grid -->
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <article
-          v-for="post in posts"
-          :key="post.id"
-          @click="viewPost(post.slug)"
+        <template v-for="(post, index) in posts" :key="post.id">
+          <!-- Z8: Blog inline ad after 3rd post -->
+          <div v-if="index === 3 && blogAd" class="col-span-1 md:col-span-2 lg:col-span-3">
+            <InlineFeedAd :ad="blogAd" zone="Z8-blog-inline" />
+          </div>
+          <article
+            @click="viewPost(post.slug)"
           class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group hover:-translate-y-2"
         >
           <div class="relative h-48 overflow-hidden">
@@ -441,6 +445,7 @@ watch(currentPage, () => {
             </div>
           </div>
         </article>
+        </template><!-- end blog post template -->
       </div>
 
       <!-- Pagination -->

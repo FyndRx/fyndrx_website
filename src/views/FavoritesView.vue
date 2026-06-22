@@ -8,6 +8,7 @@ import { formatDate } from '@/utils/date';
 import LazyImage from '@/components/LazyImage.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
 
 const router = useRouter();
 
@@ -165,15 +166,8 @@ onMounted(() => { loadFavorites(); });
       </div>
 
       <!-- ── Loading skeleton ── -->
-      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden animate-pulse">
-          <div class="h-44 bg-gray-200 dark:bg-gray-700"></div>
-          <div class="p-5 space-y-3">
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
-          </div>
-        </div>
+      <div v-if="loading">
+        <ListSkeleton type="medication" :count="6" :columns="3" />
       </div>
 
       <!-- ── Empty state ── -->

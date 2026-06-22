@@ -17,6 +17,8 @@ import ReviewCard from '@/components/ReviewCard.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import Pagination from '@/components/Pagination.vue';
 import PharmacyMap from '@/components/PharmacyMap.vue';
+import PharmacyViewSkeleton from '@/components/skeletons/PharmacyViewSkeleton.vue';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 
 const route = useRoute();
@@ -504,12 +506,7 @@ onMounted(() => {
 <template>
   <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
     <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <div>
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD] mx-auto"></div>
-        <p class="mt-4 text-gray-600 dark:text-gray-300">Loading pharmacy...</p>
-      </div>
-    </div>
+    <PharmacyViewSkeleton v-if="loading" />
 
     <!-- Error State -->
     <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen">
@@ -654,7 +651,7 @@ onMounted(() => {
                     <div class="w-1 h-6 bg-[#246BFD] rounded-full"></div>
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white">Facility Profile</h3>
                   </div>
-                  <div class="prose prose-base dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 sm:p-8 rounded-2xl border border-gray-100 dark:border-gray-700/50 leading-relaxed" v-html="pharmacy.description"></div>
+                  <div class="prose prose-base dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 sm:p-8 rounded-2xl border border-gray-100 dark:border-gray-700/50 leading-relaxed" v-html="sanitizeHtml(pharmacy.description)"></div>
                 </div>
 
                 <div class="space-y-10">
@@ -1088,9 +1085,41 @@ onMounted(() => {
 
               <!-- Reviews Tab -->
               <div v-if="activeTab === 'reviews'" class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div v-if="reviewsLoading" class="py-16 text-center">
-                  <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#246BFD] mx-auto"></div>
-                  <p class="mt-6 text-sm font-semibold text-gray-500">Syncing Testimonials...</p>
+                <!-- Reviews loading skeleton -->
+                <div v-if="reviewsLoading" class="space-y-6 animate-pulse">
+                  <!-- Rating summary skeleton -->
+                  <div class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+                    <div class="flex flex-col gap-6 lg:flex-row lg:items-center">
+                      <div class="space-y-3 text-center lg:text-left">
+                        <div class="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded mx-auto lg:mx-0"></div>
+                        <div class="h-14 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl mx-auto lg:mx-0"></div>
+                        <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mx-auto lg:mx-0"></div>
+                      </div>
+                      <div class="flex-1 space-y-3">
+                        <div v-for="i in 5" :key="i" class="flex items-center gap-3">
+                          <div class="h-3 w-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                          <div class="h-3 w-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Review cards -->
+                  <div v-for="i in 3" :key="i" class="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700/50 space-y-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"></div>
+                      <div class="space-y-2 flex-1">
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                        <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                      </div>
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 shrink-0"></div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                  </div>
                 </div>
 
                 <div v-else class="space-y-10">
@@ -1420,9 +1449,18 @@ onMounted(() => {
           </div>
         </Transition>
 
-        <div v-if="loading" class="py-24 text-center">
-          <div class="w-12 h-12 border-t-2 border-b-2 border-[#246BFD] rounded-full animate-spin mx-auto shadow-md shadow-blue-500/20"></div>
-          <p class="mt-6 text-sm font-semibold text-gray-500">Scanning Inventory Database...</p>
+        <div v-if="loading" class="space-y-4 animate-pulse py-4">
+          <div v-for="i in 4" :key="i" class="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
+            <div class="h-32 bg-gray-200 dark:bg-gray-700"></div>
+            <div class="p-4 space-y-2">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div class="flex justify-between items-center pt-1">
+                <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl w-20"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div v-else>

@@ -98,8 +98,30 @@ onMounted(() => {
             </svg>
           </button>
 
-          <div v-if="loading" class="flex items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
+          <!-- Skeleton -->
+          <div v-if="loading" class="p-8 animate-pulse">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Image -->
+              <div class="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              <!-- Details -->
+              <div class="space-y-4">
+                <div class="flex gap-2">
+                  <div class="h-7 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
+                  <div class="h-7 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                </div>
+                <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-xl w-3/4"></div>
+                <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl w-32"></div>
+                <div class="space-y-2">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                  <div v-for="i in 3" :key="i" class="h-9 bg-gray-200 dark:bg-gray-700 rounded-xl w-20"></div>
+                </div>
+                <div class="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-40"></div>
+              </div>
+            </div>
           </div>
 
           <div v-else-if="medication" class="p-8">
