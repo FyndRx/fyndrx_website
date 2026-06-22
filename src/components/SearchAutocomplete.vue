@@ -107,8 +107,6 @@ const performSearch = async (query: string) => {
      return;
   }
   
-  console.log('performSearch called with:', trimmed);
-
   searching.value = true;
   try {
     const searchPromises: Promise<any>[] = [];

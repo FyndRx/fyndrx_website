@@ -27,7 +27,6 @@ onMounted(async () => {
     // Global event listener for 401 Unauthorized
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 
-    console.log('App mounted, checking auth and settings...');
     // Load platform settings (maintenance mode, fees, etc.)
     await settingsStore.fetchSettings();
     

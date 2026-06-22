@@ -1,4 +1,4 @@
-import type { User } from '@/models/User';
+import type { User, Address, MedicalRecord } from '@/models/User';
 import { apiService } from './api';
 import type { 
   LoginApiResponse, 
@@ -55,6 +55,7 @@ export interface LoginResponse {
 export interface UpdateUserDetailsRequest {
   firstname?: string;
   lastname?: string;
+  email?: string;
   dob?: string;
   gender?: string;
   phone_number?: string;
@@ -262,18 +263,18 @@ class AuthService {
 
   // ── Address Management ──────────────────────────────────────────────────
 
-  async getAddresses(): Promise<any[]> {
-    const response = await apiService.getAuth<any>('/user/addresses');
+  async getAddresses(): Promise<Address[]> {
+    const response = await apiService.getAuth<{ data: Address[] }>('/user/addresses');
     return response.data;
   }
 
-  async addAddress(data: any): Promise<any> {
-    const response = await apiService.postAuth<any>('/user/addresses', data);
+  async addAddress(data: Partial<Omit<Address, 'id'>>): Promise<Address> {
+    const response = await apiService.postAuth<{ data: Address }>('/user/addresses', data);
     return response.data;
   }
 
-  async updateAddress(id: number, data: any): Promise<any> {
-    const response = await apiService.putAuth<any>(`/user/addresses/${id}`, data);
+  async updateAddress(id: number, data: Partial<Address>): Promise<Address> {
+    const response = await apiService.putAuth<{ data: Address }>(`/user/addresses/${id}`, data);
     return response.data;
   }
 
@@ -281,25 +282,24 @@ class AuthService {
     await apiService.deleteAuth<void>(`/user/addresses/${id}`);
   }
 
-  async setDefaultAddress(id: number): Promise<any> {
-    const response = await apiService.postAuth<any>(`/user/addresses/${id}/set-default`);
-    return response.data;
+  async setDefaultAddress(id: number): Promise<void> {
+    await apiService.postAuth<void>(`/user/addresses/${id}/set-default`);
   }
 
   // ── Medical Record Management ───────────────────────────────────────────
 
-  async getMedicalRecords(): Promise<any[]> {
-    const response = await apiService.getAuth<any>('/user/medical-records');
+  async getMedicalRecords(): Promise<MedicalRecord[]> {
+    const response = await apiService.getAuth<{ data: MedicalRecord[] }>('/user/medical-records');
     return response.data;
   }
 
-  async addMedicalRecord(data: any): Promise<any> {
-    const response = await apiService.postAuth<any>('/user/medical-records', data);
+  async addMedicalRecord(data: Omit<MedicalRecord, 'id' | 'created_at'>): Promise<MedicalRecord> {
+    const response = await apiService.postAuth<{ data: MedicalRecord }>('/user/medical-records', data);
     return response.data;
   }
 
-  async updateMedicalRecord(id: number, data: any): Promise<any> {
-    const response = await apiService.putAuth<any>(`/user/medical-records/${id}`, data);
+  async updateMedicalRecord(id: number, data: Partial<MedicalRecord>): Promise<MedicalRecord> {
+    const response = await apiService.putAuth<{ data: MedicalRecord }>(`/user/medical-records/${id}`, data);
     return response.data;
   }
 

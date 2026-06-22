@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '@/services/auth.service';
-import type { User } from '@/models/User';
-import type { LoginCredentials, RegisterCredentials } from '@/services/auth.service';
+import type { User, Address, MedicalRecord } from '@/models/User';
+import type { LoginCredentials, RegisterCredentials, UpdateUserDetailsRequest } from '@/services/auth.service';
 import { handleApiError, isNetworkError } from '@/utils/errorHandler';
 import { setAccessToken } from '@/services/api';
 import type { UserSession } from '@/models/api';
@@ -13,7 +13,6 @@ export const useAuthStore = defineStore('auth', () => {
   const isInitialized = ref(false);
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const lastTokenRefresh = ref<number | null>(null);
   const activeSessions = ref<UserSession[]>([]);
 
   const isAuthenticated = computed(() => !!accessToken.value);
@@ -27,7 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = newToken;
     setAccessToken(newToken);
     localStorage.setItem('logged_in', 'true');
-    lastTokenRefresh.value = Date.now();
     // console.log('Token set:', newToken);
   };
 
@@ -36,7 +34,6 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null;
     setAccessToken(null);
     localStorage.removeItem('logged_in');
-    lastTokenRefresh.value = null;
   };
 
   const fetchUserDetails = async () => {
@@ -92,6 +89,12 @@ export const useAuthStore = defineStore('auth', () => {
         setToken(response.access_token);
         await fetchUserDetails();
       }
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Registration failed. Please try again.';
+      throw err;
     } finally {
       loading.value = false;
     }
@@ -150,7 +153,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const updateUserDetails = async (data: any) => {
+  const updateUserDetails = async (data: UpdateUserDetailsRequest) => {
     try {
       loading.value = true;
       error.value = null;
@@ -194,7 +197,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
   };
 
-  const addAddress = async (data: any) => {
+  const addAddress = async (data: Partial<Omit<Address, 'id'>>) => {
     try {
       loading.value = true;
       await authService.addAddress(data);
@@ -207,7 +210,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const updateAddress = async (id: number, data: any) => {
+  const updateAddress = async (id: number, data: Partial<Address>) => {
     try {
       loading.value = true;
       await authService.updateAddress(id, data);
@@ -246,7 +249,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const addMedicalRecord = async (data: any) => {
+  const addMedicalRecord = async (data: Omit<MedicalRecord, 'id' | 'created_at'>) => {
     try {
       loading.value = true;
       await authService.addMedicalRecord(data);
@@ -259,7 +262,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const updateMedicalRecord = async (id: number, data: any) => {
+  const updateMedicalRecord = async (id: number, data: Partial<MedicalRecord>) => {
     try {
       loading.value = true;
       await authService.updateMedicalRecord(id, data);

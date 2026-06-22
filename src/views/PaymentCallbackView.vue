@@ -13,7 +13,7 @@ const loading = ref(true);
 const paymentStatus = ref<'success' | 'failed' | 'cancelled'>('success');
 const transactionReference = ref('');
 const orderId = ref('');
-const orders = ref<any[]>([]);
+const orders = ref<Array<{ id: string; order_number?: string; total?: number; pharmacy?: { logo?: string | null; name: string } }>>([]);
 const isBulk = ref(false);
 const message = ref('');
 
@@ -62,17 +62,17 @@ const verifyPayment = async (ref: string) => {
     const response = await paymentService.verifyPayment(ref);
     // Flexible check: verify status is success or response is valid
     // If response is null/undefined (e.g. 204), we might need to handle it or retry
-    if (response && (response.status === 'success' || (response as any).message === 'Verification successful')) {
+    if (response && (response.status === 'success' || response.message === 'Verification successful')) {
       paymentStatus.value = 'success';
       message.value = 'Your payment was processed successfully. We\'ve sent a confirmation email.';
-      
-      orders.value = (response as any).orders || [];
-      isBulk.value = (response as any).is_bulk || false;
-      
+
+      orders.value = response.orders || [];
+      isBulk.value = response.is_bulk || false;
+
       if (orders.value.length > 0) {
         orderId.value = orders.value[0].id;
       } else {
-        orderId.value = (response as any).order_id || (response as any).orderId || (response as any).order?.id || ref;
+        orderId.value = response.order_id || response.orderId || response.order?.id || ref;
       }
       
       cartStore.clearCart();
