@@ -92,6 +92,7 @@ const selectTemplate = (id: string) => {
               <iframe
                 :srcdoc="selectedTemplate.html"
                 class="w-full h-full border-0"
+                sandbox="allow-same-origin"
               ></iframe>
             </div>
           </div>

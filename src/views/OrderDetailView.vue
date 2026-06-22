@@ -21,7 +21,7 @@ const payNow = async () => {
   try {
     loading.value = true;
     const response = await paymentService.initializePayment(order.value.id);
-    if (response && response.authorization_url) {
+    if (response?.authorization_url?.startsWith('https://checkout.paystack.com')) {
       window.location.href = response.authorization_url;
     } else {
       notification.error('Payment Error', 'Could not initialize payment. Please try again.');

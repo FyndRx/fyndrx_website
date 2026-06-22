@@ -53,13 +53,7 @@ const handleSubmit = async () => {
     // Small delay to show success message
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Redirect based on user role
-    const userRole = (authStore.user as any)?.role;
-    if (userRole === 'pharmacy' || userRole === 'pharmacy_staff') {
-      router.push({ name: 'pharmacy-dashboard' });
-    } else {
-      router.push({ name: 'dashboard' });
-    }
+    router.push({ name: 'dashboard' });
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('Network error')) {
@@ -155,7 +149,6 @@ const handleLoginValidation = (isValid: boolean) => {
           />
 
           <div class="flex items-center justify-between">
-            <!-- <Checkbox label="Remember me" v-model="form.rememberMe" /> -->
             <CustomCheckbox
               v-model="form.rememberMe"
               label="Remember me"

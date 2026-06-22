@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { formatDate } from '@/utils/date';
 import { blogService } from '@/services/blogService';
 import { useAuthStore } from '@/store/auth';
@@ -362,7 +363,7 @@ onMounted(() => { loadPost(); });
 
           <!-- Article Content -->
           <div class="p-8 md:p-12">
-            <div class="prose prose-lg dark:prose-invert max-w-none mb-12" v-html="post.content"></div>
+            <div class="prose prose-lg dark:prose-invert max-w-none mb-12" v-html="sanitizeHtml(post.content)"></div>
 
             <!-- Tags -->
             <div v-if="post.tags && post.tags.length > 0" class="flex flex-wrap gap-2 mb-8 pt-8 border-t border-gray-200 dark:border-gray-700">

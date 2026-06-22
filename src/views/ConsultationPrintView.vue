@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { format } from 'date-fns';
 import { consultationService } from '@/services/consultationService';
 import type { Consultation } from '@/types/consultation';
@@ -337,7 +338,7 @@ onUnmounted(() => {
                 <div class="space-y-4">
                   <div v-if="consultation?.recommendations">
                     <h4 class="font-bold text-teal-800 text-[10px] uppercase mb-1.5 tracking-wide">Recommendations</h4>
-                    <div class="prose prose-sm text-gray-800 text-sm" v-html="consultation?.recommendations"></div>
+                    <div class="prose prose-sm text-gray-800 text-sm" v-html="sanitizeHtml(consultation?.recommendations)"></div>
                   </div>
                   <div v-if="consultation?.pharmacist_notes">
                     <h4 class="font-bold text-teal-800 text-[10px] uppercase mb-1.5 tracking-wide">Pharmacist Notes</h4>

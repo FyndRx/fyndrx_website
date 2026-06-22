@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { format } from 'date-fns';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { consultationService } from '@/services/consultationService';
 import type { Consultation } from '@/types/consultation';
 import Badge from '@/components/Badge.vue';
@@ -452,11 +453,11 @@ onMounted(() => {
                </Card>
                <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Medical History</h4>
-                  <div class="prose prose-sm dark:prose-invert text-gray-700 dark:text-gray-300" v-html="consultation?.medical_history || 'None recorded.'"></div>
+                  <div class="prose prose-sm dark:prose-invert text-gray-700 dark:text-gray-300" v-html="sanitizeHtml(consultation?.medical_history || 'None recorded.')"></div>
                </Card>
                <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Allergies</h4>
-                  <p class="text-red-500 font-medium" v-html="consultation?.allergies || 'No known allergies.'"></p>
+                  <p class="text-red-500 font-medium" v-html="sanitizeHtml(consultation?.allergies || 'No known allergies.')"></p>
                </Card>
                <Card class="p-6 border-none shadow-sm ring-1 ring-gray-100 dark:ring-gray-700 bg-white dark:bg-gray-800">
                   <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Current Medications</h4>
@@ -474,7 +475,7 @@ onMounted(() => {
                <div class="space-y-6">
                  <div v-if="consultation?.recommendations" class="bg-white/60 dark:bg-gray-900/40 rounded-2xl p-6 backdrop-blur-sm">
                     <h4 class="font-bold text-teal-800 dark:text-teal-200 mb-3 text-sm uppercase">Recommendations</h4>
-                    <div class="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200" v-html="consultation?.recommendations"></div>
+                    <div class="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200" v-html="sanitizeHtml(consultation?.recommendations)"></div>
                  </div>
 
                  <div v-if="consultation?.pharmacist_notes" class="bg-white/60 dark:bg-gray-900/40 rounded-2xl p-6 backdrop-blur-sm">

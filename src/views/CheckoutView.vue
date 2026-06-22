@@ -97,9 +97,7 @@ const saveNewAddressBookmark = async () => {
     isAddingAddress.value = false;
     await loadUserAddresses();
 
-    if (res && res.data && res.data.id) {
-      selectedAddressId.value = res.data.id;
-    } else if (res && res.id) {
+    if (res && res.id) {
       selectedAddressId.value = res.id;
     } else if (userAddresses.value.length > 0) {
       selectedAddressId.value = userAddresses.value[userAddresses.value.length - 1].id;
@@ -192,6 +190,28 @@ const syncCartWithAPI = async () => {
   }
 };
 
+// Pre-populate payment and delivery method defaults whenever pharmacies change
+watch(pharmaciesCheckout, (newPharmacies) => {
+  newPharmacies.forEach(pharmacy => {
+    const groupKey = pharmacy.pharmacyBranchId || pharmacy.pharmacyId;
+
+    const effective = effectivePaymentMethods(pharmacy);
+    const currentMethod = paymentMethods.value.get(groupKey);
+
+    if (!currentMethod || !effective.includes(currentMethod)) {
+      if (effective.includes('platform')) {
+        paymentMethods.value.set(groupKey, 'platform');
+      } else if (effective.includes('direct')) {
+        paymentMethods.value.set(groupKey, 'direct');
+      }
+    }
+
+    if (!deliveryMethods.value.has(groupKey)) {
+      deliveryMethods.value.set(groupKey, 'pickup');
+    }
+  });
+}, { immediate: true });
+
 onMounted(async () => {
   const pharmacyIdsParam = route.query.pharmacies as string;
   if (pharmacyIdsParam) {
@@ -202,35 +222,9 @@ onMounted(async () => {
     if (route.query.address) deliveryAddress.value = route.query.address as string;
     await syncCartWithAPI();
     
-    // Get updated cart from API
-    try {
-      const apiCart = await cartService.getCart();
-      cartStore.items = apiCart.items;
-    } catch (e) {
-      console.error('Failed to sync with server cart:', e);
-    }
-    
-    // Pre-populate payment and delivery methods
-    watch(pharmaciesCheckout, (newPharmacies) => {
-      newPharmacies.forEach(pharmacy => {
-        const groupKey = pharmacy.pharmacyBranchId || pharmacy.pharmacyId;
-        
-        const effective = effectivePaymentMethods(pharmacy);
-        const currentMethod = paymentMethods.value.get(groupKey);
+    // Get updated cart from API via the store's own action
+    await cartStore.syncWithAPI();
 
-        if (!currentMethod || !effective.includes(currentMethod)) {
-          if (effective.includes('platform')) {
-            paymentMethods.value.set(groupKey, 'platform');
-          } else if (effective.includes('direct')) {
-            paymentMethods.value.set(groupKey, 'direct');
-          }
-        }
-
-        if (!deliveryMethods.value.has(groupKey)) {
-          deliveryMethods.value.set(groupKey, 'pickup');
-        }
-      });
-    }, { immediate: true });
 
     // Pre-populate user details
     if (authStore.user) {
@@ -553,8 +547,6 @@ const placeAllOrders = async () => {
       notes: finalNotes
     };
 
-    console.log('Sending Bulk Order Payload:', JSON.stringify(orderPayload, null, 2));
-
     const result = await orderService.createOrder(orderPayload);
     // ... rest of logic same ...
     
@@ -614,7 +606,11 @@ const payNow = async (orderId: string | string[]) => {
 
   try {
     const paymentResponse = await paymentService.initializePayment(orderId);
-    window.location.href = paymentResponse.authorization_url;
+    const url = paymentResponse.authorization_url;
+    if (!url || !url.startsWith('https://checkout.paystack.com')) {
+      throw new Error('Invalid payment redirect URL');
+    }
+    window.location.href = url;
   } catch (err: any) {
     console.error('Payment initialization failed:', err);
     const errList: string[] = Array.isArray(err.errors)
