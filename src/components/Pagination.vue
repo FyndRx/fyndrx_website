@@ -99,7 +99,7 @@ const handlePerPageChange = (val: string | number) => {
         <!-- Page Numbers -->
         <button
           v-for="(page, index) in pages"
-          :key="index"
+          :key="`${index}-${page}`"
           @click="handlePageChange(page)"
           :disabled="page === '...'"
           :class="[

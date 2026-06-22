@@ -316,6 +316,7 @@ const startShopping = () => {
                       <div class="flex items-center space-x-2">
                         <button
                           @click="cartStore.updateQuantity(item.id, item.quantity - 1)"
+                          :aria-label="`Decrease quantity of ${item.medicationName}`"
                           class="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
                         >
                           -
@@ -325,6 +326,7 @@ const startShopping = () => {
                         </span>
                         <button
                           @click="cartStore.updateQuantity(item.id, item.quantity + 1)"
+                          :aria-label="`Increase quantity of ${item.medicationName}`"
                           class="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center"
                         >
                           +

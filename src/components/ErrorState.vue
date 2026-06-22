@@ -21,31 +21,31 @@ const emit = defineEmits<{
 const errorConfig = computed(() => {
   const configs = {
     network: {
-      icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m2.829 2.829L9.88 9.88"></path>`,
+      iconPath: 'M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m2.829 2.829L9.88 9.88',
       title: 'Connection Error',
       defaultMessage: 'Unable to connect to the server. Please check your internet connection and try again.',
       color: 'text-red-500'
     },
     notfound: {
-      icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`,
+      iconPath: 'M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
       title: 'Not Found',
       defaultMessage: 'The item you\'re looking for doesn\'t exist or has been removed.',
       color: 'text-gray-400'
     },
     server: {
-      icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`,
+      iconPath: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
       title: 'Server Error',
       defaultMessage: 'Something went wrong on our end. Our team has been notified. Please try again later.',
       color: 'text-yellow-500'
     },
     permission: {
-      icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>`,
+      iconPath: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
       title: 'Access Denied',
       defaultMessage: 'You don\'t have permission to view this content. Please log in or contact support.',
       color: 'text-orange-500'
     },
     general: {
-      icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`,
+      iconPath: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
       title: 'Oops! Something went wrong',
       defaultMessage: 'An unexpected error occurred. Please try again.',
       color: 'text-red-400'
@@ -61,23 +61,13 @@ const displayMessage = computed(() => props.message || errorConfig.value.default
   <div class="flex flex-col items-center justify-center min-h-[400px] py-12 px-4 text-center">
     <div class="mb-6 relative">
       <div class="absolute inset-0 animate-ping opacity-20">
-        <svg 
-          class="w-20 h-20 mx-auto" 
-          :class="errorConfig.color" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-          v-html="errorConfig.icon"
-        ></svg>
+        <svg class="w-20 h-20 mx-auto" :class="errorConfig.color" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="errorConfig.iconPath" />
+        </svg>
       </div>
-      <svg 
-        class="w-20 h-20 mx-auto relative" 
-        :class="errorConfig.color" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-        v-html="errorConfig.icon"
-      ></svg>
+      <svg class="w-20 h-20 mx-auto relative" :class="errorConfig.color" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="errorConfig.iconPath" />
+      </svg>
     </div>
     
     <h3 class="mb-3 text-2xl font-semibold text-gray-900 dark:text-white">
