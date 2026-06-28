@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { sanitizeHtml } from '@/utils/sanitize';
+import NotFoundState from '@/components/NotFoundState.vue';
 import { pharmacyService, type PharmacyPrice } from '@/services/pharmacyService';
 import { reviewService } from '@/services/reviewService';
 import type { PharmacyBranch } from '@/models/Pharmacy';
@@ -73,8 +74,12 @@ onMounted(async () => {
     branch.value = br;
     loadDrugs();
     loadReviews();
-  } catch {
-    error.value = 'Failed to load branch details.';
+  } catch (err: any) {
+    if (err?.response?.status === 404 || err?.status === 404 || err?.message?.includes('404')) {
+      error.value = '404';
+    } else {
+      error.value = 'Failed to load branch details.';
+    }
   } finally {
     loading.value = false;
   }
@@ -338,6 +343,13 @@ const displayReviewCount = computed(() => {
     </div>
 
     <!-- Error -->
+    <NotFoundState 
+      v-else-if="error === '404'"
+      title="Branch Not Found"
+      message="We couldn't find the pharmacy branch you're looking for. It may have been removed or you might have followed a broken link."
+      actionText="Browse Pharmacies"
+      :actionRoute="{ name: 'pharmacies' }"
+    />
     <div v-else-if="error" class="max-w-2xl mx-auto px-4 py-24 text-center">
       <p class="text-red-500 font-semibold mb-4">{{ error }}</p>
       <button @click="router.back()" class="px-6 py-2.5 rounded-xl bg-[#246BFD] text-white text-sm font-bold">Go back</button>

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth';
 import type { BlogPost, Comment } from '@/types/blog';
 import LazyImage from '@/components/LazyImage.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import NotFoundState from '@/components/NotFoundState.vue';
 import TwitterIcon from '@/components/icons/TwitterIcon.vue';
 import FacebookIcon from '@/components/icons/FacebookIcon.vue';
 import LinkedInIcon from '@/components/icons/LinkedInIcon.vue';
@@ -245,9 +246,13 @@ const loadPost = async () => {
     });
 
     relatedPosts.value = await blogService.getRelatedPosts(fetchedPost.id, 3);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error loading post:', err);
-    error.value = 'Failed to load blog post';
+    if (err?.response?.status === 404 || err?.status === 404 || err?.message?.includes('404')) {
+      error.value = '404';
+    } else {
+      error.value = 'Failed to load blog post';
+    }
   } finally {
     isLoading.value = false;
   }
@@ -277,10 +282,19 @@ onMounted(() => { loadPost(); });
       </div>
     </div>
 
-    <!-- Error State -->
+    <!-- 404 Error State -->
+    <NotFoundState 
+      v-else-if="error === '404' || error === 'Blog post not found'"
+      title="Article Not Found"
+      message="We couldn't find the article you're looking for. It may have been removed or you might have followed a broken link."
+      actionText="Back to Blog"
+      :actionRoute="{ name: 'blog' }"
+    />
+
+    <!-- General Error State -->
     <ErrorState
       v-else-if="error"
-      type="notfound"
+      type="general"
       :message="error"
       :show-retry="false"
       :show-go-home="true"
