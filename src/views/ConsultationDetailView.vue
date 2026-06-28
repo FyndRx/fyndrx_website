@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { format } from 'date-fns';
 import { sanitizeHtml } from '@/utils/sanitize';
+import NotFoundState from '@/components/NotFoundState.vue';
 import { consultationService } from '@/services/consultationService';
 import type { Consultation } from '@/types/consultation';
 import Badge from '@/components/Badge.vue';
@@ -114,9 +115,13 @@ const fetchConsultation = async () => {
       userRating.value = consultation.value.rating;
       userFeedback.value = consultation.value.feedback || '';
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to load consultation:', err);
-    error.value = 'Consultation not found or access denied.';
+    if (err?.response?.status === 404 || err?.status === 404 || err?.message?.includes('404')) {
+      error.value = '404';
+    } else {
+      error.value = 'Consultation not found or access denied.';
+    }
   } finally {
     loading.value = false;
   }
@@ -216,6 +221,13 @@ onMounted(() => {
         </div>
       </div>
 
+      <NotFoundState 
+        v-else-if="error === '404'"
+        title="Consultation Not Found"
+        message="We couldn't find the consultation you're looking for. It may have been removed or you might have followed a broken link."
+        actionText="Back to Consultations"
+        :actionRoute="{ name: 'consultations' }"
+      />
       <div v-else-if="error || !consultation" class="text-center py-20">
         <div class="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <DocumentTextIcon class="w-10 h-10 text-red-500" />

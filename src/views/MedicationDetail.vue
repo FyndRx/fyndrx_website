@@ -20,6 +20,7 @@ import LazyImage from '@/components/LazyImage.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import MedicationDetailSkeleton from '@/components/skeletons/MedicationDetailSkeleton.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
+import NotFoundState from '@/components/NotFoundState.vue';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
@@ -220,10 +221,14 @@ const loadMedicationData = async (medicationId: string | number) => {
         await recentlyViewedService.addToRecentlyViewed(medication.value.product_id || medication.value.id);
     }
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error loading medication data:', err);
-    error.value = 'Failed to load medication details';
-    notification.error('Error', 'Failed to load medication details');
+    if (err?.response?.status === 404 || err?.status === 404 || err?.message?.includes('404')) {
+      error.value = '404';
+    } else {
+      error.value = 'Failed to load medication details';
+      notification.error('Error', 'Failed to load medication details');
+    }
   } finally {
     loading.value = false;
   }
@@ -323,6 +328,29 @@ watch(
 
       <!-- Loading State -->
       <MedicationDetailSkeleton v-if="loading" />
+
+      <!-- 404 Error State -->
+      <NotFoundState 
+        v-else-if="error === '404'"
+        title="Medication Not Found"
+        message="We couldn't find the medication you're looking for. It may have been removed or you might have followed a broken link."
+        actionText="Browse Medications"
+        :actionRoute="{ name: 'medications' }"
+      />
+
+      <!-- General Error State -->
+      <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[50vh]">
+        <svg class="w-16 h-16 mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="mb-4 text-xl font-medium text-gray-900 dark:text-white">{{ error }}</p>
+        <button 
+          @click="loadMedicationData(route.params.id as string)"
+          class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
 
       <!-- Medication Details -->
       <div v-else-if="medication" class="py-12 space-y-8">

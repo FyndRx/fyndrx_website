@@ -19,6 +19,7 @@ import Pagination from '@/components/Pagination.vue';
 import PharmacyMap from '@/components/PharmacyMap.vue';
 import PharmacyViewSkeleton from '@/components/skeletons/PharmacyViewSkeleton.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
+import NotFoundState from '@/components/NotFoundState.vue';
 
 
 const route = useRoute();
@@ -222,58 +223,14 @@ const loadPharmacy = async () => {
       return;
     }
 
-    // Get pharmacy details directly from API
     try {
       pharmacy.value = await pharmacyService.getPharmacy(id);
-    } catch (errorr) {
-    // } catch (pharmacyErr: any) {
-      // If pharmacy detail endpoint doesn't exist (404), try to get pharmacy info from prices
-      // if (pharmacyErr?.response?.status === 404 || pharmacyErr?.message?.includes('404')) {
-      //   const prices = await pharmacyService.getPricesByPharmacy(id);
-      //   if (prices.length > 0) {
-      //     const firstPrice = prices[0];
-      //     const pharmacyInfo = firstPrice.pharmacy || firstPrice.pharmacy_branch;
-          
-      //     if (pharmacyInfo) {
-      //       // Use pharmacy info directly from price response - use API field names
-      //       pharmacy.value = {
-      //         id: pharmacyInfo.id || firstPrice.pharmacy_id || id,
-      //         name: pharmacyInfo.name || '',
-      //         address: pharmacyInfo.address || '',
-      //         rating: (pharmacyInfo as any).rating || 0,
-      //         reviews: [],
-      //         image: (pharmacyInfo as any).logo || '',
-      //         isOpen: (pharmacyInfo as any).is_open ?? true,
-      //         distance: (pharmacyInfo as any).distance || '',
-      //         services: [],
-      //         workingHours: {
-      //           monday: '',
-      //           tuesday: '',
-      //           wednesday: '',
-      //           thursday: '',
-      //           friday: '',
-      //           saturday: '',
-      //           sunday: ''
-      //         },
-      //         phone: '',
-      //         email: '',
-      //         website: '',
-      //         description: '',
-      //         location: { lat: 0, lng: 0 },
-      //         medications: []
-      //       };
-      //     } else {
-      //       error.value = 'Pharmacy not found';
-      //       return;
-      //     }
-      //   } else {
-      //     error.value = 'Pharmacy not found';
-      //     return;
-      //   }
-      // } else {
-        // throw pharmacyErr;
-      // }
-      error.value = errorr as string || 'Pharmacy not found';
+    } catch (errorr: any) {
+      if (errorr?.response?.status === 404 || errorr?.status === 404 || errorr?.message?.includes('404')) {
+        error.value = '404';
+      } else {
+        error.value = errorr?.message || errorr as string || 'Pharmacy not found';
+      }
       return;
     }
     
@@ -508,8 +465,17 @@ onMounted(() => {
     <!-- Loading State -->
     <PharmacyViewSkeleton v-if="loading" />
 
-    <!-- Error State -->
-    <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen">
+    <!-- 404 Error State -->
+    <NotFoundState 
+      v-else-if="error === '404'"
+      title="Pharmacy Not Found"
+      message="We couldn't find the pharmacy you're looking for. It may have been removed or you might have followed a broken link."
+      actionText="Browse Pharmacies"
+      :actionRoute="{ name: 'pharmacies' }"
+    />
+
+    <!-- General Error State -->
+    <div v-else-if="error" class="flex flex-col items-center justify-center min-h-[50vh]">
       <svg class="w-16 h-16 mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
