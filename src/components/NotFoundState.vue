@@ -8,7 +8,7 @@ interface Props {
   actionRoute?: string | object;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'Not Found',
   message: 'The item you\'re looking for doesn\'t exist or has been removed.',
   actionText: 'Go Back',
