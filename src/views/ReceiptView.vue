@@ -5,6 +5,8 @@ import { fetchReceipt, type Receipt, type PosReceipt, type OnlineReceipt } from 
 import SpotlightCardAd from '@/components/ads/formats/SpotlightCardAd.vue';
 import { useAds } from '@/composables/useAds';
 import { useAdsStore } from '@/store/ads';
+import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
+import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const route = useRoute();
 const reference = route.params.reference as string;
@@ -43,7 +45,6 @@ const items   = computed(() => receipt.value?.items ?? []);
 interface StatusConfig {
   label: string;
   color: string;
-  gradientTo: string;
   icon: 'check' | 'refresh' | 'x' | 'clock';
 }
 
@@ -51,16 +52,16 @@ const statusConfig = computed((): StatusConfig => {
   const s = status.value;
   if (s === 'completed' || s === 'success') return {
     label: isPos.value ? 'Sale Completed' : 'Payment Successful',
-    color: '#10b981', gradientTo: '#059669', icon: 'check',
+    color: '#10b981', icon: 'check',
   };
   if (s === 'refunded') return {
-    label: 'Amount Refunded', color: '#f59e0b', gradientTo: '#d97706', icon: 'refresh',
+    label: 'Amount Refunded', color: '#f59e0b', icon: 'refresh',
   };
   if (s === 'voided' || s === 'failed') return {
     label: s === 'voided' ? 'Transaction Voided' : 'Payment Failed',
-    color: '#ef4444', gradientTo: '#dc2626', icon: 'x',
+    color: '#ef4444', icon: 'x',
   };
-  return { label: 'Pending', color: '#3b82f6', gradientTo: '#2563eb', icon: 'clock' };
+  return { label: 'Pending', color: '#3b82f6', icon: 'clock' };
 });
 
 const paymentMethodLabel = computed(() => {
@@ -126,6 +127,17 @@ function retry() {
 }
 
 function printReceipt() {
+  // The receipt should always print in light mode, regardless of the app's current theme.
+  const root = document.documentElement;
+  const wasDark = root.classList.contains('dark');
+  if (wasDark) root.classList.remove('dark');
+
+  const restore = () => {
+    if (wasDark) root.classList.add('dark');
+    window.removeEventListener('afterprint', restore);
+  };
+  window.addEventListener('afterprint', restore);
+
   window.print();
 }
 
@@ -133,8 +145,8 @@ onMounted(() => adsStore.load());
 </script>
 
 <template>
-  <!-- pt-20 clears the fixed 80px site nav, no custom header here -->
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-20">
+  <!-- pt-20 clears the fixed 80px site nav (print:min-h-0/pt-0 since the nav is print:hidden) -->
+  <div class="min-h-screen print:min-h-0 bg-gray-50 dark:bg-gray-900 pt-20 print:pt-0">
     <div class="w-full max-w-2xl mx-auto">
 
       <!-- ── LOADING ── -->
@@ -193,22 +205,21 @@ onMounted(() => adsStore.load());
       </div>
 
       <!-- ── RECEIPT ── -->
-      <div v-else-if="receipt" class="pb-12">
+      <div v-else-if="receipt" class="pb-12 print:pb-2">
 
         <!-- ════════════════ HERO ════════════════ -->
         <div
-          class="relative overflow-hidden rounded-b-3xl shadow-2xl"
-          :style="`background: linear-gradient(150deg, #1A2233 0%, #1e3a5f 45%, ${statusConfig.gradientTo} 100%)`"
+          class="relative overflow-hidden rounded-b-3xl print:rounded-none bg-gradient-to-br from-[#246BFD] to-[#5089FF] rp-print-color-exact"
         >
-          <!-- Decorative blobs -->
-          <div class="absolute w-72 h-72 rounded-full -top-20 -right-16 bg-white/[0.04] pointer-events-none"></div>
-          <div class="absolute w-52 h-52 rounded-full -bottom-16 -left-12 bg-white/[0.04] pointer-events-none"></div>
-          <div class="absolute w-32 h-32 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/[0.03] pointer-events-none"></div>
+          <!-- Decorative blobs (skipped in print — no informational value, just extra ink/rendering) -->
+          <div class="absolute w-72 h-72 rounded-full -top-20 -right-16 bg-white/[0.04] pointer-events-none print:hidden"></div>
+          <div class="absolute w-52 h-52 rounded-full -bottom-16 -left-12 bg-white/[0.04] pointer-events-none print:hidden"></div>
+          <div class="absolute w-32 h-32 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/[0.03] pointer-events-none print:hidden"></div>
 
-          <div class="relative px-6 sm:px-8 pt-7 pb-8 text-white">
+          <div class="relative px-6 sm:px-8 pt-7 pb-8 print:pt-4 print:pb-4 text-white">
 
             <!-- ── Top bar: pharmacy + type badge ── -->
-            <div class="flex items-center justify-between mb-8 gap-4">
+            <div class="flex items-center justify-between mb-8 print:mb-4 gap-4">
               <div class="flex items-center gap-3 min-w-0">
                 <div
                   v-if="receipt.pharmacy.logo_url"
@@ -232,10 +243,6 @@ onMounted(() => adsStore.load());
                 <svg v-if="isPos" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
                 </svg>
-                <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
                 {{ isPos ? 'POS Terminal' : 'Online Order' }}
               </div>
             </div>
@@ -244,7 +251,7 @@ onMounted(() => adsStore.load());
             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-10">
 
               <!-- Left: status icon + label + date -->
-              <div class="flex sm:flex-col items-center sm:items-start gap-4 sm:gap-2 mb-6 sm:mb-0 sm:flex-shrink-0">
+              <div class="flex sm:flex-col items-center sm:items-start gap-4 sm:gap-2 mb-6 print:mb-3 sm:mb-0 sm:flex-shrink-0">
                 <div
                   class="w-16 h-16 rounded-full border-2 flex items-center justify-center flex-shrink-0 rp-status-ring"
                   :style="`border-color: ${statusConfig.color}; background: ${statusConfig.color}1a`"
@@ -274,13 +281,13 @@ onMounted(() => adsStore.load());
               <!-- Right: amount (large) -->
               <div class="flex-1 sm:pl-2">
                 <div class="text-[0.65rem] font-bold opacity-40 uppercase tracking-[0.15em] mb-1">Total Amount</div>
-                <div class="text-[2.8rem] sm:text-[3.2rem] font-black tracking-tight leading-none">{{ fmt(total) }}</div>
+                <div class="text-[2.8rem] sm:text-[3.2rem] print:text-[2.2rem] font-black tracking-tight leading-none">{{ fmt(total) }}</div>
                 <div class="text-[0.68rem] opacity-45 uppercase tracking-widest mt-1.5">Ghana Cedis · GHS</div>
               </div>
             </div>
 
             <!-- ── Reference band (inside hero, frosted) ── -->
-            <div class="mt-7 flex items-center gap-3 bg-white/[0.08] border border-white/[0.12] rounded-2xl px-4 py-3 backdrop-blur-sm">
+            <div class="mt-7 print:mt-4 flex items-center gap-3 bg-white/[0.08] border border-white/[0.12] rounded-2xl px-4 py-3 print:py-1.5 backdrop-blur-sm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-50 flex-shrink-0">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h1M17 14h1M14 17h4"/>
               </svg>
@@ -299,30 +306,30 @@ onMounted(() => adsStore.load());
         <!-- /hero -->
 
         <!-- ════════════════ BODY ════════════════ -->
-        <div class="px-4 sm:px-6 pt-5 space-y-4">
+        <div class="px-4 sm:px-6 pt-5 print:pt-3 space-y-4 print:space-y-2">
 
           <!-- Order number row (mobile only, when not shown in hero) -->
           <div
             v-if="online?.order_number"
-            class="sm:hidden flex justify-between items-center bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-3"
+            class="sm:hidden flex justify-between items-center bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-3 print:py-1.5"
           >
             <span class="text-sm text-gray-500 dark:text-gray-400">Order Number</span>
             <span class="font-mono font-bold text-[#246BFD] text-sm">{{ online.order_number }}</span>
           </div>
 
-          <!-- Two-column grid: items (left) / payment + actions (right) -->
-          <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-start">
+          <!-- Stacked: items, then payment details + actions -->
+          <div class="space-y-4 print:space-y-2">
 
-            <!-- ── Items card (wider column) ── -->
-            <div class="sm:col-span-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div class="px-4 py-3 border-b border-gray-50 dark:border-gray-700/50">
+            <!-- ── Items card ── -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div class="px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/50">
                 <h3 class="text-[0.58rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Items</h3>
               </div>
 
               <div
                 v-for="(item, i) in items"
                 :key="i"
-                class="flex justify-between items-start px-4 py-3 border-b border-gray-50 dark:border-gray-700/30 last:border-0"
+                class="flex justify-between items-start px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/30 last:border-0"
               >
                 <div class="flex-1 min-w-0 mr-3">
                   <div class="text-sm font-semibold text-gray-900 dark:text-white leading-snug mb-0.5">{{ item.name }}</div>
@@ -357,52 +364,49 @@ onMounted(() => adsStore.load());
               </div>
             </div>
 
-            <!-- ── Right column: payment details + actions ── -->
-            <div class="sm:col-span-2 space-y-4">
-
-              <!-- Payment details card -->
-              <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div class="px-4 py-3 border-b border-gray-50 dark:border-gray-700/50">
-                  <h3 class="text-[0.58rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Payment Details</h3>
+            <!-- ── Payment details card ── -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div class="px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/50">
+                <h3 class="text-[0.58rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Payment Details</h3>
                 </div>
                 <div class="divide-y divide-gray-50 dark:divide-gray-700/40">
-                  <div class="flex justify-between items-center px-4 py-3">
+                  <div class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Method</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paymentMethodLabel }}</span>
                   </div>
-                  <div v-if="pos?.cashier" class="flex justify-between items-center px-4 py-3">
+                  <div v-if="pos?.cashier" class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Cashier</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.cashier }}</span>
                   </div>
-                  <div v-if="pos?.register" class="flex justify-between items-center px-4 py-3">
+                  <div v-if="pos?.register" class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Register</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.register }}</span>
                   </div>
-                  <div v-if="online?.customer" class="flex justify-between items-center px-4 py-3">
+                  <div v-if="online?.customer" class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Customer</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.customer.name }}</span>
                   </div>
-                  <div v-if="online?.customer?.email" class="flex justify-between items-start px-4 py-3">
+                  <div v-if="online?.customer?.email" class="flex justify-between items-start px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Email</span>
                     <span class="text-xs font-semibold text-gray-900 dark:text-white text-right ml-2 break-all">{{ online.customer.email }}</span>
                   </div>
-                  <div v-if="paidAtStr" class="flex justify-between items-center px-4 py-3">
+                  <div v-if="paidAtStr" class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Paid At</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paidAtStr }}</span>
                   </div>
-                  <div v-if="online?.delivery_method" class="flex justify-between items-center px-4 py-3">
+                  <div v-if="online?.delivery_method" class="flex justify-between items-center px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Delivery</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 capitalize">{{ online.delivery_method }}</span>
                   </div>
-                  <div v-if="online?.delivery_address" class="flex justify-between items-start px-4 py-3">
+                  <div v-if="online?.delivery_address" class="flex justify-between items-start px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Address</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.delivery_address }}</span>
                   </div>
-                  <div v-if="pos?.notes" class="flex justify-between items-start px-4 py-3">
+                  <div v-if="pos?.notes" class="flex justify-between items-start px-4 py-3 print:py-1.5">
                     <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Notes</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 italic">{{ pos.notes }}</span>
                   </div>
-                  <div v-if="online?.refund_reason" class="flex justify-between items-start px-4 py-3">
+                  <div v-if="online?.refund_reason" class="flex justify-between items-start px-4 py-3 print:py-1.5">
                     <span class="text-sm text-red-500 flex-shrink-0">Refund Reason</span>
                     <span class="text-sm font-semibold text-red-600 dark:text-red-400 text-right ml-2">{{ online.refund_reason }}</span>
                   </div>
@@ -436,17 +440,17 @@ onMounted(() => adsStore.load());
                 </button>
               </div>
 
-            </div><!-- /right column -->
-          </div><!-- /grid -->
+          </div><!-- /stacked sections -->
 
           <!-- Footer -->
-          <div class="border-t border-dashed border-gray-200 dark:border-gray-700 pt-5 pb-6 text-center">
-            <div class="flex items-center justify-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white mb-1.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#246BFD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-              FyndRx Healthcare Platform
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700 pt-5 pb-6 print:pt-3 print:pb-2 text-center">
+
+            <!-- Powered by FyndRx -->
+            <div class="flex items-center justify-center mb-3 print:mb-2">
+              <img :src="logoBlueOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain dark:hidden" />
+              <img :src="logoWhiteOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain hidden dark:block" />
             </div>
+
             <div class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">This is a computer-generated digital receipt.</div>
             <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">www.fyndrx.com · support@fyndrx.com</div>
           </div>
@@ -455,7 +459,7 @@ onMounted(() => adsStore.load());
       </div><!-- /receipt -->
 
       <!-- Z7: Post-checkout contextual spotlight ad -->
-      <div v-if="receiptAd && !loading" class="w-full max-w-2xl mx-auto px-4 pb-10">
+      <div v-if="receiptAd && !loading" class="w-full max-w-2xl mx-auto px-4 pb-10 no-print">
         <SpotlightCardAd :ad="receiptAd" zone="Z7-post-checkout" />
       </div>
 
@@ -484,5 +488,12 @@ onMounted(() => adsStore.load());
 /* Print */
 @media print {
   .no-print { display: none !important; }
+}
+
+/* Browsers strip background colors/gradients from print output by default —
+   this forces the hero gradient to actually render instead of printing blank. */
+.rp-print-color-exact {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 </style>
