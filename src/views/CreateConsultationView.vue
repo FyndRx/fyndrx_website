@@ -11,6 +11,7 @@ import Button from '@/components/Button.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
 import DateTimePicker from '@/components/DateTimePicker.vue';
+import { useDistanceCalculator } from '@/composables/useDistanceCalculator';
 import {
   CheckCircleIcon,
   UserIcon,
@@ -142,18 +143,7 @@ const prevStep = () => {
 };
 
 // ── Distance helpers ──────────────────────────────────────────
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function fmtDist(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
-}
+const { haversineKm, formatDistance: fmtDist } = useDistanceCalculator();
 
 // ── Pharmacies with distance, sorted nearest-first ───────────
 type PharmacyWithDist = Pharmacy & { distKm: number | null };
