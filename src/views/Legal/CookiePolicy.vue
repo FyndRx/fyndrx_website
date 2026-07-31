@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { informationService, type LegalDocument } from '@/services/informationService';
 import { useSeoMeta } from '@/composables/useSeoMeta';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 useSeoMeta({
   title: 'Cookie Policy | FyndRx',
@@ -121,7 +122,7 @@ const fallback = `
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#246BFD]"></div>
         </div>
         <div v-else-if="document" class="prose dark:prose-invert max-w-none">
-          <div v-html="document.content"></div>
+          <div v-html="sanitizeHtml(document.content)"></div>
           <p v-if="document.updated_at" class="mt-8 text-sm text-gray-500">
             Last updated: {{ new Date(document.updated_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) }}
           </p>

@@ -90,13 +90,10 @@ const customQuantities = ref<Map<string, number>>(new Map());
 const paginatedPharmacies = computed(() => {
   if (!exactMatch.value || !exactMatch.value.pharmacies) return [];
   
-  // New structure: exactMatch.pharmacies.data
-  let rawData: any[] = exactMatch.value.pharmacies.data || [];
-  
-  // Client-side filtering as fallback/augmentation
-  if (showOpenOnly.value) rawData = rawData.filter((p) => p.is_open);
-  if (showInStockOnly.value) rawData = rawData.filter((p) => p.in_stock);
-  
+  // New structure: exactMatch.pharmacies.data — already filtered/paginated server-side
+  // (q, is_open, in_stock, services, sort) via PriceSearchController.
+  const rawData: any[] = exactMatch.value.pharmacies.data || [];
+
   return rawData.map((p: any): Pharmacy => ({
     id: p.pharmacy_id,
     priceId: p.id,

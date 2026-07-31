@@ -94,9 +94,7 @@ const loadDashboardData = async () => {
       recentlyViewedService.getRecentlyViewed(),
     ]);
 
-    orders.value = ordersData.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    orders.value = ordersData.orders;
 
     favoriteDrugs.value = drugsResult.data;
     favoritePharmacies.value = pharmsResult.data;
