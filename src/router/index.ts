@@ -369,6 +369,16 @@ const router = createRouter({
       }
     },
     {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/views/NotificationsView.vue'),
+      meta: {
+        title: 'Notifications | FyndRX',
+        description: 'Stay updated on your orders and account activity',
+        requiresAuth: true
+      }
+    },
+    {
       path: '/receipt/:reference',
       name: 'receipt',
       component: () => import('@/views/ReceiptView.vue'),
