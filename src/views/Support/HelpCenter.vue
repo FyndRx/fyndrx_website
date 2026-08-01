@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { informationService, type HelpCategory, type AppSettings } from '@/services/informationService';
 import { useSeoMeta } from '@/composables/useSeoMeta';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 useSeoMeta({
   title: 'Help Center | FyndRx',
@@ -123,7 +124,7 @@ const filteredCategories = computed(() => {
               <div
                 v-show="activeFaq?.categoryIndex === cIndex && activeFaq?.articleIndex === aIndex"
                 class="px-6 pb-4 text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none"
-                v-html="article.content"
+                v-html="sanitizeHtml(article.content)"
               >
               </div>
             </div>
