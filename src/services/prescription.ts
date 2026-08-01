@@ -42,15 +42,48 @@ export interface UpdatePrescriptionRequest {
   title?: string;
 }
 
+export interface PrescriptionCounts {
+  all: number;
+  active: number;
+  dispensed: number;
+  pending: number;
+  expired: number;
+  cancelled: number;
+  completed: number;
+}
+
+export interface GetPrescriptionsParams {
+  status?: string;
+  page?: number;
+  per_page?: number;
+}
+
+export interface GetPrescriptionsResult {
+  prescriptions: Prescription[];
+  meta: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+    counts: PrescriptionCounts;
+  } | null;
+}
+
 export const prescriptionService = {
-  /**
-   * Get user's prescriptions
-   * @returns Array of prescriptions
-   */
-  async getPrescriptions(): Promise<Prescription[]> {
-    const response = await apiService.getAuth<PrescriptionsApiResponse>('/prescriptions');
+  /** Server-filtered/paginated prescriptions, with per-status counts. */
+  async getPrescriptions(params?: GetPrescriptionsParams): Promise<GetPrescriptionsResult> {
+    const searchParams = new URLSearchParams();
+    if (params?.status && params.status !== 'all') searchParams.set('status', params.status);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.per_page) searchParams.set('per_page', String(params.per_page));
+    const qs = searchParams.toString();
+
+    const response = await apiService.getAuth<PrescriptionsApiResponse>(`/prescriptions${qs ? `?${qs}` : ''}`);
     const apiPrescriptions = unwrapArrayResponse(response);
-    return transformPrescriptions(apiPrescriptions);
+    return {
+      prescriptions: transformPrescriptions(apiPrescriptions),
+      meta: (response as any)?.meta ?? null,
+    };
   },
 
   /**

@@ -87,34 +87,31 @@ const activeFiltersCount = computed(() => {
   return count;
 });
 
+const SORT_MAP: Record<string, { sortBy: 'published_at' | 'likes_count' | 'views_count'; direction: 'asc' | 'desc' }> = {
+  'date-desc': { sortBy: 'published_at', direction: 'desc' },
+  'date-asc': { sortBy: 'published_at', direction: 'asc' },
+  likes: { sortBy: 'likes_count', direction: 'desc' },
+  views: { sortBy: 'views_count', direction: 'desc' },
+};
+
 const loadPosts = async () => {
   isLoading.value = true;
   try {
     const category = selectedCategory.value === 'All' ? undefined : selectedCategory.value;
+    const { sortBy: sortColumn, direction } = SORT_MAP[sortBy.value] ?? SORT_MAP['date-desc'];
     const { posts: fetchedPosts, total } = await blogService.getPosts(
       currentPage.value,
       postsPerPage,
       category,
-      searchQuery.value
+      searchQuery.value,
+      selectedTag.value,
+      sortColumn,
+      direction
     );
-    
-    let filtered = fetchedPosts;
-    
-    if (selectedTag.value !== 'All') {
-      filtered = filtered.filter(post => post.tags?.includes(selectedTag.value));
-    }
-    
-    if (sortBy.value === 'date-asc') {
-      filtered = filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } else if (sortBy.value === 'likes') {
-      filtered = filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-    } else if (sortBy.value === 'views') {
-      filtered = filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
-    }
-    
-    posts.value = filtered;
+
+    posts.value = fetchedPosts;
     totalPosts.value = total;
-    
+
     if (fetchedPosts.length > 0 && currentPage.value === 1) {
       featuredPost.value = fetchedPosts[0];
     }

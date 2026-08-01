@@ -11,7 +11,13 @@ import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
 const router = useRouter();
 const orders = ref<Order[]>([]);
 const loading = ref(true);
+const loadingMore = ref(false);
 const selectedFilter = ref<'all' | 'active' | 'completed' | 'cancelled'>('all');
+const counts = ref({ all: 0, active: 0, completed: 0, cancelled: 0 });
+const currentPage = ref(1);
+const lastPage = ref(1);
+const hasMore = computed(() => currentPage.value < lastPage.value);
+const ORDERS_PER_PAGE = 15;
 
 const payNow = async (order: Order) => {
   if (!order || order.paymentStatus !== 'pending') return;
@@ -51,20 +57,6 @@ const statusLabels = {
   cancelled: 'Cancelled'
 };
 
-const filteredOrders = computed(() => {
-  if (selectedFilter.value === 'all') return orders.value;
-  if (selectedFilter.value === 'active') {
-    return orders.value.filter(o => !['completed', 'cancelled'].includes(o.status));
-  }
-  if (selectedFilter.value === 'completed') {
-    return orders.value.filter(o => o.status === 'completed');
-  }
-  if (selectedFilter.value === 'cancelled') {
-    return orders.value.filter(o => o.status === 'cancelled');
-  }
-  return orders.value;
-});
-
 const viewOrder = (orderId: string) => {
   router.push({ name: 'order-detail', params: { id: orderId } });
 };
@@ -80,36 +72,40 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const loadOrders = async () => {
-  loading.value = true;
+const loadOrders = async (page = 1, append = false) => {
+  if (append) {
+    loadingMore.value = true;
+  } else {
+    loading.value = true;
+  }
   try {
-    const statusMap: Record<string, string | undefined> = {
-      'all': undefined,
-      'active': undefined,
-      'completed': 'completed',
-      'cancelled': 'cancelled'
-    };
-    
-    const status = statusMap[selectedFilter.value];
-    const allOrders = await orderService.getOrders({ status, per_page: 100 });
-    
-    if (selectedFilter.value === 'active') {
-      orders.value = allOrders.filter(o => !['completed', 'cancelled'].includes(o.status));
-    } else {
-      orders.value = allOrders.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    }
+    const status = selectedFilter.value === 'all' ? undefined : selectedFilter.value;
+    const { orders: fetchedOrders, meta } = await orderService.getOrders({
+      status,
+      per_page: ORDERS_PER_PAGE,
+      page,
+    });
+
+    orders.value = append ? [...orders.value, ...fetchedOrders] : fetchedOrders;
+    currentPage.value = meta?.current_page ?? page;
+    lastPage.value = meta?.last_page ?? 1;
+    if (meta?.counts) counts.value = meta.counts;
   } catch (err) {
     console.error('Error loading orders:', err);
-    orders.value = [];
+    if (!append) orders.value = [];
   } finally {
     loading.value = false;
+    loadingMore.value = false;
   }
 };
 
+const loadMoreOrders = () => {
+  if (!hasMore.value || loadingMore.value) return;
+  loadOrders(currentPage.value + 1, true);
+};
+
 watch(selectedFilter, () => {
-  loadOrders();
+  loadOrders(1);
 });
 
 onMounted(() => {
@@ -136,7 +132,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            All Orders ({{ orders.length }})
+            All Orders ({{ counts.all }})
           </button>
           <button
             @click="selectedFilter = 'active'"
@@ -147,7 +143,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Active ({{ orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length }})
+            Active ({{ counts.active }})
           </button>
           <button
             @click="selectedFilter = 'completed'"
@@ -158,7 +154,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Completed ({{ orders.filter(o => o.status === 'completed').length }})
+            Completed ({{ counts.completed }})
           </button>
           <button
             @click="selectedFilter = 'cancelled'"
@@ -169,7 +165,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Cancelled ({{ orders.filter(o => o.status === 'cancelled').length }})
+            Cancelled ({{ counts.cancelled }})
           </button>
         </div>
       </div>
@@ -178,7 +174,7 @@ onMounted(() => {
         <ListSkeleton type="order" :count="4" :columns="1" />
       </div>
 
-      <div v-else-if="filteredOrders.length === 0" class="py-16 text-center">
+      <div v-else-if="orders.length === 0" class="py-16 text-center">
         <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
@@ -194,7 +190,7 @@ onMounted(() => {
 
       <div v-else class="space-y-4">
         <div
-          v-for="order in filteredOrders"
+          v-for="order in orders"
           :key="order.id"
           @click="viewOrder(order.id)"
           class="p-6 transition-all duration-300 bg-white cursor-pointer dark:bg-gray-800 rounded-2xl hover:shadow-xl hover:-translate-y-1"
@@ -346,6 +342,16 @@ onMounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div v-if="hasMore" class="flex justify-center pt-2">
+          <button
+            @click="loadMoreOrders"
+            :disabled="loadingMore"
+            class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ loadingMore ? 'Loading…' : 'Load More Orders' }}
+          </button>
         </div>
       </div>
     </div>
