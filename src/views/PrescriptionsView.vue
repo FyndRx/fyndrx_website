@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { prescriptionService } from '@/services/prescription';
 import { consultationService } from '@/services/consultationService';
@@ -30,6 +30,14 @@ const prescriptions = ref<Prescription[]>([]);
 const selectedFilter = ref<FilterKey>('all');
 const selectedPrescription = ref<Prescription | null>(null);
 const loading = ref(true);
+const loadingMore = ref(false);
+const counts = ref<Record<FilterKey, number>>({
+  all: 0, active: 0, dispensed: 0, pending: 0, expired: 0, cancelled: 0, completed: 0,
+});
+const currentPage = ref(1);
+const lastPage = ref(1);
+const hasMore = computed(() => currentPage.value < lastPage.value);
+const PRESCRIPTIONS_PER_PAGE = 15;
 
 // ── Status config ─────────────────────────────────────────────
 const statusConfig: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
@@ -55,14 +63,7 @@ const filters: { key: FilterKey; label: string }[] = [
   { key: 'cancelled', label: 'Cancelled' },
 ];
 
-const filterCount = (key: FilterKey) =>
-  key === 'all' ? prescriptions.value.length : prescriptions.value.filter(p => p.status === key).length;
-
-const filteredPrescriptions = computed(() =>
-  selectedFilter.value === 'all'
-    ? prescriptions.value
-    : prescriptions.value.filter(p => p.status === selectedFilter.value)
-);
+const filterCount = (key: FilterKey) => counts.value[key];
 
 // ── Helpers ───────────────────────────────────────────────────
 const formatDate = (d?: string | null) => {
@@ -83,16 +84,39 @@ const originConfig = (origin?: string) => {
 };
 
 // ── Data ──────────────────────────────────────────────────────
-const loadPrescriptions = async () => {
-  loading.value = true;
+const loadPrescriptions = async (page = 1, append = false) => {
+  if (append) {
+    loadingMore.value = true;
+  } else {
+    loading.value = true;
+  }
   try {
-    const data = await prescriptionService.getPrescriptions();
-    prescriptions.value = data.sort(
-      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-    );
-  } catch { prescriptions.value = []; }
-  finally { loading.value = false; }
+    const { prescriptions: fetched, meta } = await prescriptionService.getPrescriptions({
+      status: selectedFilter.value,
+      per_page: PRESCRIPTIONS_PER_PAGE,
+      page,
+    });
+
+    prescriptions.value = append ? [...prescriptions.value, ...fetched] : fetched;
+    currentPage.value = meta?.current_page ?? page;
+    lastPage.value = meta?.last_page ?? 1;
+    if (meta?.counts) counts.value = meta.counts;
+  } catch {
+    if (!append) prescriptions.value = [];
+  } finally {
+    loading.value = false;
+    loadingMore.value = false;
+  }
 };
+
+const loadMorePrescriptions = () => {
+  if (!hasMore.value || loadingMore.value) return;
+  loadPrescriptions(currentPage.value + 1, true);
+};
+
+watch(selectedFilter, () => {
+  loadPrescriptions(1);
+});
 
 // ── Consultation link ─────────────────────────────────────────
 const consultationLoading = ref(false);
@@ -184,7 +208,7 @@ onMounted(loadPrescriptions);
       </div>
 
       <!-- ── Empty state ─────────────────────────────────────── -->
-      <div v-else-if="filteredPrescriptions.length === 0" class="flex flex-col items-center justify-center py-24 text-center">
+      <div v-else-if="prescriptions.length === 0" class="flex flex-col items-center justify-center py-24 text-center">
         <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
           <DocumentTextIcon class="w-10 h-10 text-gray-400" />
         </div>
@@ -204,7 +228,7 @@ onMounted(loadPrescriptions);
       <!-- ── Cards grid ──────────────────────────────────────── -->
       <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div
-          v-for="rx in filteredPrescriptions"
+          v-for="rx in prescriptions"
           :key="rx.id"
           class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/30 hover:shadow-lg dark:hover:shadow-none transition-all duration-200 overflow-hidden cursor-pointer"
           @click="selectedPrescription = rx"
@@ -301,6 +325,16 @@ onMounted(loadPrescriptions);
             </div>
           </div>
         </div>
+      </div>
+
+      <div v-if="hasMore" class="flex justify-center pt-6">
+        <button
+          @click="loadMorePrescriptions"
+          :disabled="loadingMore"
+          class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ loadingMore ? 'Loading…' : 'Load More Prescriptions' }}
+        </button>
       </div>
     </div>
 
