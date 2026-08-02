@@ -1,15 +1,33 @@
 import { apiService } from './api';
 
-export interface Notification {
-  id: string;
-  user_id: number;
+export interface AppData {
   type: string;
+  order_id?: string;
+  status?: string;
+  deep_link?: string;
+  prescription_id?: string;
+  [key: string]: any;
+}
+
+export interface NotificationData {
   title: string;
   body: string;
-  data?: any;
-  read_at?: string;
-  opened_at?: string;
-  clicked_at?: string;
+  icon?: string | null;
+  color?: string | null;
+  duration?: string | null;
+  format?: string;
+  status?: string | null;
+  app_data?: AppData;
+  [key: string]: any;
+}
+
+export interface Notification {
+  id: string;
+  type: string;
+  notifiable_type: string;
+  notifiable_id: string;
+  data: NotificationData;
+  read_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,7 +46,15 @@ export interface NotificationPreferences {
 
 export const notificationService = {
   async getNotifications(): Promise<Notification[]> {
-    return await apiService.getAuth<Notification[]>('/notifications');
+    const response = await apiService.getAuth<any>('/notifications');
+    if (response?.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    } else if (response?.data && Array.isArray(response.data)) {
+      return response.data;
+    } else if (Array.isArray(response)) {
+      return response;
+    }
+    return [];
   },
 
   async getNotificationById(id: string): Promise<Notification> {
@@ -44,8 +70,11 @@ export const notificationService = {
   },
 
   async getUnreadCount(): Promise<number> {
-    const response = await apiService.getAuth<{ count: number }>('/notifications/unread-count');
-    return response.count;
+    const response = await apiService.getAuth<any>('/notifications/unread-count');
+    if (response?.data?.unread_count !== undefined) {
+      return response.data.unread_count;
+    }
+    return response?.unread_count || response?.count || 0;
   },
 
   async markAllAsRead(): Promise<void> {

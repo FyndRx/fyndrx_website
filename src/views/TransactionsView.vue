@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Transaction } from '@/services/paymentService';
 import { paymentService } from '@/services/paymentService';
@@ -9,6 +9,13 @@ const router = useRouter();
 const transactions = ref<Transaction[]>([]);
 const selectedFilter = ref<'all' | 'success' | 'pending' | 'failed' | 'refunded'>('all');
 const loading = ref(true);
+const loadingMore = ref(false);
+const counts = ref({ all: 0, success: 0, pending: 0, failed: 0, refunded: 0 });
+const totals = ref({ paid: 0, pending: 0 });
+const currentPage = ref(1);
+const lastPage = ref(1);
+const hasMore = computed(() => currentPage.value < lastPage.value);
+const TRANSACTIONS_PER_PAGE = 15;
 
 const statusColors = {
   success: { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-800 dark:text-green-200', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -24,25 +31,8 @@ const statusLabels = {
   refunded: 'Refunded'
 };
 
-const filteredTransactions = computed(() => {
-  if (selectedFilter.value === 'all') return transactions.value;
-  return transactions.value.filter(t => t.status === selectedFilter.value);
-});
-
-const totalPaid = computed(() => 
-  transactions.value
-    .filter(t => t.status === 'success')
-    .reduce((sum, t) => sum + Number(t.amount), 0)
-);
-
-const totalPending = computed(() => 
-  transactions.value
-    .filter(t => t.status === 'pending')
-    .reduce((sum, t) => sum + Number(t.amount), 0)
-);
-
 const viewReceipt = (transactionId: string) => {
-  router.push({ name: 'receipt', params: { id: transactionId } });
+  router.push({ name: 'receipt', params: { reference: transactionId } });
 };
 
 const viewOrder = (orderId: string) => {
@@ -60,24 +50,42 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const loadTransactions = async () => {
-  loading.value = true;
+const loadTransactions = async (page = 1, append = false) => {
+  if (append) {
+    loadingMore.value = true;
+  } else {
+    loading.value = true;
+  }
   try {
-    const response = await paymentService.getTransactions();
-    // Handle paginated response
-    const data = (response as any).data || response;
-    transactions.value = Array.isArray(data) ? data : [];
-    
-    transactions.value = transactions.value.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    const status = selectedFilter.value === 'all' ? undefined : selectedFilter.value;
+    const { transactions: fetched, meta } = await paymentService.getTransactions({
+      status,
+      per_page: TRANSACTIONS_PER_PAGE,
+      page,
+    });
+
+    transactions.value = append ? [...transactions.value, ...fetched] : fetched;
+    currentPage.value = meta?.current_page ?? page;
+    lastPage.value = meta?.last_page ?? 1;
+    if (meta?.counts) counts.value = meta.counts;
+    if (meta?.totals) totals.value = meta.totals;
   } catch (err) {
     console.error('Error loading transactions:', err);
-    transactions.value = [];
+    if (!append) transactions.value = [];
   } finally {
     loading.value = false;
+    loadingMore.value = false;
   }
 };
+
+const loadMoreTransactions = () => {
+  if (!hasMore.value || loadingMore.value) return;
+  loadTransactions(currentPage.value + 1, true);
+};
+
+watch(selectedFilter, () => {
+  loadTransactions(1);
+});
 
 onMounted(() => {
   loadTransactions();
@@ -97,7 +105,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Total Paid</p>
-              <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ formatCurrency(totalPaid) }}</p>
+              <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ formatCurrency(totals.paid) }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20">
               <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +119,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p class="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ formatCurrency(totalPending) }}</p>
+              <p class="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ formatCurrency(totals.pending) }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
               <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +133,7 @@ onMounted(() => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 dark:text-gray-400">Transactions</p>
-              <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ transactions.length }}</p>
+              <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{{ counts.all }}</p>
             </div>
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20">
               <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +155,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            All ({{ transactions.length }})
+            All ({{ counts.all }})
           </button>
           <button
             @click="selectedFilter = 'success'"
@@ -158,7 +166,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Paid ({{ transactions.filter(t => t.status === 'success').length }})
+            Paid ({{ counts.success }})
           </button>
           <button
             @click="selectedFilter = 'pending'"
@@ -169,7 +177,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Pending ({{ transactions.filter(t => t.status === 'pending').length }})
+            Pending ({{ counts.pending }})
           </button>
           <button
             @click="selectedFilter = 'failed'"
@@ -180,7 +188,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Failed ({{ transactions.filter(t => t.status === 'failed').length }})
+            Failed ({{ counts.failed }})
           </button>
           <button
             @click="selectedFilter = 'refunded'"
@@ -191,7 +199,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
-            Refunded ({{ transactions.filter(t => t.status === 'refunded').length }})
+            Refunded ({{ counts.refunded }})
           </button>
         </div>
       </div>
@@ -201,7 +209,7 @@ onMounted(() => {
         <p class="mt-4 text-gray-600 dark:text-gray-300">Loading transactions...</p>
       </div>
 
-      <div v-else-if="filteredTransactions.length === 0" class="py-16 text-center">
+      <div v-else-if="transactions.length === 0" class="py-16 text-center">
         <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
@@ -211,7 +219,7 @@ onMounted(() => {
 
       <div v-else class="space-y-4">
         <div
-          v-for="transaction in filteredTransactions"
+          v-for="transaction in transactions"
           :key="transaction.id"
           class="p-6 transition-all duration-300 bg-white cursor-pointer dark:bg-gray-800 rounded-2xl hover:shadow-xl hover:-translate-y-1"
           @click="viewOrder(transaction.order_id)"
@@ -291,6 +299,16 @@ onMounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div v-if="hasMore" class="flex justify-center pt-2">
+          <button
+            @click="loadMoreTransactions"
+            :disabled="loadingMore"
+            class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ loadingMore ? 'Loading…' : 'Load More Transactions' }}
+          </button>
         </div>
       </div>
     </div>
