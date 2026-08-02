@@ -4,8 +4,7 @@ import { useRoute } from 'vue-router';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
-import { reviewService } from '@/services/reviewService';
-import { pharmacyService } from '@/services/pharmacyService';
+import { pharmacyService, type PharmacySearchParams } from '@/services/pharmacyService';
 import { useDataCacheStore } from '@/store/dataCache';
 import type { Pharmacy, PharmacyServiceGroup } from '@/models/Pharmacy';
 import * as HeroIconsOutline from '@heroicons/vue/24/outline';
@@ -37,6 +36,7 @@ useSeoMeta({
 const { registerElement, triggerCheck } = useScrollAnimation();
 const pharmacies = ref<Pharmacy[]>([]);
 const loading = ref(true);
+const loadingMore = ref(false);
 const error = ref<string | null>(null);
 
 const searchQuery = ref('');
@@ -44,6 +44,16 @@ const searchBarQuery = ref('');
 const selectedServices = ref<string[]>([]);
 const sortBy = ref<string>('distance');
 const isOpenNow = ref(false);
+
+// ── Server-side pagination ──────────────────────────────────────────────────
+const currentPage = ref(1);
+const lastPage = ref(1);
+const total = ref(0);
+const hasMore = computed(() => currentPage.value < lastPage.value);
+
+// ── User geolocation (for distance sort) ────────────────────────────────────
+const userLat = ref<number | null>(null);
+const userLng = ref<number | null>(null);
 
 // ── Service catalog (loaded from API) ───────────────────────────────────────
 const serviceGroups = ref<PharmacyServiceGroup[]>([]);
@@ -84,67 +94,52 @@ const sortOptions = [
 ];
 
 
-const loadPharmacies = async () => {
-  loading.value = true;
-  error.value = null;
+const fetchPharmacies = async (page: number, append = false) => {
+  if (append) {
+    loadingMore.value = true;
+  } else {
+    loading.value = true;
+    error.value = null;
+  }
+
   try {
-    // Get all pharmacies directly from /pharmacies endpoint (without drugs param)
-    // Note: We don't need pharmacy prices here - those are only needed on the pharmacy detail page
-    let result = await pharmacyService.getAllPharmacies();
-    
-    // Cache the pharmacies for later use
-    dataCache.setPharmacies(result);
-    
-    // Apply search filter if provided
-    if (searchQuery.value && searchQuery.value.trim()) {
-      const query = searchQuery.value.toLowerCase().trim();
-      result = result.filter((pharmacy: Pharmacy) =>
-        pharmacy.name?.toLowerCase()?.includes(query) ||
-        pharmacy.address?.toLowerCase()?.includes(query)
-      );
-    }
+    const { pharmacies: result, meta } = await pharmacyService.searchPharmacies({
+      q: searchQuery.value.trim() || undefined,
+      services: selectedServices.value.length > 0 ? selectedServices.value : undefined,
+      isOpen: isOpenNow.value || undefined,
+      sort: sortBy.value as PharmacySearchParams['sort'],
+      lat: userLat.value ?? undefined,
+      lng: userLng.value ?? undefined,
+      page,
+      per_page: 24,
+    });
 
-    if (selectedServices.value.length > 0) {
-      result = result.filter((pharmacy: Pharmacy) =>
-        pharmacy.services && selectedServices.value.every(slug =>
-          pharmacy.services.some(s => s.slug === slug || s.name === slug)
-        )
-      );
-    }
+    pharmacies.value = append ? [...pharmacies.value, ...result] : result;
+    dataCache.setPharmacies(pharmacies.value);
 
-    if (isOpenNow.value) {
-      result = result.filter((pharmacy: Pharmacy) => pharmacy.isOpen);
-    }
+    currentPage.value = meta?.current_page ?? page;
+    lastPage.value = meta?.last_page ?? currentPage.value;
+    total.value = meta?.total ?? pharmacies.value.length;
 
-    if (sortBy.value === 'name') {
-      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    } else if (sortBy.value === 'rating') {
-      const ratings = await Promise.all(
-        result.map(async (pharmacy: Pharmacy) => {
-          try {
-            const stats = await reviewService.getReviewStats('pharmacy', pharmacy.id);
-            return { pharmacy, rating: stats.averageRating || 0 };
-          } catch {
-            return { pharmacy, rating: 0 };
-          }
-        })
-      );
-      ratings.sort((a, b) => b.rating - a.rating);
-      result = ratings.map(r => r.pharmacy);
-    }
-
-    pharmacies.value = result;
-    if (result.length === 0) {
+    if (pharmacies.value.length === 0) {
       console.warn('[Pharmacies] API returned 0 pharmacies after filters. Check is_active flag or DB seed.');
     } else {
-      console.info(`[Pharmacies] Loaded ${result.length} pharmacies.`);
+      console.info(`[Pharmacies] Loaded ${pharmacies.value.length} of ${total.value} pharmacies.`);
     }
   } catch (err) {
     error.value = 'Failed to load pharmacies. Please try again later.';
     console.error('[Pharmacies] Error loading pharmacies:', err);
   } finally {
     loading.value = false;
+    loadingMore.value = false;
   }
+};
+
+const loadPharmacies = () => fetchPharmacies(1, false);
+
+const loadMore = () => {
+  if (!hasMore.value || loadingMore.value) return;
+  fetchPharmacies(currentPage.value + 1, true);
 };
 
 const handleSort = () => {
@@ -193,6 +188,17 @@ onMounted(async () => {
 
   if (querySearch) searchQuery.value = querySearch;
   if (queryPharmacy) searchQuery.value = queryPharmacy;
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLat.value = pos.coords.latitude;
+        userLng.value = pos.coords.longitude;
+        if (sortBy.value === 'distance') loadPharmacies();
+      },
+      () => { /* distance sort degrades to default order without coords */ }
+    );
+  }
 
   // Load service catalog and pharmacies in parallel
   servicesLoading.value = true;
@@ -420,7 +426,7 @@ onMounted(async () => {
           <div v-if="!loading && !error" class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ pharmacies.length }} {{ pharmacies.length === 1 ? 'pharmacy' : 'pharmacies' }} found
+                {{ total }} {{ total === 1 ? 'pharmacy' : 'pharmacies' }} found
               </p>
               <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <span v-if="sortBy === 'rating'">Sorted by Rating</span>
@@ -466,6 +472,17 @@ onMounted(async () => {
               class="pharmacy-card-enter"
               :style="{ animationDelay: `${index * 60}ms` }"
             />
+          </div>
+
+          <!-- Load More -->
+          <div v-if="!loading && !error && hasMore" class="flex justify-center mt-8">
+            <button
+              @click="loadMore"
+              :disabled="loadingMore"
+              class="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ loadingMore ? 'Loading…' : 'Load More Pharmacies' }}
+            </button>
           </div>
         </div>
       </div>

@@ -28,13 +28,18 @@ export interface LiveSearchFilters {
 export interface LiveSearchResult {
   medications: Medication[];
   meta?: PaginationMeta;
+  availableForms: string[];
+  availableBrands: string[];
 }
 
 export const medicationService = {
   /**
-   * Live search for medications
+   * Filterable/sortable/paginated catalog browsing — backs the medications grid.
+   * Always hits `/search/smart?mode=browse`, which returns a flat paginated product
+   * list whether or not a query is present (as opposed to `smartSearch`, which hits
+   * the same endpoint's default confidence-scored autocomplete mode).
    * @param params - Search query string or filter object
-   * @returns Medications plus optional pagination meta
+   * @returns Medications plus pagination meta and filter-dropdown facets
    */
   async liveSearch(params: string | LiveSearchFilters): Promise<LiveSearchResult> {
     try {
@@ -42,61 +47,32 @@ export const medicationService = {
       const query = filters.query?.trim() || '';
 
       const searchParams = new URLSearchParams();
-      if (query.length > 0) {
-        searchParams.set('q', query);
-      }
-
-      // Preserve existing filters if the new API supports them
+      searchParams.set('mode', 'browse');
+      if (query.length > 0) searchParams.set('q', query);
       if (filters.page && filters.page > 0) searchParams.set('page', String(filters.page));
       if (filters.perPage && filters.perPage > 0) searchParams.set('per_page', String(filters.perPage));
       if (filters.category && filters.category !== 'all') searchParams.set('category', filters.category);
       if (filters.brand && filters.brand !== 'all') searchParams.set('brand', filters.brand);
+      if (filters.form && filters.form !== 'all') searchParams.set('form', filters.form);
+      if (filters.requiresPrescription) searchParams.set('requires_prescription', filters.requiresPrescription);
+      if (filters.sort) searchParams.set('sort', filters.sort);
 
-      const queryString = searchParams.toString();
-      const url = `/search/smart${queryString ? `?${queryString}` : ''}`;
+      const url = `/search/smart?${searchParams.toString()}`;
       const response = await apiService.get<any>(url);
 
-      let medications: Medication[] = [];
-      const meta = response.meta;
-
-      // Check if it's the grouped Smart Search structure (typically when q is present)
-      if (response && response.results) {
-        const products = response.results.products || [];
-        const generics = response.results.generics || [];
-        
-        medications = [
-          ...products.map((p: any) => transformMedication({
-            id: p.id,
-            name: p.name,
-            description: p.detail || p.description || '',
-            image: p.image || '',
-            pharmacy_count: p.pharmacy_count || p.pharmacies_count,
-            price: p.price,
-            discount_price: p.discount_price,
-            brands: p.brand ? [{ id: p.brand_id, name: p.brand }] : [],
-            // Use undefined (not []) so transformMedication falls through to category field
-            categories: p.categories?.length ? p.categories : undefined,
-            brand_id: p.brand_id,
-            form_id: p.form_id,
-            strength_id: p.strength_id,
-            uom_id: p.uom_id
-          } as any)),
-          ...transformMedications(generics)
-        ];
-      } else {
-        // Standard paginated list structure (typically when no q is present)
-        const apiMeds = unwrapArrayResponse(response) as any[];
-        medications = transformMedications(apiMeds);
-      }
+      const apiMeds = unwrapArrayResponse(response) as any[];
+      const meta = response?.meta;
 
       return {
-        medications,
+        medications: transformMedications(apiMeds),
         meta: meta || {
           current_page: filters.page || 1,
           per_page: filters.perPage || 15,
-          total: medications.length,
+          total: apiMeds.length,
           last_page: 1
         },
+        availableForms: meta?.available_forms ?? [],
+        availableBrands: meta?.available_brands ?? [],
       };
     } catch (error) {
       console.error('Error in medicationService.liveSearch (using smart search):', error);
