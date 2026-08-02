@@ -50,12 +50,44 @@ export interface Transaction {
   };
 }
 
+export interface TransactionTotals {
+  paid: number;
+  pending: number;
+}
+
+export interface TransactionCounts {
+  all: number;
+  success: number;
+  pending: number;
+  failed: number;
+  refunded: number;
+}
+
+export interface GetTransactionsParams {
+  status?: 'success' | 'pending' | 'failed' | 'refunded';
+  order_id?: string;
+  page?: number;
+  per_page?: number;
+}
+
+export interface GetTransactionsResult {
+  transactions: Transaction[];
+  meta: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+    totals: TransactionTotals;
+    counts: TransactionCounts;
+  } | null;
+}
+
 export const paymentService = {
   async initializePayment(orderIds: string | string[]): Promise<PaymentInitializationResponse> {
-    const payload = Array.isArray(orderIds) 
-      ? { order_ids: orderIds } 
+    const payload = Array.isArray(orderIds)
+      ? { order_ids: orderIds }
       : { order_id: orderIds };
-      
+
     return await apiService.postAuth<PaymentInitializationResponse>('/payments/initialize', payload);
   },
 
@@ -63,9 +95,20 @@ export const paymentService = {
     return await apiService.getAuth<PaymentVerification>(`/payments/verify/${reference}`);
   },
 
-  async getTransactions(): Promise<Transaction[]> {
-    const response = await apiService.getAuth<Transaction[]>('/transactions');
-    return unwrapArrayResponse(response);
+  /** Server-filtered/paginated transaction history, with status counts and paid/pending totals. */
+  async getTransactions(params?: GetTransactionsParams): Promise<GetTransactionsResult> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.order_id) searchParams.set('order_id', params.order_id);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.per_page) searchParams.set('per_page', String(params.per_page));
+    const qs = searchParams.toString();
+
+    const response = await apiService.getAuth<any>(`/transactions${qs ? `?${qs}` : ''}`);
+    return {
+      transactions: unwrapArrayResponse(response),
+      meta: response?.meta ?? null,
+    };
   },
 
   async getTransaction(id: string): Promise<Transaction> {

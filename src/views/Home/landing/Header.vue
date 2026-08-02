@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import UserAvatar from '@/components/UserAvatar.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
+import NotificationDropdown from '@/components/NotificationDropdown.vue';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
@@ -120,6 +121,9 @@ export default {
             </span>
           </router-link>
 
+          <!-- Notification Bell (Auth Only) -->
+          <NotificationDropdown v-if="isAuthenticated" />
+
           <!-- Dark Mode Toggle -->
           <DarkModeToggle />
 
@@ -171,6 +175,9 @@ export default {
               {{ cartStore.cartItemsCount }}
             </span>
           </router-link>
+
+          <!-- Notification Bell Mobile (Auth Only) -->
+          <NotificationDropdown v-if="isAuthenticated" />
 
           <!-- User Avatar or Login Icon -->
           <template v-if="!isAuthenticated">
