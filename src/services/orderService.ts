@@ -1,9 +1,10 @@
 import type { Order, OrderTracking } from '@/models/Order';
 import { apiService } from './api';
-import type { 
+import type {
   OrderDetailApiResponse,
   OrdersApiResponse,
-  OrderTrackingDetailApiResponse
+  OrderTrackingDetailApiResponse,
+  PaginationMeta
 } from '@/models/api';
 import { 
   unwrapApiResponse,
@@ -57,6 +58,18 @@ export interface GetOrdersParams {
   page?: number;
 }
 
+export interface OrderCounts {
+  all: number;
+  active: number;
+  completed: number;
+  cancelled: number;
+}
+
+export interface GetOrdersResult {
+  orders: Order[];
+  meta: (PaginationMeta & { counts?: OrderCounts }) | null;
+}
+
 
 
 export const orderService = {
@@ -86,11 +99,10 @@ export const orderService = {
   },
 
   /**
-   * Get user's orders
-   * @param params - Optional query parameters
-   * @returns Array of orders
+   * Get user's orders, server-filtered/paginated. `status` accepts 'active' as a
+   * special value meaning "not completed and not cancelled".
    */
-  async getOrders(params?: GetOrdersParams): Promise<Order[]> {
+  async getOrders(params?: GetOrdersParams): Promise<GetOrdersResult> {
     let url = '/orders';
     if (params) {
       const queryParams = new URLSearchParams();
@@ -102,7 +114,10 @@ export const orderService = {
     }
     const response = await apiService.getAuth<OrdersApiResponse>(url);
     const apiOrders = unwrapArrayResponse(response);
-    return transformOrders(apiOrders);
+    return {
+      orders: transformOrders(apiOrders),
+      meta: (response as any)?.meta ?? null,
+    };
   },
 
   /**
