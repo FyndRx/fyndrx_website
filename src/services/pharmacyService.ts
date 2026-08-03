@@ -4,13 +4,15 @@ import type { PharmacyPrice } from '@/models/PharmacyPrice';
 import type { Medication } from '@/models/Medication';
 import type {
   PharmaciesApiResponse,
+  PharmacyApiResponse,
   PharmacyDetailApiResponse,
   PharmacyPricesApiResponse,
   PharmacyPricesByPharmacyApiResponse,
   PharmacyPricesByDrugApiResponse,
   PharmacyDrugsApiResponse,
   PharmacyDrugApiResponse,
-  PaginatedRelatedDrugsResponse
+  PaginatedRelatedDrugsResponse,
+  PaginationMeta
 } from '@/models/api';
 import {
   unwrapApiResponse,
@@ -30,6 +32,41 @@ export interface DrugSearchQuery {
   dosage_id: number;
 }
 
+export interface PharmacySearchParams {
+  q?: string;
+  location?: string;
+  delivery?: boolean;
+  services?: string[];
+  isOpen?: boolean;
+  sort?: 'default' | 'name' | 'rating' | 'distance';
+  lat?: number;
+  lng?: number;
+  page?: number;
+  per_page?: number;
+}
+
+export interface PaginatedPharmacies {
+  pharmacies: Pharmacy[];
+  meta: PaginationMeta | null;
+}
+
+export interface PharmacyPricesParams {
+  branch_id?: string | number;
+  q?: string;
+  form?: string[];
+  stock?: 'all' | 'in_stock' | 'out_of_stock';
+  sort?: 'default' | 'name_asc' | 'price_asc' | 'price_desc';
+  page?: number;
+  per_page?: number;
+}
+
+export interface PharmacyPricesResult {
+  prices: PharmacyPrice[];
+  meta: PaginationMeta | null;
+  availableForms: string[];
+  availableBranches: { id: string; name: string }[];
+}
+
 // Re-export PharmacyPrice from model
 export type { PharmacyPrice } from '@/models/PharmacyPrice';
 
@@ -38,6 +75,36 @@ export const pharmacyService = {
     const response = await apiService.get<PharmaciesApiResponse>('/pharmacies');
     const apiPharmacies = unwrapArrayResponse(response);
     return transformPharmacies(apiPharmacies);
+  },
+
+  /**
+   * Search/browse pharmacies with server-side filtering, sorting, and pagination.
+   * @param params - Search, filter, sort, and pagination options
+   */
+  async searchPharmacies(params: PharmacySearchParams = {}): Promise<PaginatedPharmacies> {
+    const searchParams = new URLSearchParams();
+    if (params.q) searchParams.set('q', params.q);
+    if (params.location) searchParams.set('location', params.location);
+    if (params.delivery !== undefined) searchParams.set('delivery', String(params.delivery));
+    if (params.services?.length) {
+      params.services.forEach(slug => searchParams.append('services[]', slug));
+    }
+    if (params.isOpen !== undefined) searchParams.set('is_open', String(params.isOpen));
+    if (params.sort) searchParams.set('sort', params.sort);
+    if (params.lat !== undefined) searchParams.set('lat', String(params.lat));
+    if (params.lng !== undefined) searchParams.set('lng', String(params.lng));
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.per_page) searchParams.set('per_page', String(params.per_page));
+
+    const qs = searchParams.toString();
+    const response = await apiService.get<{ data: PharmacyApiResponse[]; meta?: PaginationMeta }>(
+      `/pharmacies${qs ? `?${qs}` : ''}`
+    );
+    const apiPharmacies = unwrapArrayResponse(response);
+    return {
+      pharmacies: transformPharmacies(apiPharmacies),
+      meta: (response as any)?.meta ?? null,
+    };
   },
 
   /**
@@ -172,21 +239,33 @@ export const pharmacyService = {
   },
 
   /**
-   * Get prices for a specific pharmacy
+   * Get prices for a specific pharmacy, with server-side search/filter/sort/pagination.
    * @param pharmacyId - Pharmacy ID
-   * @returns Array of prices for the pharmacy
    */
-  async getPricesByPharmacy(pharmacyId: string | number, params?: Record<string, any>): Promise<PharmacyPrice[]> {
-    let url = `/pharmacy-prices/${pharmacyId}`;
+  async getPricesByPharmacy(pharmacyId: string | number, params?: PharmacyPricesParams): Promise<PharmacyPricesResult> {
+    const searchParams = new URLSearchParams();
     if (params) {
-      const queryString = new URLSearchParams(params).toString();
-      if (queryString) {
-        url += `?${queryString}`;
-      }
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(`${key}[]`, String(v)));
+        } else {
+          searchParams.set(key, String(value));
+        }
+      });
     }
-    const response = await apiService.get<PharmacyPricesByPharmacyApiResponse>(url);
+    const qs = searchParams.toString();
+    const response = await apiService.get<PharmacyPricesByPharmacyApiResponse>(
+      `/pharmacy-prices/${pharmacyId}${qs ? `?${qs}` : ''}`
+    );
     const apiPrices = unwrapArrayResponse(response);
-    return transformPharmacyPrices(apiPrices);
+    const meta = (response as any)?.meta ?? null;
+    return {
+      prices: transformPharmacyPrices(apiPrices),
+      meta,
+      availableForms: meta?.available_forms ?? [],
+      availableBranches: meta?.available_branches ?? [],
+    };
   },
 
   /**

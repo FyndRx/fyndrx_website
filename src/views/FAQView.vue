@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { informationService, type HelpArticle } from '@/services/informationService';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 const { registerElement } = useScrollAnimation();
 
@@ -171,7 +172,7 @@ const filterByCategory = (category: string) => {
                 </button>
                 
                 <div v-show="activeIndex === index" class="overflow-hidden transition-all duration-300">
-                  <div class="px-6 pb-6 text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none" v-html="faq.content">
+                  <div class="px-6 pb-6 text-gray-600 dark:text-gray-300 prose dark:prose-invert max-w-none" v-html="sanitizeHtml(faq.content)">
                   </div>
                 </div>
               </div>
