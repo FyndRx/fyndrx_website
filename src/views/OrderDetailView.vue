@@ -100,7 +100,7 @@ const viewReceipt = () => {
   if (!order.value) return;
   // If we have a transaction, use its ID (preferred). If not, pass the Order ID and let ReceiptView handle it.
   const routeId = transaction.value ? transaction.value.id : order.value.id;
-  router.push({ name: 'receipt', params: { id: routeId } });
+  router.push({ name: 'receipt', params: { reference: routeId } });
 };
 
 const handleAddReview = async (reviewData: { rating: number; title: string; comment: string }) => {
@@ -133,15 +133,11 @@ const loadOrder = async () => {
     
     if (order.value) {
       try {
-        const transactions = await paymentService.getTransactions();
-        // Use loose comparison to ensure match (api might return number vs string)
-        const transactionData = Array.isArray(transactions) 
-          ? transactions.find(t => String(t.order_id) === String(orderId))
-          : null;
-        if (transactionData) {
-          transaction.value = transactionData;
+        const { transactions } = await paymentService.getTransactions({ order_id: order.value.id, per_page: 1 });
+        if (transactions.length > 0) {
+          transaction.value = transactions[0];
         } else {
-          console.warn(`Transaction not found for order ${orderId} in ${transactions.length} transactions`);
+          console.warn(`Transaction not found for order ${order.value.id}`);
         }
       } catch (err) {
         console.error('Error loading transaction:', err);
