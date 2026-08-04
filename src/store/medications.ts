@@ -19,6 +19,8 @@ export const useMedicationsStore = defineStore('medications', () => {
 
   const allMedications = ref<Medication[]>([]);
   const categories = ref<any[]>([]);
+  const availableForms = ref<string[]>([]);
+  const availableBrands = ref<string[]>([]);
   const liveSearchMeta = ref<PaginationMeta | null>(null);
   const pagination = reactive({
     page: 1,
@@ -79,7 +81,7 @@ export const useMedicationsStore = defineStore('medications', () => {
       const trimmedQuery = searchQuery.value.trim();
       const targetPage = append ? pagination.page + 1 : pagination.page;
 
-      const { medications, meta } = await medicationService.liveSearch({
+      const { medications, meta, availableForms: forms, availableBrands: brands } = await medicationService.liveSearch({
         query: trimmedQuery || '',
         page: targetPage,
         perPage: pagination.perPage,
@@ -94,6 +96,8 @@ export const useMedicationsStore = defineStore('medications', () => {
         ? [...allMedications.value, ...medications]
         : [...medications];
 
+      availableForms.value = forms;
+      availableBrands.value = brands;
       liveSearchMeta.value = meta || null;
       pagination.page = meta?.current_page ?? targetPage;
       pagination.lastPage = meta?.last_page ?? pagination.page;
@@ -251,6 +255,8 @@ export const useMedicationsStore = defineStore('medications', () => {
     sortBy,
     showFilters,
     allMedications,
+    availableForms,
+    availableBrands,
     liveSearchMeta,
     pagination,
     loading,

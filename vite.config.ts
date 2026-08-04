@@ -49,9 +49,15 @@ export default defineConfig({
     ]
   },
   server: {
+    host: true, // Allows access from local network (e.g. physical phone)
     port: 3000,
     proxy: {
       '/api/v1': {
+        target: 'http://api.fyndrx.local',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/storage': {
         target: 'http://api.fyndrx.local',
         changeOrigin: true,
         secure: false,
