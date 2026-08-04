@@ -78,7 +78,14 @@ export const notificationService = {
   },
 
   async markAllAsRead(): Promise<void> {
-    return await apiService.postAuth<void>('/notifications/mark-all-read');
+    await apiService.postAuth('/notifications/mark-all-read');
+  },
+
+  async registerDeviceToken(token: string): Promise<void> {
+    await apiService.postAuth('/device-tokens', {
+      device_token: token,
+      device_type: 'web',
+    });
   },
 
   async markAsOpened(id: string): Promise<void> {

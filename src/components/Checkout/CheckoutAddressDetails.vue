@@ -30,6 +30,7 @@ const deliveryLocationObj = computed(() => {
 </script>
 
 <template>
+  <!-- eslint-disable vue/no-mutating-props -->
   <transition
     enter-active-class="transition-all duration-300 ease-out"
     leave-active-class="transition-all duration-200 ease-in"

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { notificationService, type Notification } from '@/services/notificationService';
 import { useAuthStore } from '@/store/auth';
+import { requestNotificationPermission, onForegroundMessage } from '@/services/firebase';
 
 export const useNotificationsStore = defineStore('notifications', {
   state: () => ({
@@ -9,11 +10,33 @@ export const useNotificationsStore = defineStore('notifications', {
     loading: false,
     initialized: false,
     pollingInterval: null as number | null,
+    firebaseInitialized: false,
   }),
   getters: {
     recentNotifications: (state) => state.notifications.slice(0, 5),
   },
   actions: {
+    async initializeFirebasePush() {
+      if (this.firebaseInitialized) return;
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return;
+      
+      const token = await requestNotificationPermission();
+      if (token) {
+        try {
+          await notificationService.registerDeviceToken(token);
+          this.firebaseInitialized = true;
+        } catch (error) {
+          console.error('Failed to register FCM token:', error);
+        }
+      }
+
+      onForegroundMessage((payload: any) => {
+        console.log('New foreground notification received:', payload);
+        // Refresh the notifications list to get the formatted message from the database
+        this.fetchNotifications();
+      });
+    },
     async fetchNotifications() {
       this.loading = true;
       try {
@@ -32,7 +55,14 @@ export const useNotificationsStore = defineStore('notifications', {
       try {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) return;
-        this.unreadCount = await notificationService.getUnreadCount();
+        const newCount = await notificationService.getUnreadCount();
+        if (newCount > this.unreadCount) {
+          this.unreadCount = newCount;
+          // Fetch the new notifications list, but don't await to avoid blocking polling
+          this.fetchNotifications();
+        } else {
+          this.unreadCount = newCount;
+        }
       } catch (error) {
         console.error('Failed to fetch unread count:', error);
       }
@@ -72,6 +102,7 @@ export const useNotificationsStore = defineStore('notifications', {
     startPolling() {
       if (this.pollingInterval) return;
       this.fetchNotifications();
+      this.initializeFirebasePush();
       this.pollingInterval = window.setInterval(() => {
         this.fetchUnreadCount();
       }, 60000); // 60 seconds
