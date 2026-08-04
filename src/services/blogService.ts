@@ -13,7 +13,10 @@ export const blogService = {
     page = 1,
     limit = 9,
     category?: string,
-    search?: string
+    search?: string,
+    tag?: string,
+    sortBy?: 'published_at' | 'likes_count' | 'views_count',
+    direction?: 'asc' | 'desc'
   ): Promise<{ posts: BlogPost[]; total: number }> {
     let url = `/blog/posts?page=${page}&limit=${limit}`;
     if (category && category !== 'All') {
@@ -21,6 +24,15 @@ export const blogService = {
     }
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
+    }
+    if (tag && tag !== 'All') {
+      url += `&tag=${encodeURIComponent(tag)}`;
+    }
+    if (sortBy) {
+      url += `&sort_by=${encodeURIComponent(sortBy)}`;
+    }
+    if (direction) {
+      url += `&direction=${encodeURIComponent(direction)}`;
     }
 
     const response = await apiService.get<any>(url);

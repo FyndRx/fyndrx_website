@@ -39,6 +39,8 @@ const {
   sortBy,
   showFilters,
   allMedications,
+  availableForms,
+  availableBrands,
   loading,
   error,
   quickViewMedicationId,
@@ -66,10 +68,6 @@ const categories = computed(() => {
   return ['all', ...storeCategories.value.map(c => c.slug)];
 });
 
-const baseFilteredMedications = computed(() => {
-  return allMedications.value;
-});
-
 const categoryOptions = computed(() => {
   return [
     { label: 'All Categories', value: 'all' },
@@ -77,146 +75,30 @@ const categoryOptions = computed(() => {
   ];
 });
 
-const formOptions = computed(() => {
-  const forms = new Set<string>();
-  let meds = baseFilteredMedications.value;
+// Forms/brands are server-side facets scoped to the active category+search (see
+// SmartSearchController::browseProducts) — they intentionally don't narrow further
+// based on the form/brand selections themselves, so switching one doesn't hide the other.
+const formOptions = computed(() => [
+  { label: 'All Forms', value: 'all' },
+  ...availableForms.value.map(f => ({ label: f, value: f }))
+]);
 
-  if (selectedCategory.value !== 'all') {
-    meds = meds.filter(med => {
-      const cats = Array.isArray(med.category) ? med.category : (med.category ? [med.category] : []);
-      if (cats.length === 0) return true;
-      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
-    });
-  }
-  
-  meds.forEach(med => {
-    if (med.forms && Array.isArray(med.forms)) {
-      med.forms.forEach((form: any) => {
-        if (form.form_name) forms.add(form.form_name);
-      });
-    }
-  });
-  
-  return [
-    { label: 'All Forms', value: 'all' },
-    ...Array.from(forms).sort().map(f => ({ label: f, value: f }))
-  ];
-});
+const brandOptions = computed(() => [
+  { label: 'All Brands', value: 'all' },
+  ...availableBrands.value.map(b => ({ label: b, value: b }))
+]);
 
-const brandOptions = computed(() => {
-  const brands = new Set<string>();
-  let meds = baseFilteredMedications.value;
-
-  if (selectedCategory.value !== 'all') {
-    meds = meds.filter(med => {
-      const cats = Array.isArray(med.category) ? med.category : (med.category ? [med.category] : []);
-      if (cats.length === 0) return true;
-      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
-    });
-  }
-  
-  if (selectedForm.value !== 'all') {
-    meds = meds.filter(med => 
-      med.forms && med.forms.some((form: any) => form.form_name === selectedForm.value)
-    );
-  }
-  
-  meds.forEach(med => {
-    if (med.brands && Array.isArray(med.brands)) {
-      med.brands.forEach((brand: any) => {
-        if (brand.name) brands.add(brand.name);
-      });
-    }
-  });
-  
-  return [
-    { label: 'All Brands', value: 'all' },
-    ...Array.from(brands).sort().map(b => ({ label: b, value: b }))
-  ];
-});
-
-const prescriptionOptions = computed(() => {
-  const hasRx = baseFilteredMedications.value.some(med => med.requiresPrescription);
-  const hasNonRx = baseFilteredMedications.value.some(med => !med.requiresPrescription);
-  
-  const options = [{ label: 'All Medications', value: 'all' }];
-  
-  if (hasRx) {
-    options.push({ label: 'Requires Prescription', value: 'yes' });
-  }
-  
-  if (hasNonRx) {
-    options.push({ label: 'No Prescription Needed', value: 'no' });
-  }
-  
-  return options;
-});
+const prescriptionOptions = [
+  { label: 'All Medications', value: 'all' },
+  { label: 'Requires Prescription', value: 'yes' },
+  { label: 'No Prescription Needed', value: 'no' },
+];
 
 const sortOptions = [
   { label: 'Name (A-Z)', value: 'name' },
   { label: 'Name (Z-A)', value: 'name-desc' },
   { label: 'Category', value: 'category' }
 ];
-
-const matchesCategorySlug = (cat: any, slug: string): boolean => {
-  if (typeof cat === 'string') return cat.toLowerCase() === slug.toLowerCase();
-  return cat.slug === slug || cat.name?.toLowerCase() === slug.toLowerCase();
-};
-
-const filteredMedications = computed(() => {
-  let meds = [...allMedications.value];
-
-  // 1. Category — already filtered server-side by the API; only re-filter client-side
-  //    when medications carry category data so we can do accurate slug comparison.
-  if (selectedCategory.value !== 'all') {
-    meds = meds.filter(med => {
-      const cats = Array.isArray(med.category)
-        ? med.category
-        : (med.category ? [med.category] : []);
-      // If the medication has no category data, trust the API result and keep it.
-      if (cats.length === 0) return true;
-      return (cats as any[]).some(cat => matchesCategorySlug(cat, selectedCategory.value));
-    });
-  }
-
-  // 2. Form Filter
-  if (selectedForm.value !== 'all') {
-    meds = meds.filter(med => 
-      med.forms && med.forms.some((form: any) => form.form_name === selectedForm.value)
-    );
-  }
-  
-  // 3. Brand Filter
-  if (selectedBrand.value !== 'all') {
-    meds = meds.filter(med => 
-      med.brands && med.brands.some((brand: any) => brand.name === selectedBrand.value)
-    );
-  }
-  
-  // 4. Prescription Filter
-  if (requiresPrescription.value !== 'all') {
-    const required = requiresPrescription.value === 'yes';
-    meds = meds.filter(med => med.requiresPrescription === required);
-  }
-  
-  // 5. Sorting
-  if (sortBy.value === 'name') {
-    meds.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  } else if (sortBy.value === 'name-desc') {
-    meds.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-  } else if (sortBy.value === 'category') {
-    meds.sort((a, b) => {
-      const getCatName = (c: any) => {
-        if (!c) return '';
-        if (Array.isArray(c)) return typeof c[0] === 'string' ? c[0] : c[0].name;
-        return typeof c === 'string' ? c : c.name;
-      };
-      return getCatName(a.category).localeCompare(getCatName(b.category));
-    });
-  }
-  
-  return meds;
-});
 
 const isCategoryActive = (category: string): boolean => {
   return selectedCategory.value === category;
@@ -437,7 +319,7 @@ onMounted(async () => {
       <!-- Results Count -->
       <div v-if="!loading && !error" class="flex justify-between items-center mb-6">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Showing <span class="font-semibold text-gray-900 dark:text-white">{{ filteredMedications.length }}</span> medications
+          Showing <span class="font-semibold text-gray-900 dark:text-white">{{ pagination.total }}</span> medications
         </p>
       </div>
 
@@ -456,14 +338,14 @@ onMounted(async () => {
 
       <!-- Empty State -->
       <EmptyState
-        v-else-if="filteredMedications.length === 0"
+        v-else-if="allMedications.length === 0"
         type="search"
         @action="clearFilters"
       />
 
       <!-- Medications Grid -->
-      <div v-else :key="`medications-grid-${filteredMedications.length}-${loading}`" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <template v-for="(medication, index) in filteredMedications" :key="`med-${medication.id}-${selectedCategory}-${selectedForm}-${selectedBrand}`">
+      <div v-else :key="`medications-grid-${allMedications.length}-${loading}`" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <template v-for="(medication, index) in allMedications" :key="`med-${medication.id}-${selectedCategory}-${selectedForm}-${selectedBrand}`">
           <!-- Z3: inject ad at position 4 (before index 3) -->
           <NativeCardAd
             v-if="index === 3 && medInlineAd"
@@ -586,7 +468,7 @@ onMounted(async () => {
         </template><!-- end medication template -->
       </div>
 
-      <div v-if="!loading && !error && filteredMedications.length > 0" class="mt-8">
+      <div v-if="!loading && !error && allMedications.length > 0" class="mt-8">
         <Pagination
           :current-page="pagination.page"
           :total-pages="pagination.lastPage"
