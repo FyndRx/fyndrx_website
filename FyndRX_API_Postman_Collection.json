@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "FyndRX API",
-        "description": "Complete API collection for FyndRX e-Pharmacy Platform\n\n**Authentication:**\n- **Public Browsing Endpoints** (API key only):\n  • Drug search & viewing\n  • Pharmacy search & prices\n  • Reviews (viewing only)\n  • Forms (viewing only)\n  • Recent/Top searched drugs\n  • Blog posts\n  • Authentication endpoints\n  • Consultations (create, stats, by type)\n  • Stats & Analytics (platform, search, user behavior, revenue, content, pharmacy/drug performance, real-time)\n\n- **Authenticated Endpoints** (Bearer token required):\n  • User profile & settings\n  • Cart operations\n  • Orders\n  • Prescriptions (user-specific)\n  • Consultations (full CRUD + actions)\n  • Reviews (create/update/delete)\n  • Favorites (drugs & pharmacies - add, remove, list, check, bulk operations)\n  • Saved drugs (legacy endpoints)\n  • Recently viewed (user-specific)\n  • Notifications\n\n**Setup:**\n1. Set API_KEY in your .env file\n2. Set the api_key variable in Postman collection\n3. Login to get access_token for authenticated endpoints\n\n**Pagination:**\nMost list endpoints now support pagination with 'page' and 'per_page' query parameters. Default per_page is 15. All paginated responses follow the format:\n```json\n{\n  \"data\": [...],\n  \"meta\": {\n    \"current_page\": 1,\n    \"per_page\": 15,\n    \"total\": 100,\n    \"last_page\": 7,\n    \"from\": 1,\n    \"to\": 15\n  }\n}\n```\n\n**Stats & Analytics:**\nAll stats endpoints support date range filtering with 'period' parameter (today, week, month, year, last_7_days, last_30_days, last_90_days, all) or custom range with 'from' and 'to' date parameters (YYYY-MM-DD format).\n\n**Favorites:**\nFavorites endpoints allow users to save drugs and pharmacies for quick access. Drugs are stored in saved_drugs table, pharmacies are stored in user's favorite_pharmacies JSON column. Supports bulk operations for efficiency.",
+        "description": "Complete API collection for FyndRX e-Pharmacy Platform\n\n**Authentication:**\n- **Public Browsing Endpoints** (API key only):\n  \u2022 Drug search & viewing\n  \u2022 Pharmacy search & prices\n  \u2022 Reviews (viewing only)\n  \u2022 Forms (viewing only)\n  \u2022 Recent/Top searched drugs\n  \u2022 Blog posts\n  \u2022 Authentication endpoints\n  \u2022 Consultations (create, stats, by type)\n  \u2022 Stats & Analytics (platform, search, user behavior, revenue, content, pharmacy/drug performance, real-time)\n\n- **Authenticated Endpoints** (Bearer token required):\n  \u2022 User profile & settings\n  \u2022 Cart operations\n  \u2022 Orders\n  \u2022 Prescriptions (user-specific)\n  \u2022 Consultations (full CRUD + actions)\n  \u2022 Reviews (create/update/delete)\n  \u2022 Favorites (drugs & pharmacies - add, remove, list, check, bulk operations)\n  \u2022 Saved drugs (legacy endpoints)\n  \u2022 Recently viewed (user-specific)\n  \u2022 Notifications\n\n**Setup:**\n1. Set API_KEY in your .env file\n2. Set the api_key variable in Postman collection\n3. Login to get access_token for authenticated endpoints\n\n**Pagination:**\nMost list endpoints now support pagination with 'page' and 'per_page' query parameters. Default per_page is 15. All paginated responses follow the format:\n```json\n{\n  \"data\": [...],\n  \"meta\": {\n    \"current_page\": 1,\n    \"per_page\": 15,\n    \"total\": 100,\n    \"last_page\": 7,\n    \"from\": 1,\n    \"to\": 15\n  }\n}\n```\n\n**Stats & Analytics:**\nAll stats endpoints support date range filtering with 'period' parameter (today, week, month, year, last_7_days, last_30_days, last_90_days, all) or custom range with 'from' and 'to' date parameters (YYYY-MM-DD format).\n\n**Favorites:**\nFavorites endpoints allow users to save drugs and pharmacies for quick access. Drugs are stored in saved_drugs table, pharmacies are stored in user's favorite_pharmacies JSON column. Supports bulk operations for efficiency.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "version": "2.11.0"
     },
@@ -28,9 +28,9 @@
         },
         {
             "key": "api_key",
-            "value": "",
+            "value": "8c3436fcf398bab6c635c6985839d174defb666de992d76ab7a28a03484445c4",
             "type": "string",
-            "description": "API key for public endpoints (set in .env as API_KEY) — do not hardcode here"
+            "description": "API key for public endpoints (set in .env as API_KEY)"
         },
         {
             "key": "refresh_token",
@@ -63,25 +63,25 @@
             "key": "pharmacy_id",
             "value": "019e9bb6-baa7-70c6-bd1a-6308e0106866",
             "type": "string",
-            "description": "UUID of MUDI CHEMIST — from seeded data"
+            "description": "UUID of MUDI CHEMIST \u2014 from seeded data"
         },
         {
             "key": "pharmacy_branch_id",
             "value": "019e9bb6-baa9-737c-9e3f-0b251cb062f6",
             "type": "string",
-            "description": "UUID of MUDI CHEMIST - OSU branch — from seeded data"
+            "description": "UUID of MUDI CHEMIST - OSU branch \u2014 from seeded data"
         },
         {
             "key": "product_id",
             "value": "019e9bb6-ba54-71a1-9de4-da6216739e01",
             "type": "string",
-            "description": "UUID of PANADOL TABLETS 500mg — from seeded data"
+            "description": "UUID of PANADOL TABLETS 500mg \u2014 from seeded data"
         },
         {
             "key": "pharmacy_drug_price_id",
             "value": "019e9bb6-bc5b-720e-9c7f-6379ef191b28",
             "type": "string",
-            "description": "UUID of Panadol 500mg price at Mudi Chemist — from seeded data"
+            "description": "UUID of Panadol 500mg price at Mudi Chemist \u2014 from seeded data"
         },
         {
             "key": "review_id",
@@ -93,13 +93,13 @@
             "key": "pharmacy_application_id",
             "value": "019e9bb6-bdd6-729f-8ba5-64e25264f2b7",
             "type": "string",
-            "description": "UUID of PrimeCare Drugstore draft application — from seeded data"
+            "description": "UUID of PrimeCare Drugstore draft application \u2014 from seeded data"
         },
         {
             "key": "post_id",
             "value": "c810f98b-5223-4beb-9c6a-36880d51f0ca",
             "type": "string",
-            "description": "UUID of blog post — from seeded data"
+            "description": "UUID of blog post \u2014 from seeded data"
         },
         {
             "key": "post_slug",
@@ -110,7 +110,7 @@
     ],
     "item": [
         {
-            "name": "⚙️ Platform Settings & Status",
+            "name": "\u2699\ufe0f Platform Settings & Status",
             "description": "Endpoints for retrieving global platform configuration, such as maintenance mode status, application versions, and global delivery fees. \n\n**Note**: These endpoints are heavily cached and highly available, making them safe to poll on application boot.",
             "item": [
                 {
@@ -139,7 +139,7 @@
                                 "status"
                             ]
                         },
-                        "description": "### 🌐 Platform Status Check\n\nRetrieves the current public configuration for the FyndRX platform. This includes critical flags like `maintenance_mode`.\n\n**Rate Limit**: `120 requests/minute` (api:public throttle group).\n\n#### 💡 Pro-tip for Frontend:\nCall this endpoint when the app boots up. If `maintenance_mode` is `true`, immediately overlay a maintenance screen using the provided `maintenance_message` and block further API calls to save bandwidth."
+                        "description": "### \ud83c\udf10 Platform Status Check\n\nRetrieves the current public configuration for the FyndRX platform. This includes critical flags like `maintenance_mode`.\n\n**Rate Limit**: `120 requests/minute` (api:public throttle group).\n\n#### \ud83d\udca1 Pro-tip for Frontend:\nCall this endpoint when the app boots up. If `maintenance_mode` is `true`, immediately overlay a maintenance screen using the provided `maintenance_message` and block further API calls to save bandwidth."
                     },
                     "response": []
                 }
@@ -174,7 +174,7 @@
                                 "user-otp-send"
                             ]
                         },
-                        "description": "# 📱 Send Registration OTP\n\nInitiate the registration or password reset process by sending an OTP to the user's phone.\n\n### Usage\nCall this endpoint first when a user wants to sign up or reset their password.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | The user's mobile number. Formats like `024...` or `+233...` are accepted. |\n\n### Optional Fields\n| Field | Type | Description |\n|---|---|---|\n| `email` | string | Backup email address. |\n| `reset_password` | boolean | Set to `true` if this is for a password reset flow. Checks if user exists. |"
+                        "description": "# \ud83d\udcf1 Send Registration OTP\n\nInitiate the registration or password reset process by sending an OTP to the user's phone.\n\n### Usage\nCall this endpoint first when a user wants to sign up or reset their password.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | The user's mobile number. Formats like `024...` or `+233...` are accepted. |\n\n### Optional Fields\n| Field | Type | Description |\n|---|---|---|\n| `email` | string | Backup email address. |\n| `reset_password` | boolean | Set to `true` if this is for a password reset flow. Checks if user exists. |"
                     }
                 },
                 {
@@ -202,7 +202,7 @@
                                 "user-otp-verify"
                             ]
                         },
-                        "description": "# ✅ Verify OTP\n\nVerify the OTP sent to the user's phone.\n\n### Usage\nCall this after the user enters the code they received.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | The number the OTP was sent to. |\n| `otp` | string | The 4-6 digit code received. |"
+                        "description": "# \u2705 Verify OTP\n\nVerify the OTP sent to the user's phone.\n\n### Usage\nCall this after the user enters the code they received.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | The number the OTP was sent to. |\n| `otp` | string | The 4-6 digit code received. |"
                     }
                 },
                 {
@@ -230,7 +230,7 @@
                                 "register"
                             ]
                         },
-                        "description": "# 📝 Complete Registration\n\nCreate a new user account after successful phone verification.\n\n### Usage\nSubmit this form to create the account. Requires the valid OTP again for security confirmation.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | User's first name. |\n| `lastname` | string | User's last name. |\n| `email` | email | Unique email address. |\n| `phone_number` | string | Unique phone number. |\n| `password` | string | Min 8 characters. |\n| `otp` | string | The valid OTP code for final verification. |"
+                        "description": "# \ud83d\udcdd Complete Registration\n\nCreate a new user account after successful phone verification.\n\n### Usage\nSubmit this form to create the account. Requires the valid OTP again for security confirmation.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | User's first name. |\n| `lastname` | string | User's last name. |\n| `email` | email | Unique email address. |\n| `phone_number` | string | Unique phone number. |\n| `password` | string | Min 8 characters. |\n| `otp` | string | The valid OTP code for final verification. |"
                     }
                 },
                 {
@@ -276,7 +276,7 @@
                                 "login"
                             ]
                         },
-                        "description": "# 🔓 Login\n\nAuthenticate a user and retrieve an access token.\n\n### Auto-Configuration\n> **Note:** This request automatically sets the `access_token` collection variable upon success. You don't need to copy-paste it manually!\n\n### Inputs\n| Field | Type | Description |\n|---|---|---|\n| `login` | string | **Required**. Either an **Email** or **Phone Number**. |\n| `password` | string | **Required**. User's password. |"
+                        "description": "# \ud83d\udd13 Login\n\nAuthenticate a user and retrieve an access token.\n\n### Auto-Configuration\n> **Note:** This request automatically sets the `access_token` collection variable upon success. You don't need to copy-paste it manually!\n\n### Inputs\n| Field | Type | Description |\n|---|---|---|\n| `login` | string | **Required**. Either an **Email** or **Phone Number**. |\n| `password` | string | **Required**. User's password. |"
                     }
                 },
                 {
@@ -304,7 +304,7 @@
                                 "password-reset"
                             ]
                         },
-                        "description": "# 🔐 Reset Password\n\nSet a new password for the user.\n\n### Flow\n1. Call `Send OTP` with `reset_password: true`.\n2. User receives code.\n3. Call this endpoint with the code and new password.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | User's phone. |\n| `otp` | string | Verification code. |\n| `password` | string | New password (min 8 chars). |\n| `password_confirmation` | string | Must match `password`. |"
+                        "description": "# \ud83d\udd10 Reset Password\n\nSet a new password for the user.\n\n### Flow\n1. Call `Send OTP` with `reset_password: true`.\n2. User receives code.\n3. Call this endpoint with the code and new password.\n\n### Required Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | User's phone. |\n| `otp` | string | Verification code. |\n| `password` | string | New password (min 8 chars). |\n| `password_confirmation` | string | Must match `password`. |"
                     }
                 },
                 {
@@ -332,7 +332,7 @@
                                 "delete-account"
                             ]
                         },
-                        "description": "# ⚠️ Delete Account\n\nPermanently delete a user account.\n\n### Warning\nThis action is irreversible. All user data, including order history and profiles, will be removed or anonymized.\n\n### Requirements\nUser must provide their password to confirm deletion."
+                        "description": "# \u26a0\ufe0f Delete Account\n\nPermanently delete a user account.\n\n### Warning\nThis action is irreversible. All user data, including order history and profiles, will be removed or anonymized.\n\n### Requirements\nUser must provide their password to confirm deletion."
                     }
                 },
                 {
@@ -350,7 +350,7 @@
                                 "logout"
                             ]
                         },
-                        "description": "# 👋 Logout\n\nInvalidate the current access token.\n\n### Headers\nRequires `Authorization: Bearer <token>`."
+                        "description": "# \ud83d\udc4b Logout\n\nInvalidate the current access token.\n\n### Headers\nRequires `Authorization: Bearer <token>`."
                     }
                 },
                 {
@@ -394,7 +394,7 @@
                                 "test-signup"
                             ]
                         },
-                        "description": "# 🧪 Test Registration\n\n**DEVELOPMENT ONLY**\n\nSkip SMS verification to quickly create a test user."
+                        "description": "# \ud83e\uddea Test Registration\n\n**DEVELOPMENT ONLY**\n\nSkip SMS verification to quickly create a test user."
                     }
                 },
                 {
@@ -438,7 +438,7 @@
                                 "refresh"
                             ]
                         },
-                        "description": "# 🔄 Refresh Access Token\n\nRequest a new short-lived access token using a rotating refresh token.\n\n### Web (SPA) Flow\nFor browsers, the `refresh_token` is sent automatically in an `HttpOnly` cookie. No body payload is required.\n\n### Mobile / Native Flow\nPass the `refresh_token` in the request body as JSON.\n\n### Post-Request Script\nAutomatically updates the `access_token` and `refresh_token` variables in your Postman collection upon success."
+                        "description": "# \ud83d\udd04 Refresh Access Token\n\nRequest a new short-lived access token using a rotating refresh token.\n\n### Web (SPA) Flow\nFor browsers, the `refresh_token` is sent automatically in an `HttpOnly` cookie. No body payload is required.\n\n### Mobile / Native Flow\nPass the `refresh_token` in the request body as JSON.\n\n### Post-Request Script\nAutomatically updates the `access_token` and `refresh_token` variables in your Postman collection upon success."
                     }
                 },
                 {
@@ -462,7 +462,7 @@
                                 "sessions"
                             ]
                         },
-                        "description": "# 📱 Get Active Sessions\n\nRetrieve a list of all active login sessions and devices associated with the authenticated user."
+                        "description": "# \ud83d\udcf1 Get Active Sessions\n\nRetrieve a list of all active login sessions and devices associated with the authenticated user."
                     }
                 },
                 {
@@ -495,7 +495,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🚫 Revoke Session\n\nRevoke a specific active session, forcing that device to log out.\n\n### URL Parameters\n*   `id`: The unique session ID (obtained from the `Get Active Sessions` response)."
+                        "description": "# \ud83d\udeab Revoke Session\n\nRevoke a specific active session, forcing that device to log out.\n\n### URL Parameters\n*   `id`: The unique session ID (obtained from the `Get Active Sessions` response)."
                     }
                 }
             ]
@@ -526,7 +526,7 @@
                                 "get"
                             ]
                         },
-                        "description": "# 👤 Get Profile\n\nRetrieve the authenticated user's profile information.\n\n### Response Includes\n*   Basic info (Name, Email, Phone)\n*   Member ID\n*   Profile Picture URL\n*   Address\n*   Favorite Pharmacies"
+                        "description": "# \ud83d\udc64 Get Profile\n\nRetrieve the authenticated user's profile information.\n\n### Response Includes\n*   Basic info (Name, Email, Phone)\n*   Member ID\n*   Profile Picture URL\n*   Address\n*   Favorite Pharmacies"
                     }
                 },
                 {
@@ -555,7 +555,7 @@
                                 "update"
                             ]
                         },
-                        "description": "# ✏️ Update Profile\n\nUpdate personal information.\n\n### Supports Partial Updates\nYou can send only the fields you want to change.\n\n### Mutable Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | First Name |\n| `lastname` | string | Last Name |\n| `email` | email | Must be unique. |\n| `phone_number` | string | Must be unique. |\n| `dob` | date | Date of Birth (YYYY-MM-DD). |\n| `gender` | string | `male`, `female`, `other`, `prefer_not_to_say` |\n| `gps_code` | string | Digital address (e.g., GA-183-2011) |\n| `address` | string | Physical address. |"
+                        "description": "# \u270f\ufe0f Update Profile\n\nUpdate personal information.\n\n### Supports Partial Updates\nYou can send only the fields you want to change.\n\n### Mutable Fields\n| Field | Type | Description |\n|---|---|---|\n| `firstname` | string | First Name |\n| `lastname` | string | Last Name |\n| `email` | email | Must be unique. |\n| `phone_number` | string | Must be unique. |\n| `dob` | date | Date of Birth (YYYY-MM-DD). |\n| `gender` | string | `male`, `female`, `other`, `prefer_not_to_say` |\n| `gps_code` | string | Digital address (e.g., GA-183-2011) |\n| `address` | string | Physical address. |"
                     }
                 },
                 {
@@ -591,7 +591,7 @@
                                 "upload"
                             ]
                         },
-                        "description": "# 📸 Upload Picture\n\nSet a profile picture for the first time.\n\n### Requirements\n*   **Format**: JPEG, PNG, JPG, GIF\n*   **Max Size**: 2MB"
+                        "description": "# \ud83d\udcf8 Upload Picture\n\nSet a profile picture for the first time.\n\n### Requirements\n*   **Format**: JPEG, PNG, JPG, GIF\n*   **Max Size**: 2MB"
                     }
                 },
                 {
@@ -627,7 +627,7 @@
                                 "update"
                             ]
                         },
-                        "description": "# 🔄 Replace Picture\n\nReplace the existing profile picture.\n\n### Logic\nDeletes the old image from storage before saving the new one."
+                        "description": "# \ud83d\udd04 Replace Picture\n\nReplace the existing profile picture.\n\n### Logic\nDeletes the old image from storage before saving the new one."
                     }
                 }
             ]
@@ -669,7 +669,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🔍 Smart Hybrid Search\n\nAdvanced hybrid search across products, generic drugs, brands, and categories. Uses a tiered confidence scoring system to determine the most relevant result.\n\n### 🎯 Confidence Tiers\n1.  **Navigational (Exact Match)**: If query matches a category or brand name exactly, it returns a navigational top_match.\n2.  **Transactional (Product Match)**: Search for specific combinations like \"Panadol 500mg syrup\".\n3.  **Informational (Broad Match)**: Fallback search across names and descriptions.\n\n### 📦 Structured Results\n- `top_match`: The single best result for navigation (navigate vs results).\n- `results.products`: Specific drug variants (e.g. Panadol Tablet 500mg).\n- `results.generics`: Generic medication groups (e.g. Paracetamol).\n- `results.brands`: Pharmaceutical brands.\n- `results.categories`: Medical categories.\n\n### 📊 Analytics Tracking\nWhen `track=1` is passed, the server logs the search query and the resolved entity for personalized recommendations and trends."
+                        "description": "# \ud83d\udd0d Smart Hybrid Search\n\nAdvanced hybrid search across products, generic drugs, brands, and categories. Uses a tiered confidence scoring system to determine the most relevant result.\n\n### \ud83c\udfaf Confidence Tiers\n1.  **Navigational (Exact Match)**: If query matches a category or brand name exactly, it returns a navigational top_match.\n2.  **Transactional (Product Match)**: Search for specific combinations like \"Panadol 500mg syrup\".\n3.  **Informational (Broad Match)**: Fallback search across names and descriptions.\n\n### \ud83d\udce6 Structured Results\n- `top_match`: The single best result for navigation (navigate vs results).\n- `results.products`: Specific drug variants (e.g. Panadol Tablet 500mg).\n- `results.generics`: Generic medication groups (e.g. Paracetamol).\n- `results.brands`: Pharmaceutical brands.\n- `results.categories`: Medical categories.\n\n### \ud83d\udcca Analytics Tracking\nWhen `track=1` is passed, the server logs the search query and the resolved entity for personalized recommendations and trends."
                     }
                 },
                 {
@@ -697,7 +697,38 @@
                                 "track"
                             ]
                         },
-                        "description": "# 📊 Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
+                        "description": "# \ud83d\udcca Track Search\n\nManually log a search query. Useful for client-side tracking when the `track=1` param on Smart Search is not being used.\n\n### Body Fields\n| Field | Type | Description |\n|---|---|---|\n| `query` | string | **Required**. The search text. |\n| `match_type` | string | Optional. One of `drug`, `brand`, `category`, `product`. |\n| `match_id` | integer | Optional. ID of the matched entity. |\n| `user_id` | integer | Optional. Logged-in user ID (resolved server-side for authenticated requests). |"
+                    }
+                },
+                {
+                    "name": "Track Search",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"query\": \"paracetamol\",\n  \"match_type\": \"drug\",\n  \"match_id\": 123\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/search/track",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "search",
+                                "track"
+                            ]
+                        }
                     }
                 }
             ]
@@ -943,7 +974,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"drugId\": 1,\n      \"drug_price_id\": 1,\n      \"name\": \"GENERIC • AMOXICILLIN • 500MG • TABLET • Pack\",\n      \"description\": \"Antibiotic for bacterial infections\",\n      \"price\": 35.00,\n      \"inStock\": true,\n      \"stockQuantity\": 50,\n      \"category\": [\"Antibiotics\"],\n      \"image\": null,\n      \"predefinedQuantities\": [1, 2, 5],\n      \"brands\": [\n        {\n          \"id\": 1,\n          \"brand_id\": 1,\n          \"name\": \"Generic\"\n        }\n      ],\n      \"forms\": [\n        {\n          \"id\": 1,\n          \"form_id\": 1,\n          \"form_name\": \"Tablet\"\n        }\n      ],\n      \"requiresPrescription\": true\n    }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"per_page\": 15,\n    \"total\": 100,\n    \"last_page\": 7,\n    \"from\": 1,\n    \"to\": 15\n  }\n}"
+                            "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"drugId\": 1,\n      \"drug_price_id\": 1,\n      \"name\": \"GENERIC \u2022 AMOXICILLIN \u2022 500MG \u2022 TABLET \u2022 Pack\",\n      \"description\": \"Antibiotic for bacterial infections\",\n      \"price\": 35.00,\n      \"inStock\": true,\n      \"stockQuantity\": 50,\n      \"category\": [\"Antibiotics\"],\n      \"image\": null,\n      \"predefinedQuantities\": [1, 2, 5],\n      \"brands\": [\n        {\n          \"id\": 1,\n          \"brand_id\": 1,\n          \"name\": \"Generic\"\n        }\n      ],\n      \"forms\": [\n        {\n          \"id\": 1,\n          \"form_id\": 1,\n          \"form_name\": \"Tablet\"\n        }\n      ],\n      \"requiresPrescription\": true\n    }\n  ],\n  \"meta\": {\n    \"current_page\": 1,\n    \"per_page\": 15,\n    \"total\": 100,\n    \"last_page\": 7,\n    \"from\": 1,\n    \"to\": 15\n  }\n}"
                         }
                     ]
                 },
@@ -1056,7 +1087,7 @@
                                 }
                             ]
                         },
-                        "description": "### 🏷️ Price Comparison\n\nReturns exact pricing and availability for a specific drug variant across all pharmacies.\n\n**Standardized Output**: Now uses the `PharmacyDrugPriceResource` format, providing a clean, flat object with product metadata and nested pharmacy details.\n\n#### Mandatory Filter\nWhile you can provide `drug_id`, `brand_id`, etc., it is highly recommended to pass a single `product_id` for the most accurate variant matching."
+                        "description": "### \ud83c\udff7\ufe0f Price Comparison\n\nReturns exact pricing and availability for a specific drug variant across all pharmacies.\n\n**Standardized Output**: Now uses the `PharmacyDrugPriceResource` format, providing a clean, flat object with product metadata and nested pharmacy details.\n\n#### Mandatory Filter\nWhile you can provide `drug_id`, `brand_id`, etc., it is highly recommended to pass a single `product_id` for the most accurate variant matching."
                     }
                 },
                 {
@@ -1305,15 +1336,28 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacies/services",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacies", "services"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacies",
+                                "services"
+                            ]
                         },
-                        "description": "# 💊 Pharmacy Services Catalog\n\nReturns all **active** pharmacy services grouped by category. Call this once on app boot to build the service picker UI.\n\n### Response shape\n```json\n{\n  \"data\": [\n    {\n      \"category\": \"clinical\",\n      \"label\": \"Clinical\",\n      \"services\": [\n        { \"id\": 4, \"name\": \"Pharmacist Consultation\", \"slug\": \"pharmacist-consultation\", \"description\": \"...\", \"icon\": \"heroicon-o-chat-bubble-left-right\" }\n      ]\n    }\n  ]\n}\n```\n\n### Categories\n`dispensing` · `clinical` · `diagnostic` · `lab` · `delivery` · `wellness` · `specialized` · `operational`"
+                        "description": "# \ud83d\udc8a Pharmacy Services Catalog\n\nReturns all **active** pharmacy services grouped by category. Call this once on app boot to build the service picker UI.\n\n### Response shape\n```json\n{\n  \"data\": [\n    {\n      \"category\": \"clinical\",\n      \"label\": \"Clinical\",\n      \"services\": [\n        { \"id\": 4, \"name\": \"Pharmacist Consultation\", \"slug\": \"pharmacist-consultation\", \"description\": \"...\", \"icon\": \"heroicon-o-chat-bubble-left-right\" }\n      ]\n    }\n  ]\n}\n```\n\n### Categories\n`dispensing` \u00b7 `clinical` \u00b7 `diagnostic` \u00b7 `lab` \u00b7 `delivery` \u00b7 `wellness` \u00b7 `specialized` \u00b7 `operational`"
                     }
                 },
                 {
@@ -1321,20 +1365,56 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacies?lat=5.6037&lng=-0.1870&radius=20&page=1&per_page=15",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacies"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacies"
+                            ],
                             "query": [
-                                {"key": "q", "value": "mudi", "description": "Optional: search by name", "disabled": true},
-                                {"key": "lat", "value": "5.6037", "description": "User latitude for distance sorting"},
-                                {"key": "lng", "value": "-0.1870", "description": "User longitude for distance sorting"},
-                                {"key": "radius", "value": "20", "description": "Search radius in km"},
-                                {"key": "is_open", "value": "true", "description": "Filter open pharmacies only", "disabled": true},
-                                {"key": "page", "value": "1"},
-                                {"key": "per_page", "value": "15"}
+                                {
+                                    "key": "q",
+                                    "value": "mudi",
+                                    "description": "Optional: search by name",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "lat",
+                                    "value": "5.6037",
+                                    "description": "User latitude for distance sorting"
+                                },
+                                {
+                                    "key": "lng",
+                                    "value": "-0.1870",
+                                    "description": "User longitude for distance sorting"
+                                },
+                                {
+                                    "key": "radius",
+                                    "value": "20",
+                                    "description": "Search radius in km"
+                                },
+                                {
+                                    "key": "is_open",
+                                    "value": "true",
+                                    "description": "Filter open pharmacies only",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                }
                             ]
                         },
                         "description": "Search and list pharmacies with optional geo-filtering."
@@ -1345,15 +1425,28 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacies/{{pharmacy_id}}",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacies", "{{pharmacy_id}}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacies",
+                                "{{pharmacy_id}}"
+                            ]
                         },
-                        "description": "# 🏥 Pharmacy Detail\n\nReturns full pharmacy profile including services (as objects) and branches (with their own services, delivery, and payment fields).\n\n### Services shape (in response)\n```json\n\"services\": [\n  { \"id\": 1, \"name\": \"Prescription Dispensing\", \"slug\": \"prescription-dispensing\", \"category\": \"dispensing\", \"description\": \"...\", \"icon\": \"...\" }\n]\n```\n\n### Branch shape\nEach branch includes: `is_active`, `is_open`, `working_hours`, `languages`, `services`, `delivery` (available/radius_km/base_fee/fee_per_km), `accepted_payment_methods`.\n\nBranch **null = inherit** from parent pharmacy for `working_hours`, `languages`, and payment methods."
+                        "description": "# \ud83c\udfe5 Pharmacy Detail\n\nReturns full pharmacy profile including services (as objects) and branches (with their own services, delivery, and payment fields).\n\n### Services shape (in response)\n```json\n\"services\": [\n  { \"id\": 1, \"name\": \"Prescription Dispensing\", \"slug\": \"prescription-dispensing\", \"category\": \"dispensing\", \"description\": \"...\", \"icon\": \"...\" }\n]\n```\n\n### Branch shape\nEach branch includes: `is_active`, `is_open`, `working_hours`, `languages`, `services`, `delivery` (available/radius_km/base_fee/fee_per_km), `accepted_payment_methods`.\n\nBranch **null = inherit** from parent pharmacy for `working_hours`, `languages`, and payment methods."
                     }
                 },
                 {
@@ -1361,15 +1454,29 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacies/{{pharmacy_id}}/branches",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacies", "{{pharmacy_id}}", "branches"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacies",
+                                "{{pharmacy_id}}",
+                                "branches"
+                            ]
                         },
-                        "description": "# 🏪 Pharmacy Branches\n\nReturns all branches for a pharmacy. Each branch includes:\n\n| Field | Notes |\n|---|---|\n| `services` | Branch-specific services; falls back to pharmacy services if branch has none |\n| `working_hours` | Branch hours override; null = inherit from pharmacy |\n| `languages` | Languages spoken at this branch; null = inherit from pharmacy |\n| `delivery` | Branch-level delivery settings (`available`, `radius_km`, `base_fee`, `fee_per_km`) |\n| `accepted_payment_methods` | `['platform', 'direct']`; null = inherit from pharmacy |\n| `is_active` | Whether this branch is currently operational |\n| `is_open` | Current open/closed status |\n| `banner_image` | Branch-specific banner image URL |"
+                        "description": "# \ud83c\udfea Pharmacy Branches\n\nReturns all branches for a pharmacy. Each branch includes:\n\n| Field | Notes |\n|---|---|\n| `services` | Branch-specific services; falls back to pharmacy services if branch has none |\n| `working_hours` | Branch hours override; null = inherit from pharmacy |\n| `languages` | Languages spoken at this branch; null = inherit from pharmacy |\n| `delivery` | Branch-level delivery settings (`available`, `radius_km`, `base_fee`, `fee_per_km`) |\n| `accepted_payment_methods` | `['platform', 'direct']`; null = inherit from pharmacy |\n| `is_active` | Whether this branch is currently operational |\n| `is_open` | Current open/closed status |\n| `banner_image` | Branch-specific banner image URL |"
                     }
                 },
                 {
@@ -1377,19 +1484,41 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacies/{{pharmacy_id}}/delivery-options?lat=5.6037&lng=-0.1870",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacies", "{{pharmacy_id}}", "delivery-options"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacies",
+                                "{{pharmacy_id}}",
+                                "delivery-options"
+                            ],
                             "query": [
-                                {"key": "lat", "value": "5.6037", "description": "User latitude for fee calculation"},
-                                {"key": "lng", "value": "-0.1870", "description": "User longitude for fee calculation"}
+                                {
+                                    "key": "lat",
+                                    "value": "5.6037",
+                                    "description": "User latitude for fee calculation"
+                                },
+                                {
+                                    "key": "lng",
+                                    "value": "-0.1870",
+                                    "description": "User longitude for fee calculation"
+                                }
                             ]
                         },
-                        "description": "# 🚚 Delivery Options\n\nReturns available delivery methods for a pharmacy with estimated fees.\n\n**Methods:** `pickup` (always available, fee 0) · `pharmacy_delivery` (if pharmacy delivers) · `fyndrx_delivery` (if platform delivery enabled)\n\nFee = base_fee + (distance_km × fee_per_km) when lat/lng are provided. Without coords, only base fee is returned."
+                        "description": "# \ud83d\ude9a Delivery Options\n\nReturns available delivery methods for a pharmacy with estimated fees.\n\n**Methods:** `pickup` (always available, fee 0) \u00b7 `pharmacy_delivery` (if pharmacy delivers) \u00b7 `fyndrx_delivery` (if platform delivery enabled)\n\nFee = base_fee + (distance_km \u00d7 fee_per_km) when lat/lng are provided. Without coords, only base fee is returned."
                     }
                 },
                 {
@@ -1603,30 +1732,30 @@
                                 {
                                     "key": "brand_id",
                                     "value": "1",
-                                    "description": "Optional: Filter by brand ID (integer — brands table)",
+                                    "description": "Optional: Filter by brand ID (integer \u2014 brands table)",
                                     "disabled": true
                                 },
                                 {
                                     "key": "form_id",
                                     "value": "1",
-                                    "description": "Optional: Filter by form ID (integer — forms table)",
+                                    "description": "Optional: Filter by form ID (integer \u2014 forms table)",
                                     "disabled": true
                                 },
                                 {
                                     "key": "strength_id",
                                     "value": "1",
-                                    "description": "Optional: Filter by strength ID (integer — strengths table). Previously called form_strength_id.",
+                                    "description": "Optional: Filter by strength ID (integer \u2014 strengths table). Previously called form_strength_id.",
                                     "disabled": true
                                 },
                                 {
                                     "key": "uom_id",
                                     "value": "1",
-                                    "description": "Optional: Filter by UOM ID (integer — uoms table). Previously called strength_uom_id.",
+                                    "description": "Optional: Filter by UOM ID (integer \u2014 uoms table). Previously called strength_uom_id.",
                                     "disabled": true
                                 }
                             ]
                         },
-                        "description": "Get prices for a specific drug across all pharmacies. Returns `exact_match` (the variant matching the brand/form/strength/uom filters) and `related_drugs` (other available variants of the same drug).\n\n**Filter params** — all optional, all use direct catalog table IDs:\n- `brand_id` → integer ID from `brands` table\n- `form_id` → integer ID from `forms` table\n- `strength_id` → integer ID from `strengths` table\n- `uom_id` → integer ID from `uoms` table\n\nFiltering and grouping is done via the `product` relationship — no junction table IDs.\n\nDistance sorting available when `lat` + `lng` are provided.",
+                        "description": "Get prices for a specific drug across all pharmacies. Returns `exact_match` (the variant matching the brand/form/strength/uom filters) and `related_drugs` (other available variants of the same drug).\n\n**Filter params** \u2014 all optional, all use direct catalog table IDs:\n- `brand_id` \u2192 integer ID from `brands` table\n- `form_id` \u2192 integer ID from `forms` table\n- `strength_id` \u2192 integer ID from `strengths` table\n- `uom_id` \u2192 integer ID from `uoms` table\n\nFiltering and grouping is done via the `product` relationship \u2014 no junction table IDs.\n\nDistance sorting available when `lat` + `lng` are provided.",
                         "response": [
                             {
                                 "name": "Successful Response",
@@ -1683,7 +1812,7 @@
                                     }
                                 ],
                                 "cookie": [],
-                                "body": "{\n  \"data\": {\n    \"exact_match\": {\n      \"drug_id\": 5,\n      \"name\": \"AMOXIL • AMOXICILLIN • 500MG • CAPSULE\",\n      \"brand\": \"AMOXIL\",\n      \"brand_id\": 2,\n      \"generic_name\": \"AMOXICILLIN\",\n      \"form\": \"CAPSULE\",\n      \"form_id\": 3,\n      \"strength\": \"500\",\n      \"strength_id\": 4,\n      \"uom\": \"Mg\",\n      \"uom_id\": 1,\n      \"image\": null,\n      \"requires_prescription\": true,\n      \"pharmacies\": [\n        {\n          \"pharmacy_id\": \"019e9bb6-baa7-70c6-bd1a-6308e0106866\",\n          \"pharmacy_name\": \"MUDI CHEMIST\",\n          \"logoPath\": null,\n          \"is_open\": true,\n          \"latitude\": 5.5571,\n          \"longitude\": -0.1969,\n          \"location\": { \"lat\": 5.5571, \"lng\": -0.1969 },\n          \"branch_id\": \"019e9bb6-baa9-737c-9e3f-0b251cb062f6\",\n          \"branch_name\": \"MUDI CHEMIST - OSU\",\n          \"price\": 45.00,\n          \"discount_price\": null,\n          \"in_stock\": true,\n          \"stock_quantity\": 120\n        }\n      ]\n    },\n    \"related_drugs\": [\n      {\n        \"drug_id\": 5,\n        \"drug_name\": \"AMOXICILLIN\",\n        \"name\": \"AMOXICILLIN • 250MG • SYRUP\",\n        \"brand\": null,\n        \"brand_id\": null,\n        \"form\": \"SYRUP\",\n        \"form_id\": 5,\n        \"strength\": \"250\",\n        \"strength_id\": 2,\n        \"uom\": \"Mg\",\n        \"uom_id\": 1,\n        \"pharmacy_id\": \"019e9bb6-baa7-70c6-bd1a-6308e0106866\",\n        \"pharmacy_name\": \"MUDI CHEMIST\",\n        \"logoPath\": null,\n        \"is_open\": true,\n        \"branch_id\": \"019e9bb6-baa9-737c-9e3f-0b251cb062f6\",\n        \"branch_name\": \"MUDI CHEMIST - OSU\",\n        \"price\": 28.50,\n        \"discount_price\": 25.00,\n        \"in_stock\": true\n      }\n    ]\n  }\n}"
+                                "body": "{\n  \"data\": {\n    \"exact_match\": {\n      \"drug_id\": 5,\n      \"name\": \"AMOXIL \u2022 AMOXICILLIN \u2022 500MG \u2022 CAPSULE\",\n      \"brand\": \"AMOXIL\",\n      \"brand_id\": 2,\n      \"generic_name\": \"AMOXICILLIN\",\n      \"form\": \"CAPSULE\",\n      \"form_id\": 3,\n      \"strength\": \"500\",\n      \"strength_id\": 4,\n      \"uom\": \"Mg\",\n      \"uom_id\": 1,\n      \"image\": null,\n      \"requires_prescription\": true,\n      \"pharmacies\": [\n        {\n          \"pharmacy_id\": \"019e9bb6-baa7-70c6-bd1a-6308e0106866\",\n          \"pharmacy_name\": \"MUDI CHEMIST\",\n          \"logoPath\": null,\n          \"is_open\": true,\n          \"latitude\": 5.5571,\n          \"longitude\": -0.1969,\n          \"location\": { \"lat\": 5.5571, \"lng\": -0.1969 },\n          \"branch_id\": \"019e9bb6-baa9-737c-9e3f-0b251cb062f6\",\n          \"branch_name\": \"MUDI CHEMIST - OSU\",\n          \"price\": 45.00,\n          \"discount_price\": null,\n          \"in_stock\": true,\n          \"stock_quantity\": 120\n        }\n      ]\n    },\n    \"related_drugs\": [\n      {\n        \"drug_id\": 5,\n        \"drug_name\": \"AMOXICILLIN\",\n        \"name\": \"AMOXICILLIN \u2022 250MG \u2022 SYRUP\",\n        \"brand\": null,\n        \"brand_id\": null,\n        \"form\": \"SYRUP\",\n        \"form_id\": 5,\n        \"strength\": \"250\",\n        \"strength_id\": 2,\n        \"uom\": \"Mg\",\n        \"uom_id\": 1,\n        \"pharmacy_id\": \"019e9bb6-baa7-70c6-bd1a-6308e0106866\",\n        \"pharmacy_name\": \"MUDI CHEMIST\",\n        \"logoPath\": null,\n        \"is_open\": true,\n        \"branch_id\": \"019e9bb6-baa9-737c-9e3f-0b251cb062f6\",\n        \"branch_name\": \"MUDI CHEMIST - OSU\",\n        \"price\": 28.50,\n        \"discount_price\": 25.00,\n        \"in_stock\": true\n      }\n    ]\n  }\n}"
                             }
                         ]
                     }
@@ -1747,14 +1876,39 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/products?page=1&per_page=15",
-                            "host": ["{{base_url}}"],
-                            "path": ["products"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "products"
+                            ],
                             "query": [
-                                {"key": "page", "value": "1"},
-                                {"key": "per_page", "value": "15"},
-                                {"key": "category", "value": "antibiotics", "description": "Filter by category slug", "disabled": true},
-                                {"key": "brand_id", "value": "1", "description": "Filter by brand ID (integer)", "disabled": true},
-                                {"key": "drug_id", "value": "1", "description": "Filter by drug ID (integer)", "disabled": true}
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "15"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "antibiotics",
+                                    "description": "Filter by category slug",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "brand_id",
+                                    "value": "1",
+                                    "description": "Filter by brand ID (integer)",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "drug_id",
+                                    "value": "1",
+                                    "description": "Filter by drug ID (integer)",
+                                    "disabled": true
+                                }
                             ]
                         },
                         "description": "List all active product SKUs with brand, drug, form, strength, and UOM details."
@@ -1773,8 +1927,13 @@
                         ],
                         "url": {
                             "raw": "{{base_url}}/products/{{product_id}}",
-                            "host": ["{{base_url}}"],
-                            "path": ["products", "{{product_id}}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "products",
+                                "{{product_id}}"
+                            ]
                         },
                         "description": "Retrieve a single product by UUID or slug.\n\n**Accepts:**\n- UUID: `019e9bb6-ba54-71a1-9de4-da6216739e01`\n- Slug: `panadol-tablets-500mg`\n\n**Note:** Integer IDs are no longer valid after the UUID migration."
                     }
@@ -1805,7 +1964,7 @@
                                 "cart"
                             ]
                         },
-                        "description": "### 🛒 Fetch Shopping Cart\n\nRetrieves the user's current shopping cart, grouped intelligently by pharmacy.\n\n**Standardized Items**: Each cart item is now transformed via `PharmacyDrugPriceResource`, providing flattened product data (name, image, dosage) and ensuring snake_case consistency.\n\n**✨ Payment Methods**: Each pharmacy group includes `accepted_payment_methods` (e.g. `['platform', 'direct']`). The frontend **MUST** use these to filter available payment options at checkout.\n\n### Response Structure\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"Medicare\",\n      \"accepted_payment_methods\": [\"platform\", \"direct\"],\n      \"items\": [\n        {\n          \"id\": 10, \n          \"cart_item_id\": 1, \n          \"name\": \"Panadol Tablet 500mg\",\n          \"quantity\": 2,\n          \"price\": 10.50,\n          ...\n        }\n      ],\n      \"subtotal\": 21.00\n    }\n  ],\n  \"total\": 21.00,\n  \"total_items\": 2\n}\n```"
+                        "description": "### \ud83d\uded2 Fetch Shopping Cart\n\nRetrieves the user's current shopping cart, grouped intelligently by pharmacy.\n\n**Standardized Items**: Each cart item is now transformed via `PharmacyDrugPriceResource`, providing flattened product data (name, image, dosage) and ensuring snake_case consistency.\n\n**\u2728 Payment Methods**: Each pharmacy group includes `accepted_payment_methods` (e.g. `['platform', 'direct']`). The frontend **MUST** use these to filter available payment options at checkout.\n\n### Response Structure\n```json\n{\n  \"pharmacies\": [\n    {\n      \"pharmacy_id\": 1,\n      \"pharmacy_name\": \"Medicare\",\n      \"accepted_payment_methods\": [\"platform\", \"direct\"],\n      \"items\": [\n        {\n          \"id\": 10, \n          \"cart_item_id\": 1, \n          \"name\": \"Panadol Tablet 500mg\",\n          \"quantity\": 2,\n          \"price\": 10.50,\n          ...\n        }\n      ],\n      \"subtotal\": 21.00\n    }\n  ],\n  \"total\": 21.00,\n  \"total_items\": 2\n}\n```"
                     }
                 },
                 {
@@ -1833,7 +1992,7 @@
                                 "items"
                             ]
                         },
-                        "description": "# ➕ Add Item\n\nAdd a drug to the cart.\n\n### Fields\n- `pharmacy_drug_price_id`: **Required**. The ID of the specific price/stock listing from a pharmacy (not just the drug ID).\n- `quantity`: **Required**. Min 1, Max 99.\n\n### Logic\n- If item exists, updates quantity (if allowed).\n- Checks stock before adding."
+                        "description": "# \u2795 Add Item\n\nAdd a drug to the cart.\n\n### Fields\n- `pharmacy_drug_price_id`: **Required**. The ID of the specific price/stock listing from a pharmacy (not just the drug ID).\n- `quantity`: **Required**. Min 1, Max 99.\n\n### Logic\n- If item exists, updates quantity (if allowed).\n- Checks stock before adding."
                     }
                 },
                 {
@@ -1862,7 +2021,7 @@
                                 "{{cart_item_id}}"
                             ]
                         },
-                        "description": "# ✏️ Update Quantity\n\nUpdate the quantity of a cart item."
+                        "description": "# \u270f\ufe0f Update Quantity\n\nUpdate the quantity of a cart item."
                     }
                 },
                 {
@@ -1887,7 +2046,7 @@
                                 "{{cart_item_id}}"
                             ]
                         },
-                        "description": "# 🗑️ Remove Item\n\nRemove a single item from the cart."
+                        "description": "# \ud83d\uddd1\ufe0f Remove Item\n\nRemove a single item from the cart."
                     }
                 },
                 {
@@ -1910,7 +2069,7 @@
                                 "cart"
                             ]
                         },
-                        "description": "# 🧹 Clear Cart\n\nRemove all items from the cart."
+                        "description": "# \ud83e\uddf9 Clear Cart\n\nRemove all items from the cart."
                     }
                 },
                 {
@@ -1938,7 +2097,7 @@
                                 "sync"
                             ]
                         },
-                        "description": "# 🔄 Sync Cart\n\nReplace the server-side cart with a local cart (e.g., from Guest session).\n\n### Warning\nThis **overwrites** existing cart items on the server."
+                        "description": "# \ud83d\udd04 Sync Cart\n\nReplace the server-side cart with a local cart (e.g., from Guest session).\n\n### Warning\nThis **overwrites** existing cart items on the server."
                     }
                 }
             ]
@@ -1971,7 +2130,7 @@
                                 "orders"
                             ]
                         },
-                        "description": "### 📦 Create a New Order\n\nSubmits an order for processing.\n\n**🛡️ Payment Enforcement Validation**:\nThis endpoint strictly enforces payment mode configurations set by the Super Admin. If you pass a `payment_method` (e.g., `platform` for online, `direct` for offline) that the specific pharmacy does *not* accept, the API will return a `422 Unprocessable Entity` with a clear error message indicating the accepted methods.\n\n**Rate Limit**: `20 requests/minute` (api:orders throttle group).\n\n# 📦 Create Order\n\nCheckout items from the cart.\n\n### Modes\n1.  **Single Branch Checkout**: Provide `pharmacy_branch_id`. Only items from that branch are ordered.\n2.  **Checkout All**: Omit `pharmacy_branch_id`. Creates multiple orders (one per branch).\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | **Required**. |\n| `delivery_method` | enum | `pickup` or `delivery`. |\n| `payment_method` | enum | `platform` (online) or `direct` (cash/POS). |\n| `delivery_address` | string | Required if method is `delivery`. |\n| `delivery_methods` | array | Map of `branch_id` -> method (for multi-checkout). |\n| `payment_methods` | array | Map of `branch_id` -> method (for multi-checkout). |"
+                        "description": "### \ud83d\udce6 Create a New Order\n\nSubmits an order for processing.\n\n**\ud83d\udee1\ufe0f Payment Enforcement Validation**:\nThis endpoint strictly enforces payment mode configurations set by the Super Admin. If you pass a `payment_method` (e.g., `platform` for online, `direct` for offline) that the specific pharmacy does *not* accept, the API will return a `422 Unprocessable Entity` with a clear error message indicating the accepted methods.\n\n**Rate Limit**: `20 requests/minute` (api:orders throttle group).\n\n# \ud83d\udce6 Create Order\n\nCheckout items from the cart.\n\n### Modes\n1.  **Single Branch Checkout**: Provide `pharmacy_branch_id`. Only items from that branch are ordered.\n2.  **Checkout All**: Omit `pharmacy_branch_id`. Creates multiple orders (one per branch).\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `phone_number` | string | **Required**. |\n| `delivery_method` | enum | `pickup` or `delivery`. |\n| `payment_method` | enum | `platform` (online) or `direct` (cash/POS). |\n| `delivery_address` | string | Required if method is `delivery`. |\n| `delivery_methods` | array | Map of `branch_id` -> method (for multi-checkout). |\n| `payment_methods` | array | Map of `branch_id` -> method (for multi-checkout). |"
                     }
                 },
                 {
@@ -2005,7 +2164,7 @@
                                 }
                             ]
                         },
-                        "description": "# 📜 Order History\n\nList all orders placed by the user."
+                        "description": "# \ud83d\udcdc Order History\n\nList all orders placed by the user."
                     }
                 },
                 {
@@ -2029,7 +2188,7 @@
                                 "{{order_id}}"
                             ]
                         },
-                        "description": "### 📄 Order Details\n\nRetrieves full details of a specific order using the standardized `OrderResource`.\n\n**Schema Update**: All fields are now strictly `snake_case` (e.g., `order_number`, `pharmacy_name`, `delivery_fee`). The `items` array uses standardized drug metadata similar to the cart."
+                        "description": "### \ud83d\udcc4 Order Details\n\nRetrieves full details of a specific order using the standardized `OrderResource`.\n\n**Schema Update**: All fields are now strictly `snake_case` (e.g., `order_number`, `pharmacy_name`, `delivery_fee`). The `items` array uses standardized drug metadata similar to the cart."
                     }
                 },
                 {
@@ -2054,7 +2213,7 @@
                                 "track"
                             ]
                         },
-                        "description": "# 🚚 Track Order\n\nGet tracking timeline.\n\n### Response\n- `current_step`: 1-6 integer.\n- `total_steps`: 5 (Pickup) or 6 (Delivery).\n- `status_history`: Array of status changes."
+                        "description": "# \ud83d\ude9a Track Order\n\nGet tracking timeline.\n\n### Response\n- `current_step`: 1-6 integer.\n- `total_steps`: 5 (Pickup) or 6 (Delivery).\n- `status_history`: Array of status changes."
                     }
                 },
                 {
@@ -2083,7 +2242,7 @@
                                 "cancel"
                             ]
                         },
-                        "description": "# 🚫 Cancel Order\n\nCancel a pending order.\n\n### Restrictions\nCannot cancel if status is `completed` or `processed` (depending on policy)."
+                        "description": "# \ud83d\udeab Cancel Order\n\nCancel a pending order.\n\n### Restrictions\nCannot cancel if status is `completed` or `processed` (depending on policy)."
                     }
                 },
                 {
@@ -2118,7 +2277,7 @@
                                 "upload-prescription"
                             ]
                         },
-                        "description": "# 📎 Upload Rx\n\nUpload a prescription image/PDF for an order that requires it.\nCreates a `Prescription` record linked to the order."
+                        "description": "# \ud83d\udcce Upload Rx\n\nUpload a prescription image/PDF for an order that requires it.\nCreates a `Prescription` record linked to the order."
                     }
                 }
             ]
@@ -2147,7 +2306,7 @@
                                 "prescriptions"
                             ]
                         },
-                        "description": "# 📋 List Prescriptions\n\nGet all prescriptions for the authenticated user.\n\n### Response\nReturns a list of prescriptions, ordered by latest created. Includes `drugs` count."
+                        "description": "# \ud83d\udccb List Prescriptions\n\nGet all prescriptions for the authenticated user.\n\n### Response\nReturns a list of prescriptions, ordered by latest created. Includes `drugs` count."
                     }
                 },
                 {
@@ -2211,7 +2370,7 @@
                                 "prescriptions"
                             ]
                         },
-                        "description": "# ➕ Create Prescription\n\nCreate a new prescription record. This creates the \"folder\" to which you can add drugs later.\n\n### Auto-Generation\nIf `prescription_number` is not provided, it is automatically generated (e.g., `RX-2024-1234`).\n\n### Inputs\n| Field | Type | Description |\n|---|---|---|\n| `prescription_picture` | file | Image of the Rx. |\n| `doctor_name` | string | Optional |\n| `prescription_date` | date | Optional |\n| `expiry_date` | date | Optional. Must be > prescription_date |\n| `status` | string | `active` (default), `pending_approval`, `expired` |"
+                        "description": "# \u2795 Create Prescription\n\nCreate a new prescription record. This creates the \"folder\" to which you can add drugs later.\n\n### Auto-Generation\nIf `prescription_number` is not provided, it is automatically generated (e.g., `RX-2024-1234`).\n\n### Inputs\n| Field | Type | Description |\n|---|---|---|\n| `prescription_picture` | file | Image of the Rx. |\n| `doctor_name` | string | Optional |\n| `prescription_date` | date | Optional |\n| `expiry_date` | date | Optional. Must be > prescription_date |\n| `status` | string | `active` (default), `pending_approval`, `expired` |"
                     }
                 },
                 {
@@ -2235,7 +2394,7 @@
                                 "{{prescription_id}}"
                             ]
                         },
-                        "description": "# 📄 Prescription Details\n\nGet full details including the list of drugs.\n\n### Includes\n*   `user` object\n*   `drugs` array (with `drug`, `brand`, `form`, `uom` details)"
+                        "description": "# \ud83d\udcc4 Prescription Details\n\nGet full details including the list of drugs.\n\n### Includes\n*   `user` object\n*   `drugs` array (with `drug`, `brand`, `form`, `uom` details)"
                     }
                 },
                 {
@@ -2280,7 +2439,7 @@
                                 "{{prescription_id}}"
                             ]
                         },
-                        "description": "# ✏️ Update Prescription\n\nUpdate prescription details.\n\n### Note on File Uploads\nTo update the picture, use `POST` with `_method: PUT` because standard PUT requests do not support `multipart/form-data` file uploads efficiently in some clients."
+                        "description": "# \u270f\ufe0f Update Prescription\n\nUpdate prescription details.\n\n### Note on File Uploads\nTo update the picture, use `POST` with `_method: PUT` because standard PUT requests do not support `multipart/form-data` file uploads efficiently in some clients."
                     }
                 },
                 {
@@ -2304,7 +2463,7 @@
                                 "{{prescription_id}}"
                             ]
                         },
-                        "description": "# 🗑️ Delete Prescription\n\nRemoves the prescription and its associated image."
+                        "description": "# \ud83d\uddd1\ufe0f Delete Prescription\n\nRemoves the prescription and its associated image."
                     }
                 },
                 {
@@ -2333,7 +2492,7 @@
                                 "drugs"
                             ]
                         },
-                        "description": "# 💊 Add Single Drug\n\nAdd one medication to this prescription.\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `drug_id` | int | **Required**. ID of the generic drug. |\n| `quantity` | int | **Required**. |\n| `dose` | string | e.g. \"500mg\". |\n| `brand_id` | int | Optional. Specific brand. |\n| `form_id` | int | Optional. Tablet, Syrup, etc. |\n| `frequency` | string | Optional. e.g. \"1-0-1\" |\n| `duration` | string | Optional. e.g. \"5 days\" |"
+                        "description": "# \ud83d\udc8a Add Single Drug\n\nAdd one medication to this prescription.\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `drug_id` | int | **Required**. ID of the generic drug. |\n| `quantity` | int | **Required**. |\n| `dose` | string | e.g. \"500mg\". |\n| `brand_id` | int | Optional. Specific brand. |\n| `form_id` | int | Optional. Tablet, Syrup, etc. |\n| `frequency` | string | Optional. e.g. \"1-0-1\" |\n| `duration` | string | Optional. e.g. \"5 days\" |"
                     }
                 },
                 {
@@ -2362,7 +2521,7 @@
                                 "store-drugs-bulk"
                             ]
                         },
-                        "description": "# 📦 Bulk Add Drugs\n\nAdd multiple medications at once.\n\n### Usage\nUseful when importing a full prescription.\n\n### Body\nRequires a `drugs` array containing objects with the same fields as the single add endpoint."
+                        "description": "# \ud83d\udce6 Bulk Add Drugs\n\nAdd multiple medications at once.\n\n### Usage\nUseful when importing a full prescription.\n\n### Body\nRequires a `drugs` array containing objects with the same fields as the single add endpoint."
                     }
                 },
                 {
@@ -2391,7 +2550,7 @@
                                 "update-drugs-bulk"
                             ]
                         },
-                        "description": "# 🔄 Bulk Update Drugs\n\nUpdate existing drugs in the prescription.\n\n### Requirement\nEach object in the `drugs` array MUST include `prescription_drug_id` to identify which record to update."
+                        "description": "# \ud83d\udd04 Bulk Update Drugs\n\nUpdate existing drugs in the prescription.\n\n### Requirement\nEach object in the `drugs` array MUST include `prescription_drug_id` to identify which record to update."
                     }
                 },
                 {
@@ -2416,7 +2575,7 @@
                                 "request"
                             ]
                         },
-                        "description": "# 📢 Request/Revoke\n\nToggle the `has_request` flag.\n\n- `GET /request`: Sets `has_request = 1`\n- `GET /revoke`: Sets `has_request = 0`"
+                        "description": "# \ud83d\udce2 Request/Revoke\n\nToggle the `has_request` flag.\n\n- `GET /request`: Sets `has_request = 1`\n- `GET /revoke`: Sets `has_request = 0`"
                     }
                 }
             ]
@@ -2473,7 +2632,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🌟 Get Reviews\n\nFetch reviews for a specific entity (Pharmacy or Drug)."
+                        "description": "# \ud83c\udf1f Get Reviews\n\nFetch reviews for a specific entity (Pharmacy or Drug)."
                     }
                 },
                 {
@@ -2500,7 +2659,7 @@
                                 "reviews"
                             ]
                         },
-                        "description": "# ✍️ Write Review\n\nSubmit a new review.\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `reviewable_type` | string | **Required**. `pharmacy`, `drug`, or `medication` (drug/medication are aliases). |\n| `reviewable_id` | string | **Required**. UUID for pharmacy; integer ID for drug. |\n| `rating` | int | **Required**. 1-5. |\n| `title` | string | **Required**. |\n| `comment` | string | **Required**. |\n| `order_id` | string | Optional. UUID of the order. Links review to a verified purchase. |"
+                        "description": "# \u270d\ufe0f Write Review\n\nSubmit a new review.\n\n### Fields\n| Field | Type | Description |\n|---|---|---|\n| `reviewable_type` | string | **Required**. `pharmacy`, `drug`, or `medication` (drug/medication are aliases). |\n| `reviewable_id` | string | **Required**. UUID for pharmacy; integer ID for drug. |\n| `rating` | int | **Required**. 1-5. |\n| `title` | string | **Required**. |\n| `comment` | string | **Required**. |\n| `order_id` | string | Optional. UUID of the order. Links review to a verified purchase. |"
                     }
                 },
                 {
@@ -2528,7 +2687,7 @@
                                 "{{review_id}}"
                             ]
                         },
-                        "description": "# ✏️ Update Review\n\nModify your existing review."
+                        "description": "# \u270f\ufe0f Update Review\n\nModify your existing review."
                     }
                 },
                 {
@@ -2552,7 +2711,7 @@
                                 "{{review_id}}"
                             ]
                         },
-                        "description": "# 🗑️ Delete Review\n\nPermanently remove your review."
+                        "description": "# \ud83d\uddd1\ufe0f Delete Review\n\nPermanently remove your review."
                     }
                 },
                 {
@@ -2581,7 +2740,7 @@
                                 "helpful"
                             ]
                         },
-                        "description": "# 👍 Mark Helpful\n\nVote on a review's helpfulness. Toggle `is_helpful` to true/false."
+                        "description": "# \ud83d\udc4d Mark Helpful\n\nVote on a review's helpfulness. Toggle `is_helpful` to true/false."
                     }
                 },
                 {
@@ -2617,7 +2776,7 @@
                                 }
                             ]
                         },
-                        "description": "# 📊 Review Stats\n\nGet average rating and breakdown for an entity."
+                        "description": "# \ud83d\udcca Review Stats\n\nGet average rating and breakdown for an entity."
                     }
                 }
             ]
@@ -2652,7 +2811,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🗣️ Get Testimonies\n\nFetch a list of active testimonies."
+                        "description": "# \ud83d\udde3\ufe0f Get Testimonies\n\nFetch a list of active testimonies."
                     }
                 },
                 {
@@ -2710,7 +2869,7 @@
                                 "testimonies"
                             ]
                         },
-                        "description": "# 📝 Submit Testimony\n\nSubmit a new testimony for approval."
+                        "description": "# \ud83d\udcdd Submit Testimony\n\nSubmit a new testimony for approval."
                     }
                 }
             ]
@@ -2759,7 +2918,7 @@
                                 }
                             ]
                         },
-                        "description": "# 📰 List Posts\n\nGet latest blog posts with pagination."
+                        "description": "# \ud83d\udcf0 List Posts\n\nGet latest blog posts with pagination."
                     }
                 },
                 {
@@ -2784,7 +2943,7 @@
                                 "{{post_slug}}"
                             ]
                         },
-                        "description": "# 📄 Read Post\n\nGet full content of a blog post by its slug."
+                        "description": "# \ud83d\udcc4 Read Post\n\nGet full content of a blog post by its slug."
                     }
                 },
                 {
@@ -2810,7 +2969,7 @@
                                 "related"
                             ]
                         },
-                        "description": "# 🔗 Related Posts\n\nGet similar posts based on category/tags."
+                        "description": "# \ud83d\udd17 Related Posts\n\nGet similar posts based on category/tags."
                     }
                 },
                 {
@@ -2834,7 +2993,7 @@
                                 "categories"
                             ]
                         },
-                        "description": "# 📂 Categories\n\nList available blog categories."
+                        "description": "# \ud83d\udcc2 Categories\n\nList available blog categories."
                     }
                 },
                 {
@@ -2858,7 +3017,7 @@
                                 "tags"
                             ]
                         },
-                        "description": "# 🏷️ Tags\n\nList available tags."
+                        "description": "# \ud83c\udff7\ufe0f Tags\n\nList available tags."
                     }
                 },
                 {
@@ -2884,7 +3043,7 @@
                                 "comments"
                             ]
                         },
-                        "description": "# 💬 Get Comments\n\nList comments for a post."
+                        "description": "# \ud83d\udcac Get Comments\n\nList comments for a post."
                     }
                 },
                 {
@@ -2910,7 +3069,7 @@
                                 "like"
                             ]
                         },
-                        "description": "# ❤️ Like Post\n\nToggle like status for a post. Works for guests (IP-based) and auth users."
+                        "description": "# \u2764\ufe0f Like Post\n\nToggle like status for a post. Works for guests (IP-based) and auth users."
                     }
                 },
                 {
@@ -2940,7 +3099,7 @@
                                 "comment"
                             ]
                         },
-                        "description": "# 🗨️ Post Comment\n\nAdd a comment to a post.\n\n### Guest vs Auth\n- **Guests**: Must provide `name` and `email`.\n- **Auth Users**: `name` and `email` are nullable (taken from profile)."
+                        "description": "# \ud83d\udde8\ufe0f Post Comment\n\nAdd a comment to a post.\n\n### Guest vs Auth\n- **Guests**: Must provide `name` and `email`.\n- **Auth Users**: `name` and `email` are nullable (taken from profile)."
                     }
                 }
             ]
@@ -3083,7 +3242,7 @@
                     }
                 },
                 {
-                    "name": "Mark Opened",
+                    "name": "Mark Openeded",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -3094,20 +3253,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/notifications/{{notification_id}}/open",
+                            "raw": "{{base_url}}/notifications/{{notification_id}}/opened",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "notifications",
                                 "{{notification_id}}",
-                                "open"
+                                "opened"
                             ]
                         }
                     }
                 },
                 {
-                    "name": "Mark Clicked",
+                    "name": "Mark Clickeded",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -3118,14 +3277,14 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/notifications/{{notification_id}}/click",
+                            "raw": "{{base_url}}/notifications/{{notification_id}}/clicked",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "notifications",
                                 "{{notification_id}}",
-                                "click"
+                                "clicked"
                             ]
                         }
                     }
@@ -3249,6 +3408,29 @@
                             "path": [
                                 "notifications",
                                 "test"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notifications By Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/notifications/type/{{notification_type}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "type",
+                                "{{notification_type}}"
                             ]
                         }
                     }
@@ -3510,7 +3692,7 @@
                                     "key": "attachments[]",
                                     "value": "",
                                     "type": "file",
-                                    "description": "Images/PDFs — max 5 MB each"
+                                    "description": "Images/PDFs \u2014 max 5 MB each"
                                 }
                             ]
                         },
@@ -3667,7 +3849,7 @@
                                 "respond"
                             ]
                         },
-                        "description": "**Pharmacist / Admin role only.**\n\nSubmit a clinical response. Status changes to `responded`.\n\n### Fields\n| Field | Required | Notes |\n|---|---|---|\n| `pharmacist_notes` | ✅ | Clinical observations |\n| `recommendations` | — | Treatment plan |\n| `requires_followup` | — | `true` / `false` |\n| `followup_date` | — | ISO datetime, required when `requires_followup` is true |\n| `followup_notes` | — | Instructions for the follow-up appointment |\n| `followup_date` | — | ISO datetime |\n"
+                        "description": "**Pharmacist / Admin role only.**\n\nSubmit a clinical response. Status changes to `responded`.\n\n### Fields\n| Field | Required | Notes |\n|---|---|---|\n| `pharmacist_notes` | \u2705 | Clinical observations |\n| `recommendations` | \u2014 | Treatment plan |\n| `requires_followup` | \u2014 | `true` / `false` |\n| `followup_date` | \u2014 | ISO datetime, required when `requires_followup` is true |\n| `followup_notes` | \u2014 | Instructions for the follow-up appointment |\n| `followup_date` | \u2014 | ISO datetime |\n"
                     }
                 },
                 {
@@ -3750,7 +3932,7 @@
                                 "rate"
                             ]
                         },
-                        "description": "Submit a star rating and optional comment after the consultation.\n\n- Only the consultation owner (patient) can rate.\n- `rating`: integer 1–5 (required)\n- `feedback`: free text (optional)"
+                        "description": "Submit a star rating and optional comment after the consultation.\n\n- Only the consultation owner (patient) can rate.\n- `rating`: integer 1\u20135 (required)\n- `feedback`: free text (optional)"
                     }
                 },
                 {
@@ -4140,7 +4322,7 @@
                                 "initialize"
                             ]
                         },
-                        "description": "### 💳 Initialize Online Payment\n\nGenerates a Paystack checkout URL for the user to complete their transaction.\n\n**🔒 Security Guard**:\nBefore initializing, this endpoint verifies the target pharmacy's `accepts_online_payment` flag. If the pharmacy has disabled online payments since the order was created, it returns a `403 Forbidden` response preventing the transaction.\n\n**Rate Limit**: `15 requests/minute` (api:payments throttle group - heavily rate-limited for security).\n\nInitialize Paystack transaction for an order."
+                        "description": "### \ud83d\udcb3 Initialize Online Payment\n\nGenerates a Paystack checkout URL for the user to complete their transaction.\n\n**\ud83d\udd12 Security Guard**:\nBefore initializing, this endpoint verifies the target pharmacy's `accepts_online_payment` flag. If the pharmacy has disabled online payments since the order was created, it returns a `403 Forbidden` response preventing the transaction.\n\n**Rate Limit**: `15 requests/minute` (api:payments throttle group - heavily rate-limited for security).\n\nInitialize Paystack transaction for an order."
                     }
                 },
                 {
@@ -4253,7 +4435,7 @@
                                 }
                             ]
                         },
-                        "description": "Returns drugs and/or pharmacies in a single response.\n\n`type` param:\n- `all` — both sections (default)\n- `drugs` — drug favourites only\n- `pharmacies` — pharmacy favourites only"
+                        "description": "Returns drugs and/or pharmacies in a single response.\n\n`type` param:\n- `all` \u2014 both sections (default)\n- `drugs` \u2014 drug favourites only\n- `pharmacies` \u2014 pharmacy favourites only"
                     }
                 },
                 {
@@ -4371,7 +4553,7 @@
                                 }
                             ]
                         },
-                        "description": "Remove a drug from favourites. The `{id}` param is matched against `id`, `drug_id`, or `product_id` — whichever resolves first."
+                        "description": "Remove a drug from favourites. The `{id}` param is matched against `id`, `drug_id`, or `product_id` \u2014 whichever resolves first."
                     }
                 },
                 {
@@ -4455,7 +4637,7 @@
                                 "bulk-remove"
                             ]
                         },
-                        "description": "Remove multiple drug favourites at once.\n\n`ids` is matched against `id`, `drug_id`, and `product_id` — any match is removed.\n\n> **Note:** Uses `POST` (not `DELETE`) to avoid HTTP client issues with request bodies on DELETE requests."
+                        "description": "Remove multiple drug favourites at once.\n\n`ids` is matched against `id`, `drug_id`, and `product_id` \u2014 any match is removed.\n\n> **Note:** Uses `POST` (not `DELETE`) to avoid HTTP client issues with request bodies on DELETE requests."
                     }
                 },
                 {
@@ -4598,7 +4780,7 @@
                                 "recent-searches"
                             ]
                         },
-                        "description": "# 🔎 Recent Search History\n\nReturns the authenticated user's last 10 search queries. Useful for displaying a \"Recent Searches\" list in the UI."
+                        "description": "# \ud83d\udd0e Recent Search History\n\nReturns the authenticated user's last 10 search queries. Useful for displaying a \"Recent Searches\" list in the UI."
                     }
                 },
                 {
@@ -4621,7 +4803,7 @@
                                 "top-searches"
                             ]
                         },
-                        "description": "# 🏆 Top Searches\n\nReturns the most popular search queries across the entire platform, aggregated by unique query text."
+                        "description": "# \ud83c\udfc6 Top Searches\n\nReturns the most popular search queries across the entire platform, aggregated by unique query text."
                     }
                 },
                 {
@@ -4646,7 +4828,7 @@
                                 ":brandId"
                             ]
                         },
-                        "description": "# 🗂️ Store Recent Search (Legacy)\n\nLegacy GET endpoint to log a drug search. Internally now writes to the new `recent_searches` table with `match_type = 'drug'` and `match_id = drugId`. Use the Smart Search `track=1` param or POST `/search/track` for new integrations."
+                        "description": "# \ud83d\uddc2\ufe0f Store Recent Search (Legacy)\n\nLegacy GET endpoint to log a drug search. Internally now writes to the new `recent_searches` table with `match_type = 'drug'` and `match_id = drugId`. Use the Smart Search `track=1` param or POST `/search/track` for new integrations."
                     }
                 },
                 {
@@ -4747,7 +4929,7 @@
                                 }
                             ]
                         },
-                        "description": "# 📊 Platform Overview\n\nHigh-level metrics: users, orders, revenue, searches, views, consultations.\n\n### Search Metrics (Updated Schema)\nThe `searches` object now reports:\n- `total` - SUM of `search_count` across all match types\n- `unique_drugs` - Count of distinct `match_id` where `match_type IN (drug, product)`"
+                        "description": "# \ud83d\udcca Platform Overview\n\nHigh-level metrics: users, orders, revenue, searches, views, consultations.\n\n### Search Metrics (Updated Schema)\nThe `searches` object now reports:\n- `total` - SUM of `search_count` across all match types\n- `unique_drugs` - Count of distinct `match_id` where `match_type IN (drug, product)`"
                     }
                 },
                 {
@@ -4787,7 +4969,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🔎 Search Analytics\n\nDetailed breakdown of search activity.\n\n### Updated Response Fields\n- `top_searches` - Aggregated by **query text** (not drug_id), reflecting actual user search terms.\n- `trending_drugs` - Computed by comparing recent vs. previous 7-day search volume for `match_type IN (drug, product)`.\n- `recent_searches` - Returns last N records, each with `query`, `match_type`, `match_id`, and resolved `drug_name`."
+                        "description": "# \ud83d\udd0e Search Analytics\n\nDetailed breakdown of search activity.\n\n### Updated Response Fields\n- `top_searches` - Aggregated by **query text** (not drug_id), reflecting actual user search terms.\n- `trending_drugs` - Computed by comparing recent vs. previous 7-day search volume for `match_type IN (drug, product)`.\n- `recent_searches` - Returns last N records, each with `query`, `match_type`, `match_id`, and resolved `drug_name`."
                     }
                 },
                 {
@@ -4817,7 +4999,7 @@
                                 }
                             ]
                         },
-                        "description": "# 👤 User Behavior\n\nUser engagement metrics: searches per user, most active users, session patterns."
+                        "description": "# \ud83d\udc64 User Behavior\n\nUser engagement metrics: searches per user, most active users, session patterns."
                     }
                 },
                 {
@@ -4857,7 +5039,7 @@
                                 }
                             ]
                         },
-                        "description": "# 💰 Revenue Stats\n\nOrder revenue breakdown by period, payment method, and pharmacy."
+                        "description": "# \ud83d\udcb0 Revenue Stats\n\nOrder revenue breakdown by period, payment method, and pharmacy."
                     }
                 },
                 {
@@ -4887,7 +5069,7 @@
                                 }
                             ]
                         },
-                        "description": "# 📝 Content Stats\n\nBlog post views, most viewed drugs, and content engagement metrics."
+                        "description": "# \ud83d\udcdd Content Stats\n\nBlog post views, most viewed drugs, and content engagement metrics."
                     }
                 },
                 {
@@ -4917,7 +5099,7 @@
                                 }
                             ]
                         },
-                        "description": "# 🏥 Pharmacy Performance\n\nRankings by orders, revenue, and drug availability across all registered pharmacies."
+                        "description": "# \ud83c\udfe5 Pharmacy Performance\n\nRankings by orders, revenue, and drug availability across all registered pharmacies."
                     }
                 },
                 {
@@ -4947,7 +5129,7 @@
                                 }
                             ]
                         },
-                        "description": "# 💊 Drug Performance\n\nTop searched and top ordered drugs. Search ranking is aggregated from `recent_searches` filtered by `match_type IN (drug, product)` and grouped by `match_id`."
+                        "description": "# \ud83d\udc8a Drug Performance\n\nTop searched and top ordered drugs. Search ranking is aggregated from `recent_searches` filtered by `match_type IN (drug, product)` and grouped by `match_id`."
                     }
                 },
                 {
@@ -4971,7 +5153,7 @@
                                 "realtime"
                             ]
                         },
-                        "description": "# ⚡ Real-Time Stats\n\nLive metrics for the last 24 hours: active users, orders in progress, searches, and unique drugs searched (scoped to `match_type IN (drug, product)`)."
+                        "description": "# \u26a1 Real-Time Stats\n\nLive metrics for the last 24 hours: active users, orders in progress, searches, and unique drugs searched (scoped to `match_type IN (drug, product)`)."
                     }
                 }
             ]
@@ -5009,7 +5191,7 @@
                                 "consultations"
                             ]
                         },
-                        "description": "Create a consultation without authentication.\n\n**Required for guests:** `patient_name`, `patient_email`, `patient_phone`\n\n**Optional:** `consultation_type`, `chief_complaint`, `pharmacy_id`, `scheduled_at`, `source`\n\n**Not allowed:** vitals, medical_history, allergies, status, priority — these are staff-only fields.\n\nAuthenticated users can omit patient fields (auto-filled from profile) and may pass `parent_consultation_id` to link as a follow-up."
+                        "description": "Create a consultation without authentication.\n\n**Required for guests:** `patient_name`, `patient_email`, `patient_phone`\n\n**Optional:** `consultation_type`, `chief_complaint`, `pharmacy_id`, `scheduled_at`, `source`\n\n**Not allowed:** vitals, medical_history, allergies, status, priority \u2014 these are staff-only fields.\n\nAuthenticated users can omit patient fields (auto-filled from profile) and may pass `parent_consultation_id` to link as a follow-up."
                     }
                 },
                 {
@@ -5062,7 +5244,7 @@
             ]
         },
         {
-            "name": "ℹ️ Information & Support",
+            "name": "\u2139\ufe0f Information & Support",
             "description": "Public content endpoints for legal policies, help resources, team information, and customer feedback.",
             "item": [
                 {
@@ -5266,8 +5448,16 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "json",
@@ -5275,10 +5465,14 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications"
+                            ]
                         },
-                        "description": "Start a new pharmacy onboarding application. Returns a UUID `application_id` — save it and use it for all subsequent steps.\n\nThe test script above automatically saves the returned `application_id` as `{{pharmacy_application_id}}`."
+                        "description": "Start a new pharmacy onboarding application. Returns a UUID `application_id` \u2014 save it and use it for all subsequent steps.\n\nThe test script above automatically saves the returned `application_id` as `{{pharmacy_application_id}}`."
                     }
                 },
                 {
@@ -5286,25 +5480,50 @@
                     "request": {
                         "method": "GET",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications/{{pharmacy_application_id}}",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications", "{{pharmacy_application_id}}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications",
+                                "{{pharmacy_application_id}}"
+                            ]
                         },
                         "description": "Retrieve the full application record by UUID. Returns all fields including current status, step, and uploaded documents."
                     }
                 },
                 {
-                    "name": "Save Progress (Steps 2–6)",
+                    "name": "Save Progress (Steps 2\u20136)",
                     "request": {
                         "method": "PATCH",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"},
-                            {"key": "Content-Type", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "json",
@@ -5312,10 +5531,15 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications/{{pharmacy_application_id}}",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications", "{{pharmacy_application_id}}"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications",
+                                "{{pharmacy_application_id}}"
+                            ]
                         },
-                        "description": "Update application progress. Only allowed when status is `draft` or `rejected`.\n\nSend any subset of fields — the server merges them. Advance `step` as the user progresses through the form.\n\n**Returns 422** if status is not `draft` or `rejected`.\n**Returns 404** if application UUID does not exist."
+                        "description": "Update application progress. Only allowed when status is `draft` or `rejected`.\n\nSend any subset of fields \u2014 the server merges them. Advance `step` as the user progresses through the form.\n\n**Returns 422** if status is not `draft` or `rejected`.\n**Returns 404** if application UUID does not exist."
                     }
                 },
                 {
@@ -5323,21 +5547,48 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "body": {
                             "mode": "formdata",
                             "formdata": [
-                                {"key": "application_id", "value": "{{pharmacy_application_id}}", "type": "text"},
-                                {"key": "document_type", "value": "gpc_license", "type": "text", "description": "gpc_license | fda_certificate | business_registration | tin_certificate | superintendent_license | facility_exterior | facility_interior | proof_of_address | logo | banner_image"},
-                                {"key": "file", "type": "file", "description": "PDF or image, max 10MB", "src": []}
+                                {
+                                    "key": "application_id",
+                                    "value": "{{pharmacy_application_id}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "document_type",
+                                    "value": "gpc_license",
+                                    "type": "text",
+                                    "description": "gpc_license | fda_certificate | business_registration | tin_certificate | superintendent_license | facility_exterior | facility_interior | proof_of_address | logo | banner_image"
+                                },
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "description": "PDF or image, max 10MB",
+                                    "src": []
+                                }
                             ]
                         },
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications/documents",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications", "documents"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications",
+                                "documents"
+                            ]
                         },
                         "description": "Upload a verification document or brand asset. Replaces any existing file of the same type."
                     }
@@ -5347,15 +5598,29 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications/{{pharmacy_application_id}}/submit",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications", "{{pharmacy_application_id}}", "submit"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications",
+                                "{{pharmacy_application_id}}",
+                                "submit"
+                            ]
                         },
-                        "description": "Submit the completed draft for admin review. Status moves from `draft` → `pending`.\n\nAll required fields and documents must be uploaded before submission. Returns 422 with the missing field name if incomplete."
+                        "description": "Submit the completed draft for admin review. Status moves from `draft` \u2192 `pending`.\n\nAll required fields and documents must be uploaded before submission. Returns 422 with the missing field name if incomplete."
                     }
                 },
                 {
@@ -5363,13 +5628,27 @@
                     "request": {
                         "method": "POST",
                         "header": [
-                            {"key": "X-API-Key", "value": "{{api_key}}", "type": "text"},
-                            {"key": "Accept", "value": "application/json", "type": "text"}
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
                         ],
                         "url": {
                             "raw": "{{base_url}}/pharmacy-applications/{{pharmacy_application_id}}/resubmit",
-                            "host": ["{{base_url}}"],
-                            "path": ["pharmacy-applications", "{{pharmacy_application_id}}", "resubmit"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pharmacy-applications",
+                                "{{pharmacy_application_id}}",
+                                "resubmit"
+                            ]
                         },
                         "description": "Resubmit a previously rejected application after the applicant has resolved the issues. Status moves to `resubmitted`.\n\nOnly allowed when status is `rejected`."
                     }

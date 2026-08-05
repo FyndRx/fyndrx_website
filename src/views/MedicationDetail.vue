@@ -215,7 +215,7 @@ const loadMedicationData = async (medicationId: string | number) => {
     ]);
     
     if (medication.value && authStore.isAuthenticated) {
-        await recentlyViewedService.addToRecentlyViewed(medication.value.product_id || medication.value.id);
+        await recentlyViewedService.addToRecentlyViewed(medication.value.drug_id || medication.value.id);
     }
 
   } catch (err: any) {

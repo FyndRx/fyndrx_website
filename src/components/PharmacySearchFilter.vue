@@ -101,7 +101,7 @@ const serviceOptions = STANDARD_SERVICES.map(service => ({
           :model-value="selectedServices"
           @update:model-value="(val) => emit('update:selectedServices', val as string[])"
           :options="serviceOptions"
-          placeholder="Filter by service"
+          placeholder="Services"
           multiple
           clearable
         />

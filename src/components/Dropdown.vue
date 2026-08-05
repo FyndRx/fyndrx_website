@@ -43,7 +43,9 @@ const filteredOptions = computed(() => {
 
 const displayValue = computed(() => {
   if (props.multiple) {
-    return selectedOptions.value.map(opt => opt.label).join(', ');
+    return selectedOptions.value.length > 0 
+      ? selectedOptions.value.map(opt => opt.label).join(', ')
+      : props.placeholder || 'Select an option';
   }
   const selected = props.options.find(opt => opt.value === props.modelValue);
   return selected?.label || props.placeholder || 'Select an option';

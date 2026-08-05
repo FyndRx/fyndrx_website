@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, Messaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,15 +12,23 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp | null = null;
-let messaging: Messaging | null = null;
+let messagingPromise: Promise<Messaging | null> = Promise.resolve(null);
 
 // Only initialize if we have the config
 if (firebaseConfig.apiKey) {
   try {
     app = initializeApp(firebaseConfig);
-    // Messaging requires the browser to support the Push API
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      messaging = getMessaging(app);
+    if (typeof window !== 'undefined') {
+      messagingPromise = isSupported().then((supported) => {
+        if (supported && app) {
+          return getMessaging(app);
+        }
+        console.warn('Firebase Messaging is not supported in this browser.');
+        return null;
+      }).catch((err) => {
+        console.warn('Failed to check Firebase Messaging support:', err);
+        return null;
+      });
     }
   } catch (error) {
     console.error('Firebase initialization error', error);
@@ -28,6 +36,7 @@ if (firebaseConfig.apiKey) {
 }
 
 export const requestNotificationPermission = async (): Promise<string | null> => {
+  const messaging = await messagingPromise;
   if (!messaging) return null;
 
   try {
@@ -47,9 +56,10 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
   }
 };
 
-export const onForegroundMessage = (callback: (payload: any) => void) => {
+export const onForegroundMessage = async (callback: (payload: any) => void) => {
+  const messaging = await messagingPromise;
   if (!messaging) return;
   return onMessage(messaging, callback);
 };
 
-export { app, messaging };
+export { app };

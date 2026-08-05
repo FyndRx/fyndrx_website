@@ -118,6 +118,7 @@ export function transformMedication(apiMed: MedicationApiResponse): Medication {
 
   return {
     id: apiMed.id,
+    drug_id: (apiMed as any).drug_id ?? apiMed.id,
     product_id: (apiMed as any).product_id ?? apiMed.id,
     name: apiMed.name,
     description: apiMed.description ?? '',
