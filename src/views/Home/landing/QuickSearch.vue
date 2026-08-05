@@ -184,7 +184,7 @@ export default {
                     v-model="pharmacyQuery"
                     type="text"
                     placeholder="e.g., HealthPlus Pharmacy"
-                    class="w-full px-4 py-3 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                    class="w-full px-4 py-3 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-full focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                     @keyup.enter="searchPharmacy"
                   />
                 </div>
@@ -196,7 +196,7 @@ export default {
                     v-model="location"
                     type="text"
                     placeholder="e.g., Accra, Kumasi"
-                    class="w-full px-4 py-3 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+                    class="w-full px-4 py-3 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-full focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all"
                     @keyup.enter="searchPharmacy"
                   />
                 </div>
@@ -204,7 +204,7 @@ export default {
 
               <button
                 @click="searchPharmacy"
-                class="w-full px-6 py-4 rounded-xl bg-[#246BFD] text-white font-semibold text-lg hover:bg-[#5089FF] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                class="w-full px-6 py-4 rounded-full bg-[#246BFD] text-white font-semibold text-lg hover:bg-[#5089FF] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -262,7 +262,7 @@ export default {
                 </p>
                 <button
                    @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
-                  class="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FE9615] text-white font-semibold text-lg hover:bg-[#e88813] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover-lift"
+                  class="w-full sm:w-auto px-8 py-4 rounded-full bg-[#FE9615] text-white font-semibold text-lg hover:bg-[#e88813] transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover-lift"
                 >
                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>

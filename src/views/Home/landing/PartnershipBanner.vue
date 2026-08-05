@@ -101,7 +101,7 @@ import { BuildingStorefrontIcon, UserGroupIcon, ChartBarIcon, ArrowRightIcon } f
                 </div>
              </div>
 
-             <router-link to="/pharmacy/onboard" class="mt-8 flex items-center justify-center w-full px-6 py-3 rounded-xl bg-white text-[#246BFD] font-semibold hover:bg-gray-100 transition-colors">
+             <router-link to="/pharmacy/onboard" class="mt-8 flex items-center justify-center w-full px-6 py-3 rounded-full bg-white text-[#246BFD] font-semibold hover:bg-gray-100 transition-colors">
                 Get Started
              </router-link>
           </div>

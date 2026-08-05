@@ -112,7 +112,7 @@ onMounted(async () => {
           <button 
             @click="checkout.payNow(checkout.selectedOrderIds.value)"
             :disabled="checkout.bulkPaymentLoading.value"
-            class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-2xl font-bold shadow-2xl shadow-blue-500/40 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center mx-auto"
+            class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-full font-bold shadow-2xl shadow-blue-500/40 transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center mx-auto"
           >
             <span v-if="checkout.bulkPaymentLoading.value" class="flex items-center">
               <svg class="w-5 h-5 mr-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -129,7 +129,7 @@ onMounted(async () => {
         <div v-else-if="checkout.selectedOrderIds.value.length === 1" class="mt-8">
            <button 
              @click="checkout.payNow(checkout.selectedOrderIds.value[0])"
-             class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center mx-auto"
+             class="w-full sm:w-auto px-16 py-4 bg-[#246BFD] hover:bg-[#1a5ce5] text-white rounded-full font-bold shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center mx-auto"
            >
              Pay for Order #{{ checkout.createdOrders.value.find(o => o.id === checkout.selectedOrderIds.value[0])?.orderNumber }}
            </button>
@@ -137,10 +137,10 @@ onMounted(async () => {
 
         <!-- Action Links -->
         <div class="mt-12 flex justify-center space-x-6">
-          <button @click="router.push({ name: 'orders' })" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">
+          <button @click="router.push({ name: 'orders' })" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium">
             View My Orders
           </button>
-          <button @click="router.push('/')" class="px-6 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 font-medium">
+          <button @click="router.push('/')" class="px-6 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-full hover:bg-gray-800 dark:hover:bg-gray-600 font-medium">
             Back to Home
           </button>
         </div>

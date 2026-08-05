@@ -136,7 +136,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
       </h3>
       <button
         @click="openAddModal"
-        class="text-sm font-black text-[#246BFD] hover:text-[#5089FF] transition-all flex items-center space-x-1 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800/20"
+        class="text-sm font-black text-[#246BFD] hover:text-[#5089FF] transition-all flex items-center space-x-1 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-full border border-blue-100 dark:border-blue-800/20"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -196,7 +196,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <div class="flex space-x-2">
               <button
                 @click="openEditModal(address)"
-                class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[#246BFD] hover:bg-blue-50 transition-all"
+                class="p-2.5 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[#246BFD] hover:bg-blue-50 transition-all"
                 title="Edit Location"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +206,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
               <button
                 v-if="!address.is_default"
                 @click="deleteAddress(address.id)"
-                class="p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all"
+                class="p-2.5 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all"
                 title="Delete Location"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <button
               v-if="!address.is_default"
               @click="setAsDefault(address.id)"
-              class="text-[10px] font-black text-[#246BFD] bg-[#246BFD]/5 px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all uppercase tracking-tighter hover:bg-[#246BFD] hover:text-white"
+              class="text-[10px] font-black text-[#246BFD] bg-[#246BFD]/5 px-3 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all uppercase tracking-tighter hover:bg-[#246BFD] hover:text-white"
             >
               Set as Default
             </button>
@@ -236,7 +236,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
       </div>
       <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No Delivery Locations</h4>
       <p class="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-8">Add your home or office location on the map for faster checkout.</p>
-      <button @click="openAddModal" class="px-8 py-3 rounded-2xl bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all">
+      <button @click="openAddModal" class="px-8 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all">
         Add My First Location
       </button>
     </div>
@@ -251,7 +251,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             </h4>
             <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Specify your exact delivery point</p>
           </div>
-          <button @click="showModal = false" class="w-12 h-12 rounded-2xl bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
+          <button @click="showModal = false" class="w-12 h-12 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -272,7 +272,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
                 v-model="form.label"
                 type="text"
                 required
-                class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-bold"
+                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-bold"
                 placeholder="Give this location a name"
               />
             </div>
@@ -282,7 +282,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
                 v-model="form.is_default"
                 type="checkbox"
                 id="is_default"
-                class="w-6 h-6 text-[#246BFD] border-gray-300 rounded-lg focus:ring-[#246BFD] transition-all cursor-pointer"
+                class="w-6 h-6 text-[#246BFD] border-gray-300 rounded-full focus:ring-[#246BFD] transition-all cursor-pointer"
               />
               <label for="is_default" class="text-sm font-bold text-gray-700 dark:text-gray-200 cursor-pointer">Set as default delivery location</label>
             </div>
@@ -297,8 +297,8 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
               </svg>
             </summary>
             <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input v-model="form.address_line_1" placeholder="Building name / Floor" class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-              <input v-model="form.city" placeholder="City" class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
+              <input v-model="form.address_line_1" placeholder="Building name / Floor" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
+              <input v-model="form.city" placeholder="City" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
             </div>
           </details>
 
@@ -306,14 +306,14 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <button
               type="button"
               @click="showModal = false"
-              class="flex-1 px-8 py-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 text-gray-500 font-bold hover:bg-gray-50 transition-all uppercase tracking-widest text-xs"
+              class="flex-1 px-8 py-4 rounded-full border-2 border-gray-100 dark:border-gray-700 text-gray-500 font-bold hover:bg-gray-50 transition-all uppercase tracking-widest text-xs"
             >
               Cancel
             </button>
             <button
               @click="handleSubmit"
               :disabled="loading || !form.google_address"
-              class="flex-[2] px-8 py-4 rounded-2xl bg-[#246BFD] text-white font-black hover:bg-[#5089FF] shadow-xl shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 uppercase tracking-widest text-xs"
+              class="flex-[2] px-8 py-4 rounded-full bg-[#246BFD] text-white font-black hover:bg-[#5089FF] shadow-xl shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 uppercase tracking-widest text-xs"
             >
               <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

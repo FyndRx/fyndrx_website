@@ -26,7 +26,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
             v-model="pharmacyState.medicationSearchQuery.value"
             type="text"
             placeholder="Search medications at this facility..."
-            class="w-full h-12 pl-12 pr-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm focus:ring-2 focus:ring-[#246BFD]/20 text-sm font-semibold transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
+            class="w-full h-12 pl-12 pr-4 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm focus:ring-2 focus:ring-[#246BFD]/20 text-sm font-semibold transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
           />
           <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -35,7 +35,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
         <!-- Filter toggle -->
         <button
           @click="pharmacyState.showFilters.value = !pharmacyState.showFilters.value"
-          class="h-12 px-4 flex items-center gap-2 rounded-xl border transition-all text-sm font-bold flex-shrink-0"
+          class="h-12 px-4 flex items-center gap-2 rounded-full border transition-all text-sm font-bold flex-shrink-0"
           :class="pharmacyState.hasActiveFilters.value
             ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-md shadow-blue-500/20'
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-[#246BFD] hover:text-[#246BFD]'"
@@ -68,7 +68,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
                 v-for="form in pharmacyState.availableForms.value"
                 :key="form"
                 @click="pharmacyState.toggleForm(form)"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                 :class="pharmacyState.drugFormFilter.value.includes(form)
                   ? 'bg-[#246BFD] text-white shadow-sm shadow-blue-500/20'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-[#246BFD]/10 hover:text-[#246BFD]'"
@@ -84,7 +84,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
                 v-for="opt in [{ key: 'all', label: 'All' }, { key: 'in_stock', label: 'In Stock' }, { key: 'out_of_stock', label: 'Out of Stock' }]"
                 :key="opt.key"
                 @click="pharmacyState.stockFilter.value = opt.key as any"
-                class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all"
                 :class="pharmacyState.stockFilter.value === opt.key
                   ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-800 dark:hover:text-white'"
@@ -98,7 +98,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
             <div class="flex flex-wrap gap-1.5">
               <button
                 @click="pharmacyState.branchFilter.value = null"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                 :class="pharmacyState.branchFilter.value === null
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'"
@@ -107,7 +107,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
                 v-for="b in pharmacyState.availableBranches.value"
                 :key="b.id"
                 @click="pharmacyState.branchFilter.value = b.id"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                 :class="pharmacyState.branchFilter.value === b.id
                   ? 'bg-[#246BFD] text-white shadow-sm shadow-blue-500/20'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-[#246BFD]/10 hover:text-[#246BFD]'"
@@ -128,7 +128,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
                 ]"
                 :key="opt.key"
                 @click="pharmacyState.sortBy.value = opt.key as any"
-                class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                 :class="pharmacyState.sortBy.value === opt.key
                   ? 'bg-violet-600 text-white shadow-sm shadow-violet-500/20'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20 dark:hover:text-violet-400'"

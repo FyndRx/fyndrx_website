@@ -127,7 +127,7 @@ const handleClose = () => {
                 type="text"
                 placeholder="Summarize your experience"
                 maxlength="100"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all"
+                class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all"
                 :disabled="submitting"
               />
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -144,7 +144,7 @@ const handleClose = () => {
                 rows="6"
                 placeholder="Tell us more about your experience..."
                 maxlength="1000"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
+                class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
                 :disabled="submitting"
               ></textarea>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -174,14 +174,14 @@ const handleClose = () => {
           <div class="sticky bottom-0 flex gap-3 p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl">
             <button
               @click="handleClose"
-              class="flex-1 px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="flex-1 px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               :disabled="submitting"
             >
               Cancel
             </button>
             <button
               @click="handleSubmit"
-              class="flex-1 px-6 py-3 rounded-xl bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              class="flex-1 px-6 py-3 rounded-full bg-[#246BFD] text-white font-semibold hover:bg-[#5089FF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               :disabled="!canSubmit || submitting"
             >
               <svg v-if="submitting" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

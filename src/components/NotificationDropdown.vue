@@ -91,7 +91,7 @@ export default {
     <!-- Bell Button -->
     <button
       @click.stop="toggle"
-      class="relative p-2.5 rounded-xl transition-all duration-300 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 group active:scale-95"
+      class="relative p-2.5 rounded-full transition-all duration-300 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 group active:scale-95"
       title="Notifications"
     >
       <div class="absolute inset-0 bg-[#246BFD]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -227,7 +227,7 @@ export default {
         <div v-if="store.notifications.length > 0" class="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 relative z-10 rounded-b-3xl">
           <button
             @click="viewAll"
-            class="w-full py-2.5 text-sm font-bold text-[#246BFD] bg-white dark:bg-gray-800 border border-white dark:border-gray-700 rounded-xl hover:shadow-md hover:border-[#246BFD]/30 transition-all duration-300"
+            class="w-full py-2.5 text-sm font-bold text-[#246BFD] bg-white dark:bg-gray-800 border border-white dark:border-gray-700 rounded-full hover:shadow-md hover:border-[#246BFD]/30 transition-all duration-300"
           >
             View all notifications
           </button>

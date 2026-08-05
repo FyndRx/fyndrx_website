@@ -352,7 +352,7 @@ onMounted(async () => {
                       :key="service.slug"
                       type="button"
                       @click="toggleService(service.slug)"
-                      class="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-left transition-all duration-150 -mx-2"
+                      class="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-full text-left transition-all duration-150 -mx-2"
                       :class="selectedServices.includes(service.slug)
                         ? 'bg-[#246BFD]/8 text-[#246BFD] dark:bg-[#246BFD]/15 dark:text-[#5089FF]'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
@@ -479,7 +479,7 @@ onMounted(async () => {
             <button
               @click="loadMore"
               :disabled="loadingMore"
-              class="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ loadingMore ? 'Loading…' : 'Load More Pharmacies' }}
             </button>

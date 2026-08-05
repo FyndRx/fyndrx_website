@@ -176,7 +176,7 @@ onMounted(loadPrescriptions);
         </div>
         <button
           @click="router.push({ name: 'upload-prescription' })"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white font-medium text-sm transition-all shadow-sm shadow-blue-200 dark:shadow-none shrink-0"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white font-medium text-sm transition-all shadow-sm shadow-blue-200 dark:shadow-none shrink-0"
         >
           <PlusIcon class="w-4 h-4" />
           Upload Prescription
@@ -219,7 +219,7 @@ onMounted(loadPrescriptions);
         <button
           v-if="selectedFilter === 'all'"
           @click="router.push({ name: 'upload-prescription' })"
-          class="px-5 py-2.5 rounded-xl bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
+          class="px-5 py-2.5 rounded-full bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
         >
           Upload Prescription
         </button>
@@ -316,7 +316,7 @@ onMounted(loadPrescriptions);
               </button>
               <button
                 v-if="rx.status === 'active' && rx.drugs?.length"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-xs font-semibold transition-all shadow-sm"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-xs font-semibold transition-all shadow-sm"
                 @click.stop="openOrderModal(rx)"
               >
                 <ShoppingCartIcon class="w-3.5 h-3.5" />
@@ -494,7 +494,7 @@ onMounted(loadPrescriptions);
               <!-- Consultation link (only for consultation-origin prescriptions) -->
               <button
                 v-if="selectedPrescription.origin === 'consultation' && extractConsultationNumber(selectedPrescription.notes)"
-                class="w-full py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/40 bg-violet-50 dark:bg-violet-900/10 text-violet-700 dark:text-violet-300 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/20 disabled:opacity-60"
+                class="w-full py-2.5 rounded-full border border-violet-200 dark:border-violet-700/40 bg-violet-50 dark:bg-violet-900/10 text-violet-700 dark:text-violet-300 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/20 disabled:opacity-60"
                 :disabled="consultationLoading"
                 @click="openConsultation(selectedPrescription)"
               >
@@ -507,13 +507,13 @@ onMounted(loadPrescriptions);
               <div class="flex gap-3">
                 <button
                   @click="selectedPrescription = null"
-                  class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  class="flex-1 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Close
                 </button>
                 <button
                   v-if="selectedPrescription.status === 'active' && selectedPrescription.drugs?.length"
-                  class="flex-1 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  class="flex-1 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
                   @click="openOrderModal(selectedPrescription)"
                 >
                   <ShoppingCartIcon class="w-4 h-4" />
@@ -521,7 +521,7 @@ onMounted(loadPrescriptions);
                 </button>
                 <button
                   v-if="selectedPrescription.status === 'active' && !selectedPrescription.drugs?.length"
-                  class="flex-1 py-2.5 rounded-xl bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  class="flex-1 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
                   @click="router.push({ name: 'upload-prescription' })"
                 >
                   <ArrowUpTrayIcon class="w-4 h-4" />
@@ -560,7 +560,7 @@ onMounted(loadPrescriptions);
               <button
                 v-for="(drug, i) in orderPrescription.drugs"
                 :key="i"
-                class="w-full flex items-center gap-3 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/40 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all text-left group"
+                class="w-full flex items-center gap-3 p-4 rounded-full border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/40 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all text-left group"
                 @click="goToMedication(drug)"
               >
                 <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">

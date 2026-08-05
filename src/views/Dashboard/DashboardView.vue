@@ -135,7 +135,7 @@ onMounted(() => {
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Here's your health overview for today</p>
         </div>
-        <router-link to="/profile" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-[#246BFD] transition-colors">
+        <router-link to="/profile" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-[#246BFD] transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           Profile
         </router-link>
@@ -216,7 +216,7 @@ onMounted(() => {
               <p class="text-sm font-semibold text-violet-900 dark:text-violet-100">{{ activeOrders.length }} active order{{ activeOrders.length > 1 ? 's' : '' }} in progress</p>
               <p class="text-xs text-violet-600 dark:text-violet-400">Your medications are on their way.</p>
             </div>
-            <router-link to="/orders" class="shrink-0 px-4 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">Track</router-link>
+            <router-link to="/orders" class="shrink-0 px-4 py-1.5 rounded-full bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">Track</router-link>
           </div>
 
           <!-- Recent orders -->
@@ -241,7 +241,7 @@ onMounted(() => {
             <div v-else-if="!recentOrders.length" class="px-6 py-12 text-center">
               <svg class="w-12 h-12 mx-auto mb-3 text-gray-200 dark:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">No orders yet</p>
-              <router-link to="/medications" class="px-5 py-2 rounded-xl bg-[#246BFD] text-white text-sm font-semibold hover:bg-[#5089FF] transition-colors">Start shopping</router-link>
+              <router-link to="/medications" class="px-5 py-2 rounded-full bg-[#246BFD] text-white text-sm font-semibold hover:bg-[#5089FF] transition-colors">Start shopping</router-link>
             </div>
 
             <!-- List -->
@@ -443,7 +443,7 @@ onMounted(() => {
           <div class="bg-gradient-to-br from-[#246BFD] to-[#5089FF] rounded-2xl p-5 text-white">
             <p class="mb-1 font-bold">Need assistance?</p>
             <p class="mb-4 text-sm text-blue-100">Our pharmacists are here to help.</p>
-            <router-link to="/consultations/new" class="inline-block px-5 py-2 rounded-xl bg-white text-[#246BFD] text-sm font-bold hover:bg-blue-50 transition-colors">
+            <router-link to="/consultations/new" class="inline-block px-5 py-2 rounded-full bg-white text-[#246BFD] text-sm font-bold hover:bg-blue-50 transition-colors">
               Start a Consultation
             </router-link>
           </div>

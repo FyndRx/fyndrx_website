@@ -199,7 +199,7 @@ export default {
         <!-- Hamburger — visible below lg -->
         <button 
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2 transition-colors rounded-lg lg:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
+          class="p-2 transition-colors rounded-full lg:hidden hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <svg 
             :class="{
@@ -240,7 +240,7 @@ export default {
             v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']" 
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
-            class="flex items-center px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:text-[#246BFD] hover:bg-[#246BFD]/5 font-medium transition-all"
+            class="flex items-center px-4 py-3 rounded-full text-gray-700 dark:text-gray-300 hover:text-[#246BFD] hover:bg-[#246BFD]/5 font-medium transition-all"
             @click="isMobileMenuOpen = false"
           >
             {{ link }}

@@ -86,7 +86,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
         <button
           @click="checkout.deliveryMethods.value.set(groupKey, 'pickup')"
           :class="[
-            'p-4 rounded-xl border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2',
+            'p-4 rounded-full border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2',
             checkout.deliveryMethods.value.get(groupKey) === 'pickup'
               ? 'border-[#246BFD] bg-[#246BFD]/5 text-[#246BFD]'
               : 'border-gray-200 dark:border-gray-700 text-gray-500 hover:border-gray-300 dark:hover:border-gray-600'
@@ -139,7 +139,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
             :disabled="!checkout.deliveryOptionsCache.value.get(pharmacyId)?.fyndrxDelivery.available"
             @click="checkout.deliveryProviders.value.set(groupKey, 'fyndrx')"
             :class="[
-              'p-4 rounded-xl border-2 text-left transition-all relative',
+              'p-4 rounded-full border-2 text-left transition-all relative',
               !checkout.deliveryOptionsCache.value.get(pharmacyId)?.fyndrxDelivery.available
                 ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40'
                 : checkout.deliveryProviders.value.get(groupKey) === 'fyndrx'
@@ -181,7 +181,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
             :disabled="!checkout.deliveryOptionsCache.value.get(pharmacyId)?.pharmacyDelivery.available"
             @click="checkout.deliveryProviders.value.set(groupKey, 'pharmacy')"
             :class="[
-              'p-4 rounded-xl border-2 text-left transition-all relative',
+              'p-4 rounded-full border-2 text-left transition-all relative',
               !checkout.deliveryOptionsCache.value.get(pharmacyId)?.pharmacyDelivery.available
                 ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40'
                 : checkout.deliveryProviders.value.get(groupKey) === 'pharmacy'
@@ -260,7 +260,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
           <button
             @click="checkout.paymentMethods.value.set(groupKey, 'platform')"
             :class="[
-              'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
+              'p-4 rounded-full border-2 transition-all text-left relative overflow-hidden',
               checkout.paymentMethods.value.get(groupKey) === 'platform'
                 ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -280,7 +280,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
           <button
             @click="checkout.paymentMethods.value.set(groupKey, 'direct')"
             :class="[
-              'p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden',
+              'p-4 rounded-full border-2 transition-all text-left relative overflow-hidden',
               checkout.paymentMethods.value.get(groupKey) === 'direct'
                 ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'

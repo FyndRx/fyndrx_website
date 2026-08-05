@@ -142,12 +142,12 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
               </a>
               <router-link
                 :to="{ name: 'pharmacy-branch', params: { pharmacyId: pharmacyState.pharmacy.value.id, branchId: branch.id } }"
-                class="px-4 py-2 rounded-xl bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a56d6] active:scale-95 transition-all flex items-center gap-1.5"
+                class="px-4 py-2 rounded-full bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a56d6] active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 View Details
               </router-link>
-              <a :href="`tel:${branch.phone}`" class="px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-white text-xs font-bold border border-gray-200 dark:border-gray-700 hover:border-[#246BFD] hover:text-[#246BFD] active:scale-95 transition-all">Call</a>
+              <a :href="`tel:${branch.phone}`" class="px-4 py-2 rounded-full bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-white text-xs font-bold border border-gray-200 dark:border-gray-700 hover:border-[#246BFD] hover:text-[#246BFD] active:scale-95 transition-all">Call</a>
             </div>
           </div>
         </div>

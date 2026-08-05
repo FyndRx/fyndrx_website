@@ -77,7 +77,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           <div class="flex gap-4">
              <button 
               @click="pharmacyState.showAddReviewModal.value = true"
-              class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-2xl"
+              class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white rounded-full font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-2xl"
             >
               Rate this Facility
             </button>

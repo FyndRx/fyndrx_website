@@ -143,7 +143,7 @@ const handleSubmit = async () => {
               </div>
               <button
                 @click="imageInput?.click()"
-                class="absolute -bottom-2 -right-2 bg-[#246BFD] text-white w-10 h-10 rounded-xl shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                class="absolute -bottom-2 -right-2 bg-[#246BFD] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -253,14 +253,14 @@ const handleSubmit = async () => {
                 <button
                   type="button"
                   @click="router.back()"
-                  class="px-8 py-3 rounded-2xl border-2 border-gray-100 dark:border-gray-700 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                  class="px-8 py-3 rounded-full border-2 border-gray-100 dark:border-gray-700 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   :disabled="loading"
-                  class="px-10 py-3 rounded-2xl bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center space-x-2"
+                  class="px-10 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center space-x-2"
                 >
                   <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -308,13 +308,13 @@ const handleSubmit = async () => {
         <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3">
           <button
             @click="cancelCrop"
-            class="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 font-bold text-gray-500 hover:bg-white transition-all"
+            class="px-6 py-2.5 rounded-full border border-gray-200 dark:border-gray-600 font-bold text-gray-500 hover:bg-white transition-all"
           >
             Cancel
           </button>
           <button
             @click="cropImage"
-            class="px-8 py-2.5 bg-[#246BFD] text-white rounded-xl font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all"
+            class="px-8 py-2.5 bg-[#246BFD] text-white rounded-full font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all"
           >
             Crop & Apply
           </button>

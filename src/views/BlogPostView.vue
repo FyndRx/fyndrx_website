@@ -454,14 +454,14 @@ onMounted(() => { loadPost(); });
                 v-model="newComment"
                 placeholder="Share your thoughts..."
                 :disabled="isSubmittingComment"
-                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all disabled:opacity-60"
+                class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all disabled:opacity-60"
                 rows="4"
               ></textarea>
               <p v-if="commentError" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ commentError }}</p>
               <button
                 @click="submitComment"
                 :disabled="!newComment.trim() || isSubmittingComment"
-                class="mt-3 px-6 py-3 bg-[#246BFD] text-white rounded-xl hover:bg-[#5089FF] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                class="mt-3 px-6 py-3 bg-[#246BFD] text-white rounded-full hover:bg-[#5089FF] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <svg v-if="isSubmittingComment" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -482,7 +482,7 @@ onMounted(() => { loadPost(); });
               </div>
               <button
                 @click="router.push({ name: 'login', query: { redirect: route.fullPath } })"
-                class="ml-auto shrink-0 px-4 py-2 bg-[#246BFD] text-white text-sm font-semibold rounded-lg hover:bg-[#5089FF] transition-colors"
+                class="ml-auto shrink-0 px-4 py-2 bg-[#246BFD] text-white text-sm font-semibold rounded-full hover:bg-[#5089FF] transition-colors"
               >
                 Sign In
               </button>
@@ -536,7 +536,7 @@ onMounted(() => { loadPost(); });
                     v-model="newReply"
                     placeholder="Write a reply…"
                     :disabled="isSubmittingReply"
-                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white disabled:opacity-60"
+                    class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent dark:bg-gray-900 dark:text-white disabled:opacity-60"
                     rows="3"
                   ></textarea>
                   <p v-if="replyError" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ replyError }}</p>
@@ -544,7 +544,7 @@ onMounted(() => { loadPost(); });
                     <button
                       @click="submitReply(comment.id)"
                       :disabled="!newReply.trim() || isSubmittingReply"
-                      class="px-4 py-2 bg-[#246BFD] text-white rounded-lg hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
+                      class="px-4 py-2 bg-[#246BFD] text-white rounded-full hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium"
                     >
                       <svg v-if="isSubmittingReply" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -554,7 +554,7 @@ onMounted(() => { loadPost(); });
                     </button>
                     <button
                       @click="toggleReply(comment.id)"
-                      class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                      class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
                     >
                       Cancel
                     </button>

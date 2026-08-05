@@ -61,7 +61,7 @@ const selectTemplate = (id: string) => {
               <div class="flex bg-white/10 rounded-xl p-1">
                 <button
                   @click="viewMode = 'mobile'"
-                  class="p-2 rounded-lg transition-all"
+                  class="p-2 rounded-full transition-all"
                   :class="viewMode === 'mobile' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-white/60 hover:text-white'"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +70,7 @@ const selectTemplate = (id: string) => {
                 </button>
                 <button
                   @click="viewMode = 'desktop'"
-                  class="p-2 rounded-lg transition-all"
+                  class="p-2 rounded-full transition-all"
                   :class="viewMode === 'desktop' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-white/60 hover:text-white'"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,10 +104,10 @@ const selectTemplate = (id: string) => {
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">{{ selectedTemplate.name }}</h2>
             </div>
             <div class="flex gap-3">
-              <button class="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <button class="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 Copy HTML
               </button>
-              <button class="px-6 py-3 bg-[#246BFD] text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+              <button class="px-6 py-3 bg-[#246BFD] text-white rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
                 Send Test
               </button>
             </div>

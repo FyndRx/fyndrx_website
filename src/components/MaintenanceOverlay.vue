@@ -129,7 +129,7 @@ onUnmounted(() => {
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <router-link 
               to="/" 
-              class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-blue-600 rounded-2xl hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 active:scale-95 overflow-hidden"
+              class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-blue-600 rounded-full hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 active:scale-95 overflow-hidden"
             >
               <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <span class="relative">Return to Public Site</span>
@@ -140,7 +140,7 @@ onUnmounted(() => {
             
             <a 
               href="mailto:support@fyndrx.com" 
-              class="inline-flex items-center justify-center px-8 py-4 font-bold text-gray-300 border border-white/10 rounded-2xl hover:bg-white/5 hover:text-white transition-all duration-300 active:scale-95"
+              class="inline-flex items-center justify-center px-8 py-4 font-bold text-gray-300 border border-white/10 rounded-full hover:bg-white/5 hover:text-white transition-all duration-300 active:scale-95"
             >
               Contact Support
             </a>

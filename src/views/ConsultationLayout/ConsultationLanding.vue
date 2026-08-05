@@ -116,14 +116,14 @@ onMounted(() => {
              <div class="flex p-1 bg-gray-100 dark:bg-gray-700/50 rounded-2xl mb-6">
                 <button 
                   @click="activeTab = 'new'"
-                  class="flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300"
+                  class="flex-1 py-3 px-6 rounded-full text-sm font-bold transition-all duration-300"
                   :class="activeTab === 'new' ? 'bg-white dark:bg-gray-800 text-[#246BFD] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 >
                   New Consultation
                 </button>
                 <button 
                   @click="activeTab = 'track'"
-                  class="flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all duration-300"
+                  class="flex-1 py-3 px-6 rounded-full text-sm font-bold transition-all duration-300"
                   :class="activeTab === 'track' ? 'bg-white dark:bg-gray-800 text-[#246BFD] shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 >
                   Track Status
@@ -139,7 +139,7 @@ onMounted(() => {
                 
                  <button
                    @click="router.push({ name: authStore.isAuthenticated ? 'create-consultation' : 'public-create-consultation' })"
-                   class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-[#246BFD] rounded-xl shadow-lg hover:bg-[#1a55db] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
+                   class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-[#246BFD] rounded-full shadow-lg hover:bg-[#1a55db] hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2"
                  >
                    Start Assessment
                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
@@ -164,13 +164,13 @@ onMounted(() => {
                             v-model="quickTrackNumber"
                             type="text" 
                             placeholder="e.g. CONS-2026-XXXX"
-                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all"
+                            class="w-full px-4 py-3 rounded-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all"
                             required
                         >
                     </div>
                     <button
                         type="submit"
-                        class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-gray-900 dark:bg-gray-700 rounded-xl shadow-lg hover:bg-black dark:hover:bg-gray-600 hover:-translate-y-1 flex items-center justify-center gap-2"
+                        class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-gray-900 dark:bg-gray-700 rounded-full shadow-lg hover:bg-black dark:hover:bg-gray-600 hover:-translate-y-1 flex items-center justify-center gap-2"
                     >
                         Track Status
                     </button>

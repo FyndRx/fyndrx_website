@@ -115,7 +115,7 @@ const submit = async () => {
                 v-for="type in consultationTypeOptions"
                 :key="type.value"
                 type="button"
-                class="p-2 border rounded-lg text-xs font-medium flex items-center gap-2"
+                class="p-2 border rounded-full text-xs font-medium flex items-center gap-2"
                 :class="
                   form.consultation_type === type.value
                     ? 'border-[#246BFD] bg-blue-50 dark:bg-blue-900/20'

@@ -181,7 +181,7 @@ const CATEGORY_COLORS: Record<string, string> = {
               v-model="search"
               type="text"
               placeholder="Search services…"
-              class="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] text-gray-900 dark:text-white placeholder-gray-400 transition-all"
+              class="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-full outline-none focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] text-gray-900 dark:text-white placeholder-gray-400 transition-all"
               @click.stop
             />
           </div>

@@ -82,7 +82,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           <div class="w-1 h-6 bg-[#246BFD] rounded-full"></div>
           <h3 class="text-lg font-bold text-gray-900 dark:text-white">Verified Testimonials</h3>
         </div>
-        <button @click="pharmacyState.showAddReviewModal.value = true" class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-xl shadow-md transition-all active:scale-95">Submit Review</button>
+        <button @click="pharmacyState.showAddReviewModal.value = true" class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95">Submit Review</button>
       </div>
 
       <div v-if="pharmacyState.reviews.value.length > 0" class="grid grid-cols-1 gap-6">

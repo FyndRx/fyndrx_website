@@ -435,25 +435,46 @@ watch(
                   v-model:show-open-only="showOpenOnly"
                   v-model:show-in-stock-only="showInStockOnly"
                   v-model:selected-services="selectedServices"
-                  class="scale-90 origin-right transition-all hover:scale-100 focus-within:scale-100"
                 />
               </div>
             </div>
           </div>
 
           <div class="p-8">
-            <div v-if="loadingPharmacies" class="space-y-3 animate-pulse py-4">
+            <div v-if="loadingPharmacies" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 py-4">
               <div
-                v-for="i in 4"
+                v-for="i in 6"
                 :key="i"
-                class="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800"
+                class="flex flex-col h-full bg-white shadow-sm dark:bg-[#1a2235] rounded-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden animate-pulse"
               >
-                <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0"></div>
-                <div class="flex-1 space-y-2">
-                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/5"></div>
-                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                <!-- Image Placeholder -->
+                <div class="p-4 pb-0">
+                  <div class="h-48 rounded-2xl bg-gray-200 dark:bg-gray-700 w-full"></div>
                 </div>
-                <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-xl w-28 shrink-0"></div>
+                <!-- Details Placeholder -->
+                <div class="p-6 flex-1 flex flex-col pt-4">
+                  <!-- Header -->
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                      <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <!-- Pricing -->
+                  <div class="pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                    <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+                    <div class="flex justify-between items-center mb-4">
+                      <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                      <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-md w-1/4"></div>
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex gap-2 mt-auto">
+                      <div class="h-12 w-28 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"></div>
+                      <div class="flex-1 h-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -552,7 +573,7 @@ watch(
                     <!-- Actions -->
                     <div class="flex flex-col gap-1 mt-auto">
                       <div class="flex gap-2">
-                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-full flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
                            <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
                            <input 
                              type="number" 
@@ -664,7 +685,6 @@ watch(
                 placeholder="Search brands, forms, or strengths..."
                 :show-location="false"
                 :show-toggles="false"
-                class="scale-90 origin-right transition-all hover:scale-100 focus-within:scale-100"
               />
             </div>
           </div>

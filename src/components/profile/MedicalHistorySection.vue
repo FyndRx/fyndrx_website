@@ -184,7 +184,7 @@ const getCategoryIconPath = (category: string) => {
           v-for="cat in categories.slice(0, 3)"
           :key="cat"
           @click="openAddModal(cat)"
-          class="px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm font-medium hover:border-[#246BFD] transition-colors flex items-center space-x-2"
+          class="px-4 py-2 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm font-medium hover:border-[#246BFD] transition-colors flex items-center space-x-2"
         >
           <svg class="w-4 h-4 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getCategoryIconPath(cat)"></path>
@@ -220,7 +220,7 @@ const getCategoryIconPath = (category: string) => {
                 :key="cat"
                 type="button"
                 @click="form.category = cat"
-                class="px-3 py-2 rounded-lg border text-[10px] font-black uppercase tracking-tight transition-all"
+                class="px-3 py-2 rounded-full border text-[10px] font-black uppercase tracking-tight transition-all"
                 :class="form.category === cat ? 'bg-[#246BFD] border-[#246BFD] text-white' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-[#246BFD]/50'"
               >
                 {{ cat }}
@@ -234,7 +234,7 @@ const getCategoryIconPath = (category: string) => {
               v-model="form.item_name"
               type="text"
               required
-              class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
+              class="w-full px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
               placeholder="e.g. Penicillin Allergy, Diabetes Type 2"
             />
           </div>
@@ -244,7 +244,7 @@ const getCategoryIconPath = (category: string) => {
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Status</label>
               <select
                 v-model="form.status"
-                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
+                class="w-full px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive / History</option>
@@ -256,7 +256,7 @@ const getCategoryIconPath = (category: string) => {
               <input
                 v-model="form.date_identified"
                 type="date"
-                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
+                class="w-full px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all"
               />
             </div>
           </div>
@@ -266,7 +266,7 @@ const getCategoryIconPath = (category: string) => {
             <textarea
               v-model="form.notes"
               rows="3"
-              class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all resize-none"
+              class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]/20 focus:border-[#246BFD] outline-none transition-all resize-none"
               placeholder="Any additional details or severity..."
             ></textarea>
             <p class="mt-2 text-[10px] text-gray-400 flex items-center">
@@ -281,14 +281,14 @@ const getCategoryIconPath = (category: string) => {
             <button
               type="button"
               @click="showModal = false"
-              class="flex-1 px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="flex-1 px-6 py-3 rounded-full border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="loading"
-              class="flex-1 px-6 py-3 rounded-xl bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-2"
+              class="flex-1 px-6 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-2"
             >
               <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

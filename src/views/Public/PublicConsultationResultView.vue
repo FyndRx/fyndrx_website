@@ -410,7 +410,7 @@ function drugName(drug: Drug): string {
                 <router-link
                   v-if="drug.drug_id"
                   :to="{ name: 'medication-detail', params: { id: drug.drug_id } }"
-                  class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a56d6] active:scale-95 transition-all opacity-0 group-hover:opacity-100 self-center"
+                  class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a56d6] active:scale-95 transition-all opacity-0 group-hover:opacity-100 self-center"
                 >
                   Order
                   <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5" />

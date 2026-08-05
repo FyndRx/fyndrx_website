@@ -268,7 +268,7 @@ watch(currentPage, () => {
               v-model="searchQuery"
               type="text"
               placeholder="Search articles, tags, authors..."
-              class="w-full px-6 py-3 pr-12 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              class="w-full px-6 py-3 pr-12 rounded-full border-2 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#246BFD] focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
             <svg class="absolute w-5 h-5 text-gray-400 right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -278,7 +278,7 @@ watch(currentPage, () => {
           <!-- Filter Toggle -->
           <button
             @click="showFilters = !showFilters"
-            class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            class="flex items-center gap-2 px-6 py-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
@@ -451,7 +451,7 @@ watch(currentPage, () => {
           <button
             @click="currentPage = currentPage - 1"
             :disabled="currentPage === 1"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -463,7 +463,7 @@ watch(currentPage, () => {
             :key="page"
             @click="currentPage = page"
             :class="[
-              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'px-4 py-2 rounded-full text-sm font-medium transition-all',
               currentPage === page
                 ? 'bg-[#246BFD] text-white shadow-lg'
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -475,7 +475,7 @@ watch(currentPage, () => {
           <button
             @click="currentPage = currentPage + 1"
             :disabled="currentPage === totalPages"
-            class="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

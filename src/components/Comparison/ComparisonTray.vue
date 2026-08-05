@@ -44,7 +44,7 @@ const emit = defineEmits<{
         >
           <LazyImage :src="med.image" :alt="med.name" aspectRatio="square" className="w-9 h-9 rounded-lg object-cover shrink-0" />
           <span class="flex-1 text-xs font-medium text-gray-800 dark:text-white truncate leading-tight">{{ med.name }}</span>
-          <button @click="emit('remove', med.id)" class="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shrink-0">
+          <button @click="emit('remove', med.id)" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shrink-0">
             <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -60,7 +60,7 @@ const emit = defineEmits<{
       <button
         @click="emit('open')"
         :disabled="comparisonList.length < 2"
-        class="w-full py-2.5 rounded-xl bg-[#246BFD] text-white text-sm font-semibold hover:bg-[#5089FF] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-[#246BFD]/30"
+        class="w-full py-2.5 rounded-full bg-[#246BFD] text-white text-sm font-semibold hover:bg-[#5089FF] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-[#246BFD]/30"
       >
         Compare Now
       </button>

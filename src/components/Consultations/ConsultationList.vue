@@ -212,7 +212,7 @@ onMounted(() => {
           </div>
           <button 
             @click="clearFilters" 
-            class="text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            class="text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             Clear Filters
           </button>

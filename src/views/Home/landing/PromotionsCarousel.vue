@@ -201,7 +201,7 @@ onUnmounted(() => {
                 <a
                   :href="heroAd.creative.cta.href"
                   :target="heroAd.creative.cta.external ? '_blank' : undefined"
-                  class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+                  class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all hover:scale-105 hover:shadow-xl active:scale-95"
                   :style="{ backgroundColor: heroAd.creative.accentColor ?? '#FE9615' }"
                   @click="handleAdClick"
                 >

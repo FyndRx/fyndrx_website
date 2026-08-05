@@ -238,17 +238,17 @@ const submitTestimony = async () => {
                <div v-else class="p-6 space-y-4">
                   <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Name</label>
-                      <input v-model="form.name" type="text" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="First Name Last Name" />
+                      <input v-model="form.name" type="text" class="w-full px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="First Name Last Name" />
                   </div>
                   
                   <div class="grid grid-cols-2 gap-4">
                       <div>
                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role (Optional)</label>
-                          <input v-model="form.role" type="text" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="e.g. Patient" />
+                          <input v-model="form.role" type="text" class="w-full px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="e.g. Patient" />
                       </div>
                       <div>
                           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location (Optional)</label>
-                          <input v-model="form.location" type="text" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="Average City" />
+                          <input v-model="form.location" type="text" class="w-full px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all dark:text-white" placeholder="Average City" />
                       </div>
                   </div>
 
@@ -269,13 +269,13 @@ const submitTestimony = async () => {
 
                   <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Experience</label>
-                      <textarea v-model="form.testimony" rows="4" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all resize-none dark:text-white" placeholder="Share your experience..."></textarea>
+                      <textarea v-model="form.testimony" rows="4" class="w-full px-4 py-2 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] outline-none transition-all resize-none dark:text-white" placeholder="Share your experience..."></textarea>
                   </div>
                </div>
 
                <!-- Footer Actions -->
                <div v-if="!submissionSuccess" class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
-                   <button @click="isModalOpen = false" class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium">Cancel</button>
+                   <button @click="isModalOpen = false" class="px-4 py-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium">Cancel</button>
                    <Button 
                       @click="submitTestimony" 
                       :disabled="isSubmitting || !form.name || !form.testimony"

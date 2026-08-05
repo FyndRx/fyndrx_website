@@ -122,7 +122,7 @@ const filterByCategory = (category: string) => {
                 :key="category.id"
                 @click="filterByCategory(category.id)"
                 :class="[
-                  'w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200',
+                  'w-full flex items-center space-x-3 px-4 py-3 rounded-full text-left transition-all duration-200',
                   selectedCategory === category.id
                     ? 'bg-[#246BFD] text-white shadow-lg'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'

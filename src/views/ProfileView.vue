@@ -76,7 +76,7 @@ watch(activeTab, (newTab) => {
               </div>
               <button 
                 @click="router.push('/profile/edit')"
-                class="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 text-[#246BFD] p-3 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 transition-transform"
+                class="absolute -bottom-2 -right-2 bg-white dark:bg-gray-800 text-[#246BFD] p-3 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 hover:scale-110 transition-transform"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -112,7 +112,7 @@ watch(activeTab, (newTab) => {
           <div class="flex gap-3">
             <button
               @click="router.push('/dashboard')"
-              class="px-5 py-2.5 rounded-xl border-2 border-[#246BFD]/20 hover:border-[#246BFD]/40 font-bold text-gray-600 dark:text-gray-400 hover:bg-[#246BFD]/5 transition-all flex items-center space-x-2 shadow-sm"
+              class="px-5 py-2.5 rounded-full border-2 border-[#246BFD]/20 hover:border-[#246BFD]/40 font-bold text-gray-600 dark:text-gray-400 hover:bg-[#246BFD]/5 transition-all flex items-center space-x-2 shadow-sm"
             >
               <svg class="w-5 h-5 text-[#246BFD]/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
@@ -121,7 +121,7 @@ watch(activeTab, (newTab) => {
             </button>
             <button
               @click="router.push('/profile/edit')"
-              class="px-6 py-2.5 rounded-xl bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 hover:shadow-[#246BFD]/30 transition-all flex items-center space-x-2"
+              class="px-6 py-2.5 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 hover:shadow-[#246BFD]/30 transition-all flex items-center space-x-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 01-2 2v11a2 2 0 012 2h11a2 2 0 012-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -318,7 +318,7 @@ watch(activeTab, (newTab) => {
                     <div v-if="!session.is_current" class="flex items-center shrink-0 self-end sm:self-center">
                       <button
                         @click="handleRevokeSession(session.id)"
-                        class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl transition-all shadow-sm"
+                        class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-full transition-all shadow-sm"
                       >
                         Revoke Access
                       </button>

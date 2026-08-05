@@ -154,7 +154,7 @@ onMounted(() => { loadFavorites(); });
             :key="tab.key"
             @click="activeTab = tab.key as typeof activeTab"
             :class="[
-              'flex-1 px-3 py-2 text-xs font-bold rounded-xl transition-all',
+              'flex-1 px-3 py-2 text-xs font-bold rounded-full transition-all',
               activeTab === tab.key
                 ? 'bg-[#246BFD] text-white shadow-md'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white',
@@ -257,7 +257,7 @@ onMounted(() => { loadFavorites(); });
                   </div>
                   <button
                     @click.stop="viewMedication(drug)"
-                    class="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#246BFD] text-white hover:bg-[#5089FF] transition-colors"
+                    class="px-3 py-1.5 text-xs font-bold rounded-full bg-[#246BFD] text-white hover:bg-[#5089FF] transition-colors"
                   >
                     View
                   </button>
@@ -273,7 +273,7 @@ onMounted(() => { loadFavorites(); });
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
           <p class="text-gray-500 dark:text-gray-400 mb-4">No saved medications yet</p>
-          <button @click="router.push({ name: 'medications' })" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-semibold rounded-xl hover:bg-[#5089FF] transition-colors">Browse Medications</button>
+          <button @click="router.push({ name: 'medications' })" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-semibold rounded-full hover:bg-[#5089FF] transition-colors">Browse Medications</button>
         </div>
 
         <!-- ════════════ PHARMACY CARDS ════════════ -->
@@ -409,7 +409,7 @@ onMounted(() => { loadFavorites(); });
                   <div v-else class="text-[11px] text-gray-400">Saved pharmacy</div>
                   <button
                     @click.stop="viewPharmacy(pharmacy)"
-                    class="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#246BFD] text-white hover:bg-[#5089FF] transition-colors"
+                    class="px-3 py-1.5 text-xs font-bold rounded-full bg-[#246BFD] text-white hover:bg-[#5089FF] transition-colors"
                   >
                     View
                   </button>
@@ -425,7 +425,7 @@ onMounted(() => { loadFavorites(); });
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <p class="text-gray-500 dark:text-gray-400 mb-4">No saved pharmacies yet</p>
-          <button @click="router.push({ name: 'pharmacies' })" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-semibold rounded-xl hover:bg-[#5089FF] transition-colors">Browse Pharmacies</button>
+          <button @click="router.push({ name: 'pharmacies' })" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-semibold rounded-full hover:bg-[#5089FF] transition-colors">Browse Pharmacies</button>
         </div>
 
       </template>

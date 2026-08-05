@@ -463,7 +463,7 @@ onMounted(() => {
                   <button
                     v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
                     @click="payNow"
-                    class="w-full py-3 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    class="w-full py-3 px-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                   >
                     <span>Secure Checkout</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -615,7 +615,7 @@ onMounted(() => {
           <textarea
             v-model="cancellationReason"
             rows="3"
-            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]"
+            class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD]"
             placeholder="Let us know why you're cancelling..."
           ></textarea>
         </div>

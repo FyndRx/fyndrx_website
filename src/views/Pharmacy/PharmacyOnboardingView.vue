@@ -1040,7 +1040,7 @@ onMounted(() => {
                   Contact Email <span class="text-red-500">*</span>
                 </label>
                 <input v-model="form.contact_email" type="email" placeholder="you@pharmacy.com"
-                  class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
+                  class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
                   :class="stepErrors.contact_email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                 <p v-if="stepErrors.contact_email" class="mt-1 text-xs text-red-500">{{ stepErrors.contact_email }}</p>
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Your application progress link will be sent here. Use the pharmacy owner or manager's email.</p>
@@ -1050,7 +1050,7 @@ onMounted(() => {
                   Pharmacy Trading Name <span class="text-red-500">*</span>
                 </label>
                 <input v-model="form.pharmacy_name" type="text" placeholder="e.g. HealthPlus Pharmacy"
-                  class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
+                  class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all outline-none"
                   :class="stepErrors.pharmacy_name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                 <p v-if="stepErrors.pharmacy_name" class="mt-1 text-xs text-red-500">{{ stepErrors.pharmacy_name }}</p>
               </div>
@@ -1067,14 +1067,14 @@ onMounted(() => {
               <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Legal / Registered Name</label>
                 <input v-model="form.legal_name" type="text" placeholder="As on registration certificate"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                  class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                 <p class="mt-1 text-xs text-gray-500">Leave blank if same as trading name.</p>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Pharmacy Type <span class="text-red-500">*</span></label>
                   <select v-model="form.pharmacy_type"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                    class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                     :class="stepErrors.pharmacy_type ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
                     <option value="" disabled>Select type</option>
                     <option v-for="t in PHARMACY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
@@ -1084,7 +1084,7 @@ onMounted(() => {
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Year Established <span class="text-red-500">*</span></label>
                   <select v-model="form.year_established"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                    class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                     :class="stepErrors.year_established ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
                     <option value="" disabled>Select year</option>
                     <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
@@ -1104,7 +1104,7 @@ onMounted(() => {
                   ]" :key="field.key">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ field.label }} <span class="text-red-500">*</span></label>
                     <input v-model="(form as any)[field.key]" type="text" :placeholder="field.placeholder"
-                      class="w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm"
+                      class="w-full px-4 py-2.5 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm"
                       :class="stepErrors[field.key] ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors[field.key]" class="mt-1 text-xs text-red-500">{{ stepErrors[field.key] }}</p>
                   </div>
@@ -1117,7 +1117,7 @@ onMounted(() => {
                 </label>
                 <textarea v-model="form.description" rows="3"
                   placeholder="Brief description of your pharmacy, specialisations, and what makes it unique..."
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all resize-none"></textarea>
+                  class="w-full px-4 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all resize-none"></textarea>
               </div>
             </div><!-- /.space-y-5 Step 2 body -->
           </div><!-- /v-if currentStep === 2 -->
@@ -1135,7 +1135,7 @@ onMounted(() => {
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Street Address <span class="text-red-500">*</span></label>
                   <input v-model="form.street_address" type="text" placeholder="House/plot number and street name"
-                    class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                    class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                     :class="stepErrors.street_address ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                   <p v-if="stepErrors.street_address" class="mt-1 text-xs text-red-500">{{ stepErrors.street_address }}</p>
                 </div>
@@ -1143,12 +1143,12 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Area / Suburb</label>
                     <input v-model="form.area_suburb" type="text" placeholder="e.g. Labone, Adum, Ashaiman"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">City / Town <span class="text-red-500">*</span></label>
                     <input v-model="form.city" type="text" placeholder="e.g. Accra, Kumasi, Tamale"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.city ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.city" class="mt-1 text-xs text-red-500">{{ stepErrors.city }}</p>
                   </div>
@@ -1157,7 +1157,7 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Region <span class="text-red-500">*</span></label>
                     <select v-model="form.region"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.region ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
                       <option value="" disabled>Select region</option>
                       <option v-for="r in GHANA_REGIONS" :key="r" :value="r">{{ r }}</option>
@@ -1170,7 +1170,7 @@ onMounted(() => {
                       <span class="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <input v-model="form.digital_address" type="text" placeholder="e.g. GA-123-4567"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                 </div>
               </div>
@@ -1212,28 +1212,28 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Primary Phone <span class="text-red-500">*</span></label>
                     <input v-model="form.primary_phone" type="tel" placeholder="+233 XX XXX XXXX"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.primary_phone ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.primary_phone" class="mt-1 text-xs text-red-500">{{ stepErrors.primary_phone }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">WhatsApp Number</label>
                     <input v-model="form.whatsapp_number" type="tel" placeholder="+233 XX XXX XXXX"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Business Email <span class="text-red-500">*</span></label>
                     <input v-model="form.business_email" type="email" placeholder="pharmacy@example.com"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.business_email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.business_email" class="mt-1 text-xs text-red-500">{{ stepErrors.business_email }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Website <span class="text-gray-400 font-normal">(optional)</span></label>
                     <input v-model="form.website" type="url" placeholder="https://yourpharmacy.com"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                 </div>
               </div>
@@ -1375,7 +1375,7 @@ onMounted(() => {
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Maximum Delivery Radius (km)</label>
                       <div class="relative max-w-xs">
                         <input v-model="form.delivery_radius_km" type="number" min="0" placeholder="e.g. 15"
-                          class="w-full pl-4 pr-12 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                          class="w-full pl-4 pr-12 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">km</span>
                       </div>
                     </div>
@@ -1394,7 +1394,7 @@ onMounted(() => {
                           <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₵</span>
                             <input v-model="form.delivery_base_fee" type="number" min="0" step="0.50" placeholder="0.00"
-                              class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                              class="w-full pl-7 pr-3 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
                           </div>
                           <p class="mt-1 text-[10px] text-gray-400">Flat charge for any delivery</p>
                         </div>
@@ -1403,7 +1403,7 @@ onMounted(() => {
                           <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₵</span>
                             <input v-model="form.delivery_fee_per_km" type="number" min="0" step="0.10" placeholder="0.00"
-                              class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
+                              class="w-full pl-7 pr-3 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-sm" />
                           </div>
                           <p class="mt-1 text-[10px] text-gray-400">Added per km of distance</p>
                         </div>
@@ -1430,7 +1430,7 @@ onMounted(() => {
                     type="button"
                     @click="form.special_storage.includes(opt.value) ? form.special_storage.splice(form.special_storage.indexOf(opt.value), 1) : form.special_storage.push(opt.value)"
                     :class="[
-                      'flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all duration-200 focus:outline-none',
+                      'flex items-center gap-3 p-3.5 rounded-full border-2 text-left transition-all duration-200 focus:outline-none',
                       form.special_storage.includes(opt.value)
                         ? 'border-[#246BFD] bg-[#246BFD]/5 dark:bg-[#246BFD]/10'
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
@@ -1490,26 +1490,26 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Full Name <span class="text-red-500">*</span></label>
                     <input v-model="form.superintendent_name" type="text" placeholder="Dr. Kwame Mensah"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.superintendent_name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.superintendent_name" class="mt-1 text-xs text-red-500">{{ stepErrors.superintendent_name }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">GPC Practising Licence No. <span class="text-red-500">*</span></label>
                     <input v-model="form.superintendent_license_number" type="text" placeholder="e.g. GPC/P/2024/XXXXX"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.superintendent_license_number ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.superintendent_license_number" class="mt-1 text-xs text-red-500">{{ stepErrors.superintendent_license_number }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Phone</label>
                     <input v-model="form.superintendent_phone" type="tel" placeholder="+233 XX XXX XXXX"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
                     <input v-model="form.superintendent_email" type="email" placeholder="superintendent@pharmacy.com"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                 </div>
               </div>
@@ -1526,7 +1526,7 @@ onMounted(() => {
                       {{ field.label }} <span v-if="field.req" class="text-red-500">*</span>
                     </label>
                     <input v-model="(form as any)[field.key]" type="number" min="0" placeholder="0"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-center text-lg font-semibold"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all text-center text-lg font-semibold"
                       :class="stepErrors[field.key] ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors[field.key]" class="mt-1 text-xs text-red-500 text-center">{{ stepErrors[field.key] }}</p>
                   </div>
@@ -1568,7 +1568,7 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Bank Name <span class="text-red-500">*</span></label>
                     <select v-model="form.bank_name"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.bank_name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'">
                       <option value="" disabled>Select bank</option>
                       <option v-for="b in BANKS" :key="b" :value="b">{{ b }}</option>
@@ -1579,19 +1579,19 @@ onMounted(() => {
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Branch</label>
                     <input v-model="form.bank_branch" type="text" placeholder="e.g. Accra Main Branch"
-                      class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                      class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Account Name <span class="text-red-500">*</span></label>
                     <input v-model="form.bank_account_name" type="text" placeholder="As it appears on your bank statement"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.bank_account_name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.bank_account_name" class="mt-1 text-xs text-red-500">{{ stepErrors.bank_account_name }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Account Number <span class="text-red-500">*</span></label>
                     <input v-model="form.bank_account_number" type="text" placeholder="Bank account number"
-                      class="w-full px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
+                      class="w-full px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all"
                       :class="stepErrors.bank_account_number ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'" />
                     <p v-if="stepErrors.bank_account_number" class="mt-1 text-xs text-red-500">{{ stepErrors.bank_account_number }}</p>
                   </div>
@@ -1609,7 +1609,7 @@ onMounted(() => {
                     <div>
                       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ mm.label }}</label>
                       <input v-model="(form as any)[mm.key]" type="tel" :placeholder="mm.placeholder"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
+                        class="w-full px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent outline-none transition-all" />
                     </div>
                   </div>
                 </div>
@@ -1705,7 +1705,7 @@ onMounted(() => {
                     <button
                       type="button"
                       @click="removeFile(doc.key)"
-                      class="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      class="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
                       title="Remove selection"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1751,7 +1751,7 @@ onMounted(() => {
                         :href="serverDocUrls[doc.key]!"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#246BFD] hover:bg-[#246BFD]/10 transition-colors"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[#246BFD] hover:bg-[#246BFD]/10 transition-colors"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -1761,7 +1761,7 @@ onMounted(() => {
                       <button
                         type="button"
                         @click="triggerFileInput(doc.key)"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -1776,7 +1776,7 @@ onMounted(() => {
                     <button
                       type="button"
                       @click="triggerFileInput(doc.key)"
-                      class="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl px-6 py-5 flex flex-col items-center gap-2 hover:border-[#246BFD] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group"
+                      class="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-full px-6 py-5 flex flex-col items-center gap-2 hover:border-[#246BFD] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group"
                     >
                       <svg class="w-8 h-8 text-gray-400 group-hover:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />

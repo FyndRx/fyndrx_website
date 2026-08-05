@@ -89,7 +89,7 @@ const icon = computed(() => {
           <button
             type="button"
             :class="[
-              'inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2',
+              'inline-flex rounded-full p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2',
               {
                 'text-blue-500 hover:bg-blue-100 focus:ring-blue-600 focus:ring-offset-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/50': variant === 'info',
                 'text-green-500 hover:bg-green-100 focus:ring-green-600 focus:ring-offset-green-50 dark:text-green-400 dark:hover:bg-green-900/50': variant === 'success',

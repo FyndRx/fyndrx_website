@@ -158,7 +158,7 @@ const handleCta = (service: typeof services[0]) => {
             <!-- CTA -->
             <button
               @click="handleCta(service)"
-              class="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
+              class="w-full py-3 rounded-full font-semibold text-sm transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
               :style="{ backgroundColor: service.color, color: '#fff' }"
             >
               {{ service.cta.label }}

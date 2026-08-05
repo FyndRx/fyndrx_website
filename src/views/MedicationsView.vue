@@ -211,7 +211,7 @@ onMounted(async () => {
           <div class="flex gap-3 items-center">
             <button
               @click="medicationsStore.toggleShowFilters()"
-              class="flex gap-2 items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg transition-all dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              class="flex gap-2 items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full transition-all dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
@@ -301,7 +301,7 @@ onMounted(async () => {
             :key="`category-${category}`"
             @click="handleCategoryClick(category)"
             :class="[
-              'px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 border',
+              'px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 border',
               isCategoryActive(category)
                 ? 'bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white border-transparent shadow-xl shadow-[#246BFD]/20 scale-105'
                 : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/50 hover:bg-gray-50 dark:hover:bg-gray-700/50'

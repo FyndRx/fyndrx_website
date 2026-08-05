@@ -52,7 +52,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside));
     <button
       type="button"
       @click="isOpen = !isOpen"
-      class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:border-[#246BFD] hover:text-[#246BFD] focus:outline-none focus:ring-2 focus:ring-[#246BFD]/20 transition-all min-w-[7rem]"
+      class="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:border-[#246BFD] hover:text-[#246BFD] focus:outline-none focus:ring-2 focus:ring-[#246BFD]/20 transition-all min-w-[7rem]"
       :class="isOpen ? 'border-[#246BFD] text-[#246BFD] ring-2 ring-[#246BFD]/20' : ''"
     >
       <svg class="w-3.5 h-3.5 flex-shrink-0 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside));
             v-for="h in HOUR_LIST" :key="h" type="button"
             @click="pickHour(h)"
             :class="[
-              'w-10 py-1.5 rounded-lg text-sm font-medium transition-all text-center',
+              'w-10 py-1.5 rounded-full text-sm font-medium transition-all text-center',
               sel.hour === h ? 'bg-[#246BFD] text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
             ]"
           >{{ h }}</button>
@@ -98,7 +98,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside));
             v-for="m in MIN_LIST" :key="m" type="button"
             @click="pickMin(m)"
             :class="[
-              'w-10 py-1.5 rounded-lg text-sm font-medium transition-all text-center',
+              'w-10 py-1.5 rounded-full text-sm font-medium transition-all text-center',
               sel.minute === m ? 'bg-[#246BFD] text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
             ]"
           >{{ m }}</button>
@@ -113,7 +113,7 @@ onUnmounted(() => document.removeEventListener('mousedown', outside));
             v-for="p in ['AM', 'PM']" :key="p" type="button"
             @click="pickPeriod(p)"
             :class="[
-              'w-12 py-1.5 rounded-lg text-sm font-semibold transition-all text-center',
+              'w-12 py-1.5 rounded-full text-sm font-semibold transition-all text-center',
               sel.period === p ? 'bg-[#246BFD] text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
             ]"
           >{{ p }}</button>

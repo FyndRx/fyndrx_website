@@ -86,7 +86,7 @@ const submit = async () => {
                 v-for="type in consultationTypes"
                 :key="type.value"
                 type="button"
-                class="p-3 border rounded-xl flex items-center gap-2 text-left transition-all"
+                class="p-3 border rounded-full flex items-center gap-2 text-left transition-all"
                 :class="
                   form.consultation_type === type.value
                     ? 'border-[#246BFD] bg-blue-50 dark:bg-blue-900/20'
@@ -131,7 +131,7 @@ const submit = async () => {
                     type="button"
                     @click="form.patient_gender = form.patient_gender === g.toLowerCase() ? '' : g.toLowerCase()"
                     :class="[
-                      'flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all',
+                      'flex-1 py-2.5 rounded-full border-2 text-sm font-medium transition-all',
                       form.patient_gender === g.toLowerCase()
                         ? 'border-[#246BFD] bg-blue-50 dark:bg-blue-900/20 text-[#246BFD] dark:text-[#5089FF]'
                         : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'

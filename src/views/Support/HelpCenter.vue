@@ -76,7 +76,7 @@ const filteredCategories = computed(() => {
             v-model="searchQuery"
             type="search"
             placeholder="Search for help articles..."
-            class="w-full pl-12 pr-4 py-4 rounded-2xl bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50 text-base shadow-lg"
+            class="w-full pl-12 pr-4 py-4 rounded-full bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50 text-base shadow-lg"
           />
         </div>
       </div>

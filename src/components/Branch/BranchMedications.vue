@@ -23,13 +23,13 @@ const router = useRouter();
         <!-- Search -->
         <div class="relative flex-1 group">
           <input v-model="branchState.drugSearch.value" type="text" placeholder="Search medications…"
-            class="w-full h-11 pl-10 pr-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm focus:ring-2 focus:ring-[#246BFD]/20 text-sm font-semibold placeholder:text-gray-400 transition-all"
+            class="w-full h-11 pl-10 pr-4 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm focus:ring-2 focus:ring-[#246BFD]/20 text-sm font-semibold placeholder:text-gray-400 transition-all"
           />
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
         <!-- Filter toggle -->
         <button @click="branchState.showFilters.value = !branchState.showFilters.value"
-          class="h-11 px-4 flex items-center gap-2 rounded-xl border text-sm font-bold transition-all flex-shrink-0"
+          class="h-11 px-4 flex items-center gap-2 rounded-full border text-sm font-bold transition-all flex-shrink-0"
           :class="branchState.hasActiveDrugFilters.value
             ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-md shadow-blue-500/20'
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-[#246BFD] hover:text-[#246BFD]'"
@@ -56,7 +56,7 @@ const router = useRouter();
               <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5">Form</p>
               <div class="flex flex-wrap gap-1.5">
                 <button v-for="f in branchState.availableForms.value" :key="f" @click="branchState.toggleForm(f)"
-                  class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                  class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                   :class="branchState.formFilter.value.includes(f) ? 'bg-[#246BFD] text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-[#246BFD]/10 hover:text-[#246BFD]'"
                 >{{ f }}</button>
               </div>
@@ -67,7 +67,7 @@ const router = useRouter();
               <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
                 <button v-for="opt in [{ key: 'all', label: 'All' }, { key: 'in_stock', label: 'In Stock' }, { key: 'out_of_stock', label: 'Out of Stock' }]"
                   :key="opt.key" @click="branchState.stockFilter.value = opt.key as any"
-                  class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all"
                   :class="branchState.stockFilter.value === opt.key ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-800 dark:hover:text-white'"
                 >{{ opt.label }}</button>
               </div>
@@ -78,7 +78,7 @@ const router = useRouter();
               <div class="flex flex-wrap gap-1.5">
                 <button v-for="opt in [{ key: 'default', label: 'Default' }, { key: 'name_asc', label: 'Name A–Z' }, { key: 'price_asc', label: 'Price ↑' }, { key: 'price_desc', label: 'Price ↓' }]"
                   :key="opt.key" @click="branchState.sortBy.value = opt.key as any"
-                  class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all"
+                  class="px-3.5 py-2 rounded-full text-xs font-bold transition-all"
                   :class="branchState.sortBy.value === opt.key ? 'bg-violet-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-900/20'"
                 >{{ opt.label }}</button>
               </div>
@@ -152,7 +152,7 @@ const router = useRouter();
             <button
               v-if="price.product_id"
               @click="router.push({ name: 'MedicationDetail', params: { id: price.product_id } })"
-              class="flex-1 h-9 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all flex items-center justify-center gap-1.5"
+              class="flex-1 h-9 rounded-full border border-gray-200 dark:border-gray-600 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all flex items-center justify-center gap-1.5"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               Details
@@ -160,7 +160,7 @@ const router = useRouter();
             <button
               @click="branchState.addToCart(price)"
               :disabled="!price.in_stock"
-              class="flex-1 h-9 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="flex-1 h-9 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               :class="price.in_stock
                 ? 'bg-[#246BFD] text-white hover:bg-[#1a56d6] shadow-sm shadow-blue-500/20 active:scale-95'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-400'"
@@ -182,7 +182,7 @@ const router = useRouter();
         <button
           @click="branchState.goToDrugPage(branchState.currentDrugPage.value - 1)"
           :disabled="branchState.currentDrugPage.value === 1"
-          class="h-9 w-9 flex items-center justify-center rounded-xl border font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          class="h-9 w-9 flex items-center justify-center rounded-full border font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           :class="branchState.currentDrugPage.value === 1 ? 'border-gray-200 dark:border-gray-700 text-gray-400' : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD]'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -191,7 +191,7 @@ const router = useRouter();
           <button
             v-if="p === 1 || p === branchState.totalDrugPages.value || Math.abs(p - branchState.currentDrugPage.value) <= 1"
             @click="branchState.goToDrugPage(p)"
-            class="h-9 min-w-[2.25rem] px-2 flex items-center justify-center rounded-xl border text-sm font-bold transition-all"
+            class="h-9 min-w-[2.25rem] px-2 flex items-center justify-center rounded-full border text-sm font-bold transition-all"
             :class="p === branchState.currentDrugPage.value
               ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-md shadow-blue-500/20'
               : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD]'"
@@ -204,7 +204,7 @@ const router = useRouter();
         <button
           @click="branchState.goToDrugPage(branchState.currentDrugPage.value + 1)"
           :disabled="branchState.currentDrugPage.value === branchState.totalDrugPages.value"
-          class="h-9 w-9 flex items-center justify-center rounded-xl border font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          class="h-9 w-9 flex items-center justify-center rounded-full border font-bold text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           :class="branchState.currentDrugPage.value === branchState.totalDrugPages.value ? 'border-gray-200 dark:border-gray-700 text-gray-400' : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD]'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>

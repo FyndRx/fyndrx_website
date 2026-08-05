@@ -392,7 +392,7 @@ onMounted(async () => {
                 v-for="type in consultationTypes"
                 :key="type.value"
                 type="button"
-                class="p-4 border rounded-xl text-left transition-all flex gap-3 items-start"
+                class="p-4 border rounded-full text-left transition-all flex gap-3 items-start"
                 :class="form.consultation_type === type.value
                   ? 'border-[#246BFD] ring-2 ring-[#246BFD]/30 bg-blue-50/50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'"
@@ -416,7 +416,7 @@ onMounted(async () => {
               <button
                 ref="pharmacyTriggerRef"
                 type="button"
-                class="w-full flex items-center justify-between px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-left transition-colors"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-left transition-colors"
                 :class="showPharmacyPicker ? 'border-[#246BFD] ring-2 ring-[#246BFD]/20' : 'border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/50'"
                 @click="openPharmacyPicker"
               >
@@ -448,7 +448,7 @@ onMounted(async () => {
                           v-model="pharmacySearch"
                           type="text"
                           placeholder="Search by name or area..."
-                          class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
+                          class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
                           @click.stop
                         />
                         <BuildingStorefrontIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -510,7 +510,7 @@ onMounted(async () => {
                   <button
                     ref="branchTriggerRef"
                     type="button"
-                    class="w-full flex items-center justify-between px-4 py-3 rounded-xl border bg-white dark:bg-gray-800 text-left transition-colors"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-full border bg-white dark:bg-gray-800 text-left transition-colors"
                     :class="showBranchPicker ? 'border-[#246BFD] ring-2 ring-[#246BFD]/20' : 'border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/50'"
                     @click="openBranchPicker"
                   >
@@ -541,7 +541,7 @@ onMounted(async () => {
                               v-model="branchSearch"
                               type="text"
                               placeholder="Search branches..."
-                              class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
+                              class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-[#246BFD]/30 focus:border-[#246BFD]"
                               @click.stop
                             />
                             <MapPinIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -598,7 +598,7 @@ onMounted(async () => {
             <div class="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                class="relative overflow-hidden p-5 rounded-2xl border-2 text-left transition-all duration-200"
+                class="relative overflow-hidden p-5 rounded-full border-2 text-left transition-all duration-200"
                 :class="form.booking_for === 'myself'
                   ? 'border-[#246BFD] bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/10 shadow-md shadow-blue-100 dark:shadow-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
@@ -626,7 +626,7 @@ onMounted(async () => {
 
               <button
                 type="button"
-                class="relative overflow-hidden p-5 rounded-2xl border-2 text-left transition-all duration-200"
+                class="relative overflow-hidden p-5 rounded-full border-2 text-left transition-all duration-200"
                 :class="form.booking_for === 'someone_else'
                   ? 'border-[#246BFD] bg-gradient-to-br from-blue-50 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/10 shadow-md shadow-blue-100 dark:shadow-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"

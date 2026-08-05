@@ -388,7 +388,7 @@ export default { name: 'BranchDetailDialog' }
           </a>
           <button
             @click="$emit('close')"
-            class="py-3 px-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all"
+            class="py-3 px-5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all"
           >
             Close
           </button>

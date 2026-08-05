@@ -65,7 +65,7 @@ const accent = props.ad.creative.accentColor ?? '#246BFD';
           :href="ad.creative.cta.href"
           :target="ad.creative.cta.external ? '_blank' : undefined"
           :rel="ad.creative.cta.external ? 'noopener noreferrer' : undefined"
-          class="flex-shrink-0 px-3.5 py-2 rounded-xl text-[11px] font-bold text-white transition-all active:scale-95"
+          class="flex-shrink-0 px-3.5 py-2 rounded-full text-[11px] font-bold text-white transition-all active:scale-95"
           :style="{ backgroundColor: accent }"
           @click="handleClick"
         >

@@ -91,14 +91,14 @@ onMounted(() => {
         <div class="inline-flex p-1 bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-md rounded-2xl">
           <button
             @click="selectedFilter = 'all'"
-            class="px-6 py-2.5 font-bold transition-all rounded-xl relative"
+            class="px-6 py-2.5 font-bold transition-all rounded-full relative"
             :class="selectedFilter === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
           >
             All Notifications
           </button>
           <button
             @click="selectedFilter = 'unread'"
-            class="px-6 py-2.5 font-bold transition-all rounded-xl relative flex items-center gap-2"
+            class="px-6 py-2.5 font-bold transition-all rounded-full relative flex items-center gap-2"
             :class="selectedFilter === 'unread' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
           >
             Unread
@@ -189,13 +189,13 @@ onMounted(() => {
                 <div class="mt-5 flex items-center gap-3">
                   <button
                     v-if="notification.data?.app_data?.type"
-                    class="px-5 py-2 text-sm font-bold rounded-xl bg-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD] hover:text-white hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
+                    class="px-5 py-2 text-sm font-bold rounded-full bg-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD] hover:text-white hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
                   >
                     View Details
                   </button>
                   <button
                     @click.stop="deleteNotification(notification.id, $event)"
-                    class="px-4 py-2 text-sm font-bold rounded-xl text-red-500 bg-red-50 dark:bg-red-900/10 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 ml-auto"
+                    class="px-4 py-2 text-sm font-bold rounded-full text-red-500 bg-red-50 dark:bg-red-900/10 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 ml-auto"
                   >
                     Delete
                   </button>

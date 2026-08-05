@@ -236,7 +236,7 @@ const startShopping = () => {
                   
                   <button
                     @click="cartStore.clearPharmacyItems(pharmacy.pharmacyId)"
-                    class="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                    class="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                     title="Remove all items from this pharmacy"
                   >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

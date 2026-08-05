@@ -56,7 +56,7 @@ const accent = props.ad.creative.accentColor ?? '#246BFD';
         :href="ad.creative.cta.href"
         :target="ad.creative.cta.external ? '_blank' : undefined"
         :rel="ad.creative.cta.external ? 'noopener noreferrer' : undefined"
-        class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95 whitespace-nowrap"
+        class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold text-white transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95 whitespace-nowrap"
         :style="{ backgroundColor: accent }"
         @click="handleClick"
       >

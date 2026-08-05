@@ -214,7 +214,7 @@ watch(() => props.modelValue, (newVal) => {
         ref="searchInput"
         type="text"
         placeholder="Search for a location or street..."
-        class="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-medium"
+        class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-medium"
       />
     </div>
 
@@ -241,7 +241,7 @@ watch(() => props.modelValue, (newVal) => {
         type="button"
         @click="useMyLocation"
         :disabled="gettingLocation"
-        class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <svg v-if="!gettingLocation" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3" stroke-width="2" />

@@ -17,7 +17,7 @@ const authStore = useAuthStore();
         <h2 class="text-xl font-black text-gray-900 dark:text-white">Ratings & Reviews</h2>
       </div>
       <button v-if="authStore.isAuthenticated" @click="branchState.showReviewModal.value = true"
-        class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all"
+        class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-full shadow-md active:scale-95 transition-all"
       >Write a Review</button>
     </div>
 
@@ -57,7 +57,7 @@ const authStore = useAuthStore();
         </div>
         <p class="font-bold text-gray-900 dark:text-white mb-1">No reviews yet</p>
         <p class="text-sm text-gray-400 mb-4">Be the first to share your experience.</p>
-        <button v-if="authStore.isAuthenticated" @click="branchState.showReviewModal.value = true" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-bold rounded-xl hover:bg-[#1a56d6] active:scale-95 transition-all">Write a Review</button>
+        <button v-if="authStore.isAuthenticated" @click="branchState.showReviewModal.value = true" class="px-5 py-2.5 bg-[#246BFD] text-white text-sm font-bold rounded-full hover:bg-[#1a56d6] active:scale-95 transition-all">Write a Review</button>
       </div>
 
       <!-- Review list -->

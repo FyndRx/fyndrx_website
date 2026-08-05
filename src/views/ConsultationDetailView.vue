@@ -297,7 +297,7 @@ onMounted(() => {
             <!-- Print Button (Header) -->
             <button 
                @click="printConsultation"
-               class="hidden md:flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-5 py-3 rounded-xl transition-all font-medium border border-gray-100 dark:border-gray-600 shadow-sm"
+               class="hidden md:flex items-center gap-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-5 py-3 rounded-full transition-all font-medium border border-gray-100 dark:border-gray-600 shadow-sm"
             >
                <PrinterIcon class="w-5 h-5" />
                <span>Print Report</span>
@@ -581,7 +581,7 @@ onMounted(() => {
                 <button
                   v-if="!consultation?.follow_up_consultations?.length"
                   @click="openFollowUpModal"
-                  class="shrink-0 flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-5 py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+                  class="shrink-0 flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-5 py-3 rounded-full transition-all shadow-md hover:shadow-lg"
                 >
                   <ArrowUturnRightIcon class="w-4 h-4" />
                   Book Follow-up
@@ -757,7 +757,7 @@ onMounted(() => {
                   <textarea 
                     v-model="userFeedback"
                     rows="3"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] focus:outline-none transition-all resize-none text-sm mb-4"
+                    class="w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-[#246BFD] focus:outline-none transition-all resize-none text-sm mb-4"
                     placeholder="Describe your experience..."
                   ></textarea>
                   <Button 

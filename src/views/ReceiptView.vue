@@ -182,7 +182,7 @@ onMounted(() => adsStore.load());
           </div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Receipt Not Found</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">This receipt link is invalid or no longer available on our platform.</p>
-          <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-[#246BFD] hover:bg-[#1d5cdb] text-white rounded-xl font-semibold text-sm transition-colors">
+          <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-[#246BFD] hover:bg-[#1d5cdb] text-white rounded-full font-semibold text-sm transition-colors">
             Go to FyndRx
           </a>
         </div>
@@ -198,7 +198,7 @@ onMounted(() => adsStore.load());
           </div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Couldn't Load Receipt</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">Something went wrong connecting to our server. Please check your connection and try again.</p>
-          <button @click="retry" class="inline-flex items-center justify-center px-6 py-3 bg-[#246BFD] hover:bg-[#1d5cdb] text-white rounded-xl font-semibold text-sm transition-colors">
+          <button @click="retry" class="inline-flex items-center justify-center px-6 py-3 bg-[#246BFD] hover:bg-[#1d5cdb] text-white rounded-full font-semibold text-sm transition-colors">
             Try Again
           </button>
         </div>
@@ -417,7 +417,7 @@ onMounted(() => adsStore.load());
               <div class="flex gap-3 no-print">
                 <button
                   @click="shareReceipt"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-[#246BFD] hover:bg-[#1d5cdb] text-white text-sm font-semibold transition-colors active:scale-[0.97]"
+                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-[#246BFD] hover:bg-[#1d5cdb] text-white text-sm font-semibold transition-colors active:scale-[0.97]"
                 >
                   <svg v-if="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -430,7 +430,7 @@ onMounted(() => adsStore.load());
                 </button>
                 <button
                   @click="printReceipt"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white text-sm font-semibold transition-colors active:scale-[0.97]"
+                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white text-sm font-semibold transition-colors active:scale-[0.97]"
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>

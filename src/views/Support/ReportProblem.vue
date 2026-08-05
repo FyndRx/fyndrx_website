@@ -133,7 +133,7 @@ const handleSubmit = async () => {
             v-model="description"
             required
             rows="5"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
             placeholder="Describe what happened and what you expected to happen..."
           ></textarea>
         </div>
@@ -145,7 +145,7 @@ const handleSubmit = async () => {
           <textarea
             v-model="steps"
             rows="4"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-all resize-none"
             placeholder="1. I opened the medications page&#10;2. I searched for Paracetamol&#10;3. The page returned an error..."
           ></textarea>
         </div>

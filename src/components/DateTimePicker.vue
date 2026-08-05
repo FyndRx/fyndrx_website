@@ -364,7 +364,7 @@ onUnmounted(() => {
             <button
               @click.stop="changeMonth(-1)"
               :disabled="isPrevDisabled"
-              class="p-1 rounded-lg transition-colors"
+              class="p-1 rounded-full transition-colors"
               :class="isPrevDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
             >
               <ChevronLeftIcon class="w-4 h-4" />
@@ -394,7 +394,7 @@ onUnmounted(() => {
             <button
               @click.stop="changeMonth(1)"
               :disabled="isNextDisabled"
-              class="p-1 rounded-lg transition-colors"
+              class="p-1 rounded-full transition-colors"
               :class="isNextDisabled ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'"
             >
               <ChevronRightIcon class="w-4 h-4" />
@@ -445,7 +445,7 @@ onUnmounted(() => {
             <select
               v-model="selectedHour"
               @change="updateValue"
-              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
             </select>
@@ -453,14 +453,14 @@ onUnmounted(() => {
             <select
               v-model="selectedMinute"
               @change="updateValue"
-              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option v-for="minute in minutes" :key="minute" :value="minute">{{ minute }}</option>
             </select>
             <select
               v-model="selectedPeriod"
               @change="updateValue"
-              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
+              class="px-1.5 py-1 text-center border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#246BFD] text-sm"
             >
               <option value="AM">AM</option>
               <option value="PM">PM</option>

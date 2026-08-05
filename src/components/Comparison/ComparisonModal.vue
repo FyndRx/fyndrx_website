@@ -40,7 +40,7 @@ const emit = defineEmits<{
                 <h2 class="text-2xl font-bold text-white">Medication Comparison</h2>
                 <p class="text-blue-100 text-sm mt-0.5">Comparing {{ comparisonList.length }} medication{{ comparisonList.length > 1 ? 's' : '' }} side by side</p>
               </div>
-              <button @click="emit('close')" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors">
+              <button @click="emit('close')" class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -311,7 +311,7 @@ const emit = defineEmits<{
                   >
                     <button
                       @click="emit('view', med)"
-                      class="w-full max-w-[160px] py-2.5 rounded-xl text-sm font-bold transition-all"
+                      class="w-full max-w-[160px] py-2.5 rounded-full text-sm font-bold transition-all"
                       :class="isBestValue(med)
                         ? 'bg-[#246BFD] text-white hover:bg-[#5089FF] shadow-md shadow-[#246BFD]/30'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:border-[#246BFD] hover:text-[#246BFD]'"

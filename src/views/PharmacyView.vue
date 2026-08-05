@@ -126,7 +126,7 @@ onMounted(() => {
           <div class="bg-[#246BFD] p-6 sm:p-8 rounded-3xl text-white shadow-lg shadow-blue-500/10">
              <h3 class="text-lg font-bold mb-3">Need Help?</h3>
              <p class="text-sm font-medium mb-6 text-blue-100">Our support team is available to assist you with your orders and health inquiries.</p>
-             <button class="w-full py-2.5 bg-white text-[#246BFD] rounded-xl font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">Start Chat</button>
+             <button class="w-full py-2.5 bg-white text-[#246BFD] rounded-full font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">Start Chat</button>
           </div>
         </div>
       </div>
@@ -202,7 +202,7 @@ onMounted(() => {
         <p class="text-sm text-gray-500 dark:text-gray-400 font-medium mb-6 leading-relaxed">The pharmacy profile you're looking for might have been moved or removed from our network.</p>
         <button 
           @click="pharmacyState.router.push({ name: 'pharmacies' })"
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246BFD] text-white text-sm font-bold rounded-xl shadow-md hover:-translate-y-0.5 transition-all"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#246BFD] text-white text-sm font-bold rounded-full shadow-md hover:-translate-y-0.5 transition-all"
         >
           Explore All Pharmacies
         </button>

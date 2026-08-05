@@ -349,7 +349,7 @@ onBeforeUnmount(() => {
         @keydown="handleKeydown"
         @focus="handleFocus"
         :class="[
-          'w-full px-6 py-4 text-lg border-2 rounded-xl focus:ring-2 transition-all text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500',
+          'w-full px-6 py-4 text-lg border-2 rounded-full focus:ring-2 transition-all text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500',
           validationError 
             ? 'border-red-500 focus:ring-red-200 focus:border-red-500' 
             : 'border-gray-200 dark:border-gray-700 focus:ring-[#246BFD] focus:border-transparent',

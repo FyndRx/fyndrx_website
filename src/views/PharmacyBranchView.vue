@@ -46,7 +46,7 @@ onMounted(() => {
     />
     <div v-else-if="branchState.error.value" class="max-w-2xl mx-auto px-4 py-24 text-center">
       <p class="text-red-500 font-semibold mb-4">{{ branchState.error.value }}</p>
-      <button @click="router.back()" class="px-6 py-2.5 rounded-xl bg-[#246BFD] text-white text-sm font-bold">Go back</button>
+      <button @click="router.back()" class="px-6 py-2.5 rounded-full bg-[#246BFD] text-white text-sm font-bold">Go back</button>
     </div>
 
     <template v-else-if="branchState.branch.value">

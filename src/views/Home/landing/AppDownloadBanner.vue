@@ -55,7 +55,7 @@ onMounted(async () => {
               :href="appSettings?.links.app_store || '#'" 
               target="_blank"
               rel="noopener noreferrer"
-              class="group relative flex items-center gap-4 bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all active:scale-95 min-w-[200px]"
+              class="group relative flex items-center gap-4 bg-white text-gray-900 px-6 py-3 rounded-full hover:bg-gray-100 transition-all active:scale-95 min-w-[200px]"
               :class="{ 'opacity-50 pointer-events-none': !appSettings?.links.app_store || appSettings?.links.app_store === '#' }"
             >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
@@ -74,7 +74,7 @@ onMounted(async () => {
               :href="appSettings?.links.play_store || '#'" 
               target="_blank"
               rel="noopener noreferrer"
-              class="group relative flex items-center gap-4 bg-transparent border border-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all active:scale-95 min-w-[220px]"
+              class="group relative flex items-center gap-4 bg-transparent border border-gray-600 text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all active:scale-95 min-w-[220px]"
             >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85M21.5,12C21.5,12.5 21.18,12.95 20.72,13.2L18.16,14.68L15.6,12.12L18.16,9.56L20.72,11.05C21.18,11.3 21.5,11.75 21.5,12M16.81,8.88L14.54,11.15L6.05,2.66L16.81,8.88Z" />

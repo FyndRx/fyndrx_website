@@ -272,7 +272,7 @@ onMounted(() => {
               <button
                 type="button"
                 @click="removePrescription"
-                class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
                 title="Remove file"
               >
                 <XMarkIcon class="w-5 h-5" />
