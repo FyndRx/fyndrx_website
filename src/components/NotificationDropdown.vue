@@ -29,12 +29,12 @@ const handleClickOutside = (e: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  store.startPolling();
+  store.initNotifications();
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
-  store.stopPolling();
+  store.cleanupNotifications();
 });
 
 const handleNotificationClick = async (notification: any) => {

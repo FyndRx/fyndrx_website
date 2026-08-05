@@ -9,7 +9,6 @@ export const useNotificationsStore = defineStore('notifications', {
     unreadCount: 0,
     loading: false,
     initialized: false,
-    pollingInterval: null as number | null,
     firebaseInitialized: false,
   }),
   getters: {
@@ -99,19 +98,13 @@ export const useNotificationsStore = defineStore('notifications', {
         console.error('Failed to delete notification:', error);
       }
     },
-    startPolling() {
-      if (this.pollingInterval) return;
+    initNotifications() {
+      if (this.initialized) return;
       this.fetchNotifications();
       this.initializeFirebasePush();
-      this.pollingInterval = window.setInterval(() => {
-        this.fetchUnreadCount();
-      }, 60000); // 60 seconds
     },
-    stopPolling() {
-      if (this.pollingInterval) {
-        clearInterval(this.pollingInterval);
-        this.pollingInterval = null;
-      }
+    cleanupNotifications() {
+      // Nothing to clean up anymore since polling is removed, but we keep the method for lifecycle symmetry.
     }
   }
 });
