@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { usePlaceholder } from '@/composables/usePlaceholder';
 
 interface Props {
   src: string;
@@ -19,9 +20,11 @@ const imageLoaded = ref(false);
 const imageError = ref(false);
 const imageRef = ref<HTMLImageElement | null>(null);
 
+const { getPlaceholder } = usePlaceholder();
+
 const placeholderSrc = computed(() => {
   if (props.placeholder) return props.placeholder;
-  return new URL(`../assets/placeholder/${props.aspectRatio}.png`, import.meta.url).href;
+  return getPlaceholder(props.aspectRatio);
 });
 
 const handleImageLoad = () => {

@@ -353,8 +353,7 @@ onMounted(() => {
                 class="flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40"
               >
                 <div class="flex items-center justify-center w-10 h-10 overflow-hidden rounded-xl bg-blue-50 dark:bg-gray-700 shrink-0">
-                  <img v-if="drugImage(drug)" :src="drugImage(drug)!" :alt="drugDisplayName(drug)" class="object-cover w-full h-full" />
-                  <svg v-else class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <LazyImage :src="drugImage(drug) || ''" :alt="drugDisplayName(drug)" className="object-cover w-full h-full" aspectRatio="square" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">{{ drugDisplayName(drug) }}</p>
@@ -377,8 +376,7 @@ onMounted(() => {
                 class="flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40"
               >
                 <div class="flex items-center justify-center w-10 h-10 overflow-hidden rounded-xl bg-emerald-50 dark:bg-gray-700 shrink-0">
-                  <img v-if="pharmacy.logo || pharmacy.image" :src="pharmacy.logo || pharmacy.image" :alt="pharmacy.name" class="object-cover w-full h-full" />
-                  <svg v-else class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                  <LazyImage :src="pharmacy.logo || pharmacy.image || ''" :alt="pharmacy.name" className="object-cover w-full h-full" aspectRatio="square" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">{{ pharmacy.name }}</p>

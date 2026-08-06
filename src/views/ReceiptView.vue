@@ -5,6 +5,7 @@ import { fetchReceipt, type Receipt, type PosReceipt, type OnlineReceipt } from 
 import SpotlightCardAd from '@/components/ads/formats/SpotlightCardAd.vue';
 import { useAds } from '@/composables/useAds';
 import { useAdsStore } from '@/store/ads';
+import LazyImage from '@/components/LazyImage.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
@@ -225,7 +226,7 @@ onMounted(() => adsStore.load());
                   v-if="receipt.pharmacy.logo_url"
                   class="w-12 h-12 rounded-2xl overflow-hidden bg-white/15 flex-shrink-0 border border-white/20 shadow-md"
                 >
-                  <img :src="receipt.pharmacy.logo_url" :alt="receipt.pharmacy.name" class="w-full h-full object-contain" />
+                  <LazyImage :src="receipt.pharmacy.logo_url || ''" :alt="receipt.pharmacy.name" className="w-full h-full object-contain" aspectRatio="square" />
                 </div>
                 <div
                   v-else

@@ -10,6 +10,7 @@ import type { ConsultationType, PatientConsultationIntake } from '@/types/consul
 import Button from '@/components/Button.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
+import LazyImage from '@/components/LazyImage.vue';
 import DateTimePicker from '@/components/DateTimePicker.vue';
 import { useDistanceCalculator } from '@/composables/useDistanceCalculator';
 import {
@@ -422,7 +423,7 @@ onMounted(async () => {
               >
                 <div v-if="selectedPharmacy" class="flex items-center gap-3 min-w-0">
                   <div class="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 flex items-center justify-center">
-                    <img v-if="selectedPharmacy.logo" :src="selectedPharmacy.logo" class="w-full h-full object-cover" />
+                    <LazyImage v-if="selectedPharmacy.logo" :src="selectedPharmacy.logo" :alt="selectedPharmacy.name" className="w-full h-full object-cover" aspectRatio="square" />
                     <BuildingStorefrontIcon v-else class="w-5 h-5 text-gray-400" />
                   </div>
                   <div class="min-w-0">
@@ -467,7 +468,7 @@ onMounted(async () => {
                         @click.stop="selectPharmacy(pharmacy)"
                       >
                         <div class="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 flex items-center justify-center">
-                          <img v-if="pharmacy.logo" :src="pharmacy.logo" class="w-full h-full object-cover" />
+                          <LazyImage v-if="pharmacy.logo" :src="pharmacy.logo" :alt="pharmacy.name" className="w-full h-full object-cover" aspectRatio="square" />
                           <BuildingStorefrontIcon v-else class="w-5 h-5 text-gray-400" />
                         </div>
                         <div class="flex-1 min-w-0">
@@ -750,7 +751,7 @@ onMounted(async () => {
               <div v-if="previewFiles.length" class="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
                 <div v-for="(pf, idx) in previewFiles" :key="idx" class="relative group">
                   <div class="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <img v-if="pf.preview" :src="pf.preview" class="w-full h-full object-cover" />
+                    <LazyImage v-if="pf.preview" :src="pf.preview" :alt="pf.file.name" className="w-full h-full object-cover" />
                     <DocumentTextIcon v-else class="w-7 h-7 text-gray-400" />
                   </div>
                   <button

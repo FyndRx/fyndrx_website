@@ -146,10 +146,7 @@ const emit = defineEmits<{
                       >
                         <!-- Pharmacy logo or initial -->
                         <div class="w-7 h-7 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 flex items-center justify-center">
-                          <img v-if="p.pharmacy_logo" :src="p.pharmacy_logo" :alt="p.pharmacy_name" class="w-full h-full object-cover" />
-                          <span v-else class="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase">
-                            {{ p.pharmacy_name?.charAt(0) }}
-                          </span>
+                          <LazyImage :src="p.pharmacy_logo || ''" :alt="p.pharmacy_name" className="w-full h-full object-cover" aspectRatio="square" />
                         </div>
                         <div class="flex-1 min-w-0">
                           <p class="text-[11px] font-semibold text-gray-800 dark:text-gray-200 truncate leading-tight">{{ p.pharmacy_name }}</p>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue';
 import type { usePharmacy } from '@/composables/usePharmacy';
+import LazyImage from '@/components/LazyImage.vue';
 
 const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 </script>
@@ -31,14 +32,13 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           class="relative h-28 overflow-hidden"
           :class="!branch.bannerImage ? 'bg-gradient-to-r from-[#246BFD]/20 to-[#246BFD]/5 dark:from-[#246BFD]/10 dark:to-transparent' : ''"
         >
-          <img v-if="branch.bannerImage" :src="branch.bannerImage" class="w-full h-full object-cover" :alt="branch.branchName" />
+          <LazyImage v-if="branch.bannerImage" :src="branch.bannerImage" className="w-full h-full object-cover" :alt="branch.branchName" />
           <div v-if="branch.bannerImage" class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
 
           <!-- Identity: pharmacy logo + branch name -->
           <div class="absolute inset-0 flex items-end px-5 pb-3 gap-3">
             <div class="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <img v-if="pharmacyState.pharmacy.value.logo" :src="pharmacyState.pharmacy.value.logo" class="w-full h-full object-cover" :alt="pharmacyState.pharmacy.value.name" />
-              <svg v-else class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              <LazyImage :src="pharmacyState.pharmacy.value.logo || ''" className="w-full h-full object-cover" :alt="pharmacyState.pharmacy.value.name" aspectRatio="square" />
             </div>
             <div class="min-w-0">
               <h4 class="text-base font-black leading-tight truncate" :class="branch.bannerImage ? 'text-white drop-shadow' : 'text-gray-900 dark:text-white'">{{ branch.branchName }}</h4>

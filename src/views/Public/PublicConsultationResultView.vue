@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { sanitizeHtml } from '@/utils/sanitize';
 import { consultationService } from '@/services/consultationService';
 import type { PublicConsultationSearchResponse, Drug } from '@/types/consultation';
+import LazyImage from '@/components/LazyImage.vue';
 import {
   ClockIcon, CheckCircleIcon, XCircleIcon, ArrowLeftIcon,
   UserIcon, BeakerIcon, ClipboardDocumentListIcon, DocumentTextIcon,
@@ -388,10 +389,7 @@ function drugName(drug: Drug): string {
               >
                 <!-- Drug image -->
                 <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600">
-                  <img v-if="drug.image" :src="drug.image" :alt="drugName(drug)" class="w-full h-full object-contain p-1" />
-                  <div v-else class="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
-                    <BeakerIcon class="w-6 h-6" />
-                  </div>
+                  <LazyImage :src="drug.image || ''" :alt="drugName(drug)" className="w-full h-full object-contain p-1" aspectRatio="square" />
                 </div>
 
                 <!-- Drug details -->

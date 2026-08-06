@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { paymentService } from '@/services/paymentService';
 import { formatCurrency } from '@/utils/currency';
+import LazyImage from '@/components/LazyImage.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -179,7 +180,7 @@ onMounted(async () => {
                  class="group bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-[#246BFD] transition-all cursor-pointer flex items-center justify-between">
               <div class="flex items-center gap-4">
                 <div v-if="order.pharmacy?.logo" class="w-12 h-12 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden bg-white p-1">
-                  <img :src="order.pharmacy.logo" :alt="order.pharmacy.name" class="w-full h-full object-contain" />
+                  <LazyImage :src="order.pharmacy.logo || ''" :alt="order.pharmacy.name" className="w-full h-full object-contain" aspectRatio="square" />
                 </div>
                 <div v-else class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#246BFD]">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
