@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import {
   CalendarIcon,
   ClockIcon,
@@ -113,6 +113,12 @@ const goToSlide = (index: number) => {
 };
 
 const isAdSlide = computed(() => heroAd.value && currentSlide.value === sponsoredSlideIndex.value);
+
+watch(isAdSlide, isVisible => {
+  if (isVisible && heroAd.value) {
+    adSession.recordImpression(heroAd.value.id, 'Z1-hero-carousel');
+  }
+});
 
 const handleAdClick = () => {
   if (heroAd.value) adSession.recordClick(heroAd.value.id, 'Z1-hero-carousel');

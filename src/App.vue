@@ -7,12 +7,14 @@ import MaintenanceOverlay from '@/components/MaintenanceOverlay.vue';
 import RateLimitWarning from '@/components/RateLimitWarning.vue';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
+import { useAdsStore } from '@/store/ads';
 import { favoritesService } from '@/services/favoritesService';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
+const adsStore = useAdsStore();
 
 const handleUnauthorized = async () => {
   // Only redirect if not already on login page
@@ -34,6 +36,10 @@ onMounted(async () => {
     if (authStore.isAuthenticated) {
       await favoritesService.initialize();
     }
+
+    // First ad slot to mount also triggers a load(); this just keeps the
+    // catalog fresh afterwards (interval + on app-foreground).
+    adsStore.initAutoRefresh();
   } catch (err) {
     console.error('Error during app initialization:', err);
   }

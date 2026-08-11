@@ -1,6 +1,8 @@
 // Session-level ad frequency capping (in-memory, no persistence).
 // Counts impressions per ad id per session, respects per-zone caps.
 
+import { adsService } from '@/services/adsService';
+
 const impressions = new Map<string, number>();
 const dismissed = new Set<string>();
 
@@ -15,10 +17,12 @@ export function useAdSession() {
     impressions.set(adId, (impressions.get(adId) ?? 0) + 1);
     // Emit analytics event (console stub — swap for real analytics)
     console.debug(`[ad:impression] ${adId} zone=${zone}`);
+    adsService.trackImpression(adId);
   };
 
   const recordClick = (adId: string, zone: string) => {
     console.debug(`[ad:click] ${adId} zone=${zone}`);
+    adsService.trackClick(adId);
   };
 
   const dismiss = (adId: string) => {
