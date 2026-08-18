@@ -1,0 +1,377 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Getting Started",
+      "slug": "getting-started",
+      "icon": "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+    },
+    {
+      "id": 2,
+      "name": "Search & Compare",
+      "slug": "search-compare",
+      "icon": "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    },
+    {
+      "id": 3,
+      "name": "Prescriptions",
+      "slug": "prescriptions",
+      "icon": "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+    },
+    {
+      "id": 4,
+      "name": "Consultations",
+      "slug": "consultations",
+      "icon": "M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+    },
+    {
+      "id": 5,
+      "name": "Orders & Payments",
+      "slug": "orders-payments",
+      "icon": "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m-10 0a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"
+    },
+    {
+      "id": 6,
+      "name": "Account & Support",
+      "slug": "account-support",
+      "icon": "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+    }
+  ],
+  "quickStart": [
+    {
+      "order": 1,
+      "title": "Sign Up",
+      "description": "Create your free account in under a minute.",
+      "icon": "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+    },
+    {
+      "order": 2,
+      "title": "Search",
+      "description": "Find your medication and compare prices nearby.",
+      "icon": "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    },
+    {
+      "order": 3,
+      "title": "Order or Consult",
+      "description": "Upload a prescription, checkout, or book a doctor.",
+      "icon": "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+    },
+    {
+      "order": 4,
+      "title": "Pay Securely",
+      "description": "Mobile Money, card, or bank transfer at checkout.",
+      "icon": "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+    },
+    {
+      "order": 5,
+      "title": "Track",
+      "description": "Follow your order in real time, stage by stage.",
+      "icon": "M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+    },
+    {
+      "order": 6,
+      "title": "Receive & Manage",
+      "description": "Confirm delivery, save favorites, download receipts.",
+      "icon": "M5 13l4 4L19 7"
+    }
+  ],
+  "guides": [
+    {
+      "id": 1,
+      "slug": "create-your-account",
+      "category": "Getting Started",
+      "order": 1,
+      "title": "Create Your FyndRx Account",
+      "summary": "Set up a free account to unlock ordering, prescriptions, and consultations.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Tap \"Create Account\"", "description": "Start from the homepage or the app menu." },
+        { "order": 2, "title": "Enter your details", "description": "Provide your full name, phone number, and email address." },
+        { "order": 3, "title": "Verify your phone number", "description": "Enter the OTP code sent to you by SMS." },
+        { "order": 4, "title": "Set a password", "description": "Choose a secure password to finish setting up your account." }
+      ],
+      "tip": "You can browse medications and pharmacies without an account — but you'll need one to order, upload prescriptions, or book a consultation.",
+      "cta": { "label": "Create an account", "to": "/register" }
+    },
+    {
+      "id": 2,
+      "slug": "complete-your-health-profile",
+      "category": "Getting Started",
+      "order": 2,
+      "title": "Complete Your Health Profile",
+      "summary": "Add key health details so pharmacists and doctors can serve you safely and quickly.",
+      "estimatedTime": "2 min",
+      "steps": [
+        { "order": 1, "title": "Open your profile", "description": "Go to Profile, then Edit Profile." },
+        { "order": 2, "title": "Add personal details", "description": "Fill in your date of birth, gender, and delivery address." },
+        { "order": 3, "title": "List allergies or conditions", "description": "Optional, but recommended so prescriptions can be checked for safety." },
+        { "order": 4, "title": "Save changes", "description": "Your profile is now ready for faster checkouts and consultations." }
+      ],
+      "tip": "A complete profile speeds up prescription verification and consultation bookings.",
+      "cta": { "label": "Edit your profile", "to": "/profile/edit" }
+    },
+    {
+      "id": 3,
+      "slug": "understand-your-dashboard",
+      "category": "Getting Started",
+      "order": 3,
+      "title": "Understand Your Dashboard",
+      "summary": "Your dashboard is the control center for every order, prescription, and appointment.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Log in", "description": "Open your Dashboard from the main menu after signing in." },
+        { "order": 2, "title": "Explore quick links", "description": "Jump straight to Orders, Prescriptions, Consultations, and Favorites." },
+        { "order": 3, "title": "Check notifications", "description": "The bell icon shows order and appointment updates as they happen." }
+      ],
+      "tip": "Pin FyndRx to your home screen for one-tap access to your dashboard.",
+      "cta": { "label": "Go to dashboard", "to": "/dashboard" }
+    },
+    {
+      "id": 4,
+      "slug": "search-for-a-medication",
+      "category": "Search & Compare",
+      "order": 1,
+      "title": "Search for a Medication",
+      "summary": "Find exactly what you need from thousands of listed medications.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open the search bar", "description": "Use the homepage search or go to \"Browse Medications\"." },
+        { "order": 2, "title": "Type a name or condition", "description": "Search by medication name, brand, or the condition it treats." },
+        { "order": 3, "title": "Filter your results", "description": "Narrow down by dosage form, category, or availability." }
+      ],
+      "tip": "Can't find an exact match? Try the generic name — many brands share the same active ingredient.",
+      "cta": { "label": "Browse medications", "to": "/medications" }
+    },
+    {
+      "id": 5,
+      "slug": "compare-prices-across-pharmacies",
+      "category": "Search & Compare",
+      "order": 2,
+      "title": "Compare Prices Across Pharmacies",
+      "summary": "See every partner pharmacy's price side by side before you buy.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open a medication page", "description": "Tap any medication from your search results." },
+        { "order": 2, "title": "View the price list", "description": "See prices from every partner pharmacy that stocks it." },
+        { "order": 3, "title": "Sort your options", "description": "Order results by lowest price or nearest distance." },
+        { "order": 4, "title": "Pick the best fit", "description": "Choose the pharmacy that offers the best value for you." }
+      ],
+      "tip": "Prices can vary significantly between pharmacies in the same city — always compare before you order.",
+      "cta": { "label": "Browse medications", "to": "/medications" }
+    },
+    {
+      "id": 6,
+      "slug": "find-a-pharmacy-near-you",
+      "category": "Search & Compare",
+      "order": 3,
+      "title": "Find a Pharmacy Near You",
+      "summary": "Discover verified pharmacies close to you, with hours, services, and stock.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open Pharmacies", "description": "Select \"Pharmacies\" from the main menu." },
+        { "order": 2, "title": "Share your location", "description": "Allow location access, or enter your area manually." },
+        { "order": 3, "title": "Browse the list", "description": "See verified pharmacies sorted by distance, rating, and services." },
+        { "order": 4, "title": "View pharmacy details", "description": "Tap a pharmacy to see its branches, hours, and available stock." }
+      ],
+      "tip": "Look for the verified badge — it confirms the pharmacy is licensed by the Ghana Pharmacy Council.",
+      "cta": { "label": "Find pharmacies", "to": "/pharmacies" }
+    },
+    {
+      "id": 7,
+      "slug": "upload-your-prescription",
+      "category": "Prescriptions",
+      "order": 1,
+      "title": "Upload Your Prescription",
+      "summary": "Get a prescription-only medicine verified and ready to order in a few taps.",
+      "estimatedTime": "2 min",
+      "steps": [
+        { "order": 1, "title": "Go to Upload Prescription", "description": "Find it on the home page or your dashboard." },
+        { "order": 2, "title": "Add a clear photo or scan", "description": "Make sure all details are visible and legible." },
+        { "order": 3, "title": "Choose a pharmacy", "description": "Pick your preferred pharmacy, or let FyndRx recommend one nearby." },
+        { "order": 4, "title": "Submit", "description": "You'll get an instant confirmation that your prescription was received." }
+      ],
+      "tip": "Make sure the prescription date, dosage, and doctor's signature are clearly visible to avoid delays.",
+      "cta": { "label": "Upload a prescription", "to": "/upload-prescription" }
+    },
+    {
+      "id": 8,
+      "slug": "track-verification-and-fulfillment",
+      "category": "Prescriptions",
+      "order": 2,
+      "title": "Track Verification & Fulfillment",
+      "summary": "Know exactly where your prescription is in the review process.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open My Prescriptions", "description": "Find it from your dashboard." },
+        { "order": 2, "title": "Check the status", "description": "See Pending Review, Verified, or Ready for Checkout." },
+        { "order": 3, "title": "Get notified", "description": "A licensed pharmacist typically approves it within 1–3 hours." },
+        { "order": 4, "title": "Complete your order", "description": "Add the verified items to your cart and check out." }
+      ],
+      "tip": "Verification can take longer outside business hours — plan ahead for regular medication.",
+      "cta": { "label": "View my prescriptions", "to": "/prescriptions" }
+    },
+    {
+      "id": 9,
+      "slug": "request-a-refill",
+      "category": "Prescriptions",
+      "order": 3,
+      "title": "Request a Refill",
+      "summary": "Reorder repeat medication without digging out the original prescription.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open a past prescription", "description": "Find it under \"My Prescriptions\"." },
+        { "order": 2, "title": "Tap Request Refill", "description": "Start a new order from the same prescription." },
+        { "order": 3, "title": "Confirm delivery & payment", "description": "Review your details before submitting." },
+        { "order": 4, "title": "Renew if expired", "description": "Book a quick teleconsultation if your prescription is no longer valid." }
+      ],
+      "tip": "Set a personal reminder a few days before you run out — refill requests still go through pharmacist review.",
+      "cta": { "label": "My prescriptions", "to": "/prescriptions" }
+    },
+    {
+      "id": 10,
+      "slug": "book-a-teleconsultation",
+      "category": "Consultations",
+      "order": 1,
+      "title": "Book a Teleconsultation",
+      "summary": "Speak to a licensed doctor from home and get medical advice fast.",
+      "estimatedTime": "2 min",
+      "steps": [
+        { "order": 1, "title": "Open Telehealth", "description": "Select \"Telehealth\" from the main menu." },
+        { "order": 2, "title": "Describe your reason for visit", "description": "Briefly explain your symptoms or concern." },
+        { "order": 3, "title": "Choose a doctor & time", "description": "Pick from available licensed doctors and open slots." },
+        { "order": 4, "title": "Confirm and pay", "description": "Secure your slot by paying the consultation fee." }
+      ],
+      "tip": "Have your health profile filled in — doctors can review your history before the call for faster, safer advice.",
+      "cta": { "label": "Book a consultation", "to": "/telehealth" }
+    },
+    {
+      "id": 11,
+      "slug": "attend-your-consultation",
+      "category": "Consultations",
+      "order": 2,
+      "title": "Attend Your Consultation",
+      "summary": "Join your appointment and talk to your doctor by chat or video.",
+      "estimatedTime": "15 min",
+      "steps": [
+        { "order": 1, "title": "Join on time", "description": "Open \"My Consultations\" a few minutes before your slot." },
+        { "order": 2, "title": "Connect with your doctor", "description": "Chat or video call from any device." },
+        { "order": 3, "title": "Discuss your symptoms", "description": "Get medical advice and next steps in real time." }
+      ],
+      "tip": "Find a quiet, well-lit space with a stable internet connection for video consultations.",
+      "cta": { "label": "My consultations", "to": "/consultations" }
+    },
+    {
+      "id": 12,
+      "slug": "get-your-e-prescription",
+      "category": "Consultations",
+      "order": 3,
+      "title": "Get Your e-Prescription",
+      "summary": "Receive a doctor-issued prescription instantly, with no upload needed.",
+      "estimatedTime": "Instant",
+      "steps": [
+        { "order": 1, "title": "Finish your consultation", "description": "Your doctor issues a digital prescription if one is needed." },
+        { "order": 2, "title": "Find it automatically", "description": "It appears in \"My Prescriptions\" right away." },
+        { "order": 3, "title": "Order as usual", "description": "Choose a pharmacy, add to cart, and check out." }
+      ],
+      "tip": "e-Prescriptions skip manual verification since they come directly from a licensed doctor.",
+      "cta": { "label": "View prescriptions", "to": "/prescriptions" }
+    },
+    {
+      "id": 13,
+      "slug": "add-to-cart-and-checkout",
+      "category": "Orders & Payments",
+      "order": 1,
+      "title": "Add Items to Your Cart & Checkout",
+      "summary": "Move from browsing to a confirmed order in a few taps.",
+      "estimatedTime": "2 min",
+      "steps": [
+        { "order": 1, "title": "Add to cart", "description": "From search results or a verified prescription." },
+        { "order": 2, "title": "Review your order", "description": "Check quantities and confirm the selected pharmacy." },
+        { "order": 3, "title": "Choose delivery or pickup", "description": "Pick home delivery or in-store pharmacy pickup at checkout." }
+      ],
+      "tip": "Ordering multiple items from the same pharmacy saves on delivery fees.",
+      "cta": { "label": "View cart", "to": "/cart" }
+    },
+    {
+      "id": 14,
+      "slug": "pay-securely",
+      "category": "Orders & Payments",
+      "order": 2,
+      "title": "Pay Securely",
+      "summary": "Complete payment with Mobile Money, card, or bank transfer.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Choose a payment method", "description": "MTN Mobile Money, Vodafone Cash, AirtelTigo Money, Visa, Mastercard, or bank transfer." },
+        { "order": 2, "title": "Confirm payment", "description": "Approve the prompt on your phone or enter your card details." },
+        { "order": 3, "title": "Get your receipt", "description": "Receive an instant order confirmation and digital receipt." }
+      ],
+      "tip": "All payments are processed through PCI-DSS compliant gateways — FyndRx never stores your card details.",
+      "cta": { "label": "Go to checkout", "to": "/checkout" }
+    },
+    {
+      "id": 15,
+      "slug": "track-your-order-and-delivery",
+      "category": "Orders & Payments",
+      "order": 3,
+      "title": "Track Your Order & Delivery",
+      "summary": "Follow your medication from confirmation to your doorstep.",
+      "estimatedTime": "Ongoing",
+      "steps": [
+        { "order": 1, "title": "Open My Orders", "description": "See real-time status for every active order." },
+        { "order": 2, "title": "Follow each stage", "description": "Confirmed, Dispensed, Out for Delivery, and Delivered." },
+        { "order": 3, "title": "Stay notified", "description": "Get SMS and push notifications at every step." },
+        { "order": 4, "title": "Confirm receipt", "description": "Mark your order received once it arrives." }
+      ],
+      "tip": "Most same-city orders arrive within 2–4 hours; same-day delivery is available at participating pharmacies.",
+      "cta": { "label": "My orders", "to": "/orders" }
+    },
+    {
+      "id": 16,
+      "slug": "manage-favorites",
+      "category": "Account & Support",
+      "order": 1,
+      "title": "Manage Favorites",
+      "summary": "Save medications and pharmacies you use often for instant reordering.",
+      "estimatedTime": "30 sec",
+      "steps": [
+        { "order": 1, "title": "Tap the heart icon", "description": "Available on any medication or pharmacy page." },
+        { "order": 2, "title": "Open Favorites anytime", "description": "Access all your saved items from one screen." },
+        { "order": 3, "title": "Reorder in seconds", "description": "Add a favorite straight to your cart in a couple of taps." }
+      ],
+      "tip": "Favoriting your regular medications makes monthly reordering nearly instant.",
+      "cta": { "label": "My favorites", "to": "/favorites" }
+    },
+    {
+      "id": 17,
+      "slug": "review-transactions-and-receipts",
+      "category": "Account & Support",
+      "order": 2,
+      "title": "Review Transactions & Receipts",
+      "summary": "Keep track of every payment and download proof for your records.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Open Transactions", "description": "See your full payment history in one place." },
+        { "order": 2, "title": "Open a transaction", "description": "Tap any entry to view its digital receipt." },
+        { "order": 3, "title": "Save or share it", "description": "Use receipts for insurance claims or expense records." }
+      ],
+      "tip": "Digital receipts are also emailed to you automatically after every payment.",
+      "cta": { "label": "View transactions", "to": "/transactions" }
+    },
+    {
+      "id": 18,
+      "slug": "get-help-anytime",
+      "category": "Account & Support",
+      "order": 3,
+      "title": "Get Help Anytime",
+      "summary": "Reach the FyndRx support team whenever something needs attention.",
+      "estimatedTime": "1 min",
+      "steps": [
+        { "order": 1, "title": "Check the Help Center", "description": "Browse guides and answers to common questions." },
+        { "order": 2, "title": "Report a specific problem", "description": "Use \"Report a Problem\" for order or account issues." },
+        { "order": 3, "title": "Contact support directly", "description": "Reach us by email, phone, or in-app chat, 24/7." }
+      ],
+      "tip": "Include your order or transaction reference when contacting support — it speeds up resolution.",
+      "cta": { "label": "Visit Help Center", "to": "/help" }
+    }
+  ]
+}

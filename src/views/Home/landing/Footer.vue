@@ -73,6 +73,7 @@ const quickLinks = [
 ];
 
 const supportLinks = [
+  { name: 'How to Use FyndRx', path: '/how-to-use' },
   { name: 'Help Center', path: '/help' },
   { name: 'FAQs', path: '/faq' },
   { name: 'Report a Problem', path: '/report' },
@@ -86,7 +87,8 @@ const informationLinks = [
   { name: 'Privacy Policy', path: '/privacy' },
   { name: 'Email Gallery', path: '/email-gallery', devOnly: true },
   { name: 'Cookie Policy', path: '/cookies' },
-  { name: 'Accessibility', path: '/accessibility' }
+  { name: 'Accessibility', path: '/accessibility' },
+  { name: 'Sitemap', path: '/sitemap' }
 ];
 </script>
 

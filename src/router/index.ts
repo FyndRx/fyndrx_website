@@ -143,6 +143,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/profile/delete-account',
+      name: 'delete-account',
+      component: () => import('../views/DeleteAccountView.vue'),
+      meta: {
+        title: 'Delete Account | FyndRx',
+        description: 'Permanently delete your FyndRx account.',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/verify-otp',
       name: 'verify-otp',
       component: () => import('../views/Auth/OTPVerificationView.vue'),
@@ -407,12 +417,39 @@ const router = createRouter({
       }
     },
     {
+      path: '/how-to-use',
+      name: 'how-to-use',
+      component: () => import('@/views/Support/HowToUseView.vue'),
+      meta: {
+        title: 'How to Use FyndRx | Step-by-Step Guide',
+        description: 'Learn how to use FyndRx step by step — create an account, search and compare medication prices, upload prescriptions, book teleconsultations, checkout, and track your delivery.'
+      }
+    },
+    {
+      path: '/how-to-use/:slug',
+      name: 'how-to-guide-detail',
+      component: () => import('@/views/Support/HowToGuideDetailView.vue'),
+      meta: {
+        title: 'How to Use FyndRx | Guide',
+        description: 'A step-by-step FyndRx guide.'
+      }
+    },
+    {
       path: '/faq',
       name: 'faq',
       component: () => import('@/views/FAQView.vue'),
       meta: {
         title: 'FAQ | FyndRX',
         description: 'Frequently asked questions about FyndRx ePharmacy platform. Find answers about orders, prescriptions, payments, and more.'
+      }
+    },
+    {
+      path: '/report',
+      name: 'report',
+      component: () => import('@/views/Support/ReportProblem.vue'),
+      meta: {
+        title: 'Report a Problem | FyndRx',
+        description: 'Encountered an issue on FyndRx? Report bugs, service problems, account issues, or pharmacy complaints here. Our team reviews every report.'
       }
     },
     {
@@ -458,6 +495,15 @@ const router = createRouter({
       meta: {
         title: 'Accessibility',
         description: 'Our commitment to accessibility'
+      }
+    },
+    {
+      path: '/sitemap',
+      name: 'sitemap',
+      component: () => import('@/views/Legal/Sitemap.vue'),
+      meta: {
+        title: 'Sitemap | FyndRx',
+        description: 'Browse every page on FyndRx — medication search, pharmacy finder, prescriptions, teleconsultations, account management, and support.'
       }
     },
     {
