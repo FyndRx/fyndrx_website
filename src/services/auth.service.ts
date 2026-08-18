@@ -1,7 +1,7 @@
 import type { User, Address, MedicalRecord } from '@/models/User';
 import { apiService } from './api';
-import type { 
-  LoginApiResponse, 
+import type {
+  LoginApiResponse,
   RegisterApiResponse,
   UserApiResponse,
   OtpResponse,
@@ -9,6 +9,16 @@ import type {
   UserSession
 } from '@/models/api';
 import { unwrapApiResponse, transformUser } from '@/utils/responseTransformers';
+import type { ApiError } from '@/utils/errorHandler';
+
+export type SocialProvider = 'google' | 'facebook';
+
+export interface LinkRequiredResponse {
+  requires_password_confirmation: true;
+  provider: SocialProvider;
+  email: string;
+  message: string;
+}
 
 export interface LoginCredentials {
   login: string;
@@ -165,6 +175,41 @@ class AuthService {
       password,
       password_confirmation,
     });
+  }
+
+  /**
+   * Sign in or sign up with a Google/Facebook token obtained client-side via the
+   * provider's own SDK. Resolves to a LinkRequiredResponse (rather than throwing)
+   * when the email already belongs to a password account that needs confirming.
+   */
+  async loginWithProvider(provider: SocialProvider, token: string): Promise<LoginResponse | LinkRequiredResponse> {
+    const payload = provider === 'google' ? { id_token: token } : { access_token: token };
+    try {
+      const response = await apiService.post<LoginApiResponse>(`/auth/${provider}`, payload);
+      return { message: response.message, access_token: response.access_token };
+    } catch (err) {
+      // apiService's response interceptor already transforms axios errors into the
+      // ApiError shape below (see src/services/api.ts) before they reach here — the
+      // raw response body survives on `.data` specifically so cases like this, where
+      // the error payload carries structured data beyond message/code, aren't lost.
+      const apiError = err as ApiError;
+      const data = apiError?.data as { requires_password_confirmation?: boolean } | undefined;
+      if (apiError?.status === 409 && data?.requires_password_confirmation) {
+        return data as LinkRequiredResponse;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Confirms linking a social identity to an existing password account.
+   */
+  async confirmProviderLink(provider: SocialProvider, token: string, password: string): Promise<LoginResponse> {
+    const payload = provider === 'google'
+      ? { id_token: token, password }
+      : { access_token: token, password };
+    const response = await apiService.post<LoginApiResponse>(`/auth/${provider}/link`, payload);
+    return { message: response.message, access_token: response.access_token };
   }
 
   /**

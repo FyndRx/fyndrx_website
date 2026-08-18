@@ -5,6 +5,9 @@ export interface ApiError {
   code?: string;
   status?: number;
   errors?: Record<string, string[]>;
+  /** The raw response body, for endpoints whose error payload carries structured
+   * data beyond message/code/errors (e.g. a 409 conflict with extra fields). */
+  data?: unknown;
 }
 
 export function handleApiError(error: unknown): ApiError {
@@ -18,6 +21,7 @@ export function handleApiError(error: unknown): ApiError {
         code: response.data?.code,
         status: response.status,
         errors: response.data?.errors,
+        data: response.data,
       };
     } else if (error.request) {
       // Request was made but no response received

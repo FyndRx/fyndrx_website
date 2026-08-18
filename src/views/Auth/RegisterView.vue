@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
+import SocialSignInButtons from '@/components/SocialSignInButtons.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 import { handleApiError } from '@/utils/errorHandler';
@@ -14,6 +15,14 @@ const authStore = useAuthStore();
 const step = ref(1); // 1: Details, 2: OTP
 const loading = ref(false);
 const globalError = ref('');
+
+const handleSocialSuccess = () => {
+  router.push({ name: 'dashboard' });
+};
+
+const handleSocialError = (message: string) => {
+  globalError.value = message;
+};
 
 const form = ref({
   firstName: '',
@@ -361,6 +370,10 @@ const handlePhoneValidation = (isValid: boolean) => {
             </button>
           </div>
         </form>
+
+        <div v-if="step === 1" class="mt-6">
+          <SocialSignInButtons @success="handleSocialSuccess" @error="handleSocialError" />
+        </div>
       </div>
     </div>
   </div>

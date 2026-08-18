@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '@/services/auth.service';
 import type { User, Address, MedicalRecord } from '@/models/User';
-import type { LoginCredentials, RegisterCredentials, UpdateUserDetailsRequest } from '@/services/auth.service';
+import type { LoginCredentials, RegisterCredentials, UpdateUserDetailsRequest, SocialProvider } from '@/services/auth.service';
 import { handleApiError, isNetworkError } from '@/utils/errorHandler';
 import { setAccessToken } from '@/services/api';
 import type { UserSession } from '@/models/api';
@@ -100,6 +100,57 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const loginWithSocialProvider = async (provider: SocialProvider, token: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.loginWithProvider(provider, token);
+
+      if ('requires_password_confirmation' in response) {
+        return { requiresLinkConfirmation: true as const, provider: response.provider, email: response.email };
+      }
+
+      if (!response.access_token) {
+        throw new Error('Invalid response from server');
+      }
+
+      setToken(response.access_token);
+      await fetchUserDetails();
+      return { requiresLinkConfirmation: false as const };
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Social sign-in failed. Please try again.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const confirmSocialLink = async (provider: SocialProvider, token: string, password: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.confirmProviderLink(provider, token, password);
+
+      if (!response.access_token) {
+        throw new Error('Invalid response from server');
+      }
+
+      setToken(response.access_token);
+      await fetchUserDetails();
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Incorrect password.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const sendOTP = async (credentials: { email: string; phone_number: string }) => {
     try {
       loading.value = true;
@@ -131,6 +182,23 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = apiError.message || 'Invalid OTP.';
       }
       throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteAccount = async (credentials: { email: string; password: string; delete_reason: string }) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      await authService.deleteAccount(credentials);
+      clearAuth();
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Failed to delete account. Please check your password and try again.';
+      throw new Error(error.value || 'An error occurred');
     } finally {
       loading.value = false;
     }
@@ -370,6 +438,9 @@ export const useAuthStore = defineStore('auth', () => {
     userInitials,
     login,
     register,
+    loginWithSocialProvider,
+    confirmSocialLink,
+    deleteAccount,
     sendOTP,
     verifyOTP,
     logout,

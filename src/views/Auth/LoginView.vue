@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
+import SocialSignInButtons from '@/components/SocialSignInButtons.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
@@ -12,6 +13,18 @@ const authStore = useAuthStore();
 
 const loading = ref(false);
 const successMessage = ref('');
+const socialError = ref('');
+
+const handleSocialSuccess = async () => {
+  socialError.value = '';
+  successMessage.value = 'Login successful! Redirecting...';
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  router.push({ name: 'dashboard' });
+};
+
+const handleSocialError = (message: string) => {
+  socialError.value = message;
+};
 const form = ref({
   login: '',
   password: '',
@@ -196,6 +209,14 @@ const handleLoginValidation = (isValid: boolean) => {
             </button>
           </div>
         </form>
+
+        <div v-if="socialError" class="mt-6 rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+          <p class="text-sm text-red-800 dark:text-red-200">{{ socialError }}</p>
+        </div>
+
+        <div class="mt-6">
+          <SocialSignInButtons @success="handleSocialSuccess" @error="handleSocialError" />
+        </div>
       </div>
     </div>
   </div>
