@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)"
+    ],
+    "additionalDirectories": [
+      "/Users/aby/Documents/GitHub/admin-panel/config"
+    ]
+  }
+}

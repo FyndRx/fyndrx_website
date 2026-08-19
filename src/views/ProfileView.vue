@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router';
 import LazyImage from '@/components/LazyImage.vue';
 import AddressSection from '@/components/profile/AddressSection.vue';
 import MedicalHistorySection from '@/components/profile/MedicalHistorySection.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import type { UserSession } from '@/models/api';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -34,13 +36,32 @@ const fetchSessions = async () => {
   }
 };
 
-const handleRevokeSession = async (id: number) => {
-  if (confirm('Are you sure you want to revoke this session? The device will be logged out immediately.')) {
-    try {
-      await authStore.revokeSession(id);
-    } catch (err: any) {
-      alert(err.message || 'Failed to revoke session');
-    }
+const sessionPendingRevoke = ref<UserSession | null>(null);
+const revokeLoading = ref(false);
+const revokeError = ref<string | null>(null);
+
+const handleRevokeSession = (session: UserSession) => {
+  sessionPendingRevoke.value = session;
+  revokeError.value = null;
+};
+
+const cancelRevoke = () => {
+  if (revokeLoading.value) return;
+  sessionPendingRevoke.value = null;
+  revokeError.value = null;
+};
+
+const confirmRevoke = async () => {
+  if (!sessionPendingRevoke.value) return;
+  revokeLoading.value = true;
+  revokeError.value = null;
+  try {
+    await authStore.revokeSession(sessionPendingRevoke.value.id);
+    sessionPendingRevoke.value = null;
+  } catch (err: any) {
+    revokeError.value = err.message || 'Failed to revoke session. Please try again.';
+  } finally {
+    revokeLoading.value = false;
   }
 };
 
@@ -317,7 +338,7 @@ watch(activeTab, (newTab) => {
 
                     <div v-if="!session.is_current" class="flex items-center shrink-0 self-end sm:self-center">
                       <button
-                        @click="handleRevokeSession(session.id)"
+                        @click="handleRevokeSession(session)"
                         class="px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-full transition-all shadow-sm"
                       >
                         Revoke Access
@@ -427,6 +448,29 @@ watch(activeTab, (newTab) => {
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      :show="!!sessionPendingRevoke"
+      title="Revoke this device?"
+      variant="danger"
+      confirm-label="Revoke Access"
+      :loading="revokeLoading"
+      :error-message="revokeError || undefined"
+      @confirm="confirmRevoke"
+      @cancel="cancelRevoke"
+    >
+      <template #icon>
+        <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      </template>
+      <p v-if="sessionPendingRevoke" class="text-sm text-gray-500 dark:text-gray-400">
+        <span class="font-bold text-gray-700 dark:text-gray-300 capitalize">{{ sessionPendingRevoke.device_name || 'This device' }}</span>
+        will be signed out immediately
+        <span v-if="sessionPendingRevoke.ip_address">from IP {{ sessionPendingRevoke.ip_address }}</span>.
+        You'll need to log in again on that device to continue.
+      </p>
+    </ConfirmDialog>
   </div>
 </template>
 
