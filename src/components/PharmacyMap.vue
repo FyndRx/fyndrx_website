@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useGoogleMaps } from '@/composables/useGoogleMaps';
+import { buildCardElement, createCardOverlayClass } from '@/utils/pharmacyMapCard';
 import type { PharmacyLocation } from '@/models/Pharmacy';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   location: PharmacyLocation;
   pharmacyName: string;
-}>();
+  isOpen?: boolean;
+  deliveryAvailable?: boolean;
+}>(), {
+  isOpen: true,
+  deliveryAvailable: false,
+});
 
 const mapContainer = ref<HTMLElement | null>(null);
-const map = ref<google.maps.Map | null>(null);
-const marker = ref<google.maps.Marker | null>(null);
+const map = ref<any>(null);
+const overlay = ref<any>(null);
 const loading = ref(true);
 
 const { loadGoogleMapsScript, error } = useGoogleMaps();
@@ -26,16 +32,17 @@ onMounted(async () => {
   }
 });
 
-const initializeMap = () => {
+function directionsUrl(location: PharmacyLocation): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
+}
+
+function initializeMap() {
   if (!mapContainer.value) return;
 
-  const location: google.maps.LatLngLiteral = {
-    lat: props.location.lat,
-    lng: props.location.lng
-  };
+  const CardOverlayClass = createCardOverlayClass();
 
   map.value = new google.maps.Map(mapContainer.value, {
-    center: location,
+    center: props.location,
     zoom: 15,
     styles: [
       {
@@ -46,36 +53,32 @@ const initializeMap = () => {
     ]
   });
 
-  marker.value = new google.maps.Marker({
-    position: location,
-    map: map.value,
-    title: props.pharmacyName,
-    animation: google.maps.Animation.DROP
+  const element = buildCardElement({
+    id: 'single',
+    name: props.pharmacyName,
+    isOpen: props.isOpen,
+    deliveryAvailable: props.deliveryAvailable,
+    externalHref: directionsUrl(props.location),
   });
-
-  const infoWindow = new (google.maps as any).InfoWindow({
-    content: `<div style="padding: 8px;">
-      <h3 style="margin: 0 0 4px 0; font-weight: 600; color: #246BFD;">${props.pharmacyName}</h3>
-      <p style="margin: 0; font-size: 12px; color: #666;">Click for directions</p>
-    </div>`
-  });
-
-  (marker.value as any).addListener('click', () => {
-    infoWindow.open(map.value!, marker.value!);
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`, '_blank');
-  });
-};
+  overlay.value = new CardOverlayClass(props.location, element);
+  overlay.value.setMap(map.value);
+}
 
 watch(() => props.location, (newLocation) => {
-  if (!map.value || !marker.value) return;
+  if (!map.value || !overlay.value) return;
+  map.value.setCenter(newLocation);
+  overlay.value.setMap(null);
 
-  const position: google.maps.LatLngLiteral = {
-    lat: newLocation.lat,
-    lng: newLocation.lng
-  };
-
-  map.value.setCenter(position);
-  marker.value.setPosition(position);
+  const CardOverlayClass = createCardOverlayClass();
+  const element = buildCardElement({
+    id: 'single',
+    name: props.pharmacyName,
+    isOpen: props.isOpen,
+    deliveryAvailable: props.deliveryAvailable,
+    externalHref: directionsUrl(newLocation),
+  });
+  overlay.value = new CardOverlayClass(newLocation, element);
+  overlay.value.setMap(map.value);
 });
 
 defineOptions({
@@ -100,4 +103,3 @@ defineOptions({
 
 <style scoped>
 </style>
- 

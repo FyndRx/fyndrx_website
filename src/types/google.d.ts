@@ -2,6 +2,9 @@ declare namespace google.maps {
   export interface Map {
     setCenter(latLng: LatLng | LatLngLiteral): void;
     setZoom(zoom: number): void;
+    getZoom(): number | undefined;
+    getBounds(): LatLngBounds | undefined;
+    panTo(latLng: LatLng | LatLngLiteral): void;
     addListener(eventName: string, handler: (...args: any[]) => void): any;
   }
   export class Map {
@@ -11,10 +14,34 @@ declare namespace google.maps {
   export interface Marker {
     setPosition(latLng: LatLng | LatLngLiteral): void;
     getPosition(): LatLng | null | undefined;
+    setMap(map: Map | null): void;
+    setIcon(icon: string | Icon): void;
     addListener(eventName: string, handler: (...args: any[]) => void): any;
   }
   export class Marker {
     constructor(options?: any);
+  }
+
+  export class InfoWindow {
+    constructor(options?: any);
+    setContent(content: string | Element): void;
+    open(map?: Map, anchor?: Marker): void;
+    close(): void;
+  }
+
+  export class Size {
+    constructor(width: number, height: number);
+  }
+
+  export interface Icon {
+    url: string;
+    scaledSize?: Size;
+    anchor?: Point;
+  }
+
+  export interface LatLngBounds {
+    getNorthEast(): LatLng;
+    getSouthWest(): LatLng;
   }
 
   export class Geocoder {

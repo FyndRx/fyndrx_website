@@ -44,6 +44,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/pharmacies/map',
+      name: 'pharmacy-map',
+      component: () => import('../views/PharmacyMapView.vue'),
+      meta: {
+        title: 'Pharmacy Map | FyndRx',
+        description: 'Find pharmacies near you on the map. See open/closed status, delivery availability, and contact details at a glance.',
+      },
+    },
+    {
       path: '/pharmacy/onboard',
       name: 'pharmacy-onboard',
       component: () => import('../views/Pharmacy/PharmacyOnboardingView.vue'),

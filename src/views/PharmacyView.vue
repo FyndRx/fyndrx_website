@@ -173,6 +173,8 @@ onMounted(() => {
               v-if="pharmacyState.pharmacy.value.location && (pharmacyState.pharmacy.value.location.lat || pharmacyState.pharmacy.value.location.lng)"
               :location="pharmacyState.pharmacy.value.location"
               :pharmacy-name="pharmacyState.pharmacy.value.name"
+              :is-open="pharmacyState.pharmacy.value.isOpen"
+              :delivery-available="pharmacyState.pharmacy.value.deliveryInfo?.available ?? false"
               class="w-full h-full"
             />
             <div v-else class="flex flex-col items-center justify-center w-full h-full bg-gray-50 dark:bg-gray-900/40 gap-4">

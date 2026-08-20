@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import type { Pharmacy, PharmacyDeliveryOptions, PharmacyServiceGroup } from '@/models/Pharmacy';
+import type { Pharmacy, PharmacyDeliveryOptions, PharmacyServiceGroup, PharmacyMapPin } from '@/models/Pharmacy';
 import type { PharmacyPrice } from '@/models/PharmacyPrice';
 import type { Medication } from '@/models/Medication';
 import type {
@@ -22,8 +22,23 @@ import {
   transformPharmacyPrices,
   transformPharmacyPrice,
   transformPharmacyDrug,
-  transformBranch
+  transformBranch,
+  transformMapPin
 } from '@/utils/responseTransformers';
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface MapPinFilters {
+  q?: string;
+  services?: string[];
+  delivery?: boolean;
+  isOpen?: boolean;
+}
 
 export interface DrugSearchQuery {
   drug_id: number;
@@ -105,6 +120,31 @@ export const pharmacyService = {
       pharmacies: transformPharmacies(apiPharmacies),
       meta: (response as any)?.meta ?? null,
     };
+  },
+
+  /**
+   * Get map pins (branches, plus branchless-pharmacy HQs) visible within a bounding box.
+   * Deliberately lightweight — no description/hours/services — for rendering markers only.
+   */
+  async getMapPins(bounds: MapBounds, filters: MapPinFilters = {}): Promise<{ pins: PharmacyMapPin[]; truncated: boolean; total: number }> {
+    const params = new URLSearchParams();
+    params.set('north', String(bounds.north));
+    params.set('south', String(bounds.south));
+    params.set('east', String(bounds.east));
+    params.set('west', String(bounds.west));
+    if (filters.q) params.set('q', filters.q);
+    if (filters.services?.length) {
+      filters.services.forEach(slug => params.append('services[]', slug));
+    }
+    if (filters.delivery !== undefined) params.set('delivery', String(filters.delivery));
+    if (filters.isOpen !== undefined) params.set('is_open', String(filters.isOpen));
+
+    const response = await apiService.get<{ data: any[]; meta: { truncated: boolean; total: number } }>(
+      `/pharmacies/map?${params.toString()}`
+    );
+    const pins = (response as any).data ?? [];
+    const meta = (response as any).meta ?? { truncated: false, total: pins.length };
+    return { pins: pins.map(transformMapPin), truncated: meta.truncated, total: meta.total };
   },
 
   /**

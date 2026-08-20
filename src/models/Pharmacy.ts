@@ -145,6 +145,21 @@ export interface Pharmacy {
   acceptedPaymentLabels?: string[];
 }
 
+/** Lightweight marker payload for the pharmacy map — no description/hours/services. */
+export interface PharmacyMapPin {
+  id: string;
+  type: 'branch' | 'hq';
+  pharmacyId: string;
+  pharmacyName: string;
+  name: string;
+  logo: string | null;
+  phone: string | null;
+  location: PharmacyLocation | null;
+  isOpen: boolean;
+  deliveryAvailable: boolean;
+  rating: number;
+}
+
 export interface PharmacyFilters {
   searchQuery?: string;
   selectedServices?: string[]; // service slugs

@@ -268,6 +268,21 @@ onMounted(async () => {
             search-type="pharmacies"
             @search="commitSearch"
           />
+          <div class="mt-4 flex justify-center">
+            <div class="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60">
+              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold bg-white dark:bg-gray-700 text-[#246BFD] shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                List
+              </span>
+              <router-link
+                to="/pharmacies/map"
+                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-[#246BFD] transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                Map
+              </router-link>
+            </div>
+          </div>
         </div>
 
         <!-- Feature highlights -->

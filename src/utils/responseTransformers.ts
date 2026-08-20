@@ -5,7 +5,7 @@
 
 import type { User } from '@/models/User';
 import type { Medication } from '@/models/Medication';
-import type { Pharmacy, PharmacyBranch, PharmacyWorkingHours } from '@/models/Pharmacy';
+import type { Pharmacy, PharmacyBranch, PharmacyWorkingHours, PharmacyMapPin } from '@/models/Pharmacy';
 import type { PharmacyPrice } from '@/models/PharmacyPrice';
 import type { Cart, CartItem } from '@/models/Cart';
 import type { Order, OrderItem, OrderTracking } from '@/models/Order';
@@ -423,6 +423,22 @@ function mapServiceObject(s: any) {
     return { id: 0, name: s, slug: s.toLowerCase().replace(/\s+/g, '-'), category: '' };
   }
   return { id: s.id ?? 0, name: s.name ?? '', slug: s.slug ?? '', category: s.category ?? '', description: s.description, icon: s.icon };
+}
+
+export function transformMapPin(pin: any): PharmacyMapPin {
+  return {
+    id: pin.id,
+    type: pin.type === 'hq' ? 'hq' : 'branch',
+    pharmacyId: pin.pharmacy_id,
+    pharmacyName: pin.pharmacy_name ?? '',
+    name: pin.name ?? pin.pharmacy_name ?? '',
+    logo: pin.logo ?? null,
+    phone: pin.phone ?? null,
+    location: pin.location ?? null,
+    isOpen: Boolean(pin.is_open),
+    deliveryAvailable: Boolean(pin.delivery_available),
+    rating: Number(pin.rating ?? 0),
+  };
 }
 
 export function transformBranch(branch: any): PharmacyBranch {
