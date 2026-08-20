@@ -60,7 +60,7 @@ export default {
         <!-- Desktop Navigation — visible lg+ -->
         <div class="items-center hidden lg:flex space-x-6 xl:space-x-8 mx-4">
           <router-link 
-            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']" 
+            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Chat', 'Blog', 'About', 'Contact']" 
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
             custom
@@ -237,7 +237,7 @@ export default {
         >
           <!-- Nav Links -->
           <router-link 
-            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']" 
+            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Chat', 'Blog', 'About', 'Contact']" 
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
             class="flex items-center px-4 py-3 rounded-full text-gray-700 dark:text-gray-300 hover:text-[#246BFD] hover:bg-[#246BFD]/5 font-medium transition-all"

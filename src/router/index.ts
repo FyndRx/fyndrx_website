@@ -53,6 +53,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/chat',
+      name: 'ai-chat',
+      component: () => import('../views/ChatPageView.vue'),
+      meta: {
+        title: 'Chat with Fynn | FyndRx',
+        description: 'Ask Fynn, your FyndRx assistant, to compare medication prices, check stock, and find open pharmacies near you.',
+        requiresAuth: false,
+      },
+    },
+    {
       path: '/pharmacy/onboard',
       name: 'pharmacy-onboard',
       component: () => import('../views/Pharmacy/PharmacyOnboardingView.vue'),

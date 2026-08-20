@@ -5,6 +5,7 @@ import MainLayout from '@/layouts/MainLayout.vue';
 import NotificationContainer from '@/components/NotificationContainer.vue';
 import MaintenanceOverlay from '@/components/MaintenanceOverlay.vue';
 import RateLimitWarning from '@/components/RateLimitWarning.vue';
+import ChatWidget from '@/components/AiChat/ChatWidget.vue';
 import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
 import { useAdsStore } from '@/store/ads';
@@ -60,6 +61,7 @@ onUnmounted(() => {
     <NotificationContainer />
     <MaintenanceOverlay />
     <RateLimitWarning />
+    <ChatWidget />
   </MainLayout>
 </template>
 

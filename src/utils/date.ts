@@ -1,4 +1,4 @@
-import { format, isValid, parseISO } from 'date-fns';
+import { format, formatDistanceToNowStrict, isValid, parseISO } from 'date-fns';
 
 export function formatDate(
   dateString: string | number | Date | null | undefined,
@@ -28,6 +28,19 @@ export function formatDate(
     return format(date, formatStr);
   } catch (error) {
     console.warn('Error formatting date:', error);
+    return '';
+  }
+}
+
+export function timeAgo(dateString: string | number | Date | null | undefined): string {
+  if (!dateString) return '';
+
+  try {
+    const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
+    if (!isValid(date)) return '';
+    return formatDistanceToNowStrict(date, { addSuffix: true });
+  } catch (error) {
+    console.warn('Error formatting relative date:', error);
     return '';
   }
 }
