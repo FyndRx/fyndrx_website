@@ -79,8 +79,7 @@ const getDrugLabel = (drug: PrescriptionDrug & { display_name?: string; drug_nam
 
 const originConfig = (origin?: string) => {
   if (origin === 'consultation') return { label: 'Consultation', icon: SparklesIcon, bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400' };
-  if (origin === 'uploaded')     return { label: 'Uploaded',     icon: ArrowUpTrayIcon, bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' };
-  return                                { label: 'Manual',       icon: DocumentTextIcon, bg: 'bg-slate-100 dark:bg-slate-700/40', text: 'text-slate-600 dark:text-slate-400' };
+  return                                { label: 'Uploaded',     icon: ArrowUpTrayIcon, bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' };
 };
 
 // ── Data ──────────────────────────────────────────────────────
