@@ -114,7 +114,7 @@ async function consumeEventStream(response: Response, handlers: ChatStreamHandle
           handlers.onToolCall?.(data.tool_name ?? '');
           break;
         case 'error':
-          throw new ChatStreamError(data.message || 'Fynn ran into a problem generating that reply.');
+          throw new ChatStreamError(data.message || 'Fynda ran into a problem generating that reply.');
         case 'message_complete':
           handlers.onComplete(data as ChatMessage);
           break;

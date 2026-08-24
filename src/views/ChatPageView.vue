@@ -7,8 +7,8 @@ import ChatThread from '@/components/AiChat/ChatThread.vue';
 import { timeAgo } from '@/utils/date';
 
 useSeoMeta({
-  title: 'Chat with Fynn | FyndRx',
-  description: 'Ask Fynn, your FyndRx assistant, to compare medication prices, check stock, and find open pharmacies near you.',
+  title: 'Chat with Fynda | FyndRx',
+  description: 'Ask Fynda, your FyndRx assistant, to compare medication prices, check stock, and find open pharmacies near you.',
   ogType: 'website',
 });
 
@@ -34,7 +34,7 @@ const bootstrap = async () => {
       await chatStore.initConversation();
     }
   } catch (err: any) {
-    bootError.value = err?.message || "Fynn couldn't load right now.";
+    bootError.value = err?.message || "Fynda couldn't load right now.";
   }
 };
 
@@ -107,7 +107,7 @@ export default { name: 'ChatPageView' };
               </svg>
             </div>
             <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">No conversations yet</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Say hello to Fynn to get started.</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Say hello to Fynda to get started.</p>
           </div>
 
           <template v-else>
@@ -185,7 +185,7 @@ export default { name: 'ChatPageView' };
             <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ conversationTitle }}</p>
             <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-              Fynn · FyndRx Assistant
+              Fynda · FyndRx Assistant
             </p>
           </div>
 

@@ -40,7 +40,7 @@ export default { name: 'ChatWidget' };
 </script>
 
 <template>
-  <div v-if="route.name !== 'ai-chat'" class="fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex flex-col items-end">
+  <div v-if="route.name !== 'ai-chat'" class="print:hidden fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex flex-col items-end">
     <!-- Chat Panel -->
     <transition
       enter-active-class="transition ease-out duration-300"
@@ -70,7 +70,7 @@ export default { name: 'ChatWidget' };
               </span>
             </div>
             <div>
-              <p class="text-sm font-bold text-gray-900 dark:text-white leading-tight">Fynn</p>
+              <p class="text-sm font-bold text-gray-900 dark:text-white leading-tight">Fynda</p>
               <p class="text-xs text-gray-500 dark:text-gray-400 leading-tight">FyndRx Assistant · Online</p>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default { name: 'ChatWidget' };
     <button
       @click="chatStore.toggle"
       class="relative w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#246BFD] to-[#5089FF] shadow-xl shadow-[#246BFD]/40 flex items-center justify-center text-white transition-transform duration-300 hover:scale-110 active:scale-95 group"
-      title="Chat with Fynn"
+      title="Chat with Fynda"
     >
       <span
         v-if="!chatStore.hasBeenOpened"

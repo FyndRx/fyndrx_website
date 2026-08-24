@@ -57,8 +57,8 @@ const router = createRouter({
       name: 'ai-chat',
       component: () => import('../views/ChatPageView.vue'),
       meta: {
-        title: 'Chat with Fynn | FyndRx',
-        description: 'Ask Fynn, your FyndRx assistant, to compare medication prices, check stock, and find open pharmacies near you.',
+        title: 'Chat with Fynda | FyndRx',
+        description: 'Ask Fynda, your FyndRx assistant, to compare medication prices, check stock, and find open pharmacies near you.',
         requiresAuth: false,
       },
     },

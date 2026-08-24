@@ -134,7 +134,7 @@ export default { name: 'ChatThread' };
             </svg>
           </div>
           <div :class="[bubbleText, bubbleMaxWidth, 'rounded-2xl rounded-tl-sm bg-white/90 dark:bg-gray-800/90 border border-gray-200/70 dark:border-gray-700/60 px-4 py-3 text-gray-700 dark:text-gray-200 shadow-sm']">
-            Hey, I'm <span class="font-bold text-[#246BFD] dark:text-[#5089FF]">Fynn</span> 👋 Ask me to compare prices, check what's in stock nearby, or find a pharmacy that's open right now.
+            Hey, I'm <span class="font-bold text-[#246BFD] dark:text-[#5089FF]">Fynda</span> 👋 Ask me to compare prices, check what's in stock nearby, or find a pharmacy that's open right now.
           </div>
         </div>
         <div class="flex flex-wrap gap-2 pl-10">
@@ -231,7 +231,7 @@ export default { name: 'ChatThread' };
           ref="textareaRef"
           v-model="draft"
           rows="1"
-          placeholder="Ask Fynn anything…"
+          placeholder="Ask Fynda anything…"
           maxlength="4000"
           class="flex-1 resize-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none py-1 max-h-[160px]"
           :class="bubbleText"
@@ -254,7 +254,7 @@ export default { name: 'ChatThread' };
         </button>
       </div>
       <div class="flex items-center justify-between mt-1.5 px-1" :class="large ? 'max-w-3xl mx-auto' : ''">
-        <p class="text-[10px] text-gray-400 dark:text-gray-500">Fynn can make mistakes — confirm medical advice with a pharmacist.</p>
+        <p class="text-[10px] text-gray-400 dark:text-gray-500">Fynda can make mistakes — confirm medical advice with a pharmacist.</p>
         <p v-if="nearLimit" class="text-[10px] font-semibold" :class="charCount > MAX_LEN ? 'text-red-500' : 'text-amber-500'">
           {{ charCount }}/{{ MAX_LEN }}
         </p>

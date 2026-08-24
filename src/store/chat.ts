@@ -70,7 +70,7 @@ export const useChatStore = defineStore('chat', () => {
       conversation.value = conv;
       messages.value = conv.messages || [];
     } catch (err: any) {
-      error.value = err?.message || "Fynn couldn't start a chat right now.";
+      error.value = err?.message || "Fynda couldn't start a chat right now.";
     } finally {
       initializing.value = false;
     }
@@ -124,7 +124,7 @@ export const useChatStore = defineStore('chat', () => {
       conversation.value = conv;
       messages.value = conv.messages || [];
     } catch (err: any) {
-      error.value = err?.message || "Fynn couldn't load that conversation.";
+      error.value = err?.message || "Fynda couldn't load that conversation.";
     } finally {
       initializing.value = false;
     }
@@ -152,7 +152,7 @@ export const useChatStore = defineStore('chat', () => {
         messages.value = [];
       }
     } catch (err: any) {
-      error.value = err?.message || "Fynn couldn't start a new chat right now.";
+      error.value = err?.message || "Fynda couldn't start a new chat right now.";
     } finally {
       initializing.value = false;
     }
@@ -248,11 +248,11 @@ export const useChatStore = defineStore('chat', () => {
         // the placeholder if generation was stopped before anything arrived.
         dropPlaceholderIfEmpty();
       } else if (err?.status === 429) {
-        error.value = err?.message || 'Too many messages — Fynn needs a short breather.';
+        error.value = err?.message || 'Too many messages — Fynda needs a short breather.';
         retryAfter.value = Number(err?.data?.retry_after) || null;
         dropPlaceholderIfEmpty();
       } else {
-        error.value = err?.message || "Fynn couldn't reply — please try again.";
+        error.value = err?.message || "Fynda couldn't reply — please try again.";
         dropPlaceholderIfEmpty();
       }
     } finally {
