@@ -35,7 +35,7 @@ const shouldShowBanner = computed(() => {
 
 <template>
   <transition name="slide-down">
-    <div v-if="shouldShowBanner" class="relative z-[60] bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 py-2 px-4 shadow-lg overflow-hidden">
+    <div v-if="shouldShowBanner" class="print:hidden relative z-[60] bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 py-2 px-4 shadow-lg overflow-hidden">
       <!-- Animated background glow -->
       <div class="absolute inset-0 bg-white/10 animate-pulse pointer-events-none"></div>
       

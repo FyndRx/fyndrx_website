@@ -20,6 +20,7 @@ const loading = ref(true);
 const notFound = ref(false);
 const fetchError = ref(false);
 const copied = ref(false);
+const printedAt = ref<string | null>(null);
 
 onMounted(async () => {
   try {
@@ -45,24 +46,37 @@ const items   = computed(() => receipt.value?.items ?? []);
 
 interface StatusConfig {
   label: string;
-  color: string;
   icon: 'check' | 'refresh' | 'x' | 'clock';
+  bg: string;
+  text: string;
 }
 
 const statusConfig = computed((): StatusConfig => {
   const s = status.value;
   if (s === 'completed' || s === 'success') return {
     label: isPos.value ? 'Sale Completed' : 'Payment Successful',
-    color: '#10b981', icon: 'check',
+    icon: 'check',
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-600 dark:text-green-400',
   };
   if (s === 'refunded') return {
-    label: 'Amount Refunded', color: '#f59e0b', icon: 'refresh',
+    label: 'Amount Refunded',
+    icon: 'refresh',
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    text: 'text-amber-600 dark:text-amber-400',
   };
   if (s === 'voided' || s === 'failed') return {
     label: s === 'voided' ? 'Transaction Voided' : 'Payment Failed',
-    color: '#ef4444', icon: 'x',
+    icon: 'x',
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-600 dark:text-red-400',
   };
-  return { label: 'Pending', color: '#3b82f6', icon: 'clock' };
+  return {
+    label: 'Pending',
+    icon: 'clock',
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    text: 'text-[#246BFD] dark:text-[#5089FF]',
+  };
 });
 
 const paymentMethodLabel = computed(() => {
@@ -128,6 +142,10 @@ function retry() {
 }
 
 function printReceipt() {
+  // Stamped fresh on every print — distinct from the transaction date, since a printed/PDF
+  // copy is often filed away and re-printed later (expense claims, insurance, disputes).
+  printedAt.value = new Date().toLocaleString('en-GH', { dateStyle: 'medium', timeStyle: 'short' });
+
   // The receipt should always print in light mode, regardless of the app's current theme.
   const root = document.documentElement;
   const wasDark = root.classList.contains('dark');
@@ -147,37 +165,90 @@ onMounted(() => adsStore.load());
 
 <template>
   <!-- pt-20 clears the fixed 80px site nav (print:min-h-0/pt-0 since the nav is print:hidden) -->
-  <div class="min-h-screen print:min-h-0 bg-gray-50 dark:bg-gray-900 pt-20 print:pt-0">
-    <div class="w-full max-w-2xl mx-auto">
+  <div class="min-h-screen print:min-h-0 bg-gray-50 dark:bg-gray-900 print:bg-white pt-20 print:pt-0 pb-12 print:pb-2">
+    <div class="w-full max-w-2xl mx-auto px-4 sm:px-6">
 
       <!-- ── LOADING ── -->
-      <div v-if="loading">
-        <!-- skeleton hero -->
-        <div class="h-56 w-full bg-gradient-to-br from-gray-700 to-gray-800 animate-pulse rounded-b-3xl"></div>
-        <div class="px-5 py-6 space-y-4">
-          <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-full animate-pulse"></div>
-          <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-4/5 animate-pulse" style="animation-delay:.08s"></div>
-          <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-3/5 animate-pulse" style="animation-delay:.16s"></div>
-          <div class="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-3">
-              <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" style="animation-delay:.1s"></div>
-              <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-4/5 animate-pulse" style="animation-delay:.2s"></div>
-              <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-3/5 animate-pulse" style="animation-delay:.3s"></div>
+      <!-- Mirrors the real receipt card's section order exactly: status → pharmacy row →
+           reference band → items/total → payment details → actions. -->
+      <div v-if="loading" class="pt-2">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-pulse">
+
+          <!-- Letterhead -->
+          <div class="flex items-center justify-between px-6 sm:px-8 py-4">
+            <div class="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div class="h-2.5 w-32 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+          </div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Status -->
+          <div class="px-6 sm:px-8 pt-8 pb-6 flex flex-col items-center">
+            <div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 mb-4"></div>
+            <div class="h-2.5 w-28 bg-gray-200 dark:bg-gray-700 rounded-full mb-3"></div>
+            <div class="h-9 w-40 bg-gray-200 dark:bg-gray-700 rounded-full mb-2"></div>
+            <div class="h-2.5 w-24 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+          </div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Sold By -->
+          <div class="px-6 sm:px-8 py-6">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-2.5 w-14 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+              <div class="h-6 w-24 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
             </div>
-            <div class="space-y-3">
-              <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" style="animation-delay:.15s"></div>
-              <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full w-4/5 animate-pulse" style="animation-delay:.25s"></div>
+            <div class="flex items-center gap-3.5">
+              <div class="w-14 h-14 rounded-2xl bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
+              <div class="space-y-2">
+                <div class="h-3.5 w-36 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="h-2.5 w-24 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+              </div>
             </div>
+          </div>
+
+          <!-- Reference band -->
+          <div class="mx-6 sm:mx-8 mb-6 h-14 bg-gray-50 dark:bg-gray-700/30 rounded-2xl"></div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Items -->
+          <div class="px-6 sm:px-8 py-5">
+            <div class="h-2.5 w-14 bg-gray-100 dark:bg-gray-700/60 rounded-full mb-4"></div>
+            <div v-for="n in 2" :key="n" class="flex justify-between items-center py-2">
+              <div class="space-y-2">
+                <div class="h-3 w-40 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="h-2.5 w-20 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+              </div>
+              <div class="h-3 w-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+            <div class="h-11 -mx-6 sm:-mx-8 mt-3 bg-gray-50 dark:bg-gray-700/30"></div>
+          </div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Payment details -->
+          <div class="px-6 sm:px-8 py-5 space-y-3">
+            <div class="h-2.5 w-28 bg-gray-100 dark:bg-gray-700/60 rounded-full mb-2"></div>
+            <div v-for="n in 3" :key="n" class="flex justify-between">
+              <div class="h-3 w-16 bg-gray-100 dark:bg-gray-700/60 rounded-full"></div>
+              <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-6 sm:px-8 pb-6 flex gap-3">
+            <div class="flex-1 h-11 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div class="flex-1 h-11 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
           </div>
         </div>
       </div>
 
       <!-- ── NOT FOUND ── -->
-      <div v-else-if="notFound" class="px-4 py-16">
+      <div v-else-if="notFound" class="pt-8 pb-16">
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-10 text-center max-w-sm mx-auto">
-          <div class="w-20 h-20 rounded-full bg-red-50 dark:bg-red-900/20 border-2 border-red-100 dark:border-red-800/40 flex items-center justify-center mx-auto mb-5">
-            <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" class="text-red-500 dark:text-red-400">
+          <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-5">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" class="text-red-600 dark:text-red-400">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
             </svg>
           </div>
@@ -190,10 +261,10 @@ onMounted(() => adsStore.load());
       </div>
 
       <!-- ── FETCH ERROR ── -->
-      <div v-else-if="fetchError" class="px-4 py-16">
+      <div v-else-if="fetchError" class="pt-8 pb-16">
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-10 text-center max-w-sm mx-auto">
-          <div class="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-100 dark:border-amber-800/40 flex items-center justify-center mx-auto mb-5">
-            <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" class="text-amber-500 dark:text-amber-400">
+          <div class="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-5">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" class="text-amber-600 dark:text-amber-400">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
             </svg>
           </div>
@@ -206,295 +277,268 @@ onMounted(() => adsStore.load());
       </div>
 
       <!-- ── RECEIPT ── -->
-      <div v-else-if="receipt" class="pb-12 print:pb-2">
+      <div v-else-if="receipt" class="pt-2">
 
-        <!-- ════════════════ HERO ════════════════ -->
-        <div
-          class="relative overflow-hidden rounded-b-3xl print:rounded-none bg-gradient-to-br from-[#246BFD] to-[#5089FF] rp-print-color-exact"
-        >
-          <!-- Decorative blobs (skipped in print — no informational value, just extra ink/rendering) -->
-          <div class="absolute w-72 h-72 rounded-full -top-20 -right-16 bg-white/[0.04] pointer-events-none print:hidden"></div>
-          <div class="absolute w-52 h-52 rounded-full -bottom-16 -left-12 bg-white/[0.04] pointer-events-none print:hidden"></div>
-          <div class="absolute w-32 h-32 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/[0.03] pointer-events-none print:hidden"></div>
+        <!-- Utility row -->
+        <div class="flex items-center justify-between mb-4 no-print">
+          <router-link to="/" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#246BFD] dark:hover:text-[#5089FF] transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to FyndRx
+          </router-link>
+          <span class="text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Digital Receipt</span>
+        </div>
 
-          <div class="relative px-6 sm:px-8 pt-7 pb-8 print:pt-4 print:pb-4 text-white">
+        <!-- ════════════════ THE RECEIPT ════════════════ -->
+        <div class="receipt-card bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden print:shadow-none print:border-gray-200">
 
-            <!-- ── Top bar: pharmacy + type badge ── -->
-            <div class="flex items-center justify-between mb-8 print:mb-4 gap-4">
-              <div class="flex items-center gap-3 min-w-0">
-                <div
-                  v-if="receipt.pharmacy.logo_url"
-                  class="w-12 h-12 rounded-2xl overflow-hidden bg-white/15 flex-shrink-0 border border-white/20 shadow-md"
-                >
-                  <LazyImage :src="receipt.pharmacy.logo_url || ''" :alt="receipt.pharmacy.name" className="w-full h-full object-contain" aspectRatio="square" />
-                </div>
-                <div
-                  v-else
-                  class="w-12 h-12 rounded-2xl bg-white/15 flex-shrink-0 flex items-center justify-center text-xl font-extrabold text-white/80 border border-white/20 shadow-md"
-                >
-                  {{ receipt.pharmacy.name.charAt(0) }}
-                </div>
-                <div class="min-w-0">
-                  <div class="text-[0.92rem] font-bold leading-snug truncate">{{ receipt.pharmacy.name }}</div>
-                  <div v-if="receipt.pharmacy.address" class="text-[0.7rem] opacity-55 mt-0.5 truncate">{{ receipt.pharmacy.address }}</div>
-                </div>
-              </div>
-              <!-- POS / Online badge -->
-              <div class="inline-flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full bg-white/10 border border-white/[0.18] text-[0.68rem] font-bold tracking-wide">
+          <!-- Letterhead: establishes FyndRx as the document's issuer at a glance —
+               matters most on a shared link or a printed page found later. -->
+          <div class="print:break-inside-avoid flex items-center justify-between px-6 sm:px-8 py-4 print:py-3">
+            <img :src="logoBlueOrange" alt="FyndRx" class="h-5 w-auto object-contain dark:hidden" />
+            <img :src="logoWhiteOrange" alt="FyndRx" class="h-5 w-auto object-contain hidden dark:block" />
+            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Verified Transaction Record</span>
+          </div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Status -->
+          <div class="print:break-inside-avoid px-6 sm:px-8 pt-8 pb-6 print:pt-4 print:pb-3 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" :class="statusConfig.bg">
+              <svg v-if="statusConfig.icon === 'check'" class="w-7 h-7" :class="statusConfig.text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12l5 5 9-9"/>
+              </svg>
+              <svg v-else-if="statusConfig.icon === 'refresh'" class="w-7 h-7" :class="statusConfig.text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+              </svg>
+              <svg v-else-if="statusConfig.icon === 'x'" class="w-7 h-7" :class="statusConfig.text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+              <svg v-else class="w-7 h-7" :class="statusConfig.text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <p class="text-xs font-bold uppercase tracking-widest mb-2" :class="statusConfig.text">{{ statusConfig.label }}</p>
+            <p class="text-4xl sm:text-[2.75rem] font-black text-gray-900 dark:text-white tracking-tight leading-none">{{ fmt(total) }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">{{ dateStr }}</p>
+          </div>
+
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Sold By: the pharmacy is the actual merchant of record for this order, so it
+               gets the same section-header treatment (and comparable visual weight) as
+               Items/Payment Details below — not just a metadata line. -->
+          <div class="print:break-inside-avoid px-6 sm:px-8 py-6 print:py-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Sold By</span>
+              <div class="inline-flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-[11px] font-bold uppercase tracking-wide">
                 <svg v-if="isPos" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
                 </svg>
                 {{ isPos ? 'POS Terminal' : 'Online Order' }}
               </div>
             </div>
+            <div class="flex items-center gap-3.5">
+              <LazyImage
+                :src="receipt.pharmacy.logo_url || ''"
+                :alt="receipt.pharmacy.name"
+                aspect-ratio="square"
+                class="w-14 h-14 rounded-2xl flex-shrink-0"
+              />
+              <div class="min-w-0">
+                <p class="text-base font-bold text-gray-900 dark:text-white truncate">{{ receipt.pharmacy.name }}</p>
+                <p v-if="receipt.pharmacy.address" class="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{{ receipt.pharmacy.address }}</p>
+              </div>
+            </div>
+          </div>
 
-            <!-- ── Main hero content: split on sm+ ── -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-10">
+          <!-- Reference band -->
+          <div class="print:break-inside-avoid mx-6 sm:mx-8 mb-6 flex items-center gap-3 bg-gray-50 dark:bg-gray-700/30 rounded-2xl px-4 py-3">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 dark:text-gray-500 flex-shrink-0">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h1M17 14h1M14 17h4"/>
+            </svg>
+            <div class="flex-1 min-w-0">
+              <div class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Transaction Reference</div>
+              <div class="font-mono font-bold text-sm text-gray-700 dark:text-gray-200 tracking-wider overflow-hidden text-ellipsis whitespace-nowrap">{{ displayRef }}</div>
+            </div>
+            <div v-if="online?.order_number" class="flex flex-col items-end flex-shrink-0">
+              <div class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">Order</div>
+              <div class="font-mono font-bold text-sm text-gray-700 dark:text-gray-200 tracking-wider">{{ online.order_number }}</div>
+            </div>
+          </div>
 
-              <!-- Left: status icon + label + date -->
-              <div class="flex sm:flex-col items-center sm:items-start gap-4 sm:gap-2 mb-6 print:mb-3 sm:mb-0 sm:flex-shrink-0">
-                <div
-                  class="w-16 h-16 rounded-full border-2 flex items-center justify-center flex-shrink-0 rp-status-ring"
-                  :style="`border-color: ${statusConfig.color}; background: ${statusConfig.color}1a`"
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Items -->
+          <div class="px-6 sm:px-8 py-5 print:py-3">
+            <h3 class="print:break-after-avoid text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Items</h3>
+
+            <!-- A real <table> so the browser can natively repeat <thead> at the top of
+                 every printed page — the only reliable cross-browser way to keep "which
+                 receipt is this" context on page 2+ when there are enough items to split. -->
+            <table class="w-full border-collapse">
+              <thead class="hidden print:table-header-group">
+                <tr>
+                  <th colspan="2" class="text-left pb-2 font-normal border-b border-gray-100">
+                    <div class="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                      <span>{{ receipt.pharmacy.name }} · Ref {{ displayRef }} (cont'd)</span>
+                      <span>FyndRx</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, i) in items"
+                  :key="i"
+                  class="print:break-inside-avoid border-b border-gray-50 dark:border-gray-700/30"
                 >
-                  <svg v-if="statusConfig.icon === 'check'" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path class="rp-check-draw" d="M5 12l5 5 9-9"/>
-                  </svg>
-                  <svg v-else-if="statusConfig.icon === 'refresh'" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                  </svg>
-                  <svg v-else-if="statusConfig.icon === 'x'" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                  </svg>
-                  <svg v-else class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-[0.85rem] font-bold" :style="`color: ${statusConfig.color}`">{{ statusConfig.label }}</div>
-                  <div class="text-[0.68rem] opacity-50 mt-0.5">{{ dateStr }}</div>
-                </div>
-              </div>
+                  <td class="py-2.5 print:py-1 align-top">
+                    <div class="text-sm font-semibold text-gray-900 dark:text-white leading-snug mb-0.5">{{ item.name }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ item.quantity }} × {{ fmt(item.unit_price) }}</div>
+                  </td>
+                  <td class="py-2.5 print:py-1 align-top text-right whitespace-nowrap">
+                    <span class="text-sm font-bold text-[#246BFD] dark:text-[#5089FF]">{{ fmt(item.total) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-              <!-- Divider (desktop only) -->
-              <div class="hidden sm:block w-px self-stretch bg-white/15 flex-shrink-0"></div>
-
-              <!-- Right: amount (large) -->
-              <div class="flex-1 sm:pl-2">
-                <div class="text-[0.65rem] font-bold opacity-40 uppercase tracking-[0.15em] mb-1">Total Amount</div>
-                <div class="text-[2.8rem] sm:text-[3.2rem] print:text-[2.2rem] font-black tracking-tight leading-none">{{ fmt(total) }}</div>
-                <div class="text-[0.68rem] opacity-45 uppercase tracking-widest mt-1.5">Ghana Cedis · GHS</div>
-              </div>
+            <div v-if="!items.length" class="py-5 text-sm text-gray-400 dark:text-gray-500 italic text-center">
+              No item details available.
             </div>
 
-            <!-- ── Reference band (inside hero, frosted) ── -->
-            <div class="mt-7 print:mt-4 flex items-center gap-3 bg-white/[0.08] border border-white/[0.12] rounded-2xl px-4 py-3 print:py-1.5 backdrop-blur-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-50 flex-shrink-0">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h1M17 14h1M14 17h4"/>
-              </svg>
-              <div class="flex-1 min-w-0">
-                <div class="text-[0.55rem] font-bold opacity-45 uppercase tracking-widest mb-0.5">Transaction Reference</div>
-                <div class="font-mono font-bold text-[0.8rem] tracking-wider opacity-90 overflow-hidden text-ellipsis whitespace-nowrap">{{ displayRef }}</div>
-              </div>
-              <div v-if="online?.order_number" class="hidden sm:flex flex-col items-end flex-shrink-0">
-                <div class="text-[0.55rem] font-bold opacity-45 uppercase tracking-widest mb-0.5">Order</div>
-                <div class="font-mono font-bold text-[0.8rem] tracking-wider opacity-90">{{ online.order_number }}</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-        <!-- /hero -->
-
-        <!-- ════════════════ BODY ════════════════ -->
-        <div class="px-4 sm:px-6 pt-5 print:pt-3 space-y-4 print:space-y-2">
-
-          <!-- Order number row (mobile only, when not shown in hero) -->
-          <div
-            v-if="online?.order_number"
-            class="sm:hidden flex justify-between items-center bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-3 print:py-1.5"
-          >
-            <span class="text-sm text-gray-500 dark:text-gray-400">Order Number</span>
-            <span class="font-mono font-bold text-[#246BFD] text-sm">{{ online.order_number }}</span>
-          </div>
-
-          <!-- Stacked: items, then payment details + actions -->
-          <div class="space-y-4 print:space-y-2">
-
-            <!-- ── Items card ── -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div class="px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/50">
-                <h3 class="text-[0.58rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Items</h3>
-              </div>
-
-              <div
-                v-for="(item, i) in items"
-                :key="i"
-                class="flex justify-between items-start px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/30 last:border-0"
-              >
-                <div class="flex-1 min-w-0 mr-3">
-                  <div class="text-sm font-semibold text-gray-900 dark:text-white leading-snug mb-0.5">{{ item.name }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ item.quantity }} × {{ fmt(item.unit_price) }}</div>
-                </div>
-                <div class="text-sm font-bold text-[#246BFD] flex-shrink-0">{{ fmt(item.total) }}</div>
-              </div>
-
-              <div v-if="!items.length" class="px-4 py-5 text-sm text-gray-400 dark:text-gray-500 italic text-center">
-                No item details available.
-              </div>
-
-              <!-- Totals -->
-              <div class="border-t border-dashed border-gray-200 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700/40">
-                <div class="flex justify-between px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300">
+            <!-- Totals: kept together as one unit so "Total Paid" never lands on a
+                 different page than the line items that make it up. -->
+            <div class="print:break-inside-avoid">
+              <div class="mt-2 pt-2 space-y-1.5">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                   <span>Subtotal</span><span>{{ fmt(subtotal) }}</span>
                 </div>
-                <div v-if="discount > 0" class="flex justify-between px-4 py-2.5 text-sm text-red-600 dark:text-red-400">
+                <div v-if="discount > 0" class="flex justify-between text-sm text-red-600 dark:text-red-400">
                   <span>Discount</span><span>− {{ fmt(discount) }}</span>
                 </div>
-                <div v-if="deliveryFee > 0" class="flex justify-between px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300">
+                <div v-if="deliveryFee > 0" class="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                   <span>Delivery</span><span>{{ fmt(deliveryFee) }}</span>
                 </div>
-                <div v-if="taxAmount && taxAmount > 0" class="flex justify-between px-4 py-2.5 text-xs text-gray-400 dark:text-gray-500">
+                <div v-if="taxAmount && taxAmount > 0" class="flex justify-between text-xs text-gray-400 dark:text-gray-500">
                   <span>Incl. Tax{{ taxRate ? ` (${(taxRate * 100).toFixed(0)}%)` : '' }}</span>
                   <span>{{ fmt(taxAmount) }}</span>
                 </div>
               </div>
-              <div class="flex justify-between items-center px-4 py-4 bg-gray-50 dark:bg-gray-700/30 border-t-2 border-gray-100 dark:border-gray-700">
+
+              <div class="flex justify-between items-center mt-4 -mx-6 sm:-mx-8 px-6 sm:px-8 py-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700">
                 <span class="text-sm font-bold text-gray-900 dark:text-white">Total Paid</span>
-                <span class="text-base font-black text-[#246BFD]">{{ fmt(total) }}</span>
+                <span class="text-base font-black text-[#246BFD] dark:text-[#5089FF]">{{ fmt(total) }}</span>
               </div>
             </div>
-
-            <!-- ── Payment details card ── -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-              <div class="px-4 py-3 print:py-1.5 border-b border-gray-50 dark:border-gray-700/50">
-                <h3 class="text-[0.58rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Payment Details</h3>
-                </div>
-                <div class="divide-y divide-gray-50 dark:divide-gray-700/40">
-                  <div class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Method</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paymentMethodLabel }}</span>
-                  </div>
-                  <div v-if="pos?.cashier" class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Cashier</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.cashier }}</span>
-                  </div>
-                  <div v-if="pos?.register" class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Register</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.register }}</span>
-                  </div>
-                  <div v-if="online?.customer" class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Customer</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.customer.name }}</span>
-                  </div>
-                  <div v-if="online?.customer?.email" class="flex justify-between items-start px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Email</span>
-                    <span class="text-xs font-semibold text-gray-900 dark:text-white text-right ml-2 break-all">{{ online.customer.email }}</span>
-                  </div>
-                  <div v-if="paidAtStr" class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Paid At</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paidAtStr }}</span>
-                  </div>
-                  <div v-if="online?.delivery_method" class="flex justify-between items-center px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Delivery</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 capitalize">{{ online.delivery_method }}</span>
-                  </div>
-                  <div v-if="online?.delivery_address" class="flex justify-between items-start px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Address</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.delivery_address }}</span>
-                  </div>
-                  <div v-if="pos?.notes" class="flex justify-between items-start px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Notes</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 italic">{{ pos.notes }}</span>
-                  </div>
-                  <div v-if="online?.refund_reason" class="flex justify-between items-start px-4 py-3 print:py-1.5">
-                    <span class="text-sm text-red-500 flex-shrink-0">Refund Reason</span>
-                    <span class="text-sm font-semibold text-red-600 dark:text-red-400 text-right ml-2">{{ online.refund_reason }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action buttons -->
-              <div class="flex gap-3 no-print">
-                <button
-                  @click="shareReceipt"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-[#246BFD] hover:bg-[#1d5cdb] text-white text-sm font-semibold transition-colors active:scale-[0.97]"
-                >
-                  <svg v-if="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                  </svg>
-                  <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12l5 5 9-9"/>
-                  </svg>
-                  {{ copied ? 'Copied!' : 'Share' }}
-                </button>
-                <button
-                  @click="printReceipt"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white text-sm font-semibold transition-colors active:scale-[0.97]"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                    <rect x="6" y="14" width="12" height="8"/>
-                  </svg>
-                  Print
-                </button>
-              </div>
-
-          </div><!-- /stacked sections -->
-
-          <!-- Footer -->
-          <div class="border-t border-dashed border-gray-200 dark:border-gray-700 pt-5 pb-6 print:pt-3 print:pb-2 text-center">
-
-            <!-- Powered by FyndRx -->
-            <div class="flex items-center justify-center mb-3 print:mb-2">
-              <img :src="logoBlueOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain dark:hidden" />
-              <img :src="logoWhiteOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain hidden dark:block" />
-            </div>
-
-            <div class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">This is a computer-generated digital receipt.</div>
-            <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">www.fyndrx.com · support@fyndrx.com</div>
           </div>
 
-        </div><!-- /body -->
+          <div class="border-t border-dashed border-gray-200 dark:border-gray-700"></div>
+
+          <!-- Payment details -->
+          <div class="print:break-inside-avoid px-6 sm:px-8 py-5 print:py-3">
+            <h3 class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Payment Details</h3>
+            <div class="space-y-2.5">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Method</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paymentMethodLabel }}</span>
+              </div>
+              <div v-if="pos?.cashier" class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Cashier</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.cashier }}</span>
+              </div>
+              <div v-if="pos?.register" class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Register</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ pos.register }}</span>
+              </div>
+              <div v-if="online?.customer" class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Customer</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.customer.name }}</span>
+              </div>
+              <div v-if="online?.customer?.email" class="flex justify-between items-start">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Email</span>
+                <span class="text-xs font-semibold text-gray-900 dark:text-white text-right ml-2 break-all">{{ online.customer.email }}</span>
+              </div>
+              <div v-if="paidAtStr" class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Paid At</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ paidAtStr }}</span>
+              </div>
+              <div v-if="online?.delivery_method" class="flex justify-between items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Delivery</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 capitalize">{{ online.delivery_method }}</span>
+              </div>
+              <div v-if="online?.delivery_address" class="flex justify-between items-start">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Address</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2">{{ online.delivery_address }}</span>
+              </div>
+              <div v-if="pos?.notes" class="flex justify-between items-start">
+                <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Notes</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white text-right ml-2 italic">{{ pos.notes }}</span>
+              </div>
+              <div v-if="online?.refund_reason" class="flex justify-between items-start">
+                <span class="text-sm text-red-500 flex-shrink-0">Refund Reason</span>
+                <span class="text-sm font-semibold text-red-600 dark:text-red-400 text-right ml-2">{{ online.refund_reason }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-6 sm:px-8 pb-6 flex gap-3 no-print">
+            <button
+              @click="shareReceipt"
+              class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-[#246BFD] hover:bg-[#1d5cdb] text-white text-sm font-semibold transition-colors active:scale-[0.97]"
+            >
+              <svg v-if="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12l5 5 9-9"/>
+              </svg>
+              {{ copied ? 'Copied!' : 'Share' }}
+            </button>
+            <button
+              @click="printReceipt"
+              class="flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-full bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white text-sm font-semibold transition-colors active:scale-[0.97]"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              Print
+            </button>
+          </div>
+        </div>
+        <!-- /receipt card -->
+
+        <!-- Footer -->
+        <div class="print:break-inside-avoid text-center pt-6 pb-2 print:pt-3">
+          <div class="flex items-center justify-center mb-3 print:mb-2">
+            <img :src="logoBlueOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain dark:hidden" />
+            <img :src="logoWhiteOrange" alt="FyndRx" class="h-6 print:h-8 w-auto object-contain hidden dark:block" />
+          </div>
+          <div class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">This is a computer-generated digital receipt.</div>
+          <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">www.fyndrx.com · support@fyndrx.com</div>
+          <div v-if="printedAt" class="hidden print:block text-[10px] text-gray-400 mt-2">Printed on {{ printedAt }}</div>
+        </div>
+
+        <!-- Z7: Post-checkout contextual spotlight ad -->
+        <div v-if="receiptAd" class="pb-4 no-print">
+          <SpotlightCardAd :ad="receiptAd" zone="Z7-post-checkout" />
+        </div>
+
       </div><!-- /receipt -->
-
-      <!-- Z7: Post-checkout contextual spotlight ad -->
-      <div v-if="receiptAd && !loading" class="w-full max-w-2xl mx-auto px-4 pb-10 no-print">
-        <SpotlightCardAd :ad="receiptAd" zone="Z7-post-checkout" />
-      </div>
-
-    </div><!-- /max-w-2xl -->
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Pulsing ring on status icon */
-.rp-status-ring {
-  animation: rp-ring-pulse 2.8s ease-in-out infinite;
-}
-@keyframes rp-ring-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
-  50%       { box-shadow: 0 0 0 10px transparent; }
-}
-
-/* Animated checkmark draw */
-.rp-check-draw {
-  stroke-dasharray: 28;
-  stroke-dashoffset: 28;
-  animation: rp-draw 0.45s ease-out 0.25s forwards;
-}
-@keyframes rp-draw { to { stroke-dashoffset: 0; } }
-
-/* Print */
 @media print {
   .no-print { display: none !important; }
-}
-
-/* Browsers strip background colors/gradients from print output by default —
-   this forces the hero gradient to actually render instead of printing blank. */
-.rp-print-color-exact {
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  /* Belt-and-suspenders: guarantee the card prints flat on white paper, no drop
+     shadow, regardless of any browser quirk with the print: Tailwind variant. */
+  .receipt-card { box-shadow: none !important; }
 }
 </style>

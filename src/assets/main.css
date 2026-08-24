@@ -29,6 +29,19 @@
   }
 }
 
+/* The app-wide gray page background has no business printing — any page's printed
+   output should sit on plain white paper, not show the on-screen chrome color. */
+@media print {
+  body {
+    background: #fff;
+  }
+}
+
+/* Consistent page margins regardless of the browser's own print-dialog default. */
+@page {
+  margin: 14mm 12mm;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

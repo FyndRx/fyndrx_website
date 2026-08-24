@@ -40,7 +40,7 @@ const accent = props.ad.creative.accentColor ?? '#246BFD';
   >
     <div
       v-if="visible"
-      class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-bottom"
+      class="print:hidden fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-bottom"
       role="banner"
       aria-label="Advertisement"
     >

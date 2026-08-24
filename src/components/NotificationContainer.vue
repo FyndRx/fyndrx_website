@@ -51,7 +51,7 @@ const getColorClasses = (type: string) => {
 </script>
 
 <template>
-  <div class="fixed top-20 right-4 z-50 space-y-4 pointer-events-none">
+  <div class="print:hidden fixed top-20 right-4 z-50 space-y-4 pointer-events-none">
     <TransitionGroup name="notification">
       <div
         v-for="notification in notifications"

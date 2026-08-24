@@ -54,7 +54,7 @@ onUnmounted(() => {
 
 <template>
   <Transition name="slide-up">
-    <div v-if="isVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md">
+    <div v-if="isVisible" class="print:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md">
       <div class="relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-5 dark:bg-gray-900/40">
         <!-- Background Gradient Glow -->
         <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>

@@ -69,7 +69,7 @@ onUnmounted(() => {
 
 <template>
   <Transition name="fade-overlay">
-    <div v-if="shouldShow" class="fixed inset-0 z-[9999] bg-[#0A0F1D] flex items-center justify-center p-6 overflow-hidden">
+    <div v-if="shouldShow" class="print:hidden fixed inset-0 z-[9999] bg-[#0A0F1D] flex items-center justify-center p-6 overflow-hidden">
       <!-- Premium Background Layers -->
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/30 rounded-full blur-[120px] animate-pulse"></div>
