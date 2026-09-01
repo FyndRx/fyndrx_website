@@ -5,45 +5,36 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
-// To receive background messages we must initialize the app here as well.
-// We get the config via URL query parameters (or you can hardcode them here if needed,
-// but they must match the main app's config).
-// Wait, environment variables aren't natively injected here by Vite in public/.
-// We will use a placeholder config that the user should fill, OR just accept that
-// they need to manually insert it if they want background notifications.
-
-// Initialize the Firebase app in the service worker by passing in
-// the messagingSenderId.
-// For background notifications, Firebase technically only needs the messagingSenderId
-// but providing the full config is safer.
+// This config mirrors src/services/firebase.ts. Vite doesn't inject env vars into
+// static public/ files, and this config isn't secret (Firebase web config is a
+// public client identifier, protected by Firebase security rules, not secrecy),
+// so it's hardcoded here to match the app's Firebase project.
 const firebaseConfig = {
-  // USER_TODO: Fill this with your Firebase Config for background notifications to work
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB_N2Fq5Z72qJEnJGraWzqiiJqTnt2Msjc",
+  authDomain: "fyndrx-75517.firebaseapp.com",
+  projectId: "fyndrx-75517",
+  storageBucket: "fyndrx-75517.firebasestorage.app",
+  messagingSenderId: "322076743399",
+  appId: "1:322076743399:web:3d09bc0a19f2f86ae17442"
 };
 
 try {
-  if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
 
-    // Custom background message handler
-    messaging.onBackgroundMessage((payload) => {
-      console.log('[firebase-messaging-sw.js] Received background message ', payload);
-      
-      const notificationTitle = payload.data?.title || payload.notification?.title || 'New Notification';
-      const notificationOptions = {
-        body: payload.data?.body || payload.notification?.body || 'You have a new update.',
-        icon: '/favicon.ico'
-      };
+  // Custom background message handler
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-      self.registration.showNotification(notificationTitle, notificationOptions);
-    });
-  }
+    const notificationTitle = payload.data?.title || payload.notification?.title || 'New Notification';
+    const notificationOptions = {
+      body: payload.data?.body || payload.notification?.body || 'You have a new update.',
+      icon: payload.notification?.icon || '/notification-icon.png',
+      badge: '/notification-badge.png'
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
 } catch (e) {
   console.log("Firebase background SW error:", e);
 }

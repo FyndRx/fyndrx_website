@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationsStore } from '@/store/notifications';
 import { formatDate } from '@/utils/date';
+import { getNotificationStyle } from '@/utils/notificationDisplay';
+import StatusBadge from '@/components/StatusBadge.vue';
+import StatusIcon from '@/components/StatusIcon.vue';
 
 const router = useRouter();
 const store = useNotificationsStore();
+
+const displayNotifications = computed(() =>
+  store.recentNotifications.map((notification) => ({
+    notification,
+    style: getNotificationStyle(notification.data?.app_data?.type, notification.data?.app_data?.status),
+  }))
+);
 
 const isOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
@@ -68,6 +78,13 @@ const handleNotificationClick = async (notification: any) => {
         router.push({ name: 'prescriptions' });
       }
       break;
+    case 'PRICE_ALERT':
+      if (appData.product_id) {
+        router.push({ name: 'MedicationDetail', params: { id: appData.product_id } });
+      } else {
+        router.push({ name: 'price-alerts' });
+      }
+      break;
     default:
       router.push('/notifications');
       break;
@@ -77,6 +94,16 @@ const handleNotificationClick = async (notification: any) => {
 const viewAll = () => {
   close();
   router.push('/notifications');
+};
+
+const enablingPush = ref(false);
+const enablePush = async () => {
+  enablingPush.value = true;
+  try {
+    await store.initializeFirebasePush();
+  } finally {
+    enablingPush.value = false;
+  }
 };
 </script>
 
@@ -143,6 +170,23 @@ export default {
           </button>
         </div>
 
+        <!-- Enable Push Prompt -->
+        <div
+          v-if="store.pushPermission === 'default'"
+          class="mx-4 mt-3 p-3 rounded-2xl bg-[#246BFD]/5 border border-[#246BFD]/15 flex items-center gap-3 relative z-10"
+        >
+          <p class="flex-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+            Get instant alerts for orders & prescriptions.
+          </p>
+          <button
+            @click="enablePush"
+            :disabled="enablingPush"
+            class="shrink-0 px-3 py-1.5 rounded-full bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a5ae0] transition-colors disabled:opacity-60"
+          >
+            {{ enablingPush ? 'Enabling…' : 'Enable' }}
+          </button>
+        </div>
+
         <!-- Loading State -->
         <div v-if="store.loading && store.notifications.length === 0" class="p-6 space-y-5 relative z-10">
           <div v-for="i in 3" :key="i" class="flex gap-4 animate-pulse">
@@ -168,11 +212,11 @@ export default {
         <!-- Notifications List -->
         <div v-else class="overflow-y-auto flex-1 p-2 space-y-1 relative z-10 custom-scrollbar">
           <div
-            v-for="notification in store.recentNotifications"
+            v-for="{ notification, style } in displayNotifications"
             :key="notification.id"
             @click="handleNotificationClick(notification)"
             class="group p-3 rounded-2xl flex gap-3.5 cursor-pointer transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-800/80 relative overflow-hidden"
-            :class="{ 
+            :class="{
               'bg-white/60 dark:bg-gray-800/60 shadow-sm border border-white/80 dark:border-gray-700/80': !notification.read_at,
               'hover:scale-[1.02] active:scale-[0.98]': true
             }"
@@ -182,21 +226,19 @@ export default {
               v-if="!notification.read_at"
               class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-[#246BFD] to-blue-400 rounded-r-full shadow-[0_0_8px_rgba(36,107,253,0.5)]"
             ></div>
-            
+
             <!-- Dynamic Icon Box -->
-            <div 
+            <div
               class="w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110 shadow-sm border border-white/40 dark:border-gray-700/50"
-              :class="[
-                notification.data?.app_data?.type?.includes('ORDER') ? 'bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 text-orange-600 dark:text-orange-400' : 
-                notification.data?.app_data?.type?.includes('PRESCRIPTION') ? 'bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/50 dark:to-fuchsia-900/50 text-violet-600 dark:text-violet-400' : 
-                'bg-gradient-to-br from-gray-100 to-slate-100 dark:from-gray-800 dark:to-slate-800 text-gray-600 dark:text-gray-300'
-              ]"
+              :class="style.containerClass"
             >
-              <!-- Determine Icon based on app_data type or status -->
-              <svg v-if="notification.data?.app_data?.status === 'processing'" class="w-6 h-6 animate-[spin_4s_linear_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              <svg v-else-if="notification.data?.app_data?.status === 'confirmed'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <svg v-else-if="notification.data?.app_data?.type?.includes('ORDER')" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-              <svg v-else-if="notification.data?.app_data?.type?.includes('PRESCRIPTION')" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <!-- Determine Icon based on app_data status, falling back to type -->
+              <StatusIcon v-if="notification.data?.app_data?.status" :status="notification.data.app_data.status" class="w-6 h-6" />
+              <svg v-else-if="style.iconKey === 'order'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+              <svg v-else-if="style.iconKey === 'prescription'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <svg v-else-if="style.iconKey === 'pharmacy'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/></svg>
+              <svg v-else-if="style.iconKey === 'broadcast'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c2.32.184 4.594.583 6.75 1.65 1.185.632 1.986-.7 1.986-1.5V6.75c0-.8-.801-2.132-1.986-1.5-2.156 1.067-4.43 1.466-6.75 1.65m0 9.18V6.75"/></svg>
+              <svg v-else-if="style.iconKey === 'price_alert'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8L11 5l-4 4-6-6"/></svg>
               <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
 
@@ -213,12 +255,15 @@ export default {
               <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
                 {{ notification.data?.body || 'You have a new update.' }}
               </p>
-              
+
               <!-- Status Pill (if available) -->
-              <div v-if="notification.data?.app_data?.status" class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="notification.data.app_data.status === 'confirmed' ? 'bg-green-500' : notification.data.app_data.status === 'processing' ? 'bg-blue-500' : 'bg-gray-500'"></span>
-                {{ notification.data.app_data.status }}
-              </div>
+              <StatusBadge
+                v-if="notification.data?.app_data?.status"
+                :status="notification.data.app_data.status"
+                size="xs"
+                show-dot
+                class="mt-2"
+              />
             </div>
           </div>
         </div>

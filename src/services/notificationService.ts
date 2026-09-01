@@ -1,4 +1,6 @@
 import { apiService } from './api';
+import type { PaginationMeta } from '@/models/api';
+import { unwrapArrayResponse, unwrapApiResponse } from '@/utils/responseTransformers';
 
 export interface AppData {
   type: string;
@@ -38,23 +40,58 @@ export interface NotificationStats {
   by_type: Record<string, number>;
 }
 
-export interface NotificationPreferences {
-  email_notifications: boolean;
-  push_notifications: boolean;
-  sms_notifications: boolean;
+// Must mirror User::NOTIFICATION_CATEGORIES / NOTIFICATION_CHANNELS on the backend
+// (app/Domains/Core/Models/User.php). The API always returns every category x
+// channel combo — unset ones default to `true` server-side (opt-out model).
+export type NotificationCategory = 'order_updates' | 'clinical' | 'promotions' | 'news' | 'reminders' | 'price_alerts';
+export type NotificationChannel = 'email' | 'sms' | 'push';
+
+export type NotificationPreferences = Record<NotificationCategory, Record<NotificationChannel, boolean>>;
+
+// A partial update — only the category/channel(s) being changed need to be present,
+// the backend merges it into what's already stored.
+export type NotificationPreferencesUpdate = Partial<Record<NotificationCategory, Partial<Record<NotificationChannel, boolean>>>>;
+
+/** `category` groups the backend's raw app_data.type values: 'order' matches
+ * ORDER_STATUS_UPDATE/NEW_ORDER, 'prescription' matches NEW_PRESCRIPTION/
+ * PRESCRIPTION_PRICED, 'pharmacy' matches NEW_PHARMACY_APPLICATION, 'broadcast'
+ * matches BROADCAST (admin-sent announcements/campaigns), 'price_alert' matches
+ * PRICE_ALERT (a watched medication's price dropped). */
+export interface GetNotificationsParams {
+  category?: 'order' | 'prescription' | 'pharmacy' | 'broadcast' | 'price_alert';
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  unread_only?: boolean;
+  page?: number;
+  per_page?: number;
+}
+
+export interface GetNotificationsResult {
+  notifications: Notification[];
+  meta: PaginationMeta | null;
 }
 
 export const notificationService = {
-  async getNotifications(): Promise<Notification[]> {
-    const response = await apiService.getAuth<any>('/notifications');
-    if (response?.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
-    } else if (response?.data && Array.isArray(response.data)) {
-      return response.data;
-    } else if (Array.isArray(response)) {
-      return response;
+  async getNotifications(params?: GetNotificationsParams): Promise<GetNotificationsResult> {
+    let url = '/notifications';
+    if (params) {
+      const queryParams = new URLSearchParams();
+      if (params.category) queryParams.append('category', params.category);
+      if (params.status) queryParams.append('status', params.status);
+      if (params.date_from) queryParams.append('date_from', params.date_from);
+      if (params.date_to) queryParams.append('date_to', params.date_to);
+      if (params.unread_only) queryParams.append('unread_only', '1');
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
     }
-    return [];
+    const response = await apiService.getAuth<any>(url);
+    return {
+      notifications: unwrapArrayResponse<Notification>(response),
+      meta: response?.meta ?? null,
+    };
   },
 
   async getNotificationById(id: string): Promise<Notification> {
@@ -101,11 +138,14 @@ export const notificationService = {
   },
 
   async getPreferences(): Promise<NotificationPreferences> {
-    return await apiService.getAuth<NotificationPreferences>('/notifications/preferences');
+    const response = await apiService.getAuth<any>('/notifications/preferences');
+    return unwrapApiResponse<NotificationPreferences>(response);
   },
 
-  async updatePreferences(preferences: NotificationPreferences): Promise<void> {
-    return await apiService.putAuth<void>('/notifications/preferences', preferences);
+  /** Partial update — only include the category/channel(s) actually changing. */
+  async updatePreferences(preferences: NotificationPreferencesUpdate): Promise<NotificationPreferences> {
+    const response = await apiService.putAuth<any>('/notifications/preferences', { preferences });
+    return unwrapApiResponse<NotificationPreferences>(response);
   },
 
   async testNotification(data: { title: string; body: string }): Promise<void> {

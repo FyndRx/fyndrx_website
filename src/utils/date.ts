@@ -1,4 +1,4 @@
-import { format, formatDistanceToNowStrict, isValid, parseISO } from 'date-fns';
+import { format, formatDistanceToNowStrict, isValid, isToday, isYesterday, parseISO } from 'date-fns';
 
 export function formatDate(
   dateString: string | number | Date | null | undefined,
@@ -28,6 +28,22 @@ export function formatDate(
     return format(date, formatStr);
   } catch (error) {
     console.warn('Error formatting date:', error);
+    return '';
+  }
+}
+
+/** "Today" / "Yesterday" / a full date, for grouping a list by calendar day. */
+export function dayGroupLabel(dateString: string | number | Date | null | undefined): string {
+  if (!dateString) return '';
+
+  try {
+    const date = typeof dateString === 'string' ? parseISO(dateString) : new Date(dateString);
+    if (!isValid(date)) return '';
+    if (isToday(date)) return 'Today';
+    if (isYesterday(date)) return 'Yesterday';
+    return format(date, 'MMMM d, yyyy');
+  } catch (error) {
+    console.warn('Error formatting day group label:', error);
     return '';
   }
 }
