@@ -108,6 +108,29 @@ const serviceOptions = STANDARD_SERVICES.map(service => ({
       </div>
     </div>
 
+    <!-- Selected Services — as removable tags, not just a joined string in the
+         dropdown trigger, so removing one is a single click rather than reopening
+         the dropdown and hunting for its checkbox. -->
+    <div v-if="showToggles && selectedServices.length" class="flex flex-wrap gap-2">
+      <span
+        v-for="service in selectedServices"
+        :key="service"
+        class="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full text-sm font-medium bg-[#246BFD]/10 text-[#246BFD] dark:bg-[#246BFD]/20"
+      >
+        {{ SERVICE_LABELS[service] || service }}
+        <button
+          type="button"
+          @click="emit('update:selectedServices', selectedServices.filter((s) => s !== service))"
+          :aria-label="`Remove ${SERVICE_LABELS[service] || service} filter`"
+          class="flex items-center justify-center w-4 h-4 rounded-full text-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-colors"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </span>
+    </div>
+
     <!-- Filter Toggles -->
     <div v-if="showToggles || showLocation" class="flex flex-wrap gap-2">
       <template v-if="showToggles">
