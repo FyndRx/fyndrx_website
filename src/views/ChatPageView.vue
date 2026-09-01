@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { useAuthStore } from '@/store/auth';
 import { useChatStore } from '@/store/chat';
+import { useSettingsStore } from '@/store/settings';
 import ChatThread from '@/components/AiChat/ChatThread.vue';
 import { timeAgo } from '@/utils/date';
 
@@ -14,12 +15,17 @@ useSeoMeta({
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const settingsStore = useSettingsStore();
 
 const sidebarOpen = ref(false);
 const bootError = ref<string | null>(null);
 
 const conversationTitle = computed(() => chatStore.conversation?.title || 'New conversation');
 
+// initConversation/startNewConversation already know how to handle AI chat
+// being toggled off backend-side (read access to existing history still
+// works there; only creating a new conversation is guarded) — so this just
+// calls them the same way regardless of that setting.
 const bootstrap = async () => {
   bootError.value = null;
   try {
@@ -82,7 +88,7 @@ export default { name: 'ChatPageView' };
       >
         <div class="p-3.5 shrink-0">
           <button
-            v-if="authStore.isAuthenticated"
+            v-if="authStore.isAuthenticated && settingsStore.aiChatEnabled"
             @click="handleNewChat"
             :disabled="chatStore.initializing"
             class="w-full flex items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#246BFD] to-[#5089FF] shadow-sm hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-60"
@@ -190,7 +196,7 @@ export default { name: 'ChatPageView' };
           </div>
 
           <button
-            v-if="authStore.isAuthenticated"
+            v-if="authStore.isAuthenticated && settingsStore.aiChatEnabled"
             @click="handleNewChat"
             :disabled="chatStore.initializing"
             class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#246BFD] dark:text-[#5089FF] px-3 py-2 rounded-xl hover:bg-[#246BFD]/10 transition-colors disabled:opacity-50"

@@ -2,12 +2,23 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import { chatService } from '@/services/chatService';
 import { useAuthStore } from '@/store/auth';
+import { useSettingsStore } from '@/store/settings';
 import type { ChatConversation, ChatConversationListMeta, ChatMessage } from '@/types/chat';
 
 const TITLE_MAX = 60;
 
 export const useChatStore = defineStore('chat', () => {
   const authStore = useAuthStore();
+  const settingsStore = useSettingsStore();
+
+  // App.vue's own onMounted fetches this, but a child route/component can
+  // mount (and call a chat action) before that resolves, so anything that
+  // might create a conversation needs to make sure the flag is real first.
+  const ensureSettingsLoaded = async () => {
+    if (!settingsStore.isLoaded) {
+      await settingsStore.fetchSettings();
+    }
+  };
 
   const isOpen = ref(false);
   const hasBeenOpened = ref(false);
@@ -57,15 +68,22 @@ export const useChatStore = defineStore('chat', () => {
   // Nothing about the conversation itself is cached client-side.
   const initConversation = async () => {
     if (conversation.value || initializing.value) return;
+    await ensureSettingsLoaded();
+
     initializing.value = true;
     error.value = null;
     try {
-      let summary: ChatConversation;
-      if (authStore.isAuthenticated) {
-        summary = (await chatService.getLatestConversation()) ?? (await chatService.createConversation(true));
-      } else {
-        summary = await chatService.createConversation(false);
+      // Reading an existing conversation still works even with AI chat
+      // toggled off backend-side — only creating a new one is blocked there.
+      let summary: ChatConversation | null = authStore.isAuthenticated
+        ? await chatService.getLatestConversation()
+        : null;
+
+      if (!summary) {
+        if (!settingsStore.aiChatEnabled) return;
+        summary = await chatService.createConversation(authStore.isAuthenticated);
       }
+
       const conv = await chatService.getConversation(summary.id, authStore.isAuthenticated);
       conversation.value = conv;
       messages.value = conv.messages || [];
@@ -134,8 +152,14 @@ export const useChatStore = defineStore('chat', () => {
   // stays reachable in the history list. Guest: there's no such thing as a
   // second conversation for the same session_id, so this adopts a fresh one —
   // the old guest thread still exists, it's just no longer reachable.
+  // Every "New chat" button in the UI is already hidden via aiChatEnabled, so
+  // reaching this guard means only the settings-load race caught it — not a
+  // real click — hence no error.value here (the empty state already explains it).
   const startNewConversation = async () => {
     if (initializing.value) return;
+    await ensureSettingsLoaded();
+    if (!settingsStore.aiChatEnabled) return;
+
     abortActiveStream();
     initializing.value = true;
     error.value = null;

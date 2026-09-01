@@ -4,6 +4,7 @@ import { apiService } from '@/services/api';
 interface RawSettings {
   maintenance_mode?: boolean | string;
   maintenance_message?: string;
+  ai_chat_enabled?: boolean | string;
   delivery_fee_flat?: number | string;
   free_delivery_threshold?: number | string;
   max_cart_items?: number | string;
@@ -23,6 +24,7 @@ interface ApiSettingsResponse {
 interface SettingsState {
   maintenanceMode: boolean;
   maintenanceMessage: string;
+  aiChatEnabled: boolean;
   deliveryFeeFlat: number;
   freeDeliveryThreshold: number;
   maxCartItems: number;
@@ -39,6 +41,7 @@ export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
     maintenanceMode: false,
     maintenanceMessage: 'We are currently performing scheduled maintenance to improve your experience.',
+    aiChatEnabled: true,
     deliveryFeeFlat: 5,
     freeDeliveryThreshold: 500,
     maxCartItems: 20,
@@ -72,6 +75,7 @@ export const useSettingsStore = defineStore('settings', {
           const s = response.settings;
           this.maintenanceMode = s.maintenance_mode === true || s.maintenance_mode === '1';
           this.maintenanceMessage = s.maintenance_message || this.maintenanceMessage;
+          this.aiChatEnabled = s.ai_chat_enabled !== false && s.ai_chat_enabled !== 'false';
           this.deliveryFeeFlat = Number(s.delivery_fee_flat) || 5;
           this.freeDeliveryThreshold = Number(s.free_delivery_threshold) || 500;
           this.maxCartItems = Number(s.max_cart_items) || 20;

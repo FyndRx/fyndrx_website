@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useChatStore } from '@/store/chat';
+import { useSettingsStore } from '@/store/settings';
 import ChatThread from './ChatThread.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
@@ -10,6 +11,7 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const settingsStore = useSettingsStore();
 
 const showNewChatConfirm = ref(false);
 
@@ -40,7 +42,7 @@ export default { name: 'ChatWidget' };
 </script>
 
 <template>
-  <div v-if="route.name !== 'ai-chat'" class="print:hidden fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex flex-col items-end">
+  <div v-if="settingsStore.aiChatEnabled && route.name !== 'ai-chat'" class="print:hidden fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex flex-col items-end">
     <!-- Chat Panel -->
     <transition
       enter-active-class="transition ease-out duration-300"

@@ -1,28 +1,36 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import UserAvatar from '@/components/UserAvatar.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import NotificationDropdown from '@/components/NotificationDropdown.vue';
 import { useAuthStore } from '@/store/auth';
 import { useCartStore } from '@/store/cart';
+import { useSettingsStore } from '@/store/settings';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const authStore = useAuthStore();
 const cartStore = useCartStore();
+const settingsStore = useSettingsStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
 const { registerElement } = useScrollAnimation();
 const isScrolled = ref(false);
 const isMobileMenuOpen = ref(false);
 
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 50;
+};
+
 onMounted(() => {
-  window.addEventListener('scroll', () => {
-    isScrolled.value = window.scrollY > 50;
-  });
+  window.addEventListener('scroll', handleScroll);
   const elements = document.querySelectorAll('.scroll-animate');
   elements.forEach((element) => registerElement(element as HTMLElement));
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
@@ -60,14 +68,14 @@ export default {
         <!-- Desktop Navigation — visible lg+ -->
         <div class="items-center hidden lg:flex space-x-6 xl:space-x-8 mx-4">
           <router-link 
-            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Chat', 'Blog', 'About', 'Contact']" 
+            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']" 
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
             custom
             v-slot="{ href, navigate, isActive }"
           >
-            <a 
-              :href="href" 
+            <a
+              :href="href"
               @click="navigate"
               class="relative font-medium transition-all duration-300 group flex items-center whitespace-nowrap text-sm xl:text-base"
               :class="[
@@ -75,13 +83,13 @@ export default {
               ]"
             >
               <!-- Active Dot -->
-              <span 
-                v-if="isActive" 
+              <span
+                v-if="isActive"
                 class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_10px_#246BFD] animate-pulse"
               ></span>
               {{ link }}
               <!-- Hover Underline -->
-              <span 
+              <span
                 v-if="!isActive"
                 class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#246BFD] transition-all duration-300 group-hover:w-full opacity-50"
               ></span>
@@ -92,8 +100,21 @@ export default {
         <!-- Right Side Actions — visible lg+ -->
         <div class="items-center hidden lg:flex space-x-2 xl:space-x-3 shrink-0">
 
+          <!-- Chat with Fynda: icon-only on lg, full label on xl+ -->
+          <router-link
+            v-if="settingsStore.aiChatEnabled"
+            to="/chat"
+            class="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-[#246BFD]/30"
+            title="Chat with Fynda"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="hidden xl:inline text-sm whitespace-nowrap">Chat</span>
+          </router-link>
+
           <!-- Upload Rx: icon-only on lg, full label on xl+ -->
-          <router-link 
+          <router-link
             to="/upload-prescription"
             class="flex items-center gap-2 px-3 py-2 rounded-full bg-[#FE9615] text-white font-medium hover:bg-[#ffb547] transition-all duration-300 hover:shadow-lg hover:shadow-[#FE9615]/20"
             title="Upload Prescription"
@@ -148,8 +169,20 @@ export default {
 
         <!-- Mobile Actions — visible only below lg -->
         <div class="flex items-center lg:hidden space-x-2 ml-auto mr-2">
+          <!-- Chat with Fynda Icon -->
+          <router-link
+            v-if="settingsStore.aiChatEnabled"
+            to="/chat"
+            class="p-2 rounded-full bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white transition-all duration-300"
+            title="Chat with Fynda"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </router-link>
+
           <!-- Upload Rx Icon -->
-          <router-link 
+          <router-link
             to="/upload-prescription"
             class="p-2 rounded-full bg-[#FE9615]/10 text-[#FE9615] hover:bg-[#FE9615] hover:text-white transition-all duration-300"
             title="Upload Prescription"
@@ -236,8 +269,8 @@ export default {
           class="pb-6 pt-2 space-y-1 lg:hidden"
         >
           <!-- Nav Links -->
-          <router-link 
-            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Chat', 'Blog', 'About', 'Contact']" 
+          <router-link
+            v-for="link in ['Home', 'Medications', 'Pharmacies', 'Blog', 'About', 'Contact']"
             :key="link"
             :to="link === 'Home' ? '/' : '/' + link.toLowerCase()"
             class="flex items-center px-4 py-3 rounded-full text-gray-700 dark:text-gray-300 hover:text-[#246BFD] hover:bg-[#246BFD]/5 font-medium transition-all"
