@@ -172,6 +172,26 @@ const router = createRouter({
       },
     },
     {
+      path: '/profile/notification-settings',
+      name: 'notification-settings',
+      component: () => import('../views/NotificationSettingsView.vue'),
+      meta: {
+        title: 'Notification Settings | FyndRx',
+        description: 'Choose how and when FyndRx contacts you.',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/profile/security',
+      name: 'security-settings',
+      component: () => import('../views/SecuritySettingsView.vue'),
+      meta: {
+        title: 'Security | FyndRx',
+        description: 'Manage your password and connected sign-in methods.',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/verify-otp',
       name: 'verify-otp',
       component: () => import('../views/Auth/OTPVerificationView.vue'),
@@ -245,6 +265,16 @@ const router = createRouter({
       meta: {
         title: 'My Favorites | FyndRX',
         description: 'View your favorite medications and pharmacies',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/price-alerts',
+      name: 'price-alerts',
+      component: () => import('@/views/PriceAlertsView.vue'),
+      meta: {
+        title: 'Price Alerts | FyndRX',
+        description: "Medications you're watching for a price drop.",
         requiresAuth: true
       }
     },
