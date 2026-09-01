@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { Analytics } from '@vercel/analytics/vue';
 import MainLayout from '@/layouts/MainLayout.vue';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import NotificationContainer from '@/components/NotificationContainer.vue';
@@ -72,6 +73,7 @@ onUnmounted(() => {
   <MaintenanceOverlay />
   <RateLimitWarning />
   <ChatWidget />
+  <Analytics />
 </template>
 
 <style scoped>
