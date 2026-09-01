@@ -20,6 +20,17 @@ const rating = ref(5);
 const isSubmitting = ref(false);
 const submitSuccess = ref(false);
 const errorMessage = ref('');
+const validationErrors = ref({ feedbackType: '', feedback: '', name: '', email: '' });
+const emailFormatValid = ref(true);
+
+const handleEmailValidation = (isValid: boolean) => {
+  emailFormatValid.value = isValid;
+  if (!isValid && email.value) {
+    validationErrors.value.email = 'Please enter a valid email address';
+  } else if (validationErrors.value.email === 'Please enter a valid email address') {
+    validationErrors.value.email = '';
+  }
+};
 
 const feedbackTypes = [
   { label: 'Suggestion', value: 'Suggestion' },
@@ -30,17 +41,44 @@ const feedbackTypes = [
 ];
 
 const handleSubmit = async () => {
-  if (!feedbackType.value || !feedback.value) return;
+  validationErrors.value = { feedbackType: '', feedback: '', name: '', email: '' };
+  errorMessage.value = '';
+
+  if (!feedbackType.value) {
+    validationErrors.value.feedbackType = 'Please select a feedback type';
+    return;
+  }
+  if (!feedback.value.trim()) {
+    validationErrors.value.feedback = 'Please share your feedback';
+    return;
+  }
+  if (feedback.value.trim().length > 2000) {
+    validationErrors.value.feedback = 'Feedback must be under 2000 characters';
+    return;
+  }
+  if (name.value.trim().length > 100) {
+    validationErrors.value.name = 'Name is too long';
+    return;
+  }
+  if (email.value.trim()) {
+    if (email.value.trim().length > 254) {
+      validationErrors.value.email = 'Email is too long';
+      return;
+    }
+    if (!emailFormatValid.value) {
+      validationErrors.value.email = 'Please enter a valid email address';
+      return;
+    }
+  }
 
   try {
     isSubmitting.value = true;
-    errorMessage.value = '';
-    
+
     await informationService.submitFeedback({
-      name: name.value || 'Anonymous',
-      email: email.value || 'no-email@fyndrx.com',
+      name: name.value.trim() || 'Anonymous',
+      email: email.value.trim() || 'no-email@fyndrx.com',
       subject: feedbackType.value,
-      message: feedback.value,
+      message: feedback.value.trim(),
       rating: rating.value
     });
     
@@ -136,6 +174,9 @@ const handleSubmit = async () => {
             required
             searchable
           />
+          <p v-if="validationErrors.feedbackType" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            {{ validationErrors.feedbackType }}
+          </p>
         </div>
 
         <!-- Rating -->
@@ -170,11 +211,15 @@ const handleSubmit = async () => {
           </label>
           <textarea
             v-model="feedback"
-            required
             rows="4"
+            maxlength="2000"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent"
+            :class="{ 'border-red-500': validationErrors.feedback }"
             placeholder="Please share your thoughts, suggestions, or concerns..."
           ></textarea>
+          <p v-if="validationErrors.feedback" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            {{ validationErrors.feedback }}
+          </p>
         </div>
 
         <!-- Name -->
@@ -184,6 +229,7 @@ const handleSubmit = async () => {
             type="text"
             label="Your Name (Optional)"
             placeholder="John Doe"
+            :error="validationErrors.name"
           />
         </div>
 
@@ -194,6 +240,8 @@ const handleSubmit = async () => {
             type="email"
             label="Your Email (Optional)"
             placeholder="john@example.com"
+            :error="validationErrors.email"
+            @validation="handleEmailValidation"
           />
         </div>
 
@@ -202,6 +250,8 @@ const handleSubmit = async () => {
           <button
             type="submit"
             :disabled="isSubmitting"
+            :aria-busy="isSubmitting"
+            :aria-disabled="isSubmitting"
             class="px-6 py-3 bg-[#246BFD] text-white font-medium rounded-full hover:bg-[#5089FF] hover:shadow-lg hover:shadow-[#246BFD]/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="isSubmitting">Submitting...</span>

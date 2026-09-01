@@ -61,10 +61,11 @@ const activeTab = ref<'new' | 'track'>('new');
 const quickTrackNumber = ref('');
 
 const handleQuickTrack = () => {
-    if (quickTrackNumber.value) {
-        router.push({ 
-            name: 'public-consultation-search', 
-            query: { consultation_number: quickTrackNumber.value } 
+    const trimmed = quickTrackNumber.value.trim();
+    if (trimmed) {
+        router.push({
+            name: 'public-consultation-search',
+            query: { consultation_number: trimmed }
         });
     }
 };
@@ -170,7 +171,8 @@ onMounted(() => {
                     </div>
                     <button
                         type="submit"
-                        class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-gray-900 dark:bg-gray-700 rounded-full shadow-lg hover:bg-black dark:hover:bg-gray-600 hover:-translate-y-1 flex items-center justify-center gap-2"
+                        :disabled="!quickTrackNumber.trim()"
+                        class="w-full py-4 text-lg font-bold text-white transition-all duration-300 bg-gray-900 dark:bg-gray-700 rounded-full shadow-lg hover:bg-black dark:hover:bg-gray-600 hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
                         Track Status
                     </button>

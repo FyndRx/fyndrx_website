@@ -22,6 +22,11 @@ export type User = {
   medical_records?: MedicalRecord[];
   created_at?: string;
   updated_at?: string;
+  has_password?: boolean;
+  google_linked?: boolean;
+  facebook_linked?: boolean;
+  email_verified?: boolean;
+  phone_verified?: boolean;
 };
 
 export type Address = {

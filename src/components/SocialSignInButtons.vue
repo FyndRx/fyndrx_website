@@ -12,6 +12,7 @@ const { renderGoogleButton, signInWithFacebook } = useSocialAuth();
 
 const googleButtonEl = ref<HTMLElement | null>(null);
 const googleReady = ref(true);
+const googleLoading = ref(false);
 const facebookLoading = ref(false);
 
 const pendingLink = ref<{ provider: SocialProvider; email: string; token: string } | null>(null);
@@ -24,7 +25,7 @@ onMounted(async () => {
   try {
     await renderGoogleButton(
       googleButtonEl.value,
-      (idToken) => handleProviderToken('google', idToken),
+      (idToken) => handleGoogleToken(idToken),
       (err) => emit('error', err.message)
     );
   } catch (err: any) {
@@ -48,6 +49,15 @@ const handleProviderToken = async (provider: SocialProvider, token: string) => {
   }
 };
 
+const handleGoogleToken = async (idToken: string) => {
+  googleLoading.value = true;
+  try {
+    await handleProviderToken('google', idToken);
+  } finally {
+    googleLoading.value = false;
+  }
+};
+
 const handleFacebookClick = async () => {
   facebookLoading.value = true;
   try {
@@ -61,7 +71,7 @@ const handleFacebookClick = async () => {
 };
 
 const submitLinkConfirmation = async () => {
-  if (!pendingLink.value || !linkPassword.value) {
+  if (!pendingLink.value || !linkPassword.value.trim()) {
     linkError.value = 'Please enter your password.';
     return;
   }
@@ -105,14 +115,16 @@ const cancelLink = () => {
           type="button"
           @click="submitLinkConfirmation"
           :disabled="linkSubmitting"
-          class="flex-1 py-2.5 px-4 rounded-full text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] transition-all duration-300 disabled:opacity-50"
+          :aria-busy="linkSubmitting"
+          class="flex-1 py-2.5 px-4 rounded-full text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ linkSubmitting ? 'Linking...' : 'Confirm & Link Account' }}
         </button>
         <button
           type="button"
           @click="cancelLink"
-          class="py-2.5 px-4 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
+          :disabled="linkSubmitting"
+          class="py-2.5 px-4 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
@@ -130,15 +142,32 @@ const cancelLink = () => {
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div ref="googleButtonEl" class="flex justify-center" :class="{ hidden: !googleReady }"></div>
+        <div class="relative flex justify-center" :class="{ hidden: !googleReady }" :aria-busy="googleLoading">
+          <div ref="googleButtonEl"></div>
+          <div
+            v-if="googleLoading"
+            class="absolute inset-0 flex items-center justify-center gap-2 bg-white/80 dark:bg-gray-800/80 rounded-full text-sm font-medium text-gray-600 dark:text-gray-300 pointer-events-none"
+          >
+            <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Signing in...
+          </div>
+        </div>
 
         <button
           type="button"
           @click="handleFacebookClick"
-          :disabled="facebookLoading"
-          class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50"
+          :disabled="facebookLoading || googleLoading"
+          :aria-busy="facebookLoading"
+          class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-full border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <svg class="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
+          <svg v-if="facebookLoading" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
             <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/>
           </svg>
           {{ facebookLoading ? 'Connecting...' : 'Continue with Facebook' }}

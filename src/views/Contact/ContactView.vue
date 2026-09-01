@@ -48,6 +48,16 @@ const validationErrors = ref({
   subject: '',
   message: '',
 });
+const emailFormatValid = ref(true);
+
+const handleEmailValidation = (isValid: boolean) => {
+  emailFormatValid.value = isValid;
+  if (!isValid && form.value.email) {
+    validationErrors.value.email = 'Please enter a valid email address';
+  } else if (validationErrors.value.email === 'Please enter a valid email address') {
+    validationErrors.value.email = '';
+  }
+};
 
 const handleSubmit = async () => {
   successMessage.value = '';
@@ -59,26 +69,48 @@ const handleSubmit = async () => {
     message: '',
   };
 
-  if (!form.value.name) {
+  if (!form.value.name.trim()) {
     validationErrors.value.name = 'Name is required';
     return;
   }
-  if (!form.value.email) {
+  if (form.value.name.trim().length > 100) {
+    validationErrors.value.name = 'Name is too long';
+    return;
+  }
+  if (!form.value.email.trim()) {
     validationErrors.value.email = 'Email is required';
     return;
   }
-  if (!form.value.subject) {
+  if (!emailFormatValid.value) {
+    validationErrors.value.email = 'Please enter a valid email address';
+    return;
+  }
+  if (!form.value.subject.trim()) {
     validationErrors.value.subject = 'Subject is required';
     return;
   }
-  if (!form.value.message) {
+  if (form.value.subject.trim().length > 200) {
+    validationErrors.value.subject = 'Subject is too long';
+    return;
+  }
+  if (!form.value.message.trim()) {
     validationErrors.value.message = 'Message is required';
+    return;
+  }
+  if (form.value.message.trim().length > 2000) {
+    validationErrors.value.message = 'Message must be under 2000 characters';
     return;
   }
 
   try {
     loading.value = true;
-    await informationService.submitFeedback(form.value);
+    await informationService.submitFeedback({
+      ...form.value,
+      name: form.value.name.trim(),
+      email: form.value.email.trim(),
+      subject: form.value.subject.trim(),
+      message: form.value.message.trim(),
+    });
     successMessage.value = 'Thank you for your message! We will get back to you soon.';
     form.value = {
       name: '',
@@ -189,6 +221,7 @@ const officeLocation = {
                   type="email"
                   :error="validationErrors.email"
                   placeholder="your.email@example.com"
+                  @validation="handleEmailValidation"
                 />
               </div>
 
@@ -210,6 +243,7 @@ const officeLocation = {
                   id="message"
                   v-model="form.message"
                   rows="4"
+                  maxlength="2000"
                   class="w-full px-4 py-2 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#246BFD] focus:border-transparent transition-colors"
                   :class="{ 'border-red-500': validationErrors.message }"
                   placeholder="Your message..."
@@ -222,6 +256,8 @@ const officeLocation = {
               <button
                 type="submit"
                 :disabled="loading"
+                :aria-busy="loading"
+                :aria-disabled="loading"
                 class="w-full px-8 py-3 rounded-full bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white font-semibold hover:shadow-lg hover:shadow-[#246BFD]/20 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ loading ? 'Sending...' : 'Send Message' }}

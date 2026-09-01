@@ -49,6 +49,10 @@ export interface ResetPasswordCredentials {
 export interface SendOTPCredentials {
   phone_number?: string;
   email?: string;
+  /** Set when this OTP is for the forgot-password flow — lets the backend look the
+   *  user up first and no-op (still 200) if no account matches, without revealing
+   *  whether the phone/email is registered. */
+  reset_password?: boolean;
 }
 
 export interface VerifyOTPCredentials {
@@ -175,6 +179,57 @@ class AuthService {
       password,
       password_confirmation,
     });
+  }
+
+  /**
+   * Change (or, for a social-only account with no password yet, set for the first
+   * time) the authenticated user's password. `current_password` is only required
+   * when the account already has one — check `user.has_password` before deciding
+   * whether to render that field. On success, every other active session (every
+   * refresh-token family besides the one making this request) is revoked
+   * server-side; the caller's own session stays signed in.
+   */
+  async changePassword(data: { current_password?: string; new_password: string; new_password_confirmation: string }): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/change-password', data);
+  }
+
+  /**
+   * Send a verification code to the authenticated user's own email address, to
+   * confirm it if it was left unverified at signup.
+   */
+  async sendEmailVerificationOtp(): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/verify-email/send');
+  }
+
+  /**
+   * Confirm the code sent by sendEmailVerificationOtp.
+   */
+  async confirmEmailVerification(otp: string): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/verify-email/confirm', { otp });
+  }
+
+  /**
+   * Send a verification code to the authenticated user's own phone number, to
+   * confirm it if it was left unverified at signup.
+   */
+  async sendPhoneVerificationOtp(): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/verify-phone/send');
+  }
+
+  /**
+   * Confirm the code sent by sendPhoneVerificationOtp.
+   */
+  async confirmPhoneVerification(otp: string): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/verify-phone/confirm', { otp });
+  }
+
+  /**
+   * Unlink a social provider from the authenticated account. The backend blocks
+   * this (422) if it would leave the account with no password and no other linked
+   * provider — set a password first in that case.
+   */
+  async unlinkProvider(provider: SocialProvider): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>(`/auth/unlink/${provider}`);
   }
 
   /**

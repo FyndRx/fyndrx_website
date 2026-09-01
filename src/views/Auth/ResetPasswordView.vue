@@ -23,6 +23,9 @@ const validationErrors = ref({
 });
 const successMessage = ref('');
 
+// Requires at least one letter and one number, 8-72 chars (72 = common bcrypt input cap)
+const isStrongPassword = (value: string) => /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(value);
+
 const handleSubmit = async () => {
   validationErrors.value = { password: '', confirmPassword: '' };
 
@@ -34,8 +37,12 @@ const handleSubmit = async () => {
     validationErrors.value.password = 'Password is required';
     return;
   }
-  if (form.value.password.length < 8) {
-    validationErrors.value.password = 'Password must be at least 8 characters long';
+  if (!isStrongPassword(form.value.password)) {
+    validationErrors.value.password = 'Password must be 8+ characters and include at least one letter and one number';
+    return;
+  }
+  if (!form.value.confirmPassword) {
+    validationErrors.value.confirmPassword = 'Please confirm your password';
     return;
   }
   if (form.value.password !== form.value.confirmPassword) {
@@ -113,6 +120,7 @@ const handleSubmit = async () => {
             placeholder="Enter your new password"
             required
             autocomplete="new-password"
+            helper="At least 8 characters, with one letter and one number"
             :error="validationErrors.password"
           />
 
@@ -144,8 +152,10 @@ const handleSubmit = async () => {
           <div>
             <button
               type="submit"
-              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300"
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
+              :aria-busy="loading"
+              :aria-disabled="loading"
             >
               <svg
                 v-if="loading"

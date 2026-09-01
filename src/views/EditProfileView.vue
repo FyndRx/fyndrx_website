@@ -22,6 +22,8 @@ const form = ref({
   gender: user.value?.gender || '',
 });
 
+const fullyVerified = computed(() => !!user.value?.email_verified && !!user.value?.phone_verified);
+
 const genderOptions = [
   { label: 'Male', value: 'male' },
   { label: 'Female', value: 'female' },
@@ -30,6 +32,72 @@ const genderOptions = [
 const loading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
+
+const validationErrors = ref({
+  firstname: '',
+  lastname: '',
+  email: '',
+  phone_number: '',
+});
+const emailFormatValid = ref(true);
+const phoneFormatValid = ref(true);
+
+const handleEmailValidation = (isValid: boolean) => {
+  emailFormatValid.value = isValid;
+  if (!isValid && form.value.email) {
+    validationErrors.value.email = 'Please enter a valid email address';
+  } else if (validationErrors.value.email === 'Please enter a valid email address') {
+    validationErrors.value.email = '';
+  }
+};
+
+const handlePhoneValidation = (isValid: boolean) => {
+  phoneFormatValid.value = isValid;
+  if (!isValid && form.value.phone_number) {
+    validationErrors.value.phone_number = 'Please enter a valid phone number';
+  } else if (validationErrors.value.phone_number === 'Please enter a valid phone number') {
+    validationErrors.value.phone_number = '';
+  }
+};
+
+const validateProfileForm = () => {
+  validationErrors.value = { firstname: '', lastname: '', email: '', phone_number: '' };
+  let isValid = true;
+
+  if (!form.value.firstname.trim()) {
+    validationErrors.value.firstname = 'First name is required';
+    isValid = false;
+  } else if (form.value.firstname.trim().length > 50) {
+    validationErrors.value.firstname = 'First name is too long';
+    isValid = false;
+  }
+
+  if (!form.value.lastname.trim()) {
+    validationErrors.value.lastname = 'Last name is required';
+    isValid = false;
+  } else if (form.value.lastname.trim().length > 50) {
+    validationErrors.value.lastname = 'Last name is too long';
+    isValid = false;
+  }
+
+  if (!form.value.email.trim()) {
+    validationErrors.value.email = 'Email is required';
+    isValid = false;
+  } else if (form.value.email.trim().length > 254) {
+    validationErrors.value.email = 'Email is too long';
+    isValid = false;
+  } else if (!emailFormatValid.value) {
+    validationErrors.value.email = 'Please enter a valid email address';
+    isValid = false;
+  }
+
+  if (form.value.phone_number.trim() && !phoneFormatValid.value) {
+    validationErrors.value.phone_number = 'Please enter a valid phone number';
+    isValid = false;
+  }
+
+  return isValid;
+};
 
 // Image upload handling
 const imageInput = ref<HTMLInputElement | null>(null);
@@ -71,16 +139,19 @@ const cancelCrop = () => {
 };
 
 const handleSubmit = async () => {
+  error.value = null;
+  success.value = null;
+
+  if (!validateProfileForm()) return;
+
   try {
     loading.value = true;
-    error.value = null;
-    success.value = null;
 
     const updateData = {
-      firstname: form.value.firstname,
-      lastname: form.value.lastname,
-      email: form.value.email,
-      phone_number: form.value.phone_number,
+      firstname: form.value.firstname.trim(),
+      lastname: form.value.lastname.trim(),
+      email: form.value.email.trim(),
+      phone_number: form.value.phone_number.trim(),
       dob: form.value.dob,
       gender: form.value.gender
     };
@@ -104,7 +175,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-28 pb-20">
+  <div class="pb-20">
     <div class="container mx-auto px-4 max-w-5xl">
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
@@ -167,7 +238,14 @@ const handleSubmit = async () => {
             <div class="mt-8 pt-8 border-t border-gray-50 dark:border-gray-700">
               <div class="flex items-center justify-between text-sm mb-4">
                 <span class="text-gray-500 font-medium">Account Status</span>
-                <span class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs uppercase">Active</span>
+                <router-link
+                  v-if="!fullyVerified"
+                  to="/profile/security"
+                  class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                >
+                  Action Needed
+                </router-link>
+                <span v-else class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs uppercase">Verified</span>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-500 font-medium">Joined Date</span>
@@ -196,12 +274,14 @@ const handleSubmit = async () => {
                   label="First Name"
                   placeholder="Enter your first name"
                   required
+                  :error="validationErrors.firstname"
                 />
                 <TextInput
                   v-model="form.lastname"
                   label="Last Name"
                   placeholder="Enter your last name"
                   required
+                  :error="validationErrors.lastname"
                 />
                 <TextInput
                   v-model="form.email"
@@ -209,12 +289,16 @@ const handleSubmit = async () => {
                   type="email"
                   placeholder="your@email.com"
                   required
+                  :error="validationErrors.email"
+                  @validation="handleEmailValidation"
                 />
                 <TextInput
                   v-model="form.phone_number"
                   label="Phone Number"
                   type="tel"
                   placeholder="+233..."
+                  :error="validationErrors.phone_number"
+                  @validation="handlePhoneValidation"
                 />
                 <DateTimePicker
                   v-model="form.dob"
@@ -260,7 +344,9 @@ const handleSubmit = async () => {
                 <button
                   type="submit"
                   :disabled="loading"
-                  class="px-10 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center space-x-2"
+                  :aria-busy="loading"
+                  :aria-disabled="loading"
+                  class="px-10 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2"
                 >
                   <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

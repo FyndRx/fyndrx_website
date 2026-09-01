@@ -14,6 +14,7 @@ const authStore = useAuthStore();
 
 const step = ref(1); // 1: Details, 2: OTP
 const loading = ref(false);
+const resendLoading = ref(false);
 const globalError = ref('');
 
 const handleSocialSuccess = () => {
@@ -46,6 +47,12 @@ const validationErrors = ref({
   otp: '',
 });
 
+const emailFormatValid = ref(true);
+const phoneFormatValid = ref(true);
+
+// Requires at least one letter and one number, 8-72 chars (72 = common bcrypt input cap)
+const isStrongPassword = (value: string) => /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(value);
+
 const validateStep1 = () => {
   let isValid = true;
   validationErrors.value = {
@@ -59,34 +66,57 @@ const validateStep1 = () => {
     otp: '',
   };
 
-  if (!form.value.firstName) {
+  if (!form.value.firstName.trim()) {
     validationErrors.value.firstName = 'First name is required';
     isValid = false;
+  } else if (form.value.firstName.trim().length > 50) {
+    validationErrors.value.firstName = 'First name is too long';
+    isValid = false;
   }
-  if (!form.value.lastName) {
+
+  if (!form.value.lastName.trim()) {
     validationErrors.value.lastName = 'Last name is required';
     isValid = false;
+  } else if (form.value.lastName.trim().length > 50) {
+    validationErrors.value.lastName = 'Last name is too long';
+    isValid = false;
   }
-  if (!form.value.email) {
+
+  if (!form.value.email.trim()) {
     validationErrors.value.email = 'Email is required';
     isValid = false;
-  }
-  if (!form.value.phoneNumber) {
-    validationErrors.value.phoneNumber = 'Phone number is required';
+  } else if (form.value.email.trim().length > 254) {
+    validationErrors.value.email = 'Email is too long';
+    isValid = false;
+  } else if (!emailFormatValid.value) {
+    validationErrors.value.email = 'Please enter a valid email address';
     isValid = false;
   }
+
+  if (!form.value.phoneNumber.trim()) {
+    validationErrors.value.phoneNumber = 'Phone number is required';
+    isValid = false;
+  } else if (!phoneFormatValid.value) {
+    validationErrors.value.phoneNumber = 'Please enter a valid phone number';
+    isValid = false;
+  }
+
   if (!form.value.password) {
     validationErrors.value.password = 'Password is required';
     isValid = false;
-  }
-  if (form.value.password.length < 8) {
-    validationErrors.value.password = 'Password must be at least 8 characters long';
+  } else if (!isStrongPassword(form.value.password)) {
+    validationErrors.value.password = 'Password must be 8+ characters and include at least one letter and one number';
     isValid = false;
   }
-  if (form.value.password !== form.value.confirmPassword) {
+
+  if (!form.value.confirmPassword) {
+    validationErrors.value.confirmPassword = 'Please confirm your password';
+    isValid = false;
+  } else if (form.value.password !== form.value.confirmPassword) {
     validationErrors.value.confirmPassword = 'Passwords do not match';
     isValid = false;
   }
+
   if (!form.value.acceptTerms) {
     validationErrors.value.terms = 'You must accept the terms and conditions';
     isValid = false;
@@ -95,21 +125,22 @@ const validateStep1 = () => {
   return isValid;
 };
 
-const handleSendOTP = async () => {
-  if (!validateStep1()) return;
+const handleSendOTP = async (isResend = false) => {
+  if (!isResend && !validateStep1()) return;
 
-  loading.value = true;
+  const busyRef = isResend ? resendLoading : loading;
+  busyRef.value = true;
   globalError.value = '';
 
   try {
     // Send OTP
     await authStore.sendOTP({
-      email: form.value.email,
-      phone_number: form.value.phoneNumber
+      email: form.value.email.trim(),
+      phone_number: form.value.phoneNumber.trim()
     });
-    
+
     // Move to next step
-    step.value = 2;
+    if (!isResend) step.value = 2;
   } catch (error: any) {
     const apiError = handleApiError(error);
     if (apiError.errors) {
@@ -117,32 +148,38 @@ const handleSendOTP = async () => {
       if (apiError.errors.phone_number) validationErrors.value.phoneNumber = apiError.errors.phone_number[0];
       if (apiError.errors.password) validationErrors.value.password = apiError.errors.password[0];
     }
-    
+
     if (!apiError.errors) {
        globalError.value = apiError.message || 'Failed to send OTP. Please try again.';
     }
   } finally {
-    loading.value = false;
+    busyRef.value = false;
   }
 };
 
 const handleRegister = async () => {
-    if (!form.value.otp) {
+    validationErrors.value.otp = '';
+
+    if (!form.value.otp.trim()) {
         validationErrors.value.otp = 'OTP is required';
+        return;
+    }
+    if (!/^\d{4,6}$/.test(form.value.otp.trim())) {
+        validationErrors.value.otp = 'Please enter the numeric code sent to you';
         return;
     }
 
     loading.value = true;
     globalError.value = '';
-    
+
     try {
         await authStore.register({
-            firstname: form.value.firstName,
-            lastname: form.value.lastName,
-            email: form.value.email,
-            phone_number: form.value.phoneNumber,
+            firstname: form.value.firstName.trim(),
+            lastname: form.value.lastName.trim(),
+            email: form.value.email.trim(),
+            phone_number: form.value.phoneNumber.trim(),
             password: form.value.password,
-            otp: form.value.otp
+            otp: form.value.otp.trim()
         });
         
         // Success - redirect to dashboard
@@ -175,6 +212,7 @@ const handleSubmit = async () => {
 };
 
 const handleEmailValidation = (isValid: boolean) => {
+  emailFormatValid.value = isValid;
   if (!isValid && form.value.email) {
     validationErrors.value.email = 'Please enter a valid email address';
   } else {
@@ -183,6 +221,7 @@ const handleEmailValidation = (isValid: boolean) => {
 };
 
 const handlePhoneValidation = (isValid: boolean) => {
+  phoneFormatValid.value = isValid;
   if (!isValid && form.value.phoneNumber) {
     validationErrors.value.phoneNumber = 'Please enter a valid phone number';
   } else {
@@ -274,7 +313,6 @@ const handlePhoneValidation = (isValid: boolean) => {
                 placeholder="Enter your phone number"
                 required
                 autocomplete="tel"
-                acceptPhone
                 :error="validationErrors.phoneNumber"
                 @validation="handlePhoneValidation"
             />
@@ -286,6 +324,7 @@ const handlePhoneValidation = (isValid: boolean) => {
                 placeholder="Enter your password"
                 required
                 autocomplete="new-password"
+                helper="At least 8 characters, with one letter and one number"
                 :error="validationErrors.password"
             />
 
@@ -335,15 +374,24 @@ const handlePhoneValidation = (isValid: boolean) => {
                 :error="validationErrors.otp"
             />
             <p class="text-sm text-gray-500">
-                Didn't receive code? <button type="button" @click="handleSendOTP" class="text-[#246BFD] hover:underline" :disabled="loading">Resend</button>
+                Didn't receive code?
+                <button
+                  type="button"
+                  @click="handleSendOTP(true)"
+                  class="text-[#246BFD] hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+                  :disabled="resendLoading"
+                  :aria-busy="resendLoading"
+                >{{ resendLoading ? 'Sending...' : 'Resend' }}</button>
             </p>
           </div>
 
           <div>
             <button
               type="submit"
-              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300"
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
+              :aria-busy="loading"
+              :aria-disabled="loading"
             >
               <svg
                 v-if="loading"

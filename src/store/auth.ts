@@ -151,6 +151,42 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const changePassword = async (data: { current_password?: string; new_password: string; new_password_confirmation: string }) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.changePassword(data);
+      await fetchUserDetails(); // has_password may have just flipped true
+      return response;
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Failed to change password.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const unlinkProvider = async (provider: SocialProvider) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.unlinkProvider(provider);
+      await fetchUserDetails(); // {provider}_linked just flipped false
+      return response;
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Failed to unlink account.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const sendOTP = async (credentials: { email: string; phone_number: string }) => {
     try {
       loading.value = true;
@@ -182,6 +218,74 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = apiError.message || 'Invalid OTP.';
       }
       throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const sendEmailVerificationOtp = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+      return await authService.sendEmailVerificationOtp();
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Failed to send verification code.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const confirmEmailVerification = async (otp: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.confirmEmailVerification(otp);
+      if (user.value) user.value = { ...user.value, email_verified: true };
+      return response;
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Invalid or expired code.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const sendPhoneVerificationOtp = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+      return await authService.sendPhoneVerificationOtp();
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Failed to send verification code.';
+      throw new Error(error.value || 'An error occurred');
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const confirmPhoneVerification = async (otp: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.confirmPhoneVerification(otp);
+      if (user.value) user.value = { ...user.value, phone_verified: true };
+      return response;
+    } catch (err) {
+      const apiError = handleApiError(err);
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : apiError.message || 'Invalid or expired code.';
+      throw new Error(error.value || 'An error occurred');
     } finally {
       loading.value = false;
     }
@@ -440,9 +544,15 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     loginWithSocialProvider,
     confirmSocialLink,
+    changePassword,
+    unlinkProvider,
     deleteAccount,
     sendOTP,
     verifyOTP,
+    sendEmailVerificationOtp,
+    confirmEmailVerification,
+    sendPhoneVerificationOtp,
+    confirmPhoneVerification,
     logout,
     checkAuth,
     fetchUserDetails,

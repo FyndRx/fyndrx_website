@@ -36,6 +36,8 @@ const validationErrors = ref({
   password: '',
 });
 
+const loginFormatValid = ref(true);
+
 const handleSubmit = async () => {
   // Reset validation errors and success message
   validationErrors.value = {
@@ -45,19 +47,35 @@ const handleSubmit = async () => {
   successMessage.value = '';
 
   // Validate form
-  if (!form.value.login) {
+  if (!form.value.login.trim()) {
     validationErrors.value.login = 'Email or phone number is required';
+    return;
+  }
+  if (form.value.login.trim().length > 254) {
+    validationErrors.value.login = 'Email or phone number is too long';
+    return;
+  }
+  if (!loginFormatValid.value) {
+    validationErrors.value.login = 'Please enter a valid email or Ghana phone number';
     return;
   }
   if (!form.value.password) {
     validationErrors.value.password = 'Password is required';
     return;
   }
+  if (form.value.password.trim().length === 0) {
+    validationErrors.value.password = 'Password cannot be blank';
+    return;
+  }
+  if (form.value.password.length > 128) {
+    validationErrors.value.password = 'Password is too long';
+    return;
+  }
 
   try {
     loading.value = true;
     await authStore.login({
-      login: form.value.login,
+      login: form.value.login.trim(),
       password: form.value.password,
     });
     successMessage.value = 'Login successful! Redirecting...';
@@ -83,6 +101,7 @@ const handleSubmit = async () => {
 };
 
 const handleLoginValidation = (isValid: boolean) => {
+  loginFormatValid.value = isValid;
   if (!isValid && form.value.login) {
     validationErrors.value.login = 'Please enter a valid email or Ghana phone number';
   } else {
@@ -181,8 +200,10 @@ const handleLoginValidation = (isValid: boolean) => {
           <div>
             <button
               type="submit"
-              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300"
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#246BFD] hover:bg-[#5089FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#246BFD] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
+              :aria-busy="loading"
+              :aria-disabled="loading"
             >
               <svg
                 v-if="loading"

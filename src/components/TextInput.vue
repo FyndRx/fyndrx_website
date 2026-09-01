@@ -34,6 +34,8 @@ const emit = defineEmits<{
   (e: 'validation', isValid: boolean): void;
 }>();
 
+defineOptions({ inheritAttrs: false });
+
 const showPassword = ref(false);
 const isPhoneNumber = ref(false);
 
@@ -52,7 +54,7 @@ const inputClasses = computed(() => [
     : 'hover:border-[#246BFD] dark:hover:border-[#246BFD]',
   props.disabled ? 'opacity-50 cursor-not-allowed' : '',
   'pl-12', // Always add left padding for the icon
-  'pr-12' // Always add right padding for the password toggle icon
+  props.type === 'password' ? 'pr-12' : '' // Reserve right padding only for the password toggle icon
 ]);
 
 const getInputIcon = computed(() => {
@@ -79,7 +81,7 @@ const validateInput = (value: string) => {
     return;
   }
 
-  if (props.type === 'email' && props.acceptPhone) {
+  if (props.acceptPhone) {
     // Check if it's a valid email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isEmail = emailRegex.test(value);
@@ -159,6 +161,7 @@ export default {
       <!-- Input or Textarea -->
       <component
         :is="type === 'textarea' ? 'textarea' : 'input'"
+        v-bind="$attrs"
         :type="type !== 'textarea' ? (type === 'password' ? (showPassword ? 'text' : 'password') : type || 'text') : undefined"
         :value="modelValue"
         :placeholder="placeholder"

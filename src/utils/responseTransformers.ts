@@ -88,6 +88,11 @@ export function transformUser(apiUser: UserApiResponse): User {
     saved_money: apiUser.saved_money,
     addresses: apiUser.addresses,
     medical_records: apiUser.medical_records,
+    has_password: apiUser.has_password,
+    google_linked: apiUser.google_linked,
+    facebook_linked: apiUser.facebook_linked,
+    email_verified: apiUser.email_verified,
+    phone_verified: apiUser.phone_verified,
   };
 }
 
