@@ -280,13 +280,7 @@ onMounted(() => adsStore.load());
       <div v-else-if="receipt" class="pt-2">
 
         <!-- Utility row -->
-        <div class="flex items-center justify-between mb-4 no-print">
-          <router-link to="/" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#246BFD] dark:hover:text-[#5089FF] transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to FyndRx
-          </router-link>
+        <div class="flex items-center justify-end mb-4 no-print">
           <span class="text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Digital Receipt</span>
         </div>
 

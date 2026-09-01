@@ -201,7 +201,7 @@ onMounted(() => {
     @created="onFollowUpCreated"
   />
 
-  <div class="min-h-screen bg-gray-50/50 dark:bg-gray-900 pt-28 pb-20">
+  <div class="pb-20">
     <iframe v-if="printUrl" :src="printUrl" class="hidden" title="Print Frame"></iframe>
     <div class="container mx-auto px-4 max-w-7xl">
       <!-- Back Navigation -->

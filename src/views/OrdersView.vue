@@ -7,6 +7,7 @@ import { paymentService } from '@/services/paymentService';
 import LazyImage from '@/components/LazyImage.vue';
 import { formatCurrency } from '@/utils/currency';
 import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
+import StatusBadge from '@/components/StatusBadge.vue';
 
 const router = useRouter();
 const orders = ref<Order[]>([]);
@@ -35,26 +36,6 @@ const payNow = async (order: Order) => {
   } finally {
     loading.value = false;
   }
-};
-
-const statusColors = {
-  pending: { bg: 'bg-yellow-100 dark:bg-yellow-900/20', text: 'text-yellow-800 dark:text-yellow-200', border: 'border-yellow-200 dark:border-yellow-800' },
-  confirmed: { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-800 dark:text-blue-200', border: 'border-blue-200 dark:border-blue-800' },
-  processing: { bg: 'bg-purple-100 dark:bg-purple-900/20', text: 'text-purple-800 dark:text-purple-200', border: 'border-purple-200 dark:border-purple-800' },
-  ready: { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-800 dark:text-green-200', border: 'border-green-200 dark:border-green-800' },
-  out_for_delivery: { bg: 'bg-indigo-100 dark:bg-indigo-900/20', text: 'text-indigo-800 dark:text-indigo-200', border: 'border-indigo-200 dark:border-indigo-800' },
-  completed: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', border: 'border-gray-200 dark:border-gray-600' },
-  cancelled: { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-800 dark:text-red-200', border: 'border-red-200 dark:border-red-800' }
-};
-
-const statusLabels = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  processing: 'Processing',
-  ready: 'Ready for Pickup',
-  out_for_delivery: 'Out for Delivery',
-  completed: 'Completed',
-  cancelled: 'Cancelled'
 };
 
 const viewOrder = (orderId: string) => {
@@ -114,7 +95,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
+  <div class="pb-12">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">Order History</h1>
@@ -203,15 +184,7 @@ onMounted(() => {
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                       {{ order.orderNumber }}
                     </h3>
-                    <span
-                      :class="[
-                        'px-3 py-1 text-xs font-semibold rounded-full',
-                        (statusColors[order.status] || statusColors.pending).bg,
-                        (statusColors[order.status] || statusColors.pending).text
-                      ]"
-                    >
-                      {{ statusLabels[order.status] || order.status }}
-                    </span>
+                    <StatusBadge :status="order.status" size="sm" show-dot />
                   </div>
                   <div class="flex items-center gap-4">
                     <!-- Pharmacy Logo -->

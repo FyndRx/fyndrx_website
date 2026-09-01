@@ -111,7 +111,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen text-gray-900 mx-auto max-w-7xl">
+  <div class="text-gray-900 mx-auto max-w-7xl">
 
     <div v-if="loading" class="flex justify-center items-center py-20">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#246BFD]"></div>

@@ -48,7 +48,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 pt-28 pb-8">
+  <div class="container mx-auto px-4 pb-8">
     <div class="flex justify-between items-center mb-8">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Consultations</h1>

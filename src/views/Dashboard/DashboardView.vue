@@ -123,7 +123,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-16 bg-gray-50 dark:bg-gray-900">
+  <div class="pb-16">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
       <!-- ── Hero greeting ── -->

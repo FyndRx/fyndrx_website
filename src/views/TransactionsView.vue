@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import type { Transaction } from '@/services/paymentService';
 import { paymentService } from '@/services/paymentService';
 import { formatCurrency } from '@/utils/currency';
+import StatusBadge from '@/components/StatusBadge.vue';
 
 const router = useRouter();
 const transactions = ref<Transaction[]>([]);
@@ -16,20 +17,6 @@ const currentPage = ref(1);
 const lastPage = ref(1);
 const hasMore = computed(() => currentPage.value < lastPage.value);
 const TRANSACTIONS_PER_PAGE = 15;
-
-const statusColors = {
-  success: { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-800 dark:text-green-200', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  pending: { bg: 'bg-yellow-100 dark:bg-yellow-900/20', text: 'text-yellow-800 dark:text-yellow-200', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-  failed: { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-800 dark:text-red-200', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  refunded: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', icon: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6' }
-};
-
-const statusLabels = {
-  success: 'Paid',
-  pending: 'Pending',
-  failed: 'Failed',
-  refunded: 'Refunded'
-};
 
 const viewReceipt = (transactionId: string) => {
   router.push({ name: 'receipt', params: { reference: transactionId } });
@@ -93,7 +80,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
+  <div class="pb-12">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">Transactions</h1>
@@ -232,15 +219,7 @@ onMounted(() => {
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                       {{ transaction.reference || transaction.order_id }}
                     </h3>
-                    <span
-                      :class="[
-                        'px-3 py-1 text-xs font-semibold rounded-full',
-                        statusColors[transaction.status].bg,
-                        statusColors[transaction.status].text
-                      ]"
-                    >
-                      {{ statusLabels[transaction.status] }}
-                    </span>
+                    <StatusBadge :status="transaction.status" size="sm" show-icon />
                   </div>
                   <div class="flex items-center gap-2 mb-1">
                     <p class="text-sm font-bold text-[#246BFD] uppercase tracking-tighter">

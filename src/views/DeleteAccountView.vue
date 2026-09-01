@@ -70,19 +70,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-28 pb-20">
+  <div class="pb-20">
     <div class="container mx-auto px-4 max-w-2xl">
-
-      <router-link
-        v-if="!deleted"
-        to="/profile"
-        class="inline-flex items-center gap-2 mb-6 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#246BFD] transition-colors"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to profile
-      </router-link>
 
       <!-- Success state -->
       <div v-if="deleted" class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-10 text-center">

@@ -18,6 +18,7 @@ import { useAdsStore } from '@/store/ads';
 import type { Medication } from '@/models/Medication';
 import LazyImage from '@/components/LazyImage.vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
+import PriceAlertButton from '@/components/PriceAlertButton.vue';
 import MedicationDetailSkeleton from '@/components/skeletons/MedicationDetailSkeleton.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
 import NotFoundState from '@/components/NotFoundState.vue';
@@ -64,6 +65,9 @@ const error = ref<string | null>(null);
 const loadingPharmacies = ref(false);
 const loadingRelated = ref(false);
 const exactMatch = ref<any>(null);
+// exactMatch.pharmacies below are all price offers for this one product, so this
+// id is what every price-alert watch (global or per-pharmacy) is scoped to.
+const watchedProductId = computed(() => exactMatch.value?.id ?? medication.value?.id ?? '');
 const relatedDrugs = ref<any[]>([]);
 const pharmacyMeta = ref<any>(null);
 const relatedMeta = ref<any>(null);
@@ -426,6 +430,13 @@ watch(
                 <p class="text-sm text-gray-500 font-medium tracking-tight">
                   Comparing {{ pharmacyMeta?.total || paginatedPharmacies.length }} live price listings from vetted pharmacies
                 </p>
+                <PriceAlertButton
+                  v-if="watchedProductId"
+                  :product-id="watchedProductId"
+                  :product-name="exactMatch?.name || medication?.name"
+                  show-label
+                  class="mt-2"
+                />
               </div>
 
               <div class="flex-1 w-full max-w-2xl">
@@ -561,13 +572,22 @@ watch(
                           {{ formatCurrency(pharmacyItem.price) }}
                         </span>
                       </div>
-                      <span 
-                        class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
-                        :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
-                      >
-                        <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
-                        {{ pharmacyItem.inStock ? (pharmacyItem.stockQuantity !== undefined ? `In Stock: ${pharmacyItem.stockQuantity}` : 'In Stock') : 'Out of Stock' }}
-                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
+                          :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+                        >
+                          <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
+                          {{ pharmacyItem.inStock ? (pharmacyItem.stockQuantity !== undefined ? `In Stock: ${pharmacyItem.stockQuantity}` : 'In Stock') : 'Out of Stock' }}
+                        </span>
+                        <PriceAlertButton
+                          v-if="watchedProductId"
+                          :product-id="watchedProductId"
+                          :pharmacy-id="pharmacyItem.id"
+                          :product-name="exactMatch?.name || medication?.name"
+                          size="small"
+                        />
+                      </div>
                     </div>
 
                     <!-- Actions -->

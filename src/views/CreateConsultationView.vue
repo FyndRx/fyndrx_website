@@ -348,7 +348,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-28 pb-12 px-4">
+  <div class="pb-12 px-4">
     <div class="max-w-3xl mx-auto">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Book a pharmacy consultation</h1>

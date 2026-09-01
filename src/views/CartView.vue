@@ -120,7 +120,7 @@ const startShopping = () => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-20 pb-12 bg-gray-50 dark:bg-gray-900">
+  <div class="pb-12">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">Shopping Cart</h1>

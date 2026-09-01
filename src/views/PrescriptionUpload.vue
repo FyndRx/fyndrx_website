@@ -145,7 +145,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen pt-28 pb-20 bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
+  <div class="pb-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
       <div class="mb-8">

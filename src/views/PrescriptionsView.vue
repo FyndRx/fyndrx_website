@@ -21,6 +21,8 @@ import {
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline';
 import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
+import StatusBadge from '@/components/StatusBadge.vue';
+import { getStatusColor } from '@/utils/statusColors';
 
 type StatusKey = 'active' | 'dispensed' | 'pending' | 'expired' | 'cancelled' | 'completed';
 type FilterKey = 'all' | StatusKey;
@@ -38,19 +40,6 @@ const currentPage = ref(1);
 const lastPage = ref(1);
 const hasMore = computed(() => currentPage.value < lastPage.value);
 const PRESCRIPTIONS_PER_PAGE = 15;
-
-// ── Status config ─────────────────────────────────────────────
-const statusConfig: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
-  active:    { label: 'Active',    bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700/40', dot: 'bg-emerald-500' },
-  dispensed: { label: 'Dispensed', bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-blue-700 dark:text-blue-300',       border: 'border-blue-200 dark:border-blue-700/40',    dot: 'bg-blue-500'    },
-  pending:   { label: 'Pending',   bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-300',     border: 'border-amber-200 dark:border-amber-700/40',  dot: 'bg-amber-500'   },
-  expired:   { label: 'Expired',   bg: 'bg-gray-100 dark:bg-gray-700/40',    text: 'text-gray-600 dark:text-gray-400',       border: 'border-gray-200 dark:border-gray-600',       dot: 'bg-gray-400'    },
-  cancelled: { label: 'Cancelled', bg: 'bg-red-50 dark:bg-red-900/20',       text: 'text-red-700 dark:text-red-300',         border: 'border-red-200 dark:border-red-700/40',      dot: 'bg-red-500'     },
-  completed: { label: 'Completed', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300',   border: 'border-indigo-200 dark:border-indigo-700/40',dot: 'bg-indigo-500'  },
-};
-
-const getStatus = (status: string) =>
-  statusConfig[status] ?? { label: status, bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200', dot: 'bg-gray-400' };
 
 // ── Filters ───────────────────────────────────────────────────
 const filters: { key: FilterKey; label: string }[] = [
@@ -164,7 +153,7 @@ onMounted(loadPrescriptions);
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-16">
+  <div class="pb-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <!-- ── Header ──────────────────────────────────────────── -->
@@ -248,13 +237,7 @@ onMounted(loadPrescriptions);
                 <component :is="originConfig((rx as any).origin).icon" class="w-3.5 h-3.5" />
                 {{ originConfig((rx as any).origin).label }}
               </div>
-              <div
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
-                :class="[getStatus(rx.status).bg, getStatus(rx.status).text, getStatus(rx.status).border]"
-              >
-                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getStatus(rx.status).dot" />
-                {{ getStatus(rx.status).label }}
-              </div>
+              <StatusBadge :status="rx.status" size="sm" show-dot />
             </div>
 
             <!-- Row 2: title + Rx number -->
@@ -368,10 +351,11 @@ onMounted(loadPrescriptions);
               </div>
               <h2 class="text-xl font-bold text-white leading-tight">{{ selectedPrescription.title || 'Prescription' }}</h2>
               <p class="text-sm font-mono text-white/60 mt-0.5">{{ selectedPrescription.prescription_number }}</p>
-              <!-- Status chip -->
+              <!-- Status chip (translucent, sits on the image header — keeps its own
+                   on-dark styling but sources the dot color from the shared map) -->
               <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20">
-                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getStatus(selectedPrescription.status).dot" />
-                {{ getStatus(selectedPrescription.status).label }}
+                <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getStatusColor(selectedPrescription.status).dot" />
+                {{ getStatusColor(selectedPrescription.status).label }}
               </div>
             </div>
 

@@ -73,7 +73,7 @@ watch(activeTab, (newTab) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-28 pb-20">
+  <div class="pb-20">
     <div class="container mx-auto px-4 max-w-6xl">
       <!-- Header / Hero Section -->
       <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden mb-8 transition-all duration-300">
@@ -139,6 +139,15 @@ watch(activeTab, (newTab) => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
               </svg>
               <span>Dashboard</span>
+            </button>
+            <button
+              @click="router.push('/profile/notification-settings')"
+              class="px-5 py-2.5 rounded-full border-2 border-[#246BFD]/20 hover:border-[#246BFD]/40 font-bold text-gray-600 dark:text-gray-400 hover:bg-[#246BFD]/5 transition-all flex items-center space-x-2 shadow-sm"
+            >
+              <svg class="w-5 h-5 text-[#246BFD]/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+              </svg>
+              <span>Settings</span>
             </button>
             <button
               @click="router.push('/profile/edit')"

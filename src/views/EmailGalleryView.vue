@@ -15,7 +15,7 @@ const selectTemplate = (id: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F8FAFC] dark:bg-gray-900 pt-24 pb-12">
+  <div class="pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="mb-12">
