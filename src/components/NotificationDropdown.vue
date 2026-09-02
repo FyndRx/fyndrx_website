@@ -22,8 +22,8 @@ const containerRef = ref<HTMLElement | null>(null);
 
 const toggle = () => {
   isOpen.value = !isOpen.value;
-  if (isOpen.value && !store.initialized) {
-    store.fetchNotifications();
+  if (isOpen.value && !store.recentInitialized) {
+    store.fetchRecentNotifications();
   }
 };
 
