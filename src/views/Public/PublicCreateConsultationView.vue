@@ -36,8 +36,8 @@ const submit = async () => {
     submitting.value = true;
     error.value = '';
 
-    if (!form.patient_name?.trim() || !form.patient_phone?.trim() || !form.patient_email?.trim()) {
-      error.value = 'Please enter your name, phone, and email.';
+    if (!form.patient_name?.trim() || !form.patient_phone?.trim()) {
+      error.value = 'Please enter your name and phone number.';
       return;
     }
     if (form.chief_complaint.trim().length < 10) {
@@ -113,8 +113,8 @@ const submit = async () => {
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Your contact details</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextInput label="Full name" v-model="form.patient_name" required />
-              <TextInput label="Phone" v-model="form.patient_phone" required />
-              <TextInput label="Email" v-model="form.patient_email" required class="md:col-span-2" />
+              <TextInput label="Phone" v-model="form.patient_phone" required helper="Used to notify you and to look up your result" />
+              <TextInput label="Email (optional)" v-model="form.patient_email" class="md:col-span-2" />
               <DateTimePicker
                 label="Date of birth (optional)"
                 format="date"
