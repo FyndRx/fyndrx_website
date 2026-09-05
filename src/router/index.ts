@@ -192,15 +192,6 @@ const router = createRouter({
       },
     },
     {
-      path: '/verify-otp',
-      name: 'verify-otp',
-      component: () => import('../views/Auth/OTPVerificationView.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'auth',
-      },
-    },
-    {
       path: '/blog',
       name: 'blog',
       component: () => import('../views/BlogView.vue'),
