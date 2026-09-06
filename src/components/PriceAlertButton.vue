@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { priceAlertService } from '@/services/priceAlertService';
+import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/composables/useNotification';
 
 interface Props {
@@ -20,6 +22,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{ toggled: [watching: boolean] }>();
 
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 const notification = useNotification();
 const isWatching = ref(false);
 const isLoading = ref(false);
@@ -47,6 +52,15 @@ const buttonColorClass = computed(() => {
 const toggle = async (e: Event) => {
   e.stopPropagation();
   if (isLoading.value) return;
+
+  // Send logged-out users straight to login instead of firing a request that's
+  // guaranteed to 401 — avoids a misleading generic error message, and a login
+  // there sends them right back to this page.
+  if (!authStore.isAuthenticated) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } });
+    return;
+  }
+
   isLoading.value = true;
 
   const prev = isWatching.value;

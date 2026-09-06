@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/composables/useNotification';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -599,7 +600,7 @@ router.beforeEach(async (to) => {
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return { name: 'login' };
+    return { name: 'login', query: { redirect: to.fullPath } };
   }
 
   // Check if route requires guest (not authenticated)
@@ -619,6 +620,12 @@ router.beforeEach(async (to) => {
   }
 
   // Returning undefined (implicit) = proceed normally
+});
+
+// Toasts (esp. errors, which no longer auto-dismiss) shouldn't follow the user
+// to a page they've navigated away from.
+router.afterEach(() => {
+  useNotification().clearAll();
 });
 
 export default router;
