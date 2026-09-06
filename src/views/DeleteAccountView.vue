@@ -26,17 +26,13 @@ const consequences = [
 ];
 
 const canSubmit = computed(() =>
-  !loading.value && !!email.value && !!password.value && confirmed.value
+  !loading.value && !!password.value && confirmed.value
 );
 
 const handleSubmit = async () => {
   validationErrors.value = { email: '', password: '' };
   errorMessage.value = '';
 
-  if (!email.value) {
-    validationErrors.value.email = 'Email is required';
-    return;
-  }
   if (!password.value) {
     validationErrors.value.password = 'Password is required';
     return;
@@ -49,7 +45,7 @@ const handleSubmit = async () => {
   loading.value = true;
   try {
     await authStore.deleteAccount({
-      email: email.value,
+      email: email.value || undefined,
       password: password.value,
       delete_reason: reason.value,
     });
@@ -115,7 +111,10 @@ const handleSubmit = async () => {
           </div>
 
           <form @submit.prevent="handleSubmit" class="space-y-6">
+            <!-- Only accounts with an email on file need to confirm it here — password
+                 confirmation is enough re-authentication for everyone else. -->
             <TextInput
+              v-if="authStore.user?.email"
               v-model="email"
               type="email"
               label="Confirm your email"

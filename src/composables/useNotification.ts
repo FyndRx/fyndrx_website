@@ -10,28 +10,39 @@ export interface Notification {
 
 const notifications = ref<Notification[]>([]);
 
+// Per-type default lifetime, in ms — 0 means "don't auto-dismiss". Errors need
+// deliberate acknowledgement (no timeout); warnings get more reading time than
+// success/info, which are low-stakes and fine to disappear quickly.
+const DEFAULT_DURATION: Record<Notification['type'], number> = {
+  success: 5000,
+  info: 5000,
+  warning: 8000,
+  error: 0,
+};
+
 export function useNotification() {
   const addNotification = (
     type: Notification['type'],
     title: string,
     message: string,
-    duration: number = 5000
+    duration?: number
   ) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const resolvedDuration = duration ?? DEFAULT_DURATION[type];
     const notification: Notification = {
       id,
       type,
       title,
       message,
-      duration
+      duration: resolvedDuration
     };
 
     notifications.value.push(notification);
 
-    if (duration > 0) {
+    if (resolvedDuration > 0) {
       setTimeout(() => {
         removeNotification(id);
-      }, duration);
+      }, resolvedDuration);
     }
 
     return id;
@@ -42,6 +53,11 @@ export function useNotification() {
     if (index !== -1) {
       notifications.value.splice(index, 1);
     }
+  };
+
+  /** Dismiss every visible toast — used on route navigation. */
+  const clearAll = () => {
+    notifications.value = [];
   };
 
   const success = (title: string, message: string, duration?: number) => {
@@ -64,6 +80,7 @@ export function useNotification() {
     notifications,
     addNotification,
     removeNotification,
+    clearAll,
     success,
     error,
     info,

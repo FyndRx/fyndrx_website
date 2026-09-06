@@ -656,7 +656,7 @@ onMounted(() => {
                  </div>
                  <div>
                     <h3 class="font-bold text-gray-900 dark:text-white">{{ consultation?.patient_name }}</h3>
-                    <p class="text-sm text-gray-500">{{ consultation?.patient_email }}</p>
+                    <p v-if="consultation?.patient_email" class="text-sm text-gray-500">{{ consultation.patient_email }}</p>
                     <p class="text-sm text-gray-500">{{ consultation?.patient_phone }}</p>
                  </div>
                </div>

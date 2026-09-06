@@ -82,7 +82,7 @@ export interface Consultation {
     parent_consultation?: ConsultationRef;
     follow_up_consultations?: ConsultationRef[];
     patient_name: string;
-    patient_email: string;
+    patient_email?: string | null;
     patient_phone: string;
     patient_date_of_birth?: string | null;
     patient_gender?: string | null;
@@ -151,7 +151,7 @@ export interface PatientConsultationIntake {
     chief_complaint: string;
     consultation_notes?: string;
     patient_name: string;
-    patient_email: string;
+    patient_email?: string;
     patient_phone: string;
     patient_date_of_birth?: string;
     patient_gender?: string;

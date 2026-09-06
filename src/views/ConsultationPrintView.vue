@@ -209,8 +209,8 @@ onUnmounted(() => {
               <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-gray-900 text-base leading-tight">{{ consultation?.patient_name }}</h3>
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-gray-500">
-                  <span>{{ consultation?.patient_email }}</span>
-                  <span v-if="consultation?.patient_phone" class="text-gray-300">·</span>
+                  <span v-if="consultation?.patient_email">{{ consultation.patient_email }}</span>
+                  <span v-if="consultation?.patient_email && consultation?.patient_phone" class="text-gray-300">·</span>
                   <span v-if="consultation?.patient_phone">{{ consultation?.patient_phone }}</span>
                 </div>
               </div>

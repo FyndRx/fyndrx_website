@@ -90,9 +90,10 @@ const unlink = async (provider: Provider) => {
         <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your password and connected sign-in methods.</p>
       </div>
 
-      <!-- Verify Email / Phone -->
+      <!-- Verify Email / Phone — only nag about a channel the user actually provided;
+           email is optional at signup, so a missing one isn't "unverified", it's N/A. -->
       <div
-        v-if="!authStore.user?.email_verified || !authStore.user?.phone_verified"
+        v-if="(authStore.user?.email && !authStore.user?.email_verified) || (authStore.user?.phone_number && !authStore.user?.phone_verified)"
         class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 md:p-8 mb-6"
       >
         <h2 class="font-bold text-gray-900 dark:text-white mb-1">Verify Your Account</h2>
@@ -101,13 +102,15 @@ const unlink = async (provider: Provider) => {
         </p>
         <div class="space-y-3">
           <VerifyContactCard
+            v-if="authStore.user?.email"
             channel="email"
-            :value="authStore.user?.email ?? null"
+            :value="authStore.user.email"
             :verified="!!authStore.user?.email_verified"
           />
           <VerifyContactCard
+            v-if="authStore.user?.phone_number"
             channel="phone"
-            :value="authStore.user?.phone_number ?? null"
+            :value="authStore.user.phone_number"
             :verified="!!authStore.user?.phone_verified"
           />
         </div>

@@ -28,7 +28,7 @@ export interface LoginCredentials {
 export interface RegisterCredentials {
   firstname: string;
   lastname: string;
-  email: string;
+  email?: string;
   phone_number: string;
   password: string;
   otp?: string;
@@ -307,10 +307,10 @@ class AuthService {
    * @param credentials - Email, password, and deletion reason
    * @returns Success message
    */
-  async deleteAccount(credentials: { 
-    email: string; 
-    password: string; 
-    delete_reason: string 
+  async deleteAccount(credentials: {
+    email?: string;
+    password: string;
+    delete_reason: string
   }): Promise<{ message: string }> {
     return await apiService.deleteAuth<OtpResponse>('/auth/delete-account', {
       data: credentials

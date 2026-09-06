@@ -111,7 +111,7 @@ export default {
             <img 
               :src="logoWhiteOrange" 
               alt="FyndRx Logo" 
-              class="w-full h-20 mr-3 transition-transform duration-300 group-hover:rotate-12"
+              class="h-20 w-auto mr-3 transition-transform duration-300 group-hover:rotate-12"
             />
             <!-- <span class="text-3xl font-extrabold text-white">
               Fynd<span class="text-[#FE9615]">Rx</span>

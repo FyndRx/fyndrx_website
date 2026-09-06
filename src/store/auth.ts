@@ -187,7 +187,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const sendOTP = async (credentials: { email: string; phone_number: string }) => {
+  const sendOTP = async (credentials: { email?: string; phone_number: string }) => {
     try {
       loading.value = true;
       error.value = null;
@@ -291,7 +291,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const deleteAccount = async (credentials: { email: string; password: string; delete_reason: string }) => {
+  const deleteAccount = async (credentials: { email?: string; password: string; delete_reason: string }) => {
     try {
       loading.value = true;
       error.value = null;

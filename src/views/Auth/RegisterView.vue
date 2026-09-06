@@ -82,15 +82,16 @@ const validateStep1 = () => {
     isValid = false;
   }
 
-  if (!form.value.email.trim()) {
-    validationErrors.value.email = 'Email is required';
-    isValid = false;
-  } else if (form.value.email.trim().length > 254) {
-    validationErrors.value.email = 'Email is too long';
-    isValid = false;
-  } else if (!emailFormatValid.value) {
-    validationErrors.value.email = 'Please enter a valid email address';
-    isValid = false;
+  // Email is optional — a phone number is the required contact/login method — but
+  // whatever's entered still has to look like a real address.
+  if (form.value.email.trim()) {
+    if (form.value.email.trim().length > 254) {
+      validationErrors.value.email = 'Email is too long';
+      isValid = false;
+    } else if (!emailFormatValid.value) {
+      validationErrors.value.email = 'Please enter a valid email address';
+      isValid = false;
+    }
   }
 
   if (!form.value.phoneNumber.trim()) {
@@ -135,7 +136,7 @@ const handleSendOTP = async (isResend = false) => {
   try {
     // Send OTP
     await authStore.sendOTP({
-      email: form.value.email.trim(),
+      email: form.value.email.trim() || undefined,
       phone_number: form.value.phoneNumber.trim()
     });
 
@@ -176,7 +177,7 @@ const handleRegister = async () => {
         await authStore.register({
             firstname: form.value.firstName.trim(),
             lastname: form.value.lastName.trim(),
-            email: form.value.email.trim(),
+            email: form.value.email.trim() || undefined,
             phone_number: form.value.phoneNumber.trim(),
             password: form.value.password,
             otp: form.value.otp.trim()
@@ -298,9 +299,8 @@ const handlePhoneValidation = (isValid: boolean) => {
             <TextInput
                 v-model="form.email"
                 type="email"
-                label="Email Address"
+                label="Email Address (optional)"
                 placeholder="Enter your email address"
-                required
                 autocomplete="email"
                 :error="validationErrors.email"
                 @validation="handleEmailValidation"
