@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
 import CustomCheckbox from '@/components/CustomCheckbox.vue';
@@ -9,17 +9,30 @@ import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const loading = ref(false);
 const successMessage = ref('');
 const socialError = ref('');
 
+// Sends the user back where an auth-required action bounced them from (e.g.
+// clicking "Watch Price" while logged out) — only if it's a same-app path, to
+// rule out an open redirect via a crafted ?redirect= value.
+const redirectAfterLogin = () => {
+  const target = route.query.redirect;
+  if (typeof target === 'string' && target.startsWith('/') && !target.startsWith('//')) {
+    router.push(target);
+  } else {
+    router.push({ name: 'dashboard' });
+  }
+};
+
 const handleSocialSuccess = async () => {
   socialError.value = '';
   successMessage.value = 'Login successful! Redirecting...';
   await new Promise(resolve => setTimeout(resolve, 1000));
-  router.push({ name: 'dashboard' });
+  redirectAfterLogin();
 };
 
 const handleSocialError = (message: string) => {
@@ -83,8 +96,8 @@ const handleSubmit = async () => {
     // await authStore.checkAuth(); // Optimization: Removed redundant check
     // Small delay to show success message
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    router.push({ name: 'dashboard' });
+
+    redirectAfterLogin();
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('Network error')) {

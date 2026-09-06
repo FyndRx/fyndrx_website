@@ -26,11 +26,15 @@ const adsStore = useAdsStore();
 // `layout` field so the two can never drift out of sync.
 const layoutComponent = computed(() => (route.meta.requiresAuth ? DashboardLayout : MainLayout));
 
-const handleUnauthorized = async () => {
+const handleUnauthorized = () => {
   // Only redirect if not already on login page
   if (router.currentRoute.value.name !== 'login') {
-    await authStore.logout();
-    router.push({ name: 'login' });
+    // Local cleanup only — NOT authStore.logout(), which calls POST /auth/logout.
+    // This handler only ever fires after a token refresh has already failed, so
+    // the session is already dead server-side; calling an authenticated endpoint
+    // here would itself 401, dispatching another auth:unauthorized and looping.
+    authStore.clearAuth();
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } });
   }
 };
 

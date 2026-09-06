@@ -17,7 +17,7 @@ const emit = defineEmits<{
   <Transition name="float-up">
     <div
       v-if="comparisonList.length > 0"
-      class="fixed bottom-6 right-6 z-40 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-4 w-72"
+      class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 sm:left-6 z-40 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-4 w-[min(18rem,calc(100vw-2rem))]"
     >
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">

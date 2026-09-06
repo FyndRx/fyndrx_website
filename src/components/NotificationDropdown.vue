@@ -144,7 +144,7 @@ export default {
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 z-50 mt-3 w-[340px] sm:w-[400px] origin-top-right rounded-3xl bg-white/75 dark:bg-gray-900/75 backdrop-blur-2xl border border-white/60 dark:border-gray-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] focus:outline-none overflow-hidden flex flex-col max-h-[85vh]"
+        class="fixed sm:absolute top-[5.75rem] sm:top-auto right-4 sm:right-0 left-4 sm:left-auto sm:mt-3 z-50 w-auto sm:w-[400px] origin-top-right rounded-3xl bg-white/75 dark:bg-gray-900/75 backdrop-blur-2xl border border-white/60 dark:border-gray-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] focus:outline-none overflow-hidden flex flex-col max-h-[85vh]"
         @click.stop
       >
         <!-- Decorative Glows -->
@@ -188,7 +188,7 @@ export default {
         </div>
 
         <!-- Loading State -->
-        <div v-if="store.loading && store.notifications.length === 0" class="p-6 space-y-5 relative z-10">
+        <div v-if="!store.recentInitialized" class="p-6 space-y-5 relative z-10">
           <div v-for="i in 3" :key="i" class="flex gap-4 animate-pulse">
             <div class="w-12 h-12 bg-gray-200/60 dark:bg-gray-700/60 rounded-2xl shrink-0"></div>
             <div class="flex-1 space-y-3 py-1.5">
@@ -199,7 +199,7 @@ export default {
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="store.notifications.length === 0" class="px-6 py-12 text-center relative z-10">
+        <div v-else-if="displayNotifications.length === 0" class="px-6 py-12 text-center relative z-10">
           <div class="mx-auto w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-3xl flex items-center justify-center mb-5 shadow-inner rotate-3">
             <svg class="w-10 h-10 text-gray-400/80 -rotate-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
@@ -269,7 +269,7 @@ export default {
         </div>
 
         <!-- Footer -->
-        <div v-if="store.notifications.length > 0" class="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 relative z-10 rounded-b-3xl">
+        <div v-if="displayNotifications.length > 0" class="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 relative z-10 rounded-b-3xl">
           <button
             @click="viewAll"
             class="w-full py-2.5 text-sm font-bold text-[#246BFD] bg-white dark:bg-gray-800 border border-white dark:border-gray-700 rounded-full hover:shadow-md hover:border-[#246BFD]/30 transition-all duration-300"

@@ -483,7 +483,7 @@ const startShopping = () => {
       <div v-if="showMapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-gray-900/60 dark:bg-black/70 backdrop-blur-md">
         <div class="relative w-full max-w-4xl h-[85vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-white/10 dark:border-gray-800 overflow-hidden flex flex-col transition-transform duration-500 animate-in fade-in zoom-in-95">
           <!-- Modal Header -->
-          <div class="p-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-20 relative">
+          <div class="shrink-0 p-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-20 relative">
             <div>
               <h3 class="text-xl font-bold text-gray-900 dark:text-white">Choose Delivery Destination</h3>
               <p class="text-xs text-gray-500 mt-1">Search or drag the red marker to pin your exact location</p>
@@ -500,7 +500,7 @@ const startShopping = () => {
           </div>
           
           <!-- Map Canvas Wrapper -->
-          <div class="flex-1 w-full relative min-h-[300px]">
+          <div class="flex-1 w-full relative min-h-[140px]">
             <OrderTrackingMap 
               :deliveryLocation="deliveryLat && deliveryLng ? { lat: deliveryLat, lng: deliveryLng } : undefined"
               :enableLocationPicker="true"
@@ -511,7 +511,7 @@ const startShopping = () => {
           </div>
           
           <!-- Modal Footer / Confirm -->
-          <div class="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 relative">
+          <div class="shrink-0 p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 relative">
             <div class="text-left w-full sm:max-w-md">
               <span class="text-[9px] font-black uppercase tracking-widest text-[#246BFD]">Selected Address</span>
               <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-0.5">

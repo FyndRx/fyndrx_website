@@ -1516,7 +1516,7 @@ onMounted(() => {
 
               <div>
                 <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Staff Headcount</h3>
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div v-for="field in [
                     { key: 'staff_count_pharmacists', label: 'Licensed Pharmacists', req: true },
                     { key: 'staff_count_technicians', label: 'Pharmacy Technicians', req: false },
