@@ -88,18 +88,18 @@ const scrollRight = () => {
       <!-- Horizontal Scroll Container -->
       <div class="relative">
         <!-- Scroll Buttons -->
-        <button 
+        <button
           @click="scrollLeft"
-          class="absolute left-0 z-10 flex items-center justify-center w-12 h-12 -translate-x-6 -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+          class="hidden md:flex absolute left-0 z-10 items-center justify-center w-12 h-12 -translate-x-6 -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
         >
           <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         
-        <button 
+        <button
           @click="scrollRight"
-          class="absolute right-0 z-10 flex items-center justify-center w-12 h-12 translate-x-6 -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+          class="hidden md:flex absolute right-0 z-10 items-center justify-center w-12 h-12 translate-x-6 -translate-y-1/2 bg-white rounded-full shadow-lg top-1/2 hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
         >
           <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

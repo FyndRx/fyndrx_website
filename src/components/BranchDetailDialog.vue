@@ -294,16 +294,16 @@ export default { name: 'BranchDetailDialog' }
                   {{ branch.deliveryInfo.available ? 'Home Delivery Available' : 'Pickup Only — No Home Delivery' }}
                 </p>
               </div>
-              <div v-if="branch.deliveryInfo.available" class="px-5 py-4 grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700">
-                <div class="text-center pr-4">
+              <div v-if="branch.deliveryInfo.available" class="px-5 py-4 grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-700">
+                <div class="text-center py-3 sm:py-0 sm:pr-4">
                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Base Fee</p>
                   <p class="text-xl font-black text-gray-900 dark:text-white">₵{{ branch.deliveryInfo.baseFee?.toFixed(2) ?? '–' }}</p>
                 </div>
-                <div class="text-center px-4">
+                <div class="text-center py-3 sm:py-0 sm:px-4">
                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Per km</p>
                   <p class="text-xl font-black text-gray-900 dark:text-white">₵{{ branch.deliveryInfo.feePerKm?.toFixed(2) ?? '–' }}</p>
                 </div>
-                <div class="text-center pl-4">
+                <div class="text-center py-3 sm:py-0 sm:pl-4">
                   <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Radius</p>
                   <p class="text-xl font-black text-gray-900 dark:text-white">
                     {{ branch.deliveryInfo.radiusKm ?? '∞' }}<span class="text-sm font-normal text-gray-400"> km</span>

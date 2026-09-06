@@ -168,12 +168,15 @@ export default {
         </div>
 
         <!-- Mobile Actions — visible only below lg -->
-        <div class="flex items-center lg:hidden space-x-2 ml-auto mr-2">
-          <!-- Chat with Fynda Icon -->
+        <div class="flex items-center lg:hidden space-x-1 sm:space-x-2 ml-auto mr-1 sm:mr-2">
+          <!-- Chat with Fynda Icon — hidden on the narrowest phones; the floating
+               chat FAB (ChatWidget) already covers this, and every icon here
+               competes with the hamburger for space before it gets pushed
+               off-screen on ~320-375px-wide devices. -->
           <router-link
             v-if="settingsStore.aiChatEnabled"
             to="/chat"
-            class="p-2 rounded-full bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white transition-all duration-300"
+            class="hidden min-[400px]:inline-block p-2 rounded-full bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white transition-all duration-300"
             title="Chat with Fynda"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,10 +184,11 @@ export default {
             </svg>
           </router-link>
 
-          <!-- Upload Rx Icon -->
+          <!-- Upload Rx Icon — hidden on the narrowest phones too; still reachable
+               from the homepage CTA and quick-search. -->
           <router-link
             to="/upload-prescription"
-            class="p-2 rounded-full bg-[#FE9615]/10 text-[#FE9615] hover:bg-[#FE9615] hover:text-white transition-all duration-300"
+            class="hidden min-[400px]:inline-block p-2 rounded-full bg-[#FE9615]/10 text-[#FE9615] hover:bg-[#FE9615] hover:text-white transition-all duration-300"
             title="Upload Prescription"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

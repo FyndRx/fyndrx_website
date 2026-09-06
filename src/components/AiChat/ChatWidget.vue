@@ -42,7 +42,7 @@ export default { name: 'ChatWidget' };
 </script>
 
 <template>
-  <div v-if="settingsStore.aiChatEnabled && route.name !== 'ai-chat'" class="print:hidden fixed bottom-24 right-4 md:bottom-5 md:right-5 z-[60] flex flex-col items-end">
+  <div v-if="settingsStore.aiChatEnabled && route.name !== 'ai-chat'" class="print:hidden fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 md:bottom-[calc(1.25rem+env(safe-area-inset-bottom))] md:right-5 z-[60] flex flex-col items-end">
     <!-- Chat Panel -->
     <transition
       enter-active-class="transition ease-out duration-300"
@@ -54,7 +54,7 @@ export default { name: 'ChatWidget' };
     >
       <div
         v-if="chatStore.isOpen"
-        class="mb-3 w-[92vw] max-w-[400px] h-[min(640px,80vh)] rounded-3xl bg-white/80 dark:bg-gray-900/85 backdrop-blur-2xl border border-white/60 dark:border-gray-700/50 shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden relative"
+        class="mb-3 w-[92vw] max-w-[400px] h-[min(640px,calc(100dvh-11.25rem))] md:h-[min(640px,calc(100dvh-6.75rem))] rounded-3xl bg-white/80 dark:bg-gray-900/85 backdrop-blur-2xl border border-white/60 dark:border-gray-700/50 shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden relative"
       >
         <!-- Decorative glows -->
         <div class="absolute -top-24 -left-16 w-48 h-48 bg-[#246BFD]/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -115,7 +115,7 @@ export default { name: 'ChatWidget' };
     <!-- Floating Action Button -->
     <button
       @click="chatStore.toggle"
-      class="relative w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#246BFD] to-[#5089FF] shadow-xl shadow-[#246BFD]/40 flex items-center justify-center text-white transition-transform duration-300 hover:scale-110 active:scale-95 group"
+      class="relative w-14 h-14 md:w-[60px] md:h-[60px] rounded-full bg-gradient-to-br from-[#246BFD] to-[#5089FF] shadow-xl shadow-[#246BFD]/40 flex items-center justify-center text-white transition-transform duration-300 hover:scale-110 active:scale-95 group"
       title="Chat with Fynda"
     >
       <span
@@ -124,14 +124,14 @@ export default { name: 'ChatWidget' };
       ></span>
       <svg
         v-if="!chatStore.isOpen"
-        class="w-7 h-7 transition-transform duration-300 group-hover:rotate-12"
+        class="w-6 h-6 md:w-7 md:h-7 transition-transform duration-300 group-hover:rotate-12"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
       >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
       </svg>
-      <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg v-else class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
