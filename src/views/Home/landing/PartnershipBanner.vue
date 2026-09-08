@@ -72,9 +72,9 @@ import { BuildingStorefrontIcon, UserGroupIcon, ChartBarIcon, ArrowRightIcon } f
               Flexible scheduling
             </li>
           </ul>
-          <a href="#" class="inline-flex items-center text-[#FE9615] font-semibold gap-1 group-hover:gap-2 transition-all">
+          <router-link to="/contact" class="inline-flex items-center text-[#FE9615] font-semibold gap-1 group-hover:gap-2 transition-all">
             Apply Now <ArrowRightIcon class="w-4 h-4" />
-          </a>
+          </router-link>
         </div>
 
         <!-- Statistics/Growth Card -->

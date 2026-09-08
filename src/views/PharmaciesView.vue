@@ -120,12 +120,6 @@ const fetchPharmacies = async (page: number, append = false) => {
     currentPage.value = meta?.current_page ?? page;
     lastPage.value = meta?.last_page ?? currentPage.value;
     total.value = meta?.total ?? pharmacies.value.length;
-
-    if (pharmacies.value.length === 0) {
-      console.warn('[Pharmacies] API returned 0 pharmacies after filters. Check is_active flag or DB seed.');
-    } else {
-      console.info(`[Pharmacies] Loaded ${pharmacies.value.length} of ${total.value} pharmacies.`);
-    }
   } catch (err) {
     error.value = 'Failed to load pharmacies. Please try again later.';
     console.error('[Pharmacies] Error loading pharmacies:', err);

@@ -13,15 +13,12 @@ const ZONE_CAPS: Record<string, number> = {
 };
 
 export function useAdSession() {
-  const recordImpression = (adId: string, zone: string) => {
+  const recordImpression = (adId: string, _zone: string) => {
     impressions.set(adId, (impressions.get(adId) ?? 0) + 1);
-    // Emit analytics event (console stub — swap for real analytics)
-    console.debug(`[ad:impression] ${adId} zone=${zone}`);
     adsService.trackImpression(adId);
   };
 
-  const recordClick = (adId: string, zone: string) => {
-    console.debug(`[ad:click] ${adId} zone=${zone}`);
+  const recordClick = (adId: string, _zone: string) => {
     adsService.trackClick(adId);
   };
 
