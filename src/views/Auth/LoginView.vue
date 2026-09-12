@@ -3,7 +3,6 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
-import CustomCheckbox from '@/components/CustomCheckbox.vue';
 import SocialSignInButtons from '@/components/SocialSignInButtons.vue';
 import logoBlueOrange from '@/assets/logo/logo_blue_orange.png';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
@@ -41,7 +40,6 @@ const handleSocialError = (message: string) => {
 const form = ref({
   login: '',
   password: '',
-  rememberMe: false,
 });
 
 const validationErrors = ref({
@@ -193,13 +191,7 @@ const handleLoginValidation = (isValid: boolean) => {
             :error="validationErrors.password"
           />
 
-          <div class="flex items-center justify-between">
-            <CustomCheckbox
-              v-model="form.rememberMe"
-              label="Remember me"
-              size="small"
-            />
-
+          <div class="flex items-center justify-end">
             <div class="text-sm">
               <router-link
                 to="/forgot-password"

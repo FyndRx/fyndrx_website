@@ -186,7 +186,7 @@ const startShopping = () => {
                   <div class="flex items-center gap-4">
                     <div class="w-14 h-14 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 group-hover:scale-105 transition-transform">
                       <LazyImage
-                        :src="pharmacy.pharmacyLogo || '/images/pharmacies/default-pharmacy.jpg'"
+                        :src="pharmacy.pharmacyLogo || ''"
                         :alt="pharmacy.pharmacyName"
                         aspectRatio="square"
                         className="w-full h-full object-contain rounded-full"

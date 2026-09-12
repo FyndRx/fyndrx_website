@@ -120,12 +120,6 @@ const fetchPharmacies = async (page: number, append = false) => {
     currentPage.value = meta?.current_page ?? page;
     lastPage.value = meta?.last_page ?? currentPage.value;
     total.value = meta?.total ?? pharmacies.value.length;
-
-    if (pharmacies.value.length === 0) {
-      console.warn('[Pharmacies] API returned 0 pharmacies after filters. Check is_active flag or DB seed.');
-    } else {
-      console.info(`[Pharmacies] Loaded ${pharmacies.value.length} of ${total.value} pharmacies.`);
-    }
   } catch (err) {
     error.value = 'Failed to load pharmacies. Please try again later.';
     console.error('[Pharmacies] Error loading pharmacies:', err);
@@ -498,6 +492,30 @@ onMounted(async () => {
             >
               {{ loadingMore ? 'Loading…' : 'Load More Pharmacies' }}
             </button>
+          </div>
+
+          <!-- Pharmacy Partner CTA — the highest-intent spot for this: anyone
+               scrolling this list to check if their own pharmacy is listed. -->
+          <div class="mt-16 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#246BFD] to-[#5089FF] px-6 py-10 sm:px-12 sm:py-14 text-center shadow-xl">
+            <div class="pointer-events-none absolute -top-10 -left-10 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
+            <div class="pointer-events-none absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#FE9615]/20 blur-2xl"></div>
+            <div class="relative">
+              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">
+                Don't see your pharmacy listed?
+              </h2>
+              <p class="text-blue-100 max-w-xl mx-auto mb-8">
+                Join FyndRx and reach thousands of patients searching for medicines near them. Onboarding takes minutes.
+              </p>
+              <router-link
+                to="/pharmacy/onboard"
+                class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white text-[#246BFD] font-bold hover:bg-gray-100 shadow-lg transition-all hover:-translate-y-0.5"
+              >
+                Partner With FyndRx
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </router-link>
+            </div>
           </div>
         </div>
       </div>

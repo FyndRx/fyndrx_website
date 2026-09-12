@@ -509,7 +509,7 @@ watch(
                 <div class="p-4 pb-0">
                   <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
                     <LazyImage
-                      :src="pharmacyItem.pharmacy?.pharmacy_image || pharmacyItem.logo || '/images/pharmacies/default-pharmacy.jpg'"
+                      :src="pharmacyItem.pharmacy?.pharmacy_image || pharmacyItem.logo || ''"
                       :alt="pharmacyItem.name"
                       aspectRatio="landscape"
                       className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
@@ -537,7 +537,7 @@ watch(
                     <!-- Logo -->
                     <div class="flex-shrink-0 w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
                       <LazyImage
-                        :src="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image || '/images/pharmacies/default-pharmacy.jpg'"
+                        :src="pharmacyItem.logo || pharmacyItem.pharmacy?.pharmacy_image || ''"
                         :alt="pharmacyItem.name"
                         aspectRatio="square"
                         className="w-full h-full object-contain rounded-full"
@@ -758,7 +758,7 @@ watch(
                     <div class="flex-shrink-0 w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
                       <!-- Logo -->
                       <LazyImage
-                        :src="drug.pharmacy_logo || '/images/pharmacies/default-pharmacy.jpg'"
+                        :src="drug.pharmacy_logo || ''"
                         :alt="drug.pharmacy_name"
                         aspectRatio="square"
                         className="w-full h-full object-contain rounded-full"

@@ -23,17 +23,18 @@ export interface HelpArticle {
   is_faq: boolean;
 }
 
+// The admin panel's Filament form saves this as a repeater — an array of
+// { platform, url } entries — but some existing records were seeded directly
+// as a flat { [platform]: url } map, so the API can return either shape.
+export type TeamMemberSocialLinks = Array<{ platform: string; url: string }> | Record<string, string>;
+
 export interface TeamMember {
   id: number;
   name: string;
   role: string;
   bio: string;
   image: string;
-  social_links: {
-    linkedin?: string;
-    twitter?: string;
-    facebook?: string;
-  };
+  social_links: TeamMemberSocialLinks | null;
 }
 
 export interface Partner {

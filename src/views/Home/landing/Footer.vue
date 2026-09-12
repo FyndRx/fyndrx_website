@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { informationService, type AppSettings, type Partner } from '@/services/informationService';
+import { stripHtml } from '@/utils/sanitize';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 import appStoreBanner from '@/assets/appstore_banner.svg';
 import playStoreBanner from '@/assets/playstore_banner.svg';
@@ -12,6 +13,15 @@ const currentYear = ref(new Date().getFullYear());
 const appSettings = ref<AppSettings | null>(null);
 const partners = ref<Partner[]>([]);
 const loading = ref(true);
+
+// The about description can be rich text (HTML) — strip it to plain text so a
+// "Read more" toggle can safely clamp/expand it without leaking markup.
+const aboutText = computed(
+  () => stripHtml(appSettings.value?.about.description) || 'Your trusted partner in accessible and affordable healthcare.'
+);
+const ABOUT_CLAMP_THRESHOLD = 120;
+const aboutNeedsToggle = computed(() => aboutText.value.length > ABOUT_CLAMP_THRESHOLD);
+const aboutExpanded = ref(false);
 
 onMounted(async () => {
   // Register elements for scroll animation
@@ -69,7 +79,8 @@ const quickLinks = [
   { name: 'Home', path: '/' },
   { name: 'Blog', path: '/blog' },
   { name: 'About', path: '/about' },
-  { name: 'Contact', path: '/contact' }
+  { name: 'Contact', path: '/contact' },
+  { name: 'Partner With Us', path: '/pharmacy/onboard', highlight: true },
 ];
 
 const supportLinks = [
@@ -117,9 +128,17 @@ export default {
               Fynd<span class="text-[#FE9615]">Rx</span>
             </span> -->
           </router-link>
-          <p class="leading-relaxed text-gray-400">
-            {{ appSettings?.about.description ? (appSettings.about.description.length > 120 ? appSettings.about.description.substring(0, 117) + '...' : appSettings.about.description) : 'Your trusted partner in accessible and affordable healthcare.' }}
+          <p class="leading-relaxed text-gray-400" :class="aboutExpanded ? '' : 'line-clamp-3'">
+            {{ aboutText }}
           </p>
+          <button
+            v-if="aboutNeedsToggle"
+            type="button"
+            @click="aboutExpanded = !aboutExpanded"
+            class="text-sm font-bold text-[#FE9615] hover:underline -mt-2"
+          >
+            {{ aboutExpanded ? 'Show less' : 'Read more' }}
+          </button>
           <div class="flex space-x-4">
             <template v-for="social in defaultSocialLinks" :key="social.name">
               <a 
@@ -153,17 +172,20 @@ export default {
                 custom
                 v-slot="{ href, navigate, isActive }"
               >
-                <a 
-                  :href="href" 
+                <a
+                  :href="href"
                   @click="navigate"
-                  class="relative transition-colors duration-300 group flex items-center"
-                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
+                  class="relative transition-colors duration-300 group flex items-center gap-1.5"
+                  :class="isActive ? 'text-[#246BFD] font-bold' : link.highlight ? 'text-[#FE9615] font-semibold hover:text-[#ffb547]' : 'text-gray-400 hover:text-white'"
                 >
-                  <span 
-                    v-if="isActive" 
+                  <span
+                    v-if="isActive"
                     class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
                   ></span>
                   {{ link.name }}
+                  <svg v-if="link.highlight" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </a>
               </router-link>
             </li>
