@@ -38,7 +38,16 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           <!-- Identity: pharmacy logo + branch name -->
           <div class="absolute inset-0 flex items-end px-5 pb-3 gap-3">
             <div class="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <LazyImage :src="pharmacyState.pharmacy.value.logo || ''" className="w-full h-full object-cover" :alt="pharmacyState.pharmacy.value.name" aspectRatio="square" />
+              <LazyImage
+                v-if="pharmacyState.pharmacy.value.logo"
+                :src="pharmacyState.pharmacy.value.logo"
+                className="w-full h-full object-contain"
+                :alt="pharmacyState.pharmacy.value.name"
+                aspectRatio="square"
+              />
+              <svg v-else class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+              </svg>
             </div>
             <div class="min-w-0">
               <h4 class="text-base font-black leading-tight truncate" :class="branch.bannerImage ? 'text-white drop-shadow' : 'text-gray-900 dark:text-white'">{{ branch.branchName }}</h4>

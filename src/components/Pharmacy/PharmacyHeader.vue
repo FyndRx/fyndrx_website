@@ -40,13 +40,17 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div class="flex-1 space-y-4">
             <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-2xl bg-white shadow-2xl overflow-hidden shrink-0">
-                <LazyImage 
-                  :src="pharmacyState.pharmacy.value.logo || '/images/pharmacies/default-pharmacy.jpg'" 
-                  :alt="pharmacyState.pharmacy.value.name" 
+              <div class="w-16 h-16 rounded-2xl bg-white shadow-2xl overflow-hidden shrink-0 flex items-center justify-center">
+                <LazyImage
+                  v-if="pharmacyState.pharmacy.value.logo"
+                  :src="pharmacyState.pharmacy.value.logo"
+                  :alt="pharmacyState.pharmacy.value.name"
                   aspectRatio="square"
-                  className="w-full h-full object-contain" 
+                  className="w-full h-full object-contain"
                 />
+                <svg v-else class="w-8 h-8 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
+                </svg>
               </div>
               <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
                 {{ pharmacyState.pharmacy.value.name }}

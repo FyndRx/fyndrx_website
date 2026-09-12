@@ -41,6 +41,13 @@ useSeoMeta({
       <HowItWorks />
     </section>
 
+    <!-- Partnership Section — moved up from below Stats/Testimonials so pharmacy
+         owners browsing the site don't have to scroll past 8+ other sections
+         to find "Partner with FyndRx" (was previously easy to miss entirely). -->
+    <section class="relative">
+      <PartnershipBanner />
+    </section>
+
     <!-- Z2: Mid-feed banner ad -->
     <section class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <AdZone zone="Z2-home-midfeed" route="home" />
@@ -64,11 +71,6 @@ useSeoMeta({
     <!-- Stats Section -->
     <section class="relative overflow-hidden">
       <Stats />
-    </section>
-
-    <!-- Partnership Section -->
-    <section class="relative">
-      <PartnershipBanner />
     </section>
 
     <!-- Testimonials Section -->

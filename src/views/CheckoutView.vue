@@ -61,7 +61,7 @@ onMounted(async () => {
               <!-- Pharmacy Logo -->
               <div class="w-12 h-12 flex-shrink-0 bg-white rounded-full border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
                 <LazyImage
-                  :src="order.pharmacy?.logo || '/images/pharmacies/default-pharmacy.jpg'"
+                  :src="order.pharmacy?.logo || ''"
                   :alt="order.pharmacyName"
                   aspectRatio="square"
                   className="w-full h-full object-contain p-1 rounded-full"

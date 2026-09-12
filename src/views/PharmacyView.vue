@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, provide } from 'vue';
 import { usePharmacy } from '@/composables/usePharmacy';
+import { useChatStore } from '@/store/chat';
 
 import PharmacyViewSkeleton from '@/components/skeletons/PharmacyViewSkeleton.vue';
 import NotFoundState from '@/components/NotFoundState.vue';
@@ -13,6 +14,8 @@ import PharmacyInventory from '@/components/Pharmacy/PharmacyInventory.vue';
 
 const pharmacyState = usePharmacy();
 provide('pharmacyState', pharmacyState);
+
+const chatStore = useChatStore();
 
 onMounted(() => {
   pharmacyState.initializeData();
@@ -126,7 +129,7 @@ onMounted(() => {
           <div class="bg-[#246BFD] p-6 sm:p-8 rounded-3xl text-white shadow-lg shadow-blue-500/10">
              <h3 class="text-lg font-bold mb-3">Need Help?</h3>
              <p class="text-sm font-medium mb-6 text-blue-100">Our support team is available to assist you with your orders and health inquiries.</p>
-             <button class="w-full py-2.5 bg-white text-[#246BFD] rounded-full font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">Start Chat</button>
+             <button @click="chatStore.open()" class="w-full py-2.5 bg-white text-[#246BFD] rounded-full font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">Start Chat</button>
           </div>
         </div>
       </div>

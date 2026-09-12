@@ -23,7 +23,7 @@ const pharmacyId = computed(() => props.pharmacy.pharmacyId);
       <div class="flex items-center space-x-4">
         <div class="w-16 h-16 p-1.5 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600">
           <LazyImage
-            :src="pharmacy.pharmacyLogo || '/images/pharmacies/default-pharmacy.jpg'"
+            :src="pharmacy.pharmacyLogo || ''"
             :alt="pharmacy.pharmacyName"
             aspectRatio="square"
             className="w-full h-full object-contain rounded-full"

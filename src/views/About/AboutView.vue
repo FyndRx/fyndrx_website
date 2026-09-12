@@ -1,7 +1,96 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
-import { informationService, type TeamMember, type AppSettings } from '@/services/informationService';
+import { informationService, type TeamMember, type TeamMemberSocialLinks, type AppSettings } from '@/services/informationService';
+import { sanitizeHtml } from '@/utils/sanitize';
+
+interface SocialIconDef {
+  label: string;
+  color: string;
+  path: string;
+}
+
+// Keyed by the platform values the admin panel's "Social Links" repeater
+// offers, plus a couple seen in already-seeded data (e.g. "github") that
+// aren't in that list yet. Anything else falls back to a generic link icon.
+const SOCIAL_ICONS: Record<string, SocialIconDef> = {
+  linkedin: {
+    label: 'LinkedIn',
+    color: '#0A66C2',
+    path: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 110-4.124 2.062 2.062 0 010 4.124zM7.119 20.452H3.555V9h3.564v11.452z',
+  },
+  x: {
+    label: 'X',
+    color: '#000000',
+    path: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z',
+  },
+  twitter: {
+    label: 'Twitter',
+    color: '#1DA1F2',
+    path: 'M23.643 4.937c-.835.37-1.732.62-2.675.733.962-.576 1.7-1.49 2.048-2.578-.9.534-1.897.922-2.958 1.13-.85-.904-2.06-1.47-3.4-1.47-2.572 0-4.658 2.086-4.658 4.66 0 .364.042.718.12 1.06-3.873-.195-7.304-2.05-9.602-4.868-.4.69-.63 1.49-.63 2.342 0 1.616.823 3.043 2.072 3.878-.764-.024-1.482-.234-2.11-.583v.06c0 2.257 1.605 4.14 3.737 4.568-.392.106-.803.163-1.227.163-.3 0-.593-.028-.877-.082.593 1.85 2.313 3.198 4.352 3.234-1.595 1.25-3.604 1.995-5.786 1.995-.376 0-.747-.022-1.112-.065 2.062 1.323 4.51 2.093 7.14 2.093 8.57 0 13.255-7.098 13.255-13.254 0-.2-.005-.402-.014-.602.91-.658 1.7-1.477 2.324-2.41z',
+  },
+  facebook: {
+    label: 'Facebook',
+    color: '#1877F2',
+    path: 'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 011.141.195v3.325a8.623 8.623 0 00-.653-.036 26.805 26.805 0 00-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 00-.679.622c-.191.303-.29.612-.29 1.198v1.351h2.98v3.667h-2.98v7.98H9.101z',
+  },
+  instagram: {
+    label: 'Instagram',
+    color: '#E4405F',
+    path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z',
+  },
+  youtube: {
+    label: 'YouTube',
+    color: '#FF0000',
+    path: 'M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z',
+  },
+  whatsapp: {
+    label: 'WhatsApp',
+    color: '#25D366',
+    path: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12.05 21.785h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.822 9.822 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884zm8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z',
+  },
+  telegram: {
+    label: 'Telegram',
+    color: '#26A5E4',
+    path: 'M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.751-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.332-1.386 4.025-1.627 4.476-1.635z',
+  },
+  tiktok: {
+    label: 'TikTok',
+    color: '#000000',
+    path: 'M16.6 5.82s.51.5 0 0A4.278 4.278 0 0115.54 3h-3.09v12.4a2.592 2.592 0 01-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 004.3 1.38V7.3s-1.88.09-3.24-1.48z',
+  },
+  snapchat: {
+    label: 'Snapchat',
+    color: '#FFFC00',
+    path: 'M12.006 1.5c3.19 0 5.53 2.36 5.7 5.49.05.86.03 1.72.02 2.58.16.09.37.13.66.05.32-.09.62-.28.96-.28.44 0 .8.32.8.79 0 .38-.24.63-.55.83.5.35 1.15.53 1.7.72.3.1.48.42.4.73-.12.46-.65.6-1.05.75-.2.07-.27.28-.17.47.16.32.28.66.15 1.01-.15.4-.55.55-.93.6-.32.05-.35.29-.24.55.14.33.03.63-.27.79-.44.24-1.04.2-1.5.42-.4.19-.55.62-.9.87-.72.5-1.65.68-2.5.68-.85 0-1.78-.18-2.5-.68-.35-.25-.5-.68-.9-.87-.46-.22-1.06-.18-1.5-.42-.3-.16-.41-.46-.27-.79.11-.26.08-.5-.24-.55-.38-.05-.78-.2-.93-.6-.13-.35-.01-.69.15-1.01.1-.19.03-.4-.17-.47-.4-.15-.93-.29-1.05-.75-.08-.31.1-.63.4-.73.55-.19 1.2-.37 1.7-.72-.31-.2-.55-.45-.55-.83 0-.47.36-.79.8-.79.34 0 .64.19.96.28.29.08.5.04.66-.05-.01-.86-.03-1.72.02-2.58.17-3.13 2.51-5.49 5.7-5.49z',
+  },
+  github: {
+    label: 'GitHub',
+    color: '#181717',
+    path: 'M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z',
+  },
+};
+
+const GENERIC_LINK_ICON = 'M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5';
+
+const socialIconFor = (platform: string): SocialIconDef => {
+  const key = platform.trim().toLowerCase();
+  if (key === 'twitter' || key === 'x') return SOCIAL_ICONS.x; // treat legacy "twitter" data the same as "x"
+  return SOCIAL_ICONS[key] ?? { label: platform, color: '#6B7280', path: GENERIC_LINK_ICON };
+};
+
+// The admin panel saves this as a repeater (array of { platform, url }), but
+// some earlier records were seeded as a flat { [platform]: url } map — accept
+// either so a member's socials don't just silently disappear.
+const socialLinksFor = (raw: TeamMemberSocialLinks | null | undefined): Array<{ platform: string; url: string }> => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.filter((entry) => entry?.platform && entry?.url);
+  }
+  return Object.entries(raw)
+    .filter(([, url]) => !!url)
+    .map(([platform, url]) => ({ platform, url }));
+};
 
 useSeoMeta({
   title: 'About FyndRx | Safest and Most Convenient Online Pharmacy in Ghana',
@@ -15,6 +104,20 @@ const activeValue = ref<number | null>(null);
 const team = ref<TeamMember[]>([]);
 const appSettings = ref<AppSettings | null>(null);
 const loading = ref(true);
+
+// Roughly how many characters a 3-line clamp fits at this card width/font size —
+// used to decide whether a bio needs a "Read more" toggle at all, so short bios
+// that already fit don't get a pointless button.
+const BIO_CLAMP_THRESHOLD = 130;
+const expandedBios = ref<Set<number>>(new Set());
+const bioNeedsToggle = (member: TeamMember) => member.bio.length > BIO_CLAMP_THRESHOLD;
+const toggleBio = (id: number) => {
+  if (expandedBios.value.has(id)) {
+    expandedBios.value.delete(id);
+  } else {
+    expandedBios.value.add(id);
+  }
+};
 
 onMounted(async () => {
   isVisible.value = true;
@@ -213,12 +316,14 @@ const stats = [
             <p class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl mb-6">
               Making Healthcare Accessible for Everyone
             </p>
-            <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6" v-if="appSettings?.about.description">
-              {{ appSettings.about.description }}
-            </p>
+            <div
+              v-if="appSettings?.about.description"
+              class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6 prose prose-lg dark:prose-invert max-w-none"
+              v-html="sanitizeHtml(appSettings.about.description)"
+            ></div>
             <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6" v-else>
-              We believe that access to quality healthcare is a fundamental right, not a privilege. FyndRx was founded to 
-              bridge the gap between patients and pharmacies, making it easier to find, compare, and order the medicines 
+              We believe that access to quality healthcare is a fundamental right, not a privilege. FyndRx was founded to
+              bridge the gap between patients and pharmacies, making it easier to find, compare, and order the medicines
               you need — no matter where you are.
             </p>
           </div>
@@ -235,7 +340,10 @@ const stats = [
                   </svg>
                 </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Vision</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.vision || 'A world where quality healthcare is just a tap away for everyone.' }}</p>
+                <div
+                  class="text-sm text-gray-500 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none prose-p:my-0"
+                  v-html="sanitizeHtml(appSettings?.about.vision || 'A world where quality healthcare is just a tap away for everyone.')"
+                ></div>
               </div>
               <!-- Mission -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mt-8">
@@ -245,7 +353,10 @@ const stats = [
                   </svg>
                 </div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Our Mission</h4>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ appSettings?.about.mission || 'Using technology to simplify and transform how people access medicine.' }}</p>
+                <div
+                  class="text-sm text-gray-500 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none prose-p:my-0"
+                  v-html="sanitizeHtml(appSettings?.about.mission || 'Using technology to simplify and transform how people access medicine.')"
+                ></div>
               </div>
               <!-- Trust -->
               <div class="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
@@ -404,10 +515,10 @@ const stats = [
           <div
             v-for="member in team"
             :key="member.id"
-            class="group text-center w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-2rem)]"
+            class="group flex flex-col items-center text-center w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-2rem)]"
             :class="{ 'animate-fade-in': isVisible }"
           >
-            <div class="relative inline-block mb-6">
+            <div class="relative inline-block mb-6 shrink-0">
               <div class="absolute -inset-2 bg-gradient-to-r from-[#246BFD]/30 to-[#FE9615]/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <img
                 class="relative w-36 h-36 mx-auto rounded-full object-cover ring-4 ring-white dark:ring-gray-800 shadow-lg transition-transform duration-300 group-hover:scale-105"
@@ -415,9 +526,46 @@ const stats = [
                 :alt="member.name"
               />
             </div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ member.name }}</h3>
-            <p class="text-[#246BFD] dark:text-[#5089FF] font-medium mt-1">{{ member.role }}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-3 px-4 line-clamp-3">{{ member.bio }}</p>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white break-words">{{ member.name }}</h3>
+            <p class="text-[#246BFD] dark:text-[#5089FF] font-medium mt-1 break-words">{{ member.role }}</p>
+            <p
+              class="text-sm text-gray-500 dark:text-gray-400 mt-3 px-4 break-words"
+              :class="expandedBios.has(member.id) ? '' : 'line-clamp-3'"
+            >
+              {{ member.bio }}
+            </p>
+            <button
+              v-if="bioNeedsToggle(member)"
+              type="button"
+              @click="toggleBio(member.id)"
+              class="text-xs font-bold text-[#246BFD] dark:text-[#5089FF] hover:underline mt-1.5"
+            >
+              {{ expandedBios.has(member.id) ? 'Show less' : 'Read more' }}
+            </button>
+
+            <div
+              v-if="socialLinksFor(member.social_links).length"
+              class="flex items-center justify-center gap-2.5 mt-5"
+            >
+              <a
+                v-for="link in socialLinksFor(member.social_links)"
+                :key="link.platform"
+                :href="link.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="socialIconFor(link.platform).label"
+                class="w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ring-1 ring-gray-100 dark:ring-gray-700"
+              >
+                <svg
+                  class="w-4 h-4 transition-colors"
+                  :style="{ color: socialIconFor(link.platform).color }"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path :d="socialIconFor(link.platform).path" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
 
