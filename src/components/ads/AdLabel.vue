@@ -12,14 +12,16 @@ const LABELS: Record<string, string> = {
 
 <template>
   <span
-    class="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded select-none"
+    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full select-none ring-1"
     :class="{
-      'bg-gray-100 text-gray-400 dark:bg-gray-700/60 dark:text-gray-500': variant === 'sponsored',
-      'bg-[#FE9615]/10 text-[#FE9615] dark:bg-[#FE9615]/15': variant === 'featured',
-      'bg-[#246BFD]/10 text-[#246BFD] dark:bg-[#246BFD]/15': variant === 'promoted',
+      // Solid chips with their own contrast: this is a disclosure label, so it must stay readable
+      // on light cards, dark cards and photos alike.
+      'bg-white text-gray-700 ring-gray-900/15 shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:ring-white/25': variant === 'sponsored',
+      'bg-accent-100 text-accent-800 ring-accent-500/30 dark:bg-accent-900 dark:text-accent-100 dark:ring-accent-400/40': variant === 'featured',
+      'bg-brand-50 text-brand-700 ring-brand-500/25 dark:bg-brand-900 dark:text-brand-100 dark:ring-brand-400/40': variant === 'promoted',
     }"
   >
-    <svg class="w-2 h-2 opacity-60" fill="currentColor" viewBox="0 0 8 8">
+    <svg class="w-2 h-2 opacity-70" fill="currentColor" viewBox="0 0 8 8" aria-hidden="true">
       <circle cx="4" cy="4" r="3"/>
     </svg>
     {{ LABELS[variant] }}

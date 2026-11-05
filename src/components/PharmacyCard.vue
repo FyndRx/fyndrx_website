@@ -72,17 +72,6 @@ const whatsappUrl = computed(() =>
   props.pharmacy.whatsappNumber ? `https://wa.me/${props.pharmacy.whatsappNumber.replace(/\D/g, '')}` : null,
 );
 
-// No photo: a branded monogram tile instead of the same generic placeholder on every card.
-const initials = computed(() =>
-  (props.pharmacy.name ?? '')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(word => word[0])
-    .join('')
-    .toUpperCase(),
-);
-
 const statusLabel = computed(() => {
   if (!props.pharmacy.isOpen) return 'Closed';
   return isCompact.value && has24_7.value ? 'Open 24/7' : 'Open Now';
@@ -115,23 +104,13 @@ const iconAction =
   >
     <!-- Image -->
     <div class="relative overflow-hidden shrink-0" :class="isCompact ? 'h-40' : 'h-44'">
+      <!-- No photo: LazyImage shows the FyndRx logo placeholder, as everywhere else on the site -->
       <LazyImage
-        v-if="pharmacy.image"
         :src="pharmacy.image"
         :alt="pharmacy.name"
         aspectRatio="landscape"
         className="w-full h-full object-cover transition-transform duration-500 ease-out-quart group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
       />
-      <div
-        v-else
-        class="flex items-center justify-center w-full h-full bg-gradient-to-br from-brand-100 via-white to-accent-100 dark:from-brand-950 dark:via-gray-800 dark:to-gray-900"
-        role="img"
-        :aria-label="pharmacy.name"
-      >
-        <span class="flex items-center justify-center w-20 h-20 text-3xl font-bold text-white rounded-3xl bg-gradient-to-br from-brand-500 to-brand-400 shadow-glow-brand" aria-hidden="true">
-          {{ initials }}
-        </span>
-      </div>
       <!-- Scrim for badge legibility, only over a real photo (it muddies the light placeholder) -->
       <div v-if="pharmacy.image" class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" aria-hidden="true"></div>
 

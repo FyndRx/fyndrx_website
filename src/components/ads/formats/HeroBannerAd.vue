@@ -41,8 +41,7 @@ const accent = props.ad.creative.accentColor ?? '#246BFD';
     <!-- Content -->
     <div class="relative z-10 p-6 md:p-8 w-full flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div class="max-w-lg">
-        <p class="flex items-center gap-2 mb-2 text-xs font-semibold tracking-widest text-white/90 uppercase">
-          <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: accent }"></span>
+        <p class="mb-2 text-xs font-semibold tracking-widest text-white/90 uppercase">
           {{ ad.advertiser }}
         </p>
         <h3 class="text-xl md:text-2xl font-bold text-white leading-snug">
