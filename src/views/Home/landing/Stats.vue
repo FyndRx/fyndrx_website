@@ -94,45 +94,45 @@ export default {
 </script>
 
 <template>
-  <section ref="sectionRef" class="py-20 bg-gradient-to-br from-[#246BFD] to-[#5089FF] relative overflow-hidden">
+  <section ref="sectionRef" class="py-14 sm:py-20 bg-gradient-to-br from-brand-600 to-brand-500 relative overflow-hidden mx-4 sm:mx-6 lg:mx-auto lg:max-w-7xl my-10 rounded-[2rem] sm:rounded-[2.5rem] shadow-float">
     <div class="absolute inset-0 opacity-10">
       <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
       <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
     </div>
 
     <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="mb-16 text-center scroll-animate slide-up">
-        <h2 class="mb-4 text-4xl font-medium text-white">
-          Our Impact in <span class="text-[#FE9615]">Numbers</span>
+      <div class="mb-10 text-center sm:mb-16 scroll-animate slide-up">
+        <h2 class="mb-4 text-3xl font-medium text-white sm:text-4xl">
+          Our Impact in <span class="text-accent-300">Numbers</span>
         </h2>
-        <p class="text-xl text-blue-100">
+        <p class="text-lg sm:text-xl text-white/85">
           Join thousands of satisfied customers who trust FyndRx for their healthcare needs
         </p>
       </div>
 
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:gap-8">
         <div
           v-for="(stat, index) in stats"
           :key="stat.id"
           class="scroll-animate slide-up"
           :class="`delay-${(index + 1) * 100}`"
         >
-          <div class="p-8 text-center transition-all duration-300 bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 hover:scale-105">
-            <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-white/20 rounded-2xl">
-              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="h-full p-4 sm:p-8 text-center transition-all duration-300 bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 hover:scale-105">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 sm:w-16 sm:h-16 sm:mb-4 bg-white/20 rounded-2xl">
+              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="stat.icon"></path>
               </svg>
             </div>
 
-            <h3 class="mb-2 text-4xl font-bold text-white tabular-nums">
+            <h3 class="mb-1 text-3xl font-bold text-white sm:mb-2 sm:text-4xl tabular-nums">
               {{ stat.displayValue }}
             </h3>
 
-            <p class="mb-1 text-lg font-medium text-blue-100">
+            <p class="mb-1 text-base font-medium sm:text-lg text-white/85">
               {{ stat.label }}
             </p>
 
-            <p class="text-sm text-blue-200">
+            <p class="text-xs sm:text-sm text-white/75">
               {{ stat.description }}
             </p>
           </div>

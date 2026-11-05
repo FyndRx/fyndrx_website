@@ -34,7 +34,7 @@ export default {
   <div class="flex flex-col min-h-screen">
     <MaintenanceBanner />
     <Header />
-    <main class="flex-grow">
+    <main id="main-content" tabindex="-1" class="flex-grow focus:outline-none">
       <slot></slot>
     </main>
     <Footer />
