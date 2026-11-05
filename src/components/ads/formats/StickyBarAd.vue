@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import type { Ad } from '@/types/Ad';
-import { useAdSession } from '@/composables/useAdSession';
+import { useAdSession, stickyBarVisible } from '@/composables/useAdSession';
 
 const props = defineProps<{ ad: Ad; zone: string }>();
 const session = useAdSession();
@@ -13,6 +13,7 @@ onMounted(() => {
   timer = setTimeout(() => {
     if (!session.isDismissed(props.ad.id) && !session.isOverCap(props.ad.id, props.zone)) {
       visible.value = true;
+      stickyBarVisible.value = true;
       session.recordImpression(props.ad.id, props.zone);
     }
   }, 30_000);
@@ -20,9 +21,16 @@ onMounted(() => {
 
 const dismiss = () => {
   visible.value = false;
+  stickyBarVisible.value = false;
   session.dismiss(props.ad.id);
   clearTimeout(timer);
 };
+
+// The bar can unmount without being dismissed (navigation, ad refresh): release the space.
+onBeforeUnmount(() => {
+  clearTimeout(timer);
+  stickyBarVisible.value = false;
+});
 
 const handleClick = () => session.recordClick(props.ad.id, props.zone);
 
