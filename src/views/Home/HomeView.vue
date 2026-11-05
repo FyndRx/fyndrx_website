@@ -58,15 +58,16 @@ useSeoMeta({
       <PartnershipBanner />
     </section>
 
-    <!-- Z2: Mid-feed banner ad -->
-    <section class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <AdZone zone="Z2-home-midfeed" route="home" />
-    </section>
-
     <!-- Features Section -->
     <section class="relative">
       <Features />
     </section>
+
+    <!-- Z2: Mid-feed banner ad. Sits after the value proposition (not between it and the partner pitch);
+         `empty:hidden` removes the frame's spacing when no ad resolves. -->
+    <div class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-4 sm:py-6 empty:hidden">
+      <AdZone zone="Z2-home-midfeed" route="home" />
+    </div>
 
     <!-- Consultation Section -->
     <section class="relative">

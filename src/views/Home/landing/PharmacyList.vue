@@ -125,7 +125,7 @@ export default {
           class="flex-none basis-[85%] sm:basis-[360px] md:basis-[385px] snap-start pharmacy-card-enter"
           :style="{ '--i': index }"
         >
-          <PharmacyCard :pharmacy="pharmacy" />
+          <PharmacyCard :pharmacy="pharmacy" variant="compact" />
         </div>
       </div>
 

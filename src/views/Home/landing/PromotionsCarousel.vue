@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref } from 'vue';
 import {
   CalendarIcon,
   ClockIcon,
@@ -10,27 +10,13 @@ import {
   SparklesIcon,
   ShieldCheckIcon
 } from '@heroicons/vue/24/outline';
-import { useAds } from '@/composables/useAds';
-import { useAdsStore } from '@/store/ads';
-import { useAdSession } from '@/composables/useAdSession';
-import AdLabel from '@/components/ads/AdLabel.vue';
 import { useMobileGestures } from '@/composables/useMobileGestures';
-
-const adsStore = useAdsStore();
-const adSession = useAdSession();
-const { resolved: heroAd } = useAds({ zone: 'Z1-hero-carousel', route: 'home', isAuthed: false });
-
-onMounted(() => adsStore.load());
 
 const currentSlide = ref(0);
 
 // Autoplay is driven by the active dot's progress animation (see template/CSS): it advances on
 // `animationend`, pauses via `animation-play-state`, and never runs under prefers-reduced-motion.
 const isPaused = ref(false);
-
-// Total slide count includes the sponsored slide when an ad is active
-const totalSlides = computed(() => heroAd.value ? slides.length + 1 : slides.length);
-const sponsoredSlideIndex = computed(() => heroAd.value ? slides.length : -1);
 
 // Themes stay inside the brand family (deep blue, vivid blue, warm dark) with orange accents.
 const slides = [
@@ -106,27 +92,15 @@ const slides = [
 ];
 
 const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % totalSlides.value;
+  currentSlide.value = (currentSlide.value + 1) % slides.length;
 };
 
 const prevSlide = () => {
-  currentSlide.value = (currentSlide.value - 1 + totalSlides.value) % totalSlides.value;
+  currentSlide.value = (currentSlide.value - 1 + slides.length) % slides.length;
 };
 
 const goToSlide = (index: number) => {
   currentSlide.value = index;
-};
-
-const isAdSlide = computed(() => heroAd.value && currentSlide.value === sponsoredSlideIndex.value);
-
-watch(isAdSlide, isVisible => {
-  if (isVisible && heroAd.value) {
-    adSession.recordImpression(heroAd.value.id, 'Z1-hero-carousel');
-  }
-});
-
-const handleAdClick = () => {
-  if (heroAd.value) adSession.recordClick(heroAd.value.id, 'Z1-hero-carousel');
 };
 
 // Swipe between slides on touch
@@ -152,7 +126,7 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobileGestures(
 
       <div
         class="relative flex flex-col overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] shadow-float transition-colors duration-700 ease-in-out"
-        :class="isAdSlide ? 'bg-gradient-to-br from-[#0D1529] to-[#131E38]' : `bg-gradient-to-br ${slides[currentSlide].theme.bg}`"
+        :class="`bg-gradient-to-br ${slides[currentSlide].theme.bg}`"
         role="group"
         aria-roledescription="carousel"
         @mouseenter="isPaused = true"
@@ -166,12 +140,12 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobileGestures(
         <!-- Background decorations (colour follows the slide) -->
         <div
           class="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 transition-colors duration-700 opacity-20 pointer-events-none"
-          :style="{ backgroundColor: isAdSlide ? (heroAd?.creative.accentColor ?? '#246BFD') : slides[currentSlide].theme.accent }"
+          :style="{ backgroundColor: slides[currentSlide].theme.accent }"
           aria-hidden="true"
         ></div>
         <div
           class="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 transition-colors duration-700 opacity-20 pointer-events-none"
-          :style="{ backgroundColor: isAdSlide ? (heroAd?.creative.accentColor ?? '#FE9615') : slides[currentSlide].theme.secondary }"
+          :style="{ backgroundColor: slides[currentSlide].theme.secondary }"
           aria-hidden="true"
         ></div>
 
@@ -189,49 +163,8 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobileGestures(
             leave-from-class="opacity-100 translate-x-0"
             leave-to-class="opacity-0 -translate-x-4"
           >
-            <!-- Sponsored ad slide -->
-            <div v-if="isAdSlide && heroAd" :key="'ad-slide'" class="w-full">
-              <div class="grid items-center grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
-                <div class="space-y-6">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <div class="inline-flex items-center gap-2 px-4 py-2 border rounded-full bg-white/5 border-white/10 backdrop-blur-sm">
-                      <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: heroAd.creative.accentColor ?? '#FE9615' }"></span>
-                      <span class="text-xs font-bold tracking-wider text-white/90 uppercase">
-                        {{ heroAd.advertiser }}
-                      </span>
-                    </div>
-                    <AdLabel variant="sponsored" />
-                  </div>
-                  <h3 class="text-3xl font-bold leading-tight text-white md:text-5xl">
-                    {{ heroAd.creative.headline }}
-                  </h3>
-                  <p v-if="heroAd.creative.subline" class="max-w-xl text-lg leading-relaxed text-white/80">
-                    {{ heroAd.creative.subline }}
-                  </p>
-                  <a
-                    :href="heroAd.creative.cta.href"
-                    :target="heroAd.creative.cta.external ? '_blank' : undefined"
-                    :rel="heroAd.creative.cta.external ? 'noopener noreferrer' : undefined"
-                    class="inline-flex items-center gap-2 px-6 py-3 font-bold text-white transition duration-200 rounded-full ease-out-quart hover:-translate-y-0.5 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-                    :style="{ backgroundColor: heroAd.creative.accentColor ?? '#FE9615' }"
-                    @click="handleAdClick"
-                  >
-                    {{ heroAd.creative.cta.label }}
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </a>
-                </div>
-                <div v-if="heroAd.creative.imageUrl" class="lg:pl-10">
-                  <div class="overflow-hidden border shadow-2xl rounded-3xl border-white/10">
-                    <img :src="heroAd.creative.imageUrl" :alt="heroAd.creative.headline" class="object-cover w-full h-56 sm:h-64" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Regular slides -->
-            <div v-else :key="currentSlide" class="w-full">
+            <div :key="currentSlide" class="w-full">
               <div class="grid items-center grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
                 <!-- Content -->
                 <div class="space-y-6 sm:space-y-8">
@@ -318,7 +251,7 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobileGestures(
 
           <div class="flex items-center gap-2">
             <button
-              v-for="index in totalSlides"
+              v-for="index in slides.length"
               :key="index - 1"
               type="button"
               :aria-label="`Go to slide ${index}`"
