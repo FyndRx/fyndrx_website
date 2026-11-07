@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import ProductName from '@/components/ProductName.vue';
 import { useRouter } from 'vue-router';
 import type { Order } from '@/models/Order';
 import { orderService } from '@/services/orderService';
@@ -241,8 +242,8 @@ onMounted(() => {
                     />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <h4 class="text-xs font-bold text-gray-900 dark:text-white truncate group-hover/item:text-[#246BFD] transition-colors">
-                      {{ item.medicationName }}
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors">
+                      <ProductName :name="item.medicationName" compact />
                     </h4>
                     <div class="mt-0.5">
                       <p class="text-[10px] text-gray-500 dark:text-gray-400">

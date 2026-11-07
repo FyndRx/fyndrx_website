@@ -13,6 +13,8 @@ export interface CartItem {
   formName: string;
   strengthId: number;
   strength: string;
+  unitId?: number;
+  unit?: string;
   uomId: number;
   uom: string;
   quantity: number;
@@ -64,6 +66,7 @@ export interface OrderItem {
   brandId?: number;
   formId: number;
   strengthId: number;
+  unitId?: number;
   uomId: number;
   quantity: number;
   price: number;

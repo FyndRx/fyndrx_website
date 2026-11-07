@@ -320,6 +320,7 @@ export const pharmacyService = {
       brand_id?: number | string;
       form_id?: number | string;
       strength_id?: number | string;
+      unit_id?: number | string;
       uom_id?: number | string;
       q?: string;
       sort?: string;
@@ -390,6 +391,7 @@ export const pharmacyService = {
       brand_id?: number | string;
       form_id?: number | string;
       strength_id?: number | string;
+      unit_id?: number | string;
       uom_id?: number | string;
       q?: string;
       sort?: string;
@@ -511,11 +513,13 @@ export const pharmacyService = {
       const formNode = brandNode.forms.get(formId)!;
 
       const strengthId = price.strength_id;
+      const unitId = price.unit_id;
       const uomId = price.uom_id;
 
       const existingVariant = formNode.variants.find(v =>
         v.strengthId === strengthId &&
-        v.uomId === uomId
+        v.unitId === (unitId || 0) &&
+        v.uomId === (uomId || 0)
       );
 
       if (existingVariant) {
@@ -526,10 +530,12 @@ export const pharmacyService = {
         formNode.variants.push({
           strengthId: strengthId || 0,
           strength: price.strength || '',
+          unitId: unitId || 0,
+          unit: price.unit || '',
           uomId: uomId || 0,
           uom: price.uom || '',
-          label: `${price.form_name || ''} ${price.strength || ''} ${price.uom || ''}`.trim(),
-          value: `${formId}_${strengthId}_${uomId}`,
+          label: buildVariantLabel(price.form_name, price.strength, price.unit, price.uom),
+          value: `${formId}_${strengthId}_${unitId || 0}_${uomId || 0}`,
           pharmacyCount: 1,
           minPrice: price.price,
           maxPrice: price.price
@@ -565,18 +571,21 @@ export const pharmacyService = {
         const formNode = brandNode.forms.get(formId)!;
 
         const existingVariant = formNode.variants.find(v =>
-          v.strengthId === related.strength_id &&
-          v.uomId === related.uom_id
+          v.strengthId === (related.strength_id ?? 0) &&
+          v.unitId === (related.unit_id ?? 0) &&
+          v.uomId === (related.uom_id ?? 0)
         );
 
         if (!existingVariant) {
           formNode.variants.push({
             strengthId: related.strength_id ?? 0,
             strength: related.strength || '',
+            unitId: related.unit_id ?? 0,
+            unit: related.unit || '',
             uomId: related.uom_id ?? 0,
             uom: related.uom || '',
-            label: `${related.form_name || ''} ${related.strength || ''} ${related.uom || ''}`.trim(),
-            value: `${formId}_${related.strength_id ?? 0}_${related.uom_id ?? 0}`,
+            label: buildVariantLabel(related.form_name, related.strength, related.unit, related.uom),
+            value: `${formId}_${related.strength_id ?? 0}_${related.unit_id ?? 0}_${related.uom_id ?? 0}`,
             pharmacyCount: 0, // Unknown from summary
             minPrice: related.price,
             maxPrice: related.price
@@ -602,15 +611,34 @@ export const pharmacyService = {
   }
 };
 
+/**
+ * "Tablet 400MG · Tablet(s)": the strength reads as one token (400 + MG) and
+ * the unit of measure follows after a separator.
+ */
+export function buildVariantLabel(
+  form?: string | null,
+  strength?: string | null,
+  unit?: string | null,
+  uom?: string | null
+): string {
+  const dose = [strength, unit].filter(Boolean).join('').trim();
+  const head = [form, dose].filter(Boolean).join(' ').trim();
+  return [head, uom].filter(Boolean).join(' · ');
+}
+
 // -- New Interfaces --
 
 export interface HierarchyVariant {
   strengthId: number;
   strength: string;
+  /** Strength unit, e.g. MG or MG/5ML */
+  unitId: number;
+  unit: string;
+  /** Unit of measure, e.g. Tablet(s) or Bottle */
   uomId: number;
   uom: string;
   label: string;
-  value: string; // "formId_strengthId_uomId"
+  value: string; // "formId_strengthId_unitId_uomId"
   pharmacyCount: number;
   minPrice: number;
   maxPrice: number;

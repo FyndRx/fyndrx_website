@@ -13,6 +13,7 @@ interface Props {
   brandId?: number | string;
   formId?: number | string;
   strengthId?: number | string;
+  unitId?: number | string;
   uomId?: number | string;
 }
 

@@ -37,7 +37,9 @@ export interface Drug {
     frequency: string;
     duration: string;
     quantity: number;
+    unit_id?: number;
     uom_id?: number;
+    unit?: string;
     uom?: string;
     instruction?: string;
     image?: string | null;

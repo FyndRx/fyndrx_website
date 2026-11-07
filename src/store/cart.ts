@@ -82,6 +82,7 @@ export const useCartStore = defineStore('cart', () => {
         i.pharmacyId === item.pharmacyId &&
         i.formId === item.formId &&
         i.strengthId === item.strengthId &&
+        (i.unitId ?? 0) === (item.unitId ?? 0) &&
         i.uomId === item.uomId;
     });
 
@@ -92,7 +93,7 @@ export const useCartStore = defineStore('cart', () => {
         ...item,
         id: item.pharmacyDrugPriceId
           ? `${item.pharmacyDrugPriceId}-${Date.now()}`
-          : `${item.pharmacyId}-${item.medicationId}-${item.formId}-${item.strengthId}-${item.uomId}-${Date.now()}`
+          : `${item.pharmacyId}-${item.medicationId}-${item.formId}-${item.strengthId}-${item.unitId ?? 0}-${item.uomId}-${Date.now()}`
       };
       items.value.push(newItem);
     }

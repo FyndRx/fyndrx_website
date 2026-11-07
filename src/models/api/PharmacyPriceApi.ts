@@ -15,6 +15,7 @@ export interface PharmacyPriceApiResponse {
   brand_id: number | null;
   form_id: number | null;
   strength_id: number | null;
+  unit_id?: number | null;
   uom_id: number | null;
 
   // Flattened product metadata
@@ -38,6 +39,7 @@ export interface PharmacyPriceApiResponse {
   brand_name?: string | null;
   form_name?: string | null;
   strength?: string | null;
+  unit?: string | null;
   uom?: string | null;
   drug_name?: string | null;
 
@@ -87,7 +89,9 @@ export interface DrugPriceMatchApiResponse {
   form_name?: string | null;
   strength_id: number | null;
   strength?: string | null;
+  unit_id?: number | null;
   uom_id: number | null;
+  unit?: string | null;
   uom?: string | null;
   image?: string | null;
   requires_prescription: boolean;
@@ -113,7 +117,9 @@ export interface DrugPriceRelatedApiResponse {
   form_name?: string | null;
   strength_id: number | null;
   strength?: string | null;
+  unit_id?: number | null;
   uom_id: number | null;
+  unit?: string | null;
   uom?: string | null;
   image?: string | null;
   price: number;

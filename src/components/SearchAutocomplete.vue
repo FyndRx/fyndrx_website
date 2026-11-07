@@ -228,6 +228,7 @@ const handleSelection = (result: { type: string; item: any }) => {
           brand_id: match.data.brand_id,
           form_id: match.data.form_id,
           strength_id: match.data.strength_id,
+          unit_id: match.data.unit_id,
           uom_id: match.data.uom_id
         }
       });
@@ -245,6 +246,7 @@ const handleSelection = (result: { type: string; item: any }) => {
         brand_id: item.brand_id,
         form_id: item.form_id,
         strength_id: item.strength_id,
+        unit_id: item.unit_id,
         uom_id: item.uom_id
       }
     });

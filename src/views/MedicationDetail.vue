@@ -286,6 +286,8 @@ const addToCart = (pharmacy: Pharmacy, quantity: number = 1) => {
     formName: exactMatch.value.form || '',
     strengthId: exactMatch.value.strength_id,
     strength: exactMatch.value.strength || '',
+    unitId: exactMatch.value.unit_id || 0,
+    unit: exactMatch.value.unit || '',
     uomId: exactMatch.value.uom_id || 0,
     uom: exactMatch.value.uom || '',
     quantity: quantity,
@@ -313,7 +315,7 @@ onMounted(async () => {
 });
 
 watch(
-  () => [route.params.id, route.query.brand_id, route.query.form_id, route.query.strength_id, route.query.uom_id],
+  () => [route.params.id, route.query.brand_id, route.query.form_id, route.query.strength_id, route.query.unit_id, route.query.uom_id],
   async ([newId]) => {
     if (newId) {
       await loadMedicationData(newId as string);

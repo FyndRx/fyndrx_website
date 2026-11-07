@@ -6,6 +6,7 @@ import OrderTrackingMap from '@/components/OrderTrackingMap.vue';
 import { reviewService } from '@/services/reviewService';
 import type { Order } from '@/models/Order';
 import LazyImage from '@/components/LazyImage.vue';
+import ProductName from '@/components/ProductName.vue';
 import AddReviewModal from '@/components/AddReviewModal.vue';
 import { orderService } from '@/services/orderService';
 import { paymentService, type Transaction } from '@/services/paymentService';
@@ -308,7 +309,7 @@ onMounted(() => {
                   
                   <div class="flex-1 min-w-0">
                     <h4 class="mb-2 font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors leading-tight">
-                      {{ item.medicationName }}
+                      <ProductName :name="item.medicationName" />
                     </h4>
                     <div class="flex items-center gap-3">
                       <span class="px-2 py-0.5 rounded-lg bg-[#246BFD]/10 text-[#246BFD] text-[10px] font-bold uppercase tracking-wider">
