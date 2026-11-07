@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { informationService, type AppSettings, type Partner } from '@/services/informationService';
 import { stripHtml } from '@/utils/sanitize';
 import logoWhiteOrange from '@/assets/logo/logo_white_orange.png';
 import appStoreBanner from '@/assets/appstore_banner.svg';
 import playStoreBanner from '@/assets/playstore_banner.svg';
 
-const { registerElement } = useScrollAnimation();
 const currentYear = ref(new Date().getFullYear());
+
+// A partner logo that fails to load falls back to the partner's name as text.
+const brokenLogos = ref<Set<string | number>>(new Set());
+const onLogoError = (id: string | number) => {
+  brokenLogos.value = new Set(brokenLogos.value).add(id);
+};
 
 const appSettings = ref<AppSettings | null>(null);
 const partners = ref<Partner[]>([]);
-const loading = ref(true);
 
 // The about description can be rich text (HTML) — strip it to plain text so a
 // "Read more" toggle can safely clamp/expand it without leaking markup.
@@ -24,10 +27,6 @@ const aboutNeedsToggle = computed(() => aboutText.value.length > ABOUT_CLAMP_THR
 const aboutExpanded = ref(false);
 
 onMounted(async () => {
-  // Register elements for scroll animation
-  const elements = document.querySelectorAll('.scroll-animate');
-  elements.forEach((element) => registerElement(element as HTMLElement));
-
   try {
     const [settings, partnersData] = await Promise.all([
       informationService.getAppSettings(),
@@ -37,10 +36,60 @@ onMounted(async () => {
     partners.value = partnersData;
   } catch (error) {
     console.error('Failed to load footer data:', error);
-  } finally {
-    loading.value = false;
   }
 });
+
+const backToTop = () => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+};
+
+// Link groups: one data source, one template block.
+const linkGroups = computed(() => [
+  { title: 'Quick Links', links: quickLinks },
+  { title: 'Support', links: supportLinks },
+  { title: 'Information', links: informationLinks.filter((link) => !link.devOnly || !isProduction) },
+]);
+
+const contactItems = computed(() => {
+  const contact = appSettings.value?.contact;
+  if (!contact) return [];
+  return [
+    contact.address && {
+      key: 'address',
+      text: contact.address,
+      href: null as string | null,
+      icon: ['M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z', 'M15 11a3 3 0 11-6 0 3 3 0 016 0z'],
+    },
+    contact.email && {
+      key: 'email',
+      text: contact.email,
+      href: `mailto:${contact.email}`,
+      icon: ['M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+    },
+    contact.phone && {
+      key: 'phone',
+      text: contact.phone,
+      href: `tel:${contact.phone}`,
+      icon: ['M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
+    },
+    contact.hours && {
+      key: 'hours',
+      text: contact.hours,
+      href: null,
+      icon: ['M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+    },
+  ].filter(Boolean) as { key: string; text: string; href: string | null; icon: string[] }[];
+});
+
+const socialLinks = computed(() =>
+  defaultSocialLinks
+    .map((social) => ({
+      ...social,
+      href: appSettings.value?.socials[social.key as keyof AppSettings['socials']] as string | undefined,
+    }))
+    .filter((social) => !!social.href),
+);
 
 const defaultSocialLinks = [
   {
@@ -75,7 +124,14 @@ const defaultSocialLinks = [
   }
 ];
 
-const quickLinks = [
+interface FooterLink {
+  name: string;
+  path: string;
+  highlight?: boolean;
+  devOnly?: boolean;
+}
+
+const quickLinks: FooterLink[] = [
   { name: 'Home', path: '/' },
   { name: 'Blog', path: '/blog' },
   { name: 'About', path: '/about' },
@@ -83,7 +139,7 @@ const quickLinks = [
   { name: 'Partner With Us', path: '/pharmacy/onboard', highlight: true },
 ];
 
-const supportLinks = [
+const supportLinks: FooterLink[] = [
   { name: 'How to Use FyndRx', path: '/how-to-use' },
   { name: 'Help Center', path: '/help' },
   { name: 'FAQs', path: '/faq' },
@@ -93,7 +149,7 @@ const supportLinks = [
 
 const isProduction = import.meta.env.PROD;
 
-const informationLinks = [
+const informationLinks: FooterLink[] = [
   { name: 'Terms of Service', path: '/terms' },
   { name: 'Privacy Policy', path: '/privacy' },
   { name: 'Email Gallery', path: '/email-gallery', devOnly: true },
@@ -110,221 +166,186 @@ export default {
 </script>
 
 <template>
-  <footer class="print:hidden relative bg-gradient-to-b from-[#1A2233] to-[#0F172A] text-white pt-16 pb-8">
-    <!-- Decorative elements -->
-    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#246BFD] via-[#FE9615] to-[#246BFD]"></div>
-    
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-7">
-        <!-- Brand Section -->
-        <div class="space-y-6 lg:col-span-2">
-          <router-link to="/" class="inline-flex items-center group">
-            <img 
-              :src="logoWhiteOrange" 
-              alt="FyndRx Logo" 
-              class="h-20 w-auto mr-3 transition-transform duration-300 group-hover:rotate-12"
-            />
-            <!-- <span class="text-3xl font-extrabold text-white">
-              Fynd<span class="text-[#FE9615]">Rx</span>
-            </span> -->
-          </router-link>
-          <p class="leading-relaxed text-gray-400" :class="aboutExpanded ? '' : 'line-clamp-3'">
-            {{ aboutText }}
-          </p>
-          <button
-            v-if="aboutNeedsToggle"
-            type="button"
-            @click="aboutExpanded = !aboutExpanded"
-            class="text-sm font-bold text-[#FE9615] hover:underline -mt-2"
-          >
-            {{ aboutExpanded ? 'Show less' : 'Read more' }}
-          </button>
-          <div class="flex space-x-4">
-            <template v-for="social in defaultSocialLinks" :key="social.name">
-              <a 
-                v-if="appSettings?.socials[social.key as keyof AppSettings['socials']]"
-                :href="appSettings.socials[social.key as keyof AppSettings['socials']]"
-                target="_blank"
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#FE9615] transition-all duration-300 group"
-              >
-                <svg 
-                  class="w-5 h-5 text-gray-400 transition-colors group-hover:text-white" 
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path :d="social.icon" />
-                </svg>
-              </a>
-            </template>
-          </div>
-        </div>
+  <footer class="print:hidden px-4 pt-10 pb-6 sm:px-6">
+    <div
+      class="relative overflow-hidden mx-auto lg:max-w-7xl rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br from-gray-900 via-brand-950 to-gray-900 text-white ring-1 ring-white/10 shadow-float"
+    >
+      <!-- Ambient light: the same blue and orange as the page, kept very low -->
+      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute -top-40 -left-24 w-[30rem] h-[30rem] rounded-full bg-brand-500/20 blur-3xl"></div>
+        <div class="absolute -bottom-48 -right-24 w-[30rem] h-[30rem] rounded-full bg-accent-500/10 blur-3xl"></div>
+        <!-- Thin brand-colour highlight along the top edge -->
+        <div class="absolute top-0 h-px inset-x-12 bg-gradient-to-r from-transparent via-accent-500/70 to-transparent"></div>
+      </div>
 
-        <!-- Quick Links -->
-        <div class="lg:col-span-1">
-          <h4 class="relative inline-block mb-6 text-lg font-semibold">
-            Quick Links
-            <span class="absolute bottom-0 left-0 w-full h-0.5 bg-[#FE9615] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
-          </h4>
-          <ul class="space-y-3">
-            <li v-for="link in quickLinks" :key="link.name">
-              <router-link 
-                :to="link.path"
-                custom
-                v-slot="{ href, navigate, isActive }"
+      <div class="relative px-6 pt-12 pb-8 sm:px-10 sm:pt-14 lg:px-14">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
+          <!-- Brand -->
+          <div class="space-y-6 lg:col-span-5">
+            <router-link to="/" class="inline-flex items-center group focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 rounded-xl" aria-label="FyndRx home">
+              <img
+                :src="logoWhiteOrange"
+                alt="FyndRx"
+                class="w-auto h-14 sm:h-16 transition-transform duration-300 ease-out-quart group-hover:rotate-6 motion-reduce:transition-none motion-reduce:group-hover:rotate-0"
+              />
+            </router-link>
+
+            <div>
+              <p class="max-w-md leading-relaxed text-gray-300" :class="aboutExpanded ? '' : 'line-clamp-3'">
+                {{ aboutText }}
+              </p>
+              <button
+                v-if="aboutNeedsToggle"
+                type="button"
+                class="mt-2 text-sm font-bold rounded text-accent-400 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-500/30"
+                :aria-expanded="aboutExpanded"
+                @click="aboutExpanded = !aboutExpanded"
               >
+                {{ aboutExpanded ? 'Show less' : 'Read more' }}
+              </button>
+            </div>
+
+            <ul v-if="socialLinks.length" class="flex flex-wrap gap-3">
+              <li v-for="social in socialLinks" :key="social.name">
                 <a
-                  :href="href"
-                  @click="navigate"
-                  class="relative transition-colors duration-300 group flex items-center gap-1.5"
-                  :class="isActive ? 'text-[#246BFD] font-bold' : link.highlight ? 'text-[#FE9615] font-semibold hover:text-[#ffb547]' : 'text-gray-400 hover:text-white'"
+                  :href="social.href"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  :aria-label="`FyndRx on ${social.name}`"
+                  class="flex items-center justify-center text-gray-300 transition duration-200 rounded-full w-11 h-11 bg-white/10 ring-1 ring-white/10 ease-out-quart hover:-translate-y-0.5 hover:bg-accent-500 hover:text-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
                 >
-                  <span
-                    v-if="isActive"
-                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
-                  ></span>
-                  {{ link.name }}
-                  <svg v-if="link.highlight" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path :d="social.icon" />
                   </svg>
                 </a>
-              </router-link>
-            </li>
-          </ul>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Link columns -->
+          <div class="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+            <nav v-for="group in linkGroups" :key="group.title" :aria-label="group.title">
+              <h3 class="mb-5 text-sm font-semibold tracking-wider text-white uppercase">{{ group.title }}</h3>
+              <ul class="space-y-3">
+                <li v-for="link in group.links" :key="link.name">
+                  <router-link :to="link.path" custom v-slot="{ href, navigate, isActive }">
+                    <a
+                      :href="href"
+                      class="group inline-flex items-center gap-1.5 rounded transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                      :class="isActive
+                        ? 'text-brand-300 font-semibold'
+                        : link.highlight
+                          ? 'text-accent-400 font-semibold hover:text-accent-300'
+                          : 'text-gray-300 hover:text-white'"
+                      :aria-current="isActive ? 'page' : undefined"
+                      @click="navigate"
+                    >
+                      {{ link.name }}
+                      <svg
+                        v-if="link.highlight"
+                        class="w-3.5 h-3.5 transition-transform duration-200 ease-out-quart group-hover:translate-x-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </a>
+                  </router-link>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
 
-        <!-- Support -->
-        <div class="lg:col-span-1">
-          <h4 class="mb-6 text-lg font-semibold">Support</h4>
-          <ul class="space-y-3">
-            <li v-for="link in supportLinks" :key="link.name">
-              <router-link 
-                :to="link.path"
-                custom
-                v-slot="{ href, navigate, isActive }"
-              >
-                <a 
-                  :href="href" 
-                  @click="navigate"
-                  class="relative transition-colors duration-300 group flex items-center"
-                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
-                >
-                  <span 
-                    v-if="isActive" 
-                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
-                  ></span>
-                  {{ link.name }}
-                </a>
-              </router-link>
+        <!-- Contact + app badges -->
+        <div
+          v-if="contactItems.length || appSettings?.links.app_store || appSettings?.links.play_store"
+          class="flex flex-col gap-8 pt-8 mt-12 border-t lg:flex-row lg:items-center lg:justify-between border-white/10"
+        >
+          <ul v-if="contactItems.length" class="grid grid-cols-1 gap-x-8 gap-y-3 text-gray-300 sm:grid-cols-2 lg:flex lg:flex-wrap">
+            <li v-for="item in contactItems" :key="item.key" class="flex items-start gap-2.5">
+              <svg class="w-5 h-5 mt-0.5 text-accent-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path v-for="d in item.icon" :key="d" stroke-linecap="round" stroke-linejoin="round" :d="d" />
+              </svg>
+              <a v-if="item.href" :href="item.href" class="transition-colors rounded hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30">{{ item.text }}</a>
+              <span v-else>{{ item.text }}</span>
             </li>
           </ul>
-        </div>
 
-        <!-- Information -->
-        <div class="lg:col-span-1">
-          <h4 class="mb-6 text-lg font-semibold">Information</h4>
-          <ul class="space-y-3">
-            <li v-for="link in informationLinks" :key="link.name" v-show="!link.devOnly || !isProduction">
-              <router-link
-                :to="link.path"
-                custom
-                v-slot="{ href, navigate, isActive }"
-              >
-                <a 
-                  :href="href" 
-                  @click="navigate"
-                  class="relative transition-colors duration-300 group flex items-center"
-                  :class="isActive ? 'text-[#246BFD] font-bold' : 'text-gray-400 hover:text-white'"
-                >
-                  <span 
-                    v-if="isActive" 
-                    class="absolute -left-3 w-1.5 h-1.5 rounded-full bg-[#246BFD] shadow-[0_0_8px_#246BFD]"
-                  ></span>
-                  {{ link.name }}
-                </a>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Contact Info -->
-        <div class="lg:col-span-2">
-          <h4 class="mb-6 text-lg font-semibold">Contact Us</h4>
-          <ul class="space-y-3 text-gray-400">
-            <li class="flex items-start" v-if="appSettings?.contact.address">
-              <svg class="w-5 h-5 text-[#FE9615] mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              <span>{{ appSettings.contact.address }}</span>
-            </li>
-            <li class="flex items-center" v-if="appSettings?.contact.email">
-              <svg class="w-5 h-5 text-[#FE9615] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-              <a :href="`mailto:${appSettings.contact.email}`" class="hover:text-white transition-colors">{{ appSettings.contact.email }}</a>
-            </li>
-            <li class="flex items-center" v-if="appSettings?.contact.phone">
-              <svg class="w-5 h-5 text-[#FE9615] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-              </svg>
-              <a :href="`tel:${appSettings.contact.phone}`" class="hover:text-white transition-colors">{{ appSettings.contact.phone }}</a>
-            </li>
-            <li class="flex items-center" v-if="appSettings?.contact.hours">
-              <svg class="w-5 h-5 text-[#FE9615] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>{{ appSettings.contact.hours }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- App Store Badges -->
-        <div class="lg:col-span-2">
-          <h4 class="mb-6 text-lg font-semibold">Download Our App</h4>
-          <div class="flex space-x-4">
-            <a v-if="appSettings?.links.app_store" :href="appSettings.links.app_store" target="_blank" class="transition-opacity hover:opacity-90">
-              <img :src="appStoreBanner" alt="Download on the App Store" class="w-full h-10" />
+          <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <a
+              v-if="appSettings?.links.app_store"
+              :href="appSettings.links.app_store"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="transition duration-200 rounded-lg ease-out-quart hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+            >
+              <img :src="appStoreBanner" alt="Download on the App Store" class="w-auto h-11" />
             </a>
-            <a v-if="appSettings?.links.play_store" :href="appSettings.links.play_store" target="_blank" class="transition-opacity hover:opacity-90">
-              <img :src="playStoreBanner" alt="GET IT ON Google Play" class="w-full h-10" />
+            <a
+              v-if="appSettings?.links.play_store"
+              :href="appSettings.links.play_store"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="transition duration-200 rounded-lg ease-out-quart hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+            >
+              <img :src="playStoreBanner" alt="Get it on Google Play" class="w-auto h-11" />
             </a>
           </div>
         </div>
-      </div>
 
-      <!-- Partners Section -->
-      <div v-if="partners.length > 0" class="mt-16 pt-8 border-t border-gray-800">
-        <h4 class="text-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em] mb-10">
-          Trusted Partners
-        </h4>
-        <div class="flex flex-wrap justify-center items-center gap-6 md:gap-10">
-          <a
-            v-for="partner in partners"
-            :key="partner.id"
-            :href="partner.website"
-            target="_blank"
-            rel="noopener noreferrer"
-            :title="partner.name"
-            class="flex items-center justify-center h-14 md:h-16 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300"
-          >
-            <img :src="partner.logo" :alt="partner.name" class="max-h-8 md:max-h-10 max-w-full w-auto object-contain" />
-          </a>
+        <!-- Partners: on light chips so any logo, dark or light, stays legible -->
+        <div v-if="partners.length > 0" class="pt-8 mt-8 border-t border-white/10">
+          <h3 class="mb-6 text-xs font-bold tracking-[0.2em] text-center text-gray-400 uppercase">Trusted Partners</h3>
+          <ul class="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+            <li v-for="partner in partners" :key="partner.id">
+              <a
+                :href="partner.website"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="partner.name"
+                class="flex items-center justify-center h-14 px-5 transition duration-200 bg-white rounded-2xl opacity-90 ease-out-quart hover:-translate-y-0.5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+              >
+                <span v-if="brokenLogos.has(partner.id)" class="text-sm font-medium text-gray-700">{{ partner.name }}</span>
+                <img
+                  v-else
+                  :src="partner.logo"
+                  :alt="partner.name"
+                  class="object-contain w-auto max-w-full max-h-8 md:max-h-9"
+                  @error="onLogoError(partner.id)"
+                />
+              </a>
+            </li>
+          </ul>
         </div>
-      </div>
 
-      <!-- Copyright -->
-      <div class="pt-8 mt-12 text-center border-t border-gray-800">
-        <p class="text-gray-400">
-          &copy; {{ currentYear }} FyndRX. All rights reserved.
-        </p>
+        <!-- Copyright (back-to-top sits on the left so it never collides with the floating chat button) -->
+        <div class="flex items-center gap-4 pt-6 mt-8 border-t border-white/10">
+          <button
+            type="button"
+            aria-label="Back to top"
+            class="flex items-center justify-center text-gray-300 transition duration-200 rounded-full w-11 h-11 shrink-0 bg-white/10 ring-1 ring-white/10 ease-out-quart hover:-translate-y-0.5 hover:bg-white/20 hover:text-white active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+            @click="backToTop"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+          <p class="text-sm text-gray-400">&copy; {{ currentYear }} FyndRX. All rights reserved.</p>
+        </div>
       </div>
     </div>
   </footer>
 </template>
 
 <style scoped>
-
-.router-link-active {
-  color: white;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-</style> 
+</style>

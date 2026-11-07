@@ -24,10 +24,20 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+  <div class="relative min-h-screen isolate overflow-x-clip">
+    <!-- One continuous page canvas: pastel brand wash + soft orbs spaced down the page.
+         Sections are transparent, so there is never a hard edge between them. -->
+    <div class="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-accent-50/70 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"></div>
+      <div class="absolute top-[14%] -right-72 h-[44rem] w-[44rem] rounded-full bg-brand-200/40 blur-[130px] dark:bg-brand-500/10"></div>
+      <div class="absolute top-[30%] -left-72 h-[44rem] w-[44rem] rounded-full bg-accent-200/40 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[48%] -right-72 h-[44rem] w-[44rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/8"></div>
+      <div class="absolute top-[66%] -left-72 h-[44rem] w-[44rem] rounded-full bg-accent-200/35 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[84%] -right-72 h-[44rem] w-[44rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/8"></div>
+    </div>
+
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-[#246BFD]/10 to-[#FE9615]/10"></div>
       <Hero />
     </section>
 
@@ -48,15 +58,16 @@ useSeoMeta({
       <PartnershipBanner />
     </section>
 
-    <!-- Z2: Mid-feed banner ad -->
-    <section class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <AdZone zone="Z2-home-midfeed" route="home" />
-    </section>
-
     <!-- Features Section -->
     <section class="relative">
       <Features />
     </section>
+
+    <!-- Z2: Mid-feed banner ad. Sits after the value proposition (not between it and the partner pitch);
+         `empty:hidden` removes the frame's spacing when no ad resolves. -->
+    <div class="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-4 sm:py-6 empty:hidden">
+      <AdZone zone="Z2-home-midfeed" route="home" />
+    </div>
 
     <!-- Consultation Section -->
     <section class="relative">

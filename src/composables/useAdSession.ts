@@ -1,10 +1,15 @@
 // Session-level ad frequency capping (in-memory, no persistence).
 // Counts impressions per ad id per session, respects per-zone caps.
 
+import { ref } from 'vue';
 import { adsService } from '@/services/adsService';
 
 const impressions = new Map<string, number>();
 const dismissed = new Set<string>();
+
+// True while the mobile sticky ad bar is on screen. Other fixed UI (e.g. the chat button)
+// reads this to lift itself clear of the bar instead of permanently reserving the space.
+export const stickyBarVisible = ref(false);
 
 const ZONE_CAPS: Record<string, number> = {
   'Z6-dashboard-spotlight': 1,
