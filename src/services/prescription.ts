@@ -20,6 +20,7 @@ export interface MedicationItem {
   instruction?: string;
   brand_id?: number;
   form_id?: number;
+  unit_id?: number;
   uom_id?: number;
 }
 

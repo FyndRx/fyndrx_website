@@ -8,6 +8,8 @@ export interface OrderItem {
   formName: string;
   strengthId: number;
   strength: string;
+  unitId?: number;
+  unit?: string;
   uomId: number;
   uom: string;
   quantity: number;

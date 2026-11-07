@@ -11,6 +11,8 @@ export interface SmartSearchProduct {
     form_id: number;
     strength: string;
     strength_id: number;
+    unit?: string;
+    unit_id?: number;
     uom: string;
     uom_id: number;
     image: string | null;

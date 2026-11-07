@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
+import ProductName from '@/components/ProductName.vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
@@ -295,8 +296,8 @@ const startShopping = () => {
                   </div>
 
                   <div class="flex-1 min-w-0">
-                    <h4 class="mb-1 text-lg font-bold text-gray-900 dark:text-white truncate">
-                      {{ item.medicationName }}
+                    <h4 class="mb-1 text-lg font-bold text-gray-900 dark:text-white">
+                      <ProductName :name="item.medicationName" />
                     </h4>
                     <div class="mb-2">
                       <div class="flex items-center gap-2 flex-wrap">

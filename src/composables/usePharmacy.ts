@@ -319,6 +319,8 @@ export function usePharmacy() {
       formName: price.form_name || '',
       strengthId: price.strength_id || 0,
       strength: price.strength || '',
+      unitId: price.unit_id || 0,
+      unit: price.unit || '',
       uomId: price.uom_id || 0,
       uom: price.uom || '',
       
@@ -347,6 +349,7 @@ export function usePharmacy() {
         brand_id: price.brand_id,
         form_id: price.form_id,
         strength_id: price.strength_id,
+        unit_id: price.unit_id,
         uom_id: price.uom_id
       }
     });

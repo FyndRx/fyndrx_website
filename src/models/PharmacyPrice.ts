@@ -8,6 +8,7 @@ export interface PharmacyPrice {
   drug_id: number; // drugs table not migrated — stays number
   brand_id: number;
   strength_id?: number;
+  unit_id?: number;
   uom_id?: number;
   price: number;
   discount_price?: number;
@@ -56,6 +57,7 @@ export interface PharmacyPrice {
   brand_name?: string;
   form_name?: string;
   strength?: string;
+  unit?: string;
   uom?: string;
   requires_prescription?: boolean;
   price_id?: number;

@@ -11,15 +11,15 @@ export interface DrugBrandApiResponse {
   image?: string | null;
 }
 
-export interface DrugUomApiResponse {
+export interface DrugUnitApiResponse {
   id: number;
-  uom: string;
+  unit: string;
 }
 
 export interface DrugStrengthApiResponse {
   id: number;
   strength: string;
-  uoms: DrugUomApiResponse[];
+  units: DrugUnitApiResponse[];
 }
 
 export interface DrugFormApiResponse {

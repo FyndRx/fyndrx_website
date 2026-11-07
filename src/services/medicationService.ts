@@ -115,6 +115,8 @@ export const medicationService = {
             form_id: p.form_id || 0,
             strength: p.strength || '',
             strength_id: p.strength_id || 0,
+            unit: p.unit || '',
+            unit_id: p.unit_id || 0,
             uom: p.uom || '',
             uom_id: p.uom_id || 0,
             image: p.image || null,

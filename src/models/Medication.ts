@@ -4,9 +4,10 @@ export interface MedicationBrand {
   image?: string;
 }
 
-export interface MedicationUOM {
+/** Strength unit, e.g. MG or MG/5ML (the unit of measure, e.g. Tablet(s), is separate). */
+export interface MedicationUnit {
   id: number;
-  uom: string;
+  unit: string;
 }
 
 export interface Category {
@@ -18,7 +19,7 @@ export interface Category {
 export interface MedicationStrength {
   id: number;
   strength: string;
-  uoms: MedicationUOM[];
+  units: MedicationUnit[];
 }
 
 export interface MedicationForm {
@@ -49,7 +50,9 @@ export interface Medication {
   form_name?: string;
   strength_id?: number;
   strength?: string;
+  unit_id?: number;
   uom_id?: number;
+  unit?: string;
   uom?: string;
   starting_price?: number;
   pharmacy_id?: string;

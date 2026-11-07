@@ -117,6 +117,8 @@ export function useBranchDetail() {
       formName: price.form_name || '',
       strengthId: price.strength_id || 0,
       strength: price.strength || '',
+      unitId: price.unit_id || 0,
+      unit: price.unit || '',
       uomId: price.uom_id || 0,
       uom: price.uom || '',
       quantity: 1,

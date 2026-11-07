@@ -10,6 +10,7 @@ export interface OrderItemApiResponse {
   brand_id: number | null;
   form_id: number | null;
   strength_id: number | null;
+  unit_id?: number | null;
   uom_id: number | null;
   name: string;
   image?: string | null;

@@ -19,6 +19,7 @@ export interface CartItemApiResponse {
   brand_id: number | null;
   form_id: number | null;
   strength_id: number | null;
+  unit_id?: number | null;
   uom_id: number | null;
 
   // Flattened product metadata
@@ -37,6 +38,7 @@ export interface CartItemApiResponse {
   brand_name?: string | null;
   form_name?: string | null;
   strength?: string | null;
+  unit?: string | null;
   uom?: string | null;
 
   // Pharmacy & Branch Info (Flattened from API)
