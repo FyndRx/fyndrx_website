@@ -14,14 +14,16 @@ interface TypeStyle {
 
 // Flat, single-hue fill — bg tint matches the icon's own text color.
 const TYPE_CONTAINER_CLASS: Record<NotificationIconKey, string> = {
-  order: 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400',
-  prescription: 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400',
-  pharmacy: 'bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400',
-  broadcast: 'bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400',
+  // The icon shape already tells the types apart, so colour stays within the brand palette:
+  // blue for account/clinical items, orange for order and announcement activity.
+  order: 'bg-accent-500/15 text-accent-600 dark:text-accent-400',
+  prescription: 'bg-brand-500/10 text-brand-600 dark:text-brand-300',
+  pharmacy: 'bg-brand-500/10 text-brand-600 dark:text-brand-300',
+  broadcast: 'bg-accent-500/15 text-accent-600 dark:text-accent-400',
   // Emerald, matching PriceAlertButton's "watching" color and the "completed/paid"
   // status family — reinforces "savings/good news" the same way everywhere it appears.
-  price_alert: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400',
-  info: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
+  price_alert: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  info: 'bg-gray-500/10 text-gray-600 dark:text-gray-300',
 };
 
 // Backend types seen today: ORDER_STATUS_UPDATE, NEW_ORDER, NEW_PRESCRIPTION,

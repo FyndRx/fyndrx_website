@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl animate-pulse">
+  <div class="p-6 rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 animate-pulse">
     <div class="flex items-start gap-4 mb-4">
       <div class="flex-shrink-0 w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
       <div class="flex-1 space-y-2">
@@ -23,7 +23,7 @@
       <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-28"></div>
     </div>
 
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="pt-4 border-t border-gray-200/70 dark:border-white/10">
       <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-full w-full"></div>
     </div>
   </div>

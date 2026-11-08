@@ -33,29 +33,29 @@ const categoryMeta: CategoryMeta[] = [
   {
     name: 'Chronic Condition',
     icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
-    color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    border: 'border-amber-200 dark:border-amber-900/30',
-    hoverRing: 'hover:ring-4 hover:ring-amber-500/10',
-    solid: 'bg-amber-500',
+    color: 'text-accent-600 dark:text-accent-400',
+    bg: 'bg-accent-500/15',
+    border: 'border-accent-500/30',
+    hoverRing: 'hover:ring-4 hover:ring-accent-500/10',
+    solid: 'bg-accent-500',
   },
   {
     name: 'Current Medication',
     icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.675.337a4 4 0 01-2.586.344l-2.387-.477a2 2 0 00-1.022.547l-1.428 1.428a2 2 0 00-.586 1.414v.572a2 2 0 002 2h12a2 2 0 002-2v-.572a2 2 0 00-.586-1.414l-1.428-1.428z',
-    color: 'text-[#246BFD] dark:text-[#5089FF]',
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-900/30',
-    hoverRing: 'hover:ring-4 hover:ring-[#246BFD]/10',
-    solid: 'bg-[#246BFD]',
+    color: 'text-brand-600 dark:text-brand-300',
+    bg: 'bg-brand-500/10',
+    border: 'border-brand-500/30',
+    hoverRing: 'hover:ring-4 hover:ring-brand-500/10',
+    solid: 'bg-brand-500',
   },
   {
     name: 'Past Surgery',
     icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-    color: 'text-violet-600 dark:text-violet-400',
-    bg: 'bg-violet-50 dark:bg-violet-900/20',
-    border: 'border-violet-200 dark:border-violet-900/30',
-    hoverRing: 'hover:ring-4 hover:ring-violet-500/10',
-    solid: 'bg-violet-500',
+    color: 'text-slate-600 dark:text-slate-300',
+    bg: 'bg-slate-500/10',
+    border: 'border-slate-500/30',
+    hoverRing: 'hover:ring-4 hover:ring-slate-500/10',
+    solid: 'bg-slate-500',
   },
   {
     name: 'Family History',
@@ -168,14 +168,14 @@ const confirmDelete = async () => {
   <div class="space-y-8">
     <div class="flex items-center justify-between flex-wrap gap-4">
       <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-        <svg class="w-6 h-6 mr-2 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 mr-2 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
         Medical History
       </h3>
       <button
         @click="openAddModal()"
-        class="text-sm font-black text-[#246BFD] hover:text-[#5089FF] transition-all flex items-center space-x-1 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-full border border-blue-100 dark:border-blue-800/20"
+        class="text-sm font-semibold text-brand-500 hover:text-brand-400 transition-all flex items-center space-x-1 bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-full border border-brand-100 dark:border-brand-800/20"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -192,8 +192,8 @@ const confirmDelete = async () => {
         @click="toggleCategory(cat.name)"
         class="flex-shrink-0 flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full border-2 transition-all duration-300"
         :class="selectedCategory === cat.name
-          ? `${cat.solid} border-transparent text-white shadow-lg`
-          : `bg-white dark:bg-gray-800 ${cat.border} ${cat.color} hover:shadow-md`"
+          ? `${cat.solid} border-transparent text-white shadow-card`
+          : `bg-white/80 dark:bg-gray-800/70 ${cat.border} ${cat.color} hover:shadow-md`"
       >
         <span
           class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
@@ -203,9 +203,9 @@ const confirmDelete = async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="cat.icon"></path>
           </svg>
         </span>
-        <span class="text-xs font-black uppercase tracking-tight whitespace-nowrap">{{ cat.name }}</span>
+        <span class="text-xs font-semibold whitespace-nowrap">{{ cat.name }}</span>
         <span
-          class="text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          class="text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
           :class="selectedCategory === cat.name ? 'bg-white/25 text-white' : `${cat.bg} ${cat.color}`"
         >
           {{ countFor(cat.name) }}
@@ -217,7 +217,7 @@ const confirmDelete = async () => {
     <div v-if="hasAnyRecords" class="space-y-8">
       <div v-for="cat in visibleCategories" :key="cat.name">
         <div v-if="groupedRecords[cat.name].length" class="space-y-3">
-          <div class="flex items-center text-[10px] font-black uppercase tracking-[0.2em] px-1" :class="cat.color">
+          <div class="flex items-center text-xs font-semibold px-1" :class="cat.color">
             <span class="w-1.5 h-1.5 rounded-full mr-2" :class="cat.solid"></span>
             {{ cat.name }}
           </div>
@@ -226,7 +226,7 @@ const confirmDelete = async () => {
             <div
               v-for="record in groupedRecords[cat.name]"
               :key="record.id"
-              class="group relative p-5 rounded-2xl border-2 bg-white dark:bg-gray-800/50 transition-all duration-300 hover:shadow-xl"
+              class="group relative p-5 rounded-2xl border-2 bg-white/70 dark:bg-gray-800/50 transition-all duration-300 hover:shadow-card-hover"
               :class="[cat.border, cat.hoverRing]"
             >
               <div class="flex justify-between items-start gap-3">
@@ -239,10 +239,10 @@ const confirmDelete = async () => {
                   <div class="min-w-0">
                     <h4 class="font-bold text-gray-900 dark:text-white truncate">{{ record.item_name }}</h4>
                     <div class="flex items-center space-x-2 mt-1 flex-wrap gap-y-1">
-                      <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-black uppercase tracking-tighter">
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-semibold ">
                         {{ record.status }}
                       </span>
-                      <span v-if="record.date_identified" class="text-[10px] text-gray-400 font-medium">
+                      <span v-if="record.date_identified" class="text-xs text-gray-400 font-medium">
                         {{ new Date(record.date_identified).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) }}
                       </span>
                     </div>
@@ -250,7 +250,7 @@ const confirmDelete = async () => {
                 </div>
 
                 <div class="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                  <button @click="openEditModal(record)" class="p-2 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#246BFD] hover:bg-blue-50 transition-all">
+                  <button @click="openEditModal(record)" class="p-2 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 01-2 2v11a2 2 0 012 2h11a2 2 0 012-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
@@ -273,14 +273,14 @@ const confirmDelete = async () => {
 
       <div v-if="selectedCategory && !groupedRecords[selectedCategory].length" class="text-center py-10 text-sm text-gray-400">
         No {{ selectedCategory.toLowerCase() }} entries yet.
-        <button @click="openAddModal(selectedCategory)" class="text-[#246BFD] font-bold hover:underline ml-1">Add one</button>
+        <button @click="openAddModal(selectedCategory)" class="text-brand-500 font-bold hover:underline ml-1">Add one</button>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center py-20 bg-gray-50 dark:bg-gray-700/30 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-600">
-      <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg class="w-10 h-10 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-else class="text-center py-20 bg-white/60 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-600">
+      <div class="w-20 h-20 bg-brand-50 dark:bg-brand-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
         </svg>
       </div>
@@ -293,7 +293,7 @@ const confirmDelete = async () => {
           v-for="cat in categoryMeta.slice(0, 3)"
           :key="cat.name"
           @click="openAddModal(cat.name)"
-          class="px-4 py-2.5 rounded-full bg-white dark:bg-gray-700 border-2 text-sm font-bold transition-colors flex items-center space-x-2"
+          class="px-4 py-2.5 rounded-full bg-white/80 dark:bg-gray-700/70 border-2 text-sm font-bold transition-colors flex items-center space-x-2"
           :class="[cat.border, cat.color]"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,16 +305,17 @@ const confirmDelete = async () => {
     </div>
 
     <!-- Medical Record Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-        <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="w-full overflow-hidden bg-white shadow-float rounded-3xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 animate-in zoom-in duration-300 max-w-lg" role="dialog" aria-modal="true" aria-label="Medical history form">
+        <div class="p-8 border-b border-gray-200/70 dark:border-white/10 flex items-center justify-between bg-brand-50/30 dark:bg-brand-900/10">
           <div>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            <h4 class="text-2xl font-semibold text-gray-900 dark:text-white ">
               {{ editingRecord ? 'Edit Entry' : 'Add Medical Entry' }}
             </h4>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Kept private &amp; encrypted</p>
+            <p class="text-xs text-gray-500 font-bold mt-1">Kept private &amp; encrypted</p>
           </div>
-          <button @click="showModal = false" class="w-12 h-12 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
+          <button @click="showModal = false" class="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-700/70 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -323,15 +324,15 @@ const confirmDelete = async () => {
 
         <form @submit.prevent="handleSubmit" class="p-8 space-y-6 overflow-y-auto max-h-[75vh] no-scrollbar">
           <div>
-            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category</label>
+            <label class="block text-xs font-semibold text-gray-400 mb-2">Category</label>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <button
                 v-for="cat in categoryMeta"
                 :key="cat.name"
                 type="button"
                 @click="form.category = cat.name"
-                class="px-3 py-2.5 rounded-full border-2 text-[10px] font-black uppercase tracking-tight transition-all"
-                :class="form.category === cat.name ? `${cat.solid} border-transparent text-white shadow-md` : `bg-gray-50 dark:bg-gray-700 ${cat.border} ${cat.color} hover:shadow-sm`"
+                class="px-3 py-2.5 rounded-full border-2 text-xs font-semibold transition-all"
+                :class="form.category === cat.name ? `${cat.solid} border-transparent text-white shadow-card` : `bg-gray-50 dark:bg-gray-700 ${cat.border} ${cat.color} hover:shadow-sm`"
               >
                 {{ cat.name }}
               </button>
@@ -339,22 +340,22 @@ const confirmDelete = async () => {
           </div>
 
           <div>
-            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Name / Condition</label>
+            <label class="block text-xs font-semibold text-gray-400 mb-2">Name / Condition</label>
             <input
               v-model="form.item_name"
               type="text"
               required
-              class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-bold"
+              class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all shadow-sm font-bold"
               placeholder="e.g. Penicillin Allergy, Diabetes Type 2"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+              <label class="block text-xs font-semibold text-gray-400 mb-2">Status</label>
               <select
                 v-model="form.status"
-                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all"
+                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive / History</option>
@@ -362,24 +363,24 @@ const confirmDelete = async () => {
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Date Identified</label>
+              <label class="block text-xs font-semibold text-gray-400 mb-2">Date Identified</label>
               <input
                 v-model="form.date_identified"
                 type="date"
-                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all"
+                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Notes / Details</label>
+            <label class="block text-xs font-semibold text-gray-400 mb-2">Notes / Details</label>
             <textarea
               v-model="form.notes"
               rows="3"
-              class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all resize-none"
+              class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all resize-none"
               placeholder="Any additional details or severity..."
             ></textarea>
-            <p class="mt-2 text-[10px] text-gray-400 flex items-center">
+            <p class="mt-2 text-xs text-gray-400 flex items-center">
               <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
@@ -391,14 +392,14 @@ const confirmDelete = async () => {
             <button
               type="button"
               @click="showModal = false"
-              class="flex-1 px-8 py-4 rounded-full border-2 border-gray-100 dark:border-gray-700 text-gray-500 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
+              class="flex-1 px-8 py-4 rounded-full border-2 border-gray-200/70 dark:border-white/10 text-gray-500 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="loading"
-              class="flex-[2] px-8 py-4 rounded-full bg-[#246BFD] text-white font-black hover:bg-[#5089FF] shadow-xl shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 uppercase tracking-widest text-xs"
+              class="flex-[2] px-8 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-card shadow-brand-500/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 text-xs"
             >
               <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -410,6 +411,7 @@ const confirmDelete = async () => {
         </form>
       </div>
     </div>
+    </Teleport>
 
     <ConfirmDialog
       :show="!!recordPendingDelete"

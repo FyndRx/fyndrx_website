@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl animate-pulse">
+  <div class="p-6 bg-white shadow-card dark:bg-gray-800 rounded-2xl animate-pulse">
     <div class="flex items-start justify-between mb-4">
       <div class="space-y-2 flex-1">
         <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between pt-4 border-t border-gray-200/70 dark:border-white/10">
       <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
       <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-full w-32"></div>
     </div>

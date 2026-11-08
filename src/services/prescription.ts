@@ -55,6 +55,8 @@ export interface PrescriptionCounts {
 
 export interface GetPrescriptionsParams {
   status?: string;
+  /** Free-text search: title, Rx number, prescriber, or medication. */
+  q?: string;
   page?: number;
   per_page?: number;
 }
@@ -75,6 +77,7 @@ export const prescriptionService = {
   async getPrescriptions(params?: GetPrescriptionsParams): Promise<GetPrescriptionsResult> {
     const searchParams = new URLSearchParams();
     if (params?.status && params.status !== 'all') searchParams.set('status', params.status);
+    if (params?.q) searchParams.set('q', params.q);
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.per_page) searchParams.set('per_page', String(params.per_page));
     const qs = searchParams.toString();

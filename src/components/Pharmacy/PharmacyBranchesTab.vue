@@ -11,7 +11,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 
     <!-- Loading skeleton -->
     <div v-if="pharmacyState.branchesLoading.value" class="space-y-4">
-      <div v-for="n in (pharmacyState.pharmacy.value.branchesCount || 2)" :key="n" class="rounded-3xl bg-white dark:bg-gray-800 overflow-hidden border border-gray-100 dark:border-gray-700/50">
+      <div v-for="n in (pharmacyState.pharmacy.value.branchesCount || 2)" :key="n" class="rounded-3xl bg-white/80 dark:bg-gray-800/70 overflow-hidden ring-1 ring-gray-200/70 dark:ring-white/10">
         <div class="h-24 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
         <div class="p-6 space-y-3">
           <div class="h-4 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse w-1/2"></div>
@@ -25,19 +25,19 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
       <div
         v-for="branch in pharmacyState.branches.value"
         :key="branch.id"
-        class="rounded-3xl bg-white dark:bg-gray-800 shadow-lg border border-gray-100 dark:border-gray-700/50 hover:shadow-xl transition-all duration-500 overflow-hidden"
+        class="rounded-3xl bg-white/80 dark:bg-gray-800/70 shadow-card ring-1 ring-gray-200/70 dark:ring-white/10 hover:shadow-card-hover transition-all duration-500 overflow-hidden"
       >
         <!-- Branch banner -->
         <div
           class="relative h-28 overflow-hidden"
-          :class="!branch.bannerImage ? 'bg-gradient-to-r from-[#246BFD]/20 to-[#246BFD]/5 dark:from-[#246BFD]/10 dark:to-transparent' : ''"
+          :class="!branch.bannerImage ? 'bg-gradient-to-r from-brand-500/20 to-brand-500/5 dark:from-brand-500/10 dark:to-transparent' : ''"
         >
           <LazyImage v-if="branch.bannerImage" :src="branch.bannerImage" className="w-full h-full object-cover" :alt="branch.branchName" />
           <div v-if="branch.bannerImage" class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
 
           <!-- Identity: pharmacy logo + branch name -->
           <div class="absolute inset-0 flex items-end px-5 pb-3 gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div class="w-10 h-10 rounded-xl bg-white/80 dark:bg-gray-800/70 shadow-card flex items-center justify-center flex-shrink-0 overflow-hidden">
               <LazyImage
                 v-if="pharmacyState.pharmacy.value.logo"
                 :src="pharmacyState.pharmacy.value.logo"
@@ -45,26 +45,26 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
                 :alt="pharmacyState.pharmacy.value.name"
                 aspectRatio="square"
               />
-              <svg v-else class="w-5 h-5 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6M9 11h.01M15 11h.01M9 15h.01M15 15h.01" />
               </svg>
             </div>
             <div class="min-w-0">
-              <h4 class="text-base font-black leading-tight truncate" :class="branch.bannerImage ? 'text-white drop-shadow' : 'text-gray-900 dark:text-white'">{{ branch.branchName }}</h4>
+              <h4 class="text-base font-semibold leading-tight truncate" :class="branch.bannerImage ? 'text-white drop-shadow' : 'text-gray-900 dark:text-white'">{{ branch.branchName }}</h4>
               <div class="flex items-center gap-2 mt-0.5">
                 <span
-                  class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full backdrop-blur-sm"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full backdrop-blur-sm"
                   :class="branch.isOpen ? 'bg-emerald-100/90 text-emerald-700' : 'bg-red-100/90 text-red-700'"
                 >
                   <span class="w-1.5 h-1.5 rounded-full" :class="branch.isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"></span>
                   {{ branch.isOpen ? 'Open Now' : 'Closed' }}
                 </span>
-                <span v-if="branch.isActive === false" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100/90 text-gray-500">Inactive</span>
+                <span v-if="branch.isActive === false" class="px-2 py-0.5 text-xs font-bold rounded-full bg-gray-100/90 text-gray-500">Inactive</span>
               </div>
             </div>
             <!-- Rating badge in card banner -->
             <div v-if="(branch.rating ?? 0) > 0" class="ml-auto flex-shrink-0 flex items-center gap-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl px-2.5 py-1.5">
-              <svg class="w-3.5 h-3.5 text-amber-400 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-3.5 h-3.5 text-accent-400 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
               <span class="text-xs font-bold text-gray-800 dark:text-white">{{ branch.rating?.toFixed(1) }}</span>
             </div>
           </div>
@@ -80,28 +80,28 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <!-- Address -->
             <div>
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Address</p>
+              <p class="text-xs font-bold text-gray-400 mb-1">Address</p>
               <p class="font-semibold text-gray-900 dark:text-white leading-snug">{{ branch.address }}</p>
-              <p v-if="branch.city || branch.region" class="text-xs font-medium text-[#246BFD] mt-0.5">
+              <p v-if="branch.city || branch.region" class="text-xs font-medium text-brand-500 mt-0.5">
                 {{ [branch.city, branch.region].filter(Boolean).join(', ') }}
               </p>
               <p v-if="branch.digitalAddress" class="text-xs font-mono text-gray-400 mt-0.5">{{ branch.digitalAddress }}</p>
             </div>
             <!-- Contact -->
             <div>
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Contact</p>
-              <a :href="`tel:${branch.phone}`" class="font-semibold text-gray-900 dark:text-white hover:text-[#246BFD] transition-colors block">{{ branch.phone }}</a>
+              <p class="text-xs font-bold text-gray-400 mb-1">Contact</p>
+              <a :href="`tel:${branch.phone}`" class="font-semibold text-gray-900 dark:text-white hover:text-brand-500 transition-colors block">{{ branch.phone }}</a>
               <p v-if="branch.managerName" class="text-xs text-gray-400 mt-0.5">Manager: {{ branch.managerName }}</p>
             </div>
             <!-- Languages -->
             <div v-if="(branch.languages ?? []).length > 0">
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Languages</p>
+              <p class="text-xs font-bold text-gray-400 mb-1">Languages</p>
               <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ branch.languages!.join(' · ') }}</p>
             </div>
             <!-- Delivery -->
             <div v-if="branch.deliveryInfo">
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Delivery</p>
-              <p v-if="branch.deliveryInfo.available" class="font-semibold text-[#246BFD] text-sm">
+              <p class="text-xs font-bold text-gray-400 mb-1">Delivery</p>
+              <p v-if="branch.deliveryInfo.available" class="font-semibold text-brand-500 text-sm">
                 From GHS {{ branch.deliveryInfo.baseFee?.toFixed(0) ?? '–' }}
                 <span v-if="branch.deliveryInfo.radiusKm" class="text-gray-400 font-normal text-xs"> · {{ branch.deliveryInfo.radiusKm }} km</span>
               </p>
@@ -111,28 +111,28 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 
           <!-- Capability pills -->
           <div class="flex flex-wrap gap-1.5">
-            <span v-if="branch.acceptsOnlinePrescriptions" class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-md bg-green-50 text-green-700 border border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30">
+            <span v-if="branch.acceptsOnlinePrescriptions" class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md bg-green-50 text-green-700 border border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30">
               <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
               Online Rx
             </span>
-            <span v-for="s in (branch.specialStorage ?? [])" :key="s" class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-cyan-50 text-cyan-700 border border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-400">{{ s }}</span>
+            <span v-for="s in (branch.specialStorage ?? [])" :key="s" class="px-2 py-0.5 text-xs font-semibold rounded-md bg-brand-50 text-brand-700 border border-brand-100 dark:bg-brand-900/20 dark:text-brand-400">{{ s }}</span>
           </div>
 
           <!-- Branch services chips -->
           <div v-if="(branch.services ?? []).length > 0">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Services</p>
+            <p class="text-xs font-bold text-gray-400 mb-2">Services</p>
             <div class="flex flex-wrap gap-1.5">
               <span
                 v-for="s in branch.services!.slice(0, 5)"
                 :key="s.slug || s.id"
-                class="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-[#246BFD]/8 text-[#246BFD] border border-[#246BFD]/15 dark:bg-[#246BFD]/10 dark:text-[#5089FF]"
+                class="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-brand-500/8 text-brand-500 border border-brand-500/15 dark:bg-brand-500/10 dark:text-brand-400"
               >{{ s.name }}</span>
               <span v-if="branch.services!.length > 5" class="px-2.5 py-0.5 text-[11px] text-gray-400 border border-gray-200 dark:border-gray-700 rounded-full">+{{ branch.services!.length - 5 }}</span>
             </div>
           </div>
 
           <!-- Payment + actions -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-200/70 dark:border-white/10">
             <div v-if="(branch.acceptedPaymentMethods ?? []).length > 0" class="flex items-center gap-2">
               <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -151,12 +151,12 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
               </a>
               <router-link
                 :to="{ name: 'pharmacy-branch', params: { pharmacyId: pharmacyState.pharmacy.value.id, branchId: branch.id } }"
-                class="px-4 py-2 rounded-full bg-[#246BFD] text-white text-xs font-bold hover:bg-[#1a56d6] active:scale-95 transition-all flex items-center gap-1.5"
+                class="px-4 py-2 rounded-full bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 View Details
               </router-link>
-              <a :href="`tel:${branch.phone}`" class="px-4 py-2 rounded-full bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-white text-xs font-bold border border-gray-200 dark:border-gray-700 hover:border-[#246BFD] hover:text-[#246BFD] active:scale-95 transition-all">Call</a>
+              <a :href="`tel:${branch.phone}`" class="px-4 py-2 rounded-full bg-white/60 dark:bg-white/5 text-gray-700 dark:text-white text-xs font-bold border border-gray-200 dark:border-gray-700 hover:border-brand-500 hover:text-brand-500 active:scale-95 transition-all">Call</a>
             </div>
           </div>
         </div>

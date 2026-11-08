@@ -86,7 +86,7 @@ const unlink = async (provider: Provider) => {
     <div class="container mx-auto px-4 max-w-2xl">
 
       <div class="mb-8">
-        <h1 class="text-3xl font-black text-gray-900 dark:text-white">Security</h1>
+        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">Security</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your password and connected sign-in methods.</p>
       </div>
 
@@ -94,7 +94,7 @@ const unlink = async (provider: Provider) => {
            email is optional at signup, so a missing one isn't "unverified", it's N/A. -->
       <div
         v-if="(authStore.user?.email && !authStore.user?.email_verified) || (authStore.user?.phone_number && !authStore.user?.phone_verified)"
-        class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 md:p-8 mb-6"
+        class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-6 md:p-8 mb-6"
       >
         <h2 class="font-bold text-gray-900 dark:text-white mb-1">Verify Your Account</h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
@@ -117,7 +117,7 @@ const unlink = async (provider: Provider) => {
       </div>
 
       <!-- Change / Set Password -->
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 md:p-8 mb-6">
+      <div class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-6 md:p-8 mb-6">
         <h2 class="font-bold text-gray-900 dark:text-white mb-1">
           {{ hasPassword ? 'Change Password' : 'Set a Password' }}
         </h2>
@@ -159,7 +159,7 @@ const unlink = async (provider: Provider) => {
           <button
             type="submit"
             :disabled="!canSubmitPassword || passwordSubmitting"
-            class="px-6 py-2.5 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 hover:shadow-[#246BFD]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            class="px-6 py-2.5 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 shadow-card shadow-brand-500/20 hover:shadow-brand-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
             {{ passwordSubmitting ? 'Saving…' : hasPassword ? 'Change Password' : 'Set Password' }}
           </button>
@@ -171,7 +171,7 @@ const unlink = async (provider: Provider) => {
       </div>
 
       <!-- Connected Accounts -->
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 md:p-8">
+      <div class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-6 md:p-8">
         <h2 class="font-bold text-gray-900 dark:text-white mb-1">Connected Accounts</h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Social providers linked for sign-in.</p>
 
@@ -179,7 +179,7 @@ const unlink = async (provider: Provider) => {
           <div
             v-for="provider in PROVIDERS"
             :key="provider.key"
-            class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 dark:border-gray-700"
+            class="flex items-center gap-4 p-4 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10"
           >
             <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-gray-50 dark:bg-gray-900">
               <svg v-if="provider.key === 'google'" class="w-5 h-5" viewBox="0 0 24 24">

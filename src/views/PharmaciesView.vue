@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useScrollAnimation } from '@/composables/useScrollAnimation';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { usePullToRefresh } from '@/composables/useMobileGestures';
 import { pharmacyService, type PharmacySearchParams } from '@/services/pharmacyService';
@@ -33,7 +32,6 @@ useSeoMeta({
   ogType: 'website',
 });
 
-const { registerElement, triggerCheck } = useScrollAnimation();
 const pharmacies = ref<Pharmacy[]>([]);
 const loading = ref(true);
 const loadingMore = ref(false);
@@ -201,32 +199,34 @@ onMounted(async () => {
     .catch(() => { /* sidebar degrades gracefully */ })
     .finally(() => { servicesLoading.value = false; });
 
-  // Register static scroll-animate elements (hero, sidebar) immediately on mount.
-  // Pharmacy cards use CSS keyframe animation instead and need no JS trigger.
-  await nextTick();
-  document.querySelectorAll('.scroll-animate').forEach(el => registerElement(el as HTMLElement));
-  triggerCheck();
-
   await loadPharmacies();
 });
 </script>
 
 <template>
   <div 
-    class="min-h-screen bg-gray-50 dark:bg-gray-900"
+    class="relative pt-24 pb-16 min-h-screen isolate overflow-x-clip"
     @touchstart="handleTouchStart"
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
   >
+    <!-- Same pastel canvas as the home page -->
+    <div class="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-accent-50/70 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"></div>
+      <div class="absolute top-[4%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/40 blur-[130px] dark:bg-brand-500/10"></div>
+      <div class="absolute top-[38%] -left-72 h-[40rem] w-[40rem] rounded-full bg-accent-200/40 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[72%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/8"></div>
+    </div>
+
     <!-- Pull to Refresh Indicator -->
     <div 
       v-if="pullDistance > 0"
       class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 transition-all"
       :style="{ transform: `translate(-50%, ${Math.min(pullDistance, 80)}px)` }"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-full p-3 shadow-lg">
+      <div class="p-3 bg-white rounded-full shadow-lg dark:bg-gray-800">
         <svg 
-          class="w-6 h-6 text-[#246BFD] transition-transform"
+          class="w-6 h-6 text-brand-500 transition-transform"
           :class="{ 'animate-spin': isRefreshing }"
           fill="none" 
           stroke="currentColor" 
@@ -237,82 +237,55 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Hero Section -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-[#246BFD]/10 via-white to-[#FE9615]/8 dark:from-[#246BFD]/10 dark:via-gray-900 dark:to-[#FE9615]/5 py-16 sm:py-20">
-      <!-- Decorative blobs -->
-      <div class="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#246BFD]/8 blur-3xl dark:bg-[#246BFD]/5"></div>
-      <div class="pointer-events-none absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#FE9615]/8 blur-3xl dark:bg-[#FE9615]/5"></div>
+    <!-- Heading + search -->
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="mb-8 text-center pharm-rise">
+        <h1 class="mb-3 text-4xl font-medium text-gray-900 sm:text-5xl dark:text-white">
+          Find <span class="text-brand-500 dark:text-brand-400">Pharmacies</span> Near You
+        </h1>
+        <p class="mx-auto max-w-2xl text-lg text-gray-600 sm:text-xl dark:text-gray-300">
+          Browse licensed pharmacies, compare medication prices, and get your prescriptions filled — all in one place.
+        </p>
+      </div>
 
-      <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <!-- Heading -->
-        <div class="mb-10 text-center scroll-animate slide-up">
-          <h1 class="mb-3 text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Find Pharmacies Near You
-          </h1>
-          <p class="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Browse licensed pharmacies, compare medication prices, and get your prescriptions filled — all in one place.
-          </p>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="delay-200 scroll-animate slide-up max-w-2xl mx-auto">
-          <SearchAutocomplete
-            v-model="searchBarQuery"
-            placeholder="Search pharmacies by name, location, or services..."
-            search-type="pharmacies"
-            @search="commitSearch"
-          />
-          <div class="mt-4 flex justify-center">
-            <div class="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60">
-              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold bg-white dark:bg-gray-700 text-[#246BFD] shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                List
-              </span>
-              <router-link
-                to="/pharmacies/map"
-                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-[#246BFD] transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                Map
-              </router-link>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feature highlights -->
-        <div class="delay-300 scroll-animate slide-up mt-8 flex flex-wrap justify-center gap-3">
-          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm text-sm text-gray-600 dark:text-gray-300">
-            <svg class="w-4 h-4 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            <span class="font-medium">Licensed &amp; verified</span>
-          </div>
-          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm text-sm text-gray-600 dark:text-gray-300">
-            <svg class="w-4 h-4 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-            <span class="font-medium">Compare prices</span>
-          </div>
-          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm text-sm text-gray-600 dark:text-gray-300">
-            <svg class="w-4 h-4 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-            <span class="font-medium">Online prescriptions</span>
-          </div>
-          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm text-sm text-gray-600 dark:text-gray-300">
-            <svg class="w-4 h-4 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-            <span class="font-medium">Home delivery</span>
+      <div class="relative z-30 mx-auto max-w-3xl pharm-rise" style="--d: 0.08s">
+        <SearchAutocomplete
+          v-model="searchBarQuery"
+          placeholder="Search pharmacies by name, location, or services..."
+          search-type="pharmacies"
+          input-class="pr-12 bg-white/80 shadow-card backdrop-blur-md dark:bg-gray-800/70"
+          @search="commitSearch"
+        />
+        <div class="flex justify-center mt-4">
+          <div class="inline-flex gap-1 items-center p-1 rounded-full ring-1 backdrop-blur-md bg-white/70 ring-gray-200/80 dark:bg-white/5 dark:ring-white/10">
+            <span class="inline-flex gap-1.5 items-center px-4 py-1.5 text-sm font-medium text-white rounded-full bg-brand-500 shadow-glow-brand" aria-current="page">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+              List
+            </span>
+            <router-link
+              to="/pharmacies/map"
+              class="inline-flex gap-1.5 items-center px-4 py-1.5 text-sm font-medium text-gray-600 rounded-full transition duration-200 ease-out-quart dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+              Map
+            </router-link>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="px-4 pt-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="flex flex-col gap-8 lg:flex-row">
         <!-- Filters Sidebar -->
-        <div class="flex-shrink-0 delay-300 lg:w-64 scroll-animate slide-up">
-          <div class="sticky top-24 p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+        <div class="flex-shrink-0 lg:w-64 pharm-rise" style="--d: 0.14s">
+          <div class="sticky top-24 p-6 rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filters</h3>
               <button
                 v-if="hasActiveFilters"
                 @click="clearAllFilters"
-                class="text-xs font-medium text-[#246BFD] hover:text-[#5089FF] transition-colors"
+                class="text-sm font-medium transition-colors text-brand-600 hover:text-brand-500 dark:text-brand-300 focus-visible:outline-none focus-visible:underline"
               >
                 Clear All
               </button>
@@ -337,7 +310,7 @@ onMounted(async () => {
               <div v-if="servicesLoading" class="space-y-2">
                 <div
                   v-for="i in 6" :key="i"
-                  class="h-7 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse"
+                  class="h-7 rounded-full bg-gray-200/70 dark:bg-white/10 animate-pulse"
                   :style="{ width: `${60 + (i % 3) * 13}%` }"
                 />
               </div>
@@ -352,7 +325,7 @@ onMounted(async () => {
                   <!-- Category header (only when multiple groups exist) -->
                   <p
                     v-if="serviceGroups.length > 1"
-                    class="mb-1.5 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest"
+                    class="mb-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400"
                   >{{ group.label }}</p>
 
                   <div class="space-y-0.5">
@@ -361,16 +334,16 @@ onMounted(async () => {
                       :key="service.slug"
                       type="button"
                       @click="toggleService(service.slug)"
-                      class="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-full text-left transition-all duration-150 -mx-2"
+                      class="flex items-center gap-2.5 w-full px-2 py-1.5 rounded-full text-left transition duration-200 ease-out-quart -mx-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
                       :class="selectedServices.includes(service.slug)
-                        ? 'bg-[#246BFD]/8 text-[#246BFD] dark:bg-[#246BFD]/15 dark:text-[#5089FF]'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
+                        ? 'bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-900/5 dark:hover:bg-white/5'"
                     >
                       <!-- Checkbox indicator -->
                       <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center">
                         <span
                           v-if="selectedServices.includes(service.slug)"
-                          class="w-4 h-4 rounded bg-[#246BFD] flex items-center justify-center"
+                          class="w-4 h-4 rounded bg-brand-500 flex items-center justify-center"
                         >
                           <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -412,16 +385,16 @@ onMounted(async () => {
             </div>
 
             <!-- Active Filters Summary -->
-            <div v-if="hasActiveFilters" class="mt-6 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
-              <p class="text-xs font-medium text-blue-800 dark:text-blue-300 mb-2">Active Filters</p>
+            <div v-if="hasActiveFilters" class="p-3 mt-6 rounded-2xl bg-brand-500/10 ring-1 ring-brand-500/20">
+              <p class="mb-2 text-xs font-semibold text-brand-700 dark:text-brand-300">Active Filters</p>
               <div class="flex flex-wrap gap-1">
-                <span v-if="searchQuery" class="inline-flex items-center px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                <span v-if="searchQuery" class="inline-flex items-center px-2 py-1 text-xs bg-white/80 dark:bg-white/10 rounded-full text-gray-700 dark:text-gray-300">
                   Search: "{{ searchQuery.length > 15 ? searchQuery.substring(0, 15) + '...' : searchQuery }}"
                 </span>
-                <span v-if="isOpenNow" class="inline-flex items-center px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                <span v-if="isOpenNow" class="inline-flex items-center px-2 py-1 text-xs bg-white/80 dark:bg-white/10 rounded-full text-gray-700 dark:text-gray-300">
                   Open Now
                 </span>
-                <span v-for="service in selectedServices" :key="service" class="inline-flex items-center px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-full text-gray-700 dark:text-gray-300">
+                <span v-for="service in selectedServices" :key="service" class="inline-flex items-center px-2 py-1 text-xs bg-white/80 dark:bg-white/10 rounded-full text-gray-700 dark:text-gray-300">
                   {{ serviceNameBySlug[service] || service }}
                 </span>
               </div>
@@ -432,7 +405,7 @@ onMounted(async () => {
         <!-- Pharmacy List -->
         <div class="flex-1">
           <!-- Results Header -->
-          <div v-if="!loading && !error" class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+          <div v-if="!loading && !error" class="p-4 mb-6 rounded-2xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ total }} {{ total === 1 ? 'pharmacy' : 'pharmacies' }} found
@@ -478,8 +451,8 @@ onMounted(async () => {
               v-for="(pharmacy, index) in pharmacies"
               :key="pharmacy.id"
               :pharmacy="pharmacy"
-              class="pharmacy-card-enter"
-              :style="{ animationDelay: `${index * 60}ms` }"
+              class="pharm-card"
+              :style="{ '--i': index % 9 }"
             />
           </div>
 
@@ -488,7 +461,7 @@ onMounted(async () => {
             <button
               @click="loadMore"
               :disabled="loadingMore"
-              class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-8 py-3 text-sm font-medium text-gray-700 rounded-full border transition duration-200 bg-white/70 backdrop-blur border-gray-200 ease-out-quart dark:bg-white/5 dark:border-white/10 dark:text-gray-200 hover:border-brand-500 hover:text-brand-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
             >
               {{ loadingMore ? 'Loading…' : 'Load More Pharmacies' }}
             </button>
@@ -496,19 +469,19 @@ onMounted(async () => {
 
           <!-- Pharmacy Partner CTA — the highest-intent spot for this: anyone
                scrolling this list to check if their own pharmacy is listed. -->
-          <div class="mt-16 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#246BFD] to-[#5089FF] px-6 py-10 sm:px-12 sm:py-14 text-center shadow-xl">
+          <div class="relative px-6 py-10 mt-16 text-center rounded-3xl shadow-float overflow-hidden bg-gradient-to-br from-brand-500 to-brand-400 sm:px-12 sm:py-14">
             <div class="pointer-events-none absolute -top-10 -left-10 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
-            <div class="pointer-events-none absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#FE9615]/20 blur-2xl"></div>
+            <div class="pointer-events-none absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-accent-500/25 blur-2xl"></div>
             <div class="relative">
-              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">
+              <h2 class="mb-3 text-2xl font-semibold text-white sm:text-3xl">
                 Don't see your pharmacy listed?
               </h2>
-              <p class="text-blue-100 max-w-xl mx-auto mb-8">
+              <p class="mx-auto mb-8 max-w-xl text-brand-50">
                 Join FyndRx and reach thousands of patients searching for medicines near them. Onboarding takes minutes.
               </p>
               <router-link
                 to="/pharmacy/onboard"
-                class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white text-[#246BFD] font-bold hover:bg-gray-100 shadow-lg transition-all hover:-translate-y-0.5"
+                class="inline-flex gap-2 items-center px-8 py-3.5 font-semibold rounded-full shadow-lg transition duration-200 bg-white text-brand-600 ease-out-quart hover:bg-brand-50 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
               >
                 Partner With FyndRx
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -524,45 +497,30 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Static page chrome (hero, sidebar) fades in via JS-triggered .visible */
-.scroll-animate {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.scroll-animate.visible {
-  opacity: 1;
-  transform: translateY(0);
+/* Entrance on the same easing as the home page. `backwards` so hover transforms still apply afterwards. */
+.pharm-rise {
+  animation: pharm-rise 0.6s cubic-bezier(0.25, 1, 0.5, 1) var(--d, 0s) backwards;
 }
 
-/* Pharmacy cards animate in via CSS keyframe the moment they enter the DOM.
-   No JS timing dependency — they are always visible. */
-@keyframes cardEnter {
+.pharm-card {
+  animation: pharm-rise 0.5s cubic-bezier(0.25, 1, 0.5, 1) calc(var(--i, 0) * 60ms) backwards;
+}
+
+@keyframes pharm-rise {
   from {
     opacity: 0;
     transform: translateY(16px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
-.pharmacy-card-enter {
-  animation: cardEnter 0.45s ease-out backwards;
-}
 
-/* Ensure cards are always visible after animation completes or if animation fails */
 @media (prefers-reduced-motion: reduce) {
-  .pharmacy-card-enter {
+  .pharm-rise,
+  .pharm-card {
     animation: none;
-    opacity: 1;
   }
 }
-
-.hover-lift {
-  transition: transform 0.2s ease-out;
-}
-.hover-lift:hover {
-  transform: translateY(-4px);
-}
-</style> 
+</style>

@@ -11,7 +11,7 @@ const settingsStore = useSettingsStore();
 </script>
 
 <template>
-  <div class="sticky top-24 p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+  <div class="sticky top-24 p-6 rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
     <h2 class="mb-6 text-xl font-medium text-gray-900 dark:text-white">Order Summary</h2>
     
     <div class="space-y-4 mb-6">
@@ -29,10 +29,10 @@ const settingsStore = useSettingsStore();
         <span>Incl. {{ settingsStore.taxLabel }}</span>
         <span>~{{ formatCurrency(checkout.estimatedTaxFor()) }}</span>
       </div>
-      <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="pt-4 border-t border-gray-200/70 dark:border-white/10">
         <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">
           <span>Total</span>
-          <span class="text-[#246BFD]">{{ formatCurrency(checkout.grandTotal.value) }}</span>
+          <span class="text-brand-500">{{ formatCurrency(checkout.grandTotal.value) }}</span>
         </div>
       </div>
     </div>
@@ -40,7 +40,7 @@ const settingsStore = useSettingsStore();
     <button
       @click="checkout.placeAllOrders()"
       :disabled="checkout.loading.value || checkout.pharmaciesCheckout.value.length === 0 || checkout.pharmaciesCheckout.value.some(p => checkout.effectivePaymentMethods(p).length === 0)"
-      class="w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="w-full px-6 py-3 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
     >
       <span v-if="checkout.loading.value" class="flex items-center justify-center">
         <svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@ const settingsStore = useSettingsStore();
       </span>
     </button>
 
-    <div class="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+    <div class="p-4 mt-6 rounded-2xl bg-brand-500/10 ring-1 ring-brand-500/15">
       <p class="text-sm text-gray-600 dark:text-gray-300">
         <strong>Note:</strong> You can review and pay for each order separately after placing them.
       </p>

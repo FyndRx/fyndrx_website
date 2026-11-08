@@ -70,7 +70,7 @@ const handleSubmit = async () => {
     <div class="container mx-auto px-4 max-w-2xl">
 
       <!-- Success state -->
-      <div v-if="deleted" class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-10 text-center">
+      <div v-if="deleted" class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-10 text-center">
         <div class="inline-flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30">
           <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -81,7 +81,7 @@ const handleSubmit = async () => {
       </div>
 
       <template v-else>
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 md:p-10">
+        <div class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-8 md:p-10">
           <div class="flex items-center gap-4 mb-6">
             <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 flex-shrink-0">
               <svg class="w-7 h-7 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +141,7 @@ const handleSubmit = async () => {
               <textarea
                 v-model="reason"
                 rows="3"
-                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white/80 dark:bg-gray-800/70 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
                 placeholder="Your feedback helps us improve FyndRx for other users..."
               ></textarea>
             </div>

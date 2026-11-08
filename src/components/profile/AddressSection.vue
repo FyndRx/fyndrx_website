@@ -120,7 +120,7 @@ const setAsDefault = async (id: number) => {
 const getMapThumbnail = (lat: number | null, lng: number | null) => {
   if (!lat || !lng) return '';
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=400x200&markers=color:0x246BFD%7C${lat},${lng}&key=${apiKey}&style=feature:poi%7Cvisibility:off`;
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=400x200&markers=color:0x246BFD%7C${lat},${lng}&key=${apiKey}&style=element:geometry%7Ccolor:0xeef3fb&style=feature:water%7Celement:geometry%7Ccolor:0xb9d3ff&style=feature:road%7Celement:geometry.fill%7Ccolor:0xffffff&style=feature:road.highway%7Celement:geometry.fill%7Ccolor:0xffe4b8&style=feature:poi%7Cvisibility:off&style=feature:transit%7Cvisibility:off`; // same palette as the interactive maps (see utils/mapBrand.ts)
 };
 </script>
 
@@ -128,7 +128,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-        <svg class="w-6 h-6 mr-2 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 mr-2 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>
@@ -136,7 +136,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
       </h3>
       <button
         @click="openAddModal"
-        class="text-sm font-black text-[#246BFD] hover:text-[#5089FF] transition-all flex items-center space-x-1 uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-full border border-blue-100 dark:border-blue-800/20"
+        class="text-sm font-semibold text-brand-500 hover:text-brand-400 transition-all flex items-center space-x-1 bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-full border border-brand-100 dark:border-brand-800/20"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -149,20 +149,20 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
       <div
         v-for="address in authStore.user.addresses"
         :key="address.id"
-        class="group relative bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border-2 transition-all duration-500 hover:shadow-2xl hover:shadow-[#246BFD]/10"
-        :class="address.is_default ? 'border-[#246BFD] ring-4 ring-[#246BFD]/5' : 'border-gray-50 dark:border-gray-700 hover:border-blue-200'"
+        class="relative overflow-hidden transition duration-300 group rounded-3xl bg-white/70 shadow-card backdrop-blur-md ease-out-quart hover:shadow-card-hover dark:bg-gray-800/60"
+        :class="address.is_default ? 'ring-2 ring-brand-500' : 'ring-1 ring-white/70 dark:ring-white/10 hover:ring-brand-500/40'"
       >
         <!-- Map Thumbnail -->
         <div class="h-32 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-900">
           <img 
             :src="getMapThumbnail(Number(address.latitude), Number(address.longitude))" 
-            class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+            class="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
             alt="Location Map"
           />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-gray-950/60 to-transparent" aria-hidden="true"></div>
           
           <div v-if="address.is_default" class="absolute top-4 right-4 z-10">
-            <span class="bg-[#246BFD] text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg shadow-[#246BFD]/30 uppercase tracking-widest flex items-center">
+            <span class="bg-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-card shadow-brand-500/30 flex items-center">
               <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
               </svg>
@@ -171,14 +171,14 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
           </div>
           
           <div class="absolute bottom-3 left-4 text-white">
-            <h4 class="font-black text-sm uppercase tracking-widest drop-shadow-md">{{ address.label || 'Saved Location' }}</h4>
+            <h4 class="font-semibold text-sm drop-shadow-md">{{ address.label || 'Saved Location' }}</h4>
           </div>
         </div>
 
         <!-- Address Details -->
         <div class="p-5 space-y-4">
           <div class="flex items-start space-x-3">
-            <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-[#246BFD]">
+            <div class="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-xl text-brand-500">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -188,7 +188,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
               <p class="text-xs font-bold text-gray-900 dark:text-white leading-relaxed line-clamp-2">
                 {{ address.google_address || address.address_line_1 }}
               </p>
-              <p v-if="address.city" class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{{ address.city }}</p>
+              <p v-if="address.city" class="text-xs text-gray-400 font-bold mt-1">{{ address.city }}</p>
             </div>
           </div>
 
@@ -196,7 +196,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <div class="flex space-x-2">
               <button
                 @click="openEditModal(address)"
-                class="p-2.5 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-[#246BFD] hover:bg-blue-50 transition-all"
+                class="p-2.5 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-brand-500 hover:bg-brand-50 transition-all"
                 title="Edit Location"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <button
               v-if="!address.is_default"
               @click="setAsDefault(address.id)"
-              class="text-[10px] font-black text-[#246BFD] bg-[#246BFD]/5 px-3 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all uppercase tracking-tighter hover:bg-[#246BFD] hover:text-white"
+              class="text-xs font-semibold text-brand-500 bg-brand-500/5 px-3 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-500 hover:text-white"
             >
               Set as Default
             </button>
@@ -227,31 +227,32 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
       </div>
     </div>
 
-    <div v-else class="text-center py-20 bg-gray-50 dark:bg-gray-700/30 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-600">
-      <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg class="w-10 h-10 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-else class="text-center py-20 bg-white/60 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-600">
+      <div class="w-20 h-20 bg-brand-50 dark:bg-brand-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>
       </div>
       <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No Delivery Locations</h4>
       <p class="text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-8">Add your home or office location on the map for faster checkout.</p>
-      <button @click="openAddModal" class="px-8 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all">
+      <button @click="openAddModal" class="px-8 py-3 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 shadow-card shadow-brand-500/20 transition-all">
         Add My First Location
       </button>
     </div>
 
     <!-- Address Modal -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div class="bg-white dark:bg-gray-800 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-        <div class="p-8 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+      <div class="w-full overflow-hidden bg-white shadow-float rounded-3xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 animate-in zoom-in duration-300 max-w-2xl" role="dialog" aria-modal="true" aria-label="Address form">
+        <div class="p-8 border-b border-gray-200/70 dark:border-white/10 flex items-center justify-between bg-brand-50/30 dark:bg-brand-900/10">
           <div>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            <h4 class="text-2xl font-semibold text-gray-900 dark:text-white ">
               {{ editingAddress ? 'Edit Location' : 'Add New Location' }}
             </h4>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Specify your exact delivery point</p>
+            <p class="text-xs text-gray-500 font-bold mt-1">Specify your exact delivery point</p>
           </div>
-          <button @click="showModal = false" class="w-12 h-12 rounded-full bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
+          <button @click="showModal = false" class="w-12 h-12 rounded-full bg-white/80 dark:bg-gray-700/70 shadow-sm border border-gray-100 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -267,38 +268,38 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <div class="col-span-2">
-              <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Location Title (e.g. My Home, Dad's Office)</label>
+              <label class="block text-xs font-semibold text-gray-400 mb-2">Location Title (e.g. My Home, Dad's Office)</label>
               <input
                 v-model="form.label"
                 type="text"
                 required
-                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-bold"
+                class="w-full px-5 py-4 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all shadow-sm font-bold"
                 placeholder="Give this location a name"
               />
             </div>
             
-            <div class="flex items-center space-x-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700 md:col-span-2">
+            <div class="flex items-center space-x-3 p-4 bg-white/60 dark:bg-white/5 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10 md:col-span-2">
               <input
                 v-model="form.is_default"
                 type="checkbox"
                 id="is_default"
-                class="w-6 h-6 text-[#246BFD] border-gray-300 rounded-full focus:ring-[#246BFD] transition-all cursor-pointer"
+                class="w-6 h-6 text-brand-500 border-gray-300 rounded-full focus:ring-brand-500 transition-all cursor-pointer"
               />
               <label for="is_default" class="text-sm font-bold text-gray-700 dark:text-gray-200 cursor-pointer">Set as default delivery location</label>
             </div>
           </div>
 
           <!-- Extra Details (Optional / Collapsed) -->
-          <details class="group bg-gray-50/50 dark:bg-gray-900/20 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <summary class="p-4 cursor-pointer font-bold text-xs uppercase tracking-widest text-gray-500 flex items-center justify-between list-none">
+          <details class="group bg-gray-50/50 dark:bg-gray-900/20 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10">
+            <summary class="p-4 cursor-pointer font-bold text-xs text-gray-500 flex items-center justify-between list-none">
               <span>Additional Address Details (Optional)</span>
               <svg class="w-4 h-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </summary>
             <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input v-model="form.address_line_1" placeholder="Building name / Floor" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-              <input v-model="form.city" placeholder="City" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
+              <input v-model="form.address_line_1" placeholder="Building name / Floor" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-sm" />
+              <input v-model="form.city" placeholder="City" class="px-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700/70 text-sm" />
             </div>
           </details>
 
@@ -306,14 +307,14 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
             <button
               type="button"
               @click="showModal = false"
-              class="flex-1 px-8 py-4 rounded-full border-2 border-gray-100 dark:border-gray-700 text-gray-500 font-bold hover:bg-gray-50 transition-all uppercase tracking-widest text-xs"
+              class="flex-1 px-8 py-4 rounded-full border-2 border-gray-200/70 dark:border-white/10 text-gray-500 font-bold hover:bg-gray-50 transition-all text-xs"
             >
               Cancel
             </button>
             <button
               @click="handleSubmit"
               :disabled="loading || !form.google_address"
-              class="flex-[2] px-8 py-4 rounded-full bg-[#246BFD] text-white font-black hover:bg-[#5089FF] shadow-xl shadow-[#246BFD]/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 uppercase tracking-widest text-xs"
+              class="flex-[2] px-8 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-card shadow-brand-500/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-3 text-xs"
             >
               <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -325,6 +326,7 @@ const getMapThumbnail = (lat: number | null, lng: number | null) => {
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
 

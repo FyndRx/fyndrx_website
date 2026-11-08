@@ -122,17 +122,18 @@ const startShopping = () => {
 
 <template>
   <div class="pb-12">
+    <!-- Rendered inside DashboardLayout (requiresAuth route), which supplies the page background and top spacing -->
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
-        <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">Shopping Cart</h1>
+        <h1 class="mb-2 text-3xl font-medium text-gray-900 sm:text-4xl dark:text-white">Shopping <span class="text-brand-500 dark:text-brand-400">Cart</span></h1>
         <p class="text-gray-600 dark:text-gray-300">
           {{ cartStore.cartItemsCount }} {{ cartStore.cartItemsCount === 1 ? 'item' : 'items' }} in your cart
         </p>
       </div>
 
       <div v-if="cartStore.items.length === 0" class="py-16 text-center">
-        <div class="mx-auto mb-6 w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex justify-center items-center mx-auto mb-6 w-24 h-24 rounded-full bg-brand-500/10">
+          <svg class="w-12 h-12 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
           </svg>
         </div>
@@ -140,7 +141,7 @@ const startShopping = () => {
         <p class="mb-6 text-gray-600 dark:text-gray-300">Add medications to your cart to get started</p>
         <button
           @click="startShopping"
-          class="px-8 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
+          class="px-8 py-3 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
         >
           Browse Pharmacies
         </button>
@@ -150,7 +151,7 @@ const startShopping = () => {
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <!-- Main Content Column -->
           <div class="lg:col-span-2 space-y-6">
-            <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
               <div class="flex items-center gap-4">
                 <CustomCheckbox
                   :model-value="allPharmaciesSelected"
@@ -158,7 +159,7 @@ const startShopping = () => {
                   variant="switch"
                   @update:model-value="toggleSelectAll"
                 />
-                <span class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Select All Pharmacies</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 ">Select All Pharmacies</span>
               </div>
               <div v-if="selectedBranches.size > 0" class="hidden sm:block">
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -170,9 +171,9 @@ const startShopping = () => {
             <div
               v-for="pharmacy in cartStore.groupedByPharmacy"
               :key="pharmacy.pharmacyBranchId"
-              class="overflow-hidden bg-white shadow-lg dark:bg-gray-800 rounded-2xl"
+              class="overflow-hidden rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10"
             >
-            <div class="p-6 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-6 bg-white/50 dark:bg-white/5 border-b border-gray-200/70 dark:border-white/10">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-5">
                   <div class="relative group">
@@ -185,7 +186,7 @@ const startShopping = () => {
                   </div>
                   
                   <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 group-hover:scale-105 transition-transform">
+                    <div class="w-14 h-14 p-1 overflow-hidden bg-white/80 dark:bg-gray-700/70 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 group-hover:scale-105 transition-transform">
                       <LazyImage
                         :src="pharmacy.pharmacyLogo || ''"
                         :alt="pharmacy.pharmacyName"
@@ -199,11 +200,11 @@ const startShopping = () => {
                         {{ pharmacy.pharmacyName }}
                       </h3>
                       <div class="flex items-center gap-2 mt-1">
-                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate ">
                           {{ pharmacy.branchName || 'Main Branch' }}
                         </p>
                         <span class="mx-2 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
@@ -213,10 +214,10 @@ const startShopping = () => {
                         <span class="mx-2 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
                         <button 
                           @click="toggleMap(pharmacy.pharmacyBranchId)"
-                          class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 border focus:outline-none"
+                          class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold transition-all duration-300 border focus:outline-none"
                           :class="activeMapBranchId === pharmacy.pharmacyBranchId 
-                            ? 'bg-[#246BFD]/10 border-[#246BFD] text-[#246BFD] shadow-sm scale-105' 
-                            : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#246BFD] hover:text-[#246BFD] hover:scale-105'"
+                            ? 'bg-brand-500/10 border-brand-500 text-brand-500 shadow-sm scale-105' 
+                            : 'bg-white/70 dark:bg-white/5 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-brand-500 hover:text-brand-500 hover:scale-105'"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -230,9 +231,9 @@ const startShopping = () => {
                 </div>
                 
                 <div class="flex items-center gap-4">
-                  <div class="hidden sm:block text-right pr-4 border-r border-gray-200 dark:border-gray-700">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pharmacy Subtotal</p>
-                    <p class="text-lg font-black text-[#246BFD]">{{ formatCurrency(pharmacy.subtotal) }}</p>
+                  <div class="hidden sm:block text-right pr-4 border-r border-gray-200/70 dark:border-white/10">
+                    <p class="text-xs font-bold text-gray-400 ">Pharmacy Subtotal</p>
+                    <p class="text-lg font-semibold text-brand-500">{{ formatCurrency(pharmacy.subtotal) }}</p>
                   </div>
                   
                   <button
@@ -259,10 +260,10 @@ const startShopping = () => {
             >
               <div 
                 v-if="activeMapBranchId === pharmacy.pharmacyBranchId" 
-                class="overflow-hidden border-b border-gray-150 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/10"
+                class="overflow-hidden border-b border-gray-200/70 dark:border-white/10 bg-white/40 dark:bg-white/5"
               >
                 <div class="p-4 sm:p-6">
-                  <div class="relative h-[350px] w-full rounded-2xl overflow-hidden shadow-inner border border-gray-100 dark:border-gray-700">
+                  <div class="relative h-[350px] w-full rounded-2xl overflow-hidden shadow-inner ring-1 ring-gray-200/70 dark:ring-white/10">
                     <OrderTrackingMap 
                       :pharmacyLocations="[{ lat: Number(pharmacy.latitude || 5.6037), lng: Number(pharmacy.longitude || -0.1870), name: pharmacy.branchName ? `${pharmacy.pharmacyName} - ${pharmacy.branchName}` : pharmacy.pharmacyName }]"
                       deliveryMethod="pickup"
@@ -273,7 +274,7 @@ const startShopping = () => {
               </div>
             </transition>
 
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            <div class="divide-y divide-gray-200/70 dark:divide-white/10">
               <div
                 v-for="item in pharmacy.items"
                 :key="item.id"
@@ -303,7 +304,7 @@ const startShopping = () => {
                       <div class="flex items-center gap-2 flex-wrap">
                         <span
                           v-if="item.requiresPrescription"
-                          class="inline-flex items-center px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-800 bg-orange-100 rounded-lg dark:bg-orange-900/30 dark:text-orange-200"
+                          class="inline-flex items-center px-2 py-1 text-xs font-bold text-accent-800 bg-accent-100 rounded-lg dark:bg-accent-900/30 dark:text-accent-200"
                         >
                           <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -335,7 +336,7 @@ const startShopping = () => {
                       </div>
 
                       <div class="text-right">
-                        <div class="text-lg font-medium text-[#246BFD]">
+                        <div class="text-lg font-medium text-brand-500">
                           {{ formatCurrency((item.discountPrice || item.price) * item.quantity) }}
                         </div>
                         <div v-if="item.discountPrice && item.discountPrice < item.price" class="text-sm text-gray-500 line-through">
@@ -370,7 +371,7 @@ const startShopping = () => {
         </div>
 
         <div class="lg:col-span-1">
-          <div class="sticky top-24 p-6 bg-white shadow-lg dark:bg-gray-800 rounded-2xl">
+          <div class="sticky top-24 p-6 rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
             <h2 class="mb-6 text-xl font-medium text-gray-900 dark:text-white">Order Summary</h2>
             
             <div class="space-y-4 mb-6">
@@ -386,30 +387,30 @@ const startShopping = () => {
                 <span>Selected Items</span>
                 <span>{{ formatCurrency(selectedTotal) }}</span>
               </div>
-              <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div class="pt-4 border-t border-gray-200/70 dark:border-white/10">
                 <div class="flex justify-between text-lg font-medium text-gray-900 dark:text-white">
                   <span>Total</span>
-                  <span class="text-[#246BFD]">{{ formatCurrency(selectedBranches.size > 0 ? selectedTotal : cartStore.total) }}</span>
+                  <span class="text-brand-500">{{ formatCurrency(selectedBranches.size > 0 ? selectedTotal : cartStore.total) }}</span>
                 </div>
               </div>
             </div>
 
             <!-- Creative Delivery Destination Widget inside Sidebar -->
-            <div class="mb-6 p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/40 dark:to-gray-800 border border-gray-150 dark:border-gray-700/60 shadow-sm relative overflow-hidden transition-all duration-300">
+            <div class="mb-6 p-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-gray-200/70 dark:border-white/10 shadow-sm relative overflow-hidden transition-all duration-300">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-lg bg-[#246BFD]/10 text-[#246BFD] flex items-center justify-center">
+                  <div class="w-7 h-7 rounded-lg bg-brand-500/10 text-brand-500 flex items-center justify-center">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <span class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Delivery Destination</span>
+                  <span class="text-xs font-bold text-gray-700 dark:text-gray-300 ">Delivery Destination</span>
                 </div>
                 
                 <button 
                   @click="showMapModal = true"
-                  class="text-xs font-bold text-[#246BFD] hover:underline flex items-center gap-1 focus:outline-none"
+                  class="text-xs font-bold text-brand-500 hover:underline flex items-center gap-1 focus:outline-none"
                 >
                   Change
                 </button>
@@ -419,10 +420,10 @@ const startShopping = () => {
                 <p class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
                   {{ deliveryAddress || 'No location selected yet' }}
                 </p>
-                <p v-if="deliveryLat && deliveryLng" class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-black">
+                <p v-if="deliveryLat && deliveryLng" class="text-xs text-gray-400 dark:text-gray-500 font-semibold">
                   Coordinates: {{ deliveryLat.toFixed(4) }}°, {{ deliveryLng.toFixed(4) }}°
                 </p>
-                <p v-else class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-bold">
+                <p v-else class="text-xs text-gray-400 dark:text-gray-500 font-bold">
                   Uses default profile address
                 </p>
               </div>
@@ -432,22 +433,22 @@ const startShopping = () => {
               <button
                 @click="proceedToCheckout"
                 :disabled="selectedBranches.size === 0"
-                class="w-full px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-6 py-3 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
               >
                 Proceed to Checkout
               </button>
               <button
                 @click="continueShopping"
-                class="w-full px-6 py-3 rounded-full bg-white dark:bg-gray-700 text-[#246BFD] font-medium border-2 border-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300"
+                class="w-full px-6 py-3 font-medium transition duration-200 border-2 rounded-full bg-white/70 backdrop-blur text-brand-600 border-brand-500 ease-out-quart hover:bg-brand-500 hover:text-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 dark:bg-white/5 dark:text-brand-300 dark:hover:text-white"
               >
                 Continue Shopping
               </button>
             </div>
 
             <div class="mt-6 space-y-3">
-              <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <div class="p-4 rounded-2xl bg-brand-500/10 ring-1 ring-brand-500/15">
                 <div class="flex items-start space-x-2">
-                  <svg class="w-5 h-5 text-[#246BFD] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                   </svg>
                   <p class="text-sm text-gray-600 dark:text-gray-300">
@@ -456,12 +457,12 @@ const startShopping = () => {
                 </div>
               </div>
 
-              <div v-if="hasPrescriptionItems" class="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
+              <div v-if="hasPrescriptionItems" class="p-4 rounded-2xl bg-accent-500/10 ring-1 ring-accent-500/20">
                 <div class="flex items-start space-x-2">
-                  <svg class="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-accent-600 dark:text-accent-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                   </svg>
-                  <div class="text-sm text-orange-700 dark:text-orange-300">
+                  <div class="text-sm text-accent-700 dark:text-accent-300">
                     <p class="font-semibold mb-1">Prescription Required</p>
                     <p>Some items in your cart require a prescription. You'll be asked to upload it during checkout if choosing delivery.</p>
                   </div>
@@ -481,13 +482,13 @@ const startShopping = () => {
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
-      <div v-if="showMapModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-gray-900/60 dark:bg-black/70 backdrop-blur-md">
-        <div class="relative w-full max-w-4xl h-[85vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-white/10 dark:border-gray-800 overflow-hidden flex flex-col transition-transform duration-500 animate-in fade-in zoom-in-95">
+      <div v-if="showMapModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 md:p-10 bg-gray-900/60 dark:bg-black/70 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Choose delivery destination">
+        <div class="relative w-full max-w-4xl h-[85vh] bg-white dark:bg-gray-900 rounded-3xl shadow-float ring-1 ring-white/70 dark:ring-white/10 overflow-hidden flex flex-col transition-transform duration-500 animate-in fade-in zoom-in-95">
           <!-- Modal Header -->
-          <div class="shrink-0 p-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-20 relative">
+          <div class="shrink-0 p-6 bg-white dark:bg-gray-900 border-b border-gray-200/70 dark:border-white/10 flex items-center justify-between z-20 relative">
             <div>
               <h3 class="text-xl font-bold text-gray-900 dark:text-white">Choose Delivery Destination</h3>
-              <p class="text-xs text-gray-500 mt-1">Search or drag the red marker to pin your exact location</p>
+              <p class="text-xs text-gray-500 mt-1">Search or drag the orange pin to set your exact location</p>
             </div>
             
             <button 
@@ -512,9 +513,9 @@ const startShopping = () => {
           </div>
           
           <!-- Modal Footer / Confirm -->
-          <div class="shrink-0 p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 relative">
+          <div class="shrink-0 p-6 bg-white/60 dark:bg-white/5 border-t border-gray-200/70 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 relative">
             <div class="text-left w-full sm:max-w-md">
-              <span class="text-[9px] font-black uppercase tracking-widest text-[#246BFD]">Selected Address</span>
+              <span class="text-xs font-semibold text-brand-500">Selected Address</span>
               <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-0.5">
                 {{ deliveryAddress || 'Loading resolved address...' }}
               </p>
@@ -522,7 +523,7 @@ const startShopping = () => {
             
             <button 
               @click="showMapModal = false"
-              class="w-full sm:w-auto px-8 py-3 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-bold shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+              class="w-full sm:w-auto px-8 py-3 text-sm font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
             >
               Confirm Location
             </button>

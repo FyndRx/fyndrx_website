@@ -8,7 +8,7 @@
       </div>
 
       <!-- Hero card -->
-      <div class="mb-12 overflow-hidden bg-gray-200 dark:bg-gray-700 rounded-[2rem] h-[450px] relative">
+      <div class="mb-12 overflow-hidden bg-gray-200 dark:bg-gray-700 rounded-3xl h-[450px] relative">
         <!-- Gradient overlay -->
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
@@ -52,9 +52,9 @@
         <div class="lg:col-span-2 space-y-12">
 
           <!-- Tab card -->
-          <div class="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700/50 shadow-xl">
+          <div class="bg-white/70 backdrop-blur-md dark:bg-gray-800/60 rounded-3xl overflow-hidden ring-1 ring-gray-200/70 dark:ring-white/10 shadow-card">
             <!-- Tab nav -->
-            <div class="border-b border-gray-100 dark:border-gray-700/50 px-6 sm:px-8">
+            <div class="border-b border-gray-200/70 dark:border-white/10 px-6 sm:px-8">
               <div class="flex gap-8 py-4">
                 <div class="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 <div class="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
@@ -69,7 +69,7 @@
               <!-- Facility Profile -->
               <div class="space-y-4">
                 <div class="h-5 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div class="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-700/50 space-y-2">
+                <div class="bg-white/60 dark:bg-white/5 p-6 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10 space-y-2">
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-11/12"></div>
                   <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
@@ -81,7 +81,7 @@
               <!-- Operating Hours -->
               <div class="space-y-4">
                 <div class="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div class="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-gray-100 dark:border-gray-700/50 space-y-3">
+                <div class="bg-white/60 dark:bg-white/5 p-6 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10 space-y-3">
                   <div v-for="i in 7" :key="i" class="flex justify-between items-center">
                     <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
                     <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28"></div>
@@ -93,7 +93,7 @@
               <div class="space-y-4">
                 <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div v-for="i in 4" :key="i" class="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 shadow-sm">
+                  <div v-for="i in 4" :key="i" class="flex items-center gap-4 p-5 rounded-2xl bg-white/70 backdrop-blur-md dark:bg-gray-800/60 ring-1 ring-gray-200/70 dark:ring-white/10 shadow-sm">
                     <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl shrink-0"></div>
                     <div class="space-y-2">
                       <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
@@ -113,7 +113,7 @@
 
         <!-- Right: Inventory panel (1 col) -->
         <div class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700/50 shadow-xl p-6 space-y-6">
+          <div class="bg-white/70 backdrop-blur-md dark:bg-gray-800/60 rounded-3xl ring-1 ring-gray-200/70 dark:ring-white/10 shadow-card p-6 space-y-6">
             <!-- Heading -->
             <div class="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
             <!-- Search bar -->
@@ -127,7 +127,7 @@
               <div
                 v-for="i in 4"
                 :key="i"
-                class="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50"
+                class="rounded-2xl overflow-hidden ring-1 ring-gray-200/70 dark:ring-white/10"
               >
                 <div class="h-32 bg-gray-200 dark:bg-gray-700"></div>
                 <div class="p-4 space-y-2">

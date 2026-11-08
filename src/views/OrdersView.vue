@@ -1,25 +1,76 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import ProductName from '@/components/ProductName.vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Order } from '@/models/Order';
 import { orderService } from '@/services/orderService';
 import { paymentService } from '@/services/paymentService';
 import LazyImage from '@/components/LazyImage.vue';
 import { formatCurrency } from '@/utils/currency';
-import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
+import DataTable, { type DataTableColumn } from '@/components/DataTable.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import TableSearch from '@/components/TableSearch.vue';
+import Pagination from '@/components/Pagination.vue';
+import { useServerTable } from '@/composables/useServerTable';
 
 const router = useRouter();
-const orders = ref<Order[]>([]);
-const loading = ref(true);
-const loadingMore = ref(false);
-const selectedFilter = ref<'all' | 'active' | 'completed' | 'cancelled'>('all');
+
+const columns: DataTableColumn[] = [
+  { key: 'order', label: 'Order', primary: true, cellClass: 'whitespace-nowrap' },
+  { key: 'pharmacy', label: 'Pharmacy' },
+  { key: 'items', label: 'Items', hideBelow: 1400 },
+  { key: 'details', label: 'Fulfilment', hideBelow: 1280 },
+  { key: 'status', label: 'Status' },
+  { key: 'total', label: 'Total', align: 'right', cellClass: 'whitespace-nowrap' },
+  { key: 'actions', label: '', align: 'right', cellClass: 'whitespace-nowrap' },
+];
+
+/** Catalog names read "DRUG • BRAND • FORM • STRENGTH"; a table cell only needs the drug. */
+const shortName = (name: string) => (name.split('•')[0] || name).trim() || 'Medication';
+
+const paymentLabel = (o: Order) =>
+  o.paymentMethod === 'platform'
+    ? (o.paymentStatus === 'paid' ? 'Paid online' : o.paymentStatus === 'failed' ? 'Payment failed' : 'Pay online')
+    : 'Pay at pharmacy';
+
+const paymentTextClass = (o: Order) =>
+  o.paymentMethod === 'platform'
+    ? (o.paymentStatus === 'paid'
+        ? 'text-emerald-700 dark:text-emerald-400'
+        : o.paymentStatus === 'failed'
+          ? 'text-red-700 dark:text-red-400'
+          : 'text-brand-700 dark:text-brand-300')
+    : 'text-accent-700 dark:text-accent-300';
+type OrderFilter = 'all' | 'active' | 'completed' | 'cancelled';
+
 const counts = ref({ all: 0, active: 0, completed: 0, cancelled: 0 });
-const currentPage = ref(1);
-const lastPage = ref(1);
-const hasMore = computed(() => currentPage.value < lastPage.value);
-const ORDERS_PER_PAGE = 15;
+const tableTop = ref<HTMLElement | null>(null);
+
+// Search, filter, page and per-page are all handled server-side
+const {
+  rows: orders,
+  loading,
+  q: search,
+  filter: selectedFilter,
+  page,
+  perPage,
+  total,
+  lastPage,
+  setPage,
+  setPerPage,
+} = useServerTable<Order, OrderFilter>({
+  initialFilter: 'all',
+  scrollTarget: tableTop,
+  fetcher: async ({ page, perPage, q, filter }) => {
+    const { orders: rows, meta } = await orderService.getOrders({
+      status: filter === 'all' ? undefined : filter,
+      q: q || undefined,
+      per_page: perPage,
+      page,
+    });
+    if (meta?.counts) counts.value = meta.counts;
+    return { rows, meta };
+  },
+});
 
 const payNow = async (order: Order) => {
   if (!order || order.paymentStatus !== 'pending') return;
@@ -53,281 +104,157 @@ const formatDate = (dateString: string) => {
     minute: '2-digit'
   });
 };
-
-const loadOrders = async (page = 1, append = false) => {
-  if (append) {
-    loadingMore.value = true;
-  } else {
-    loading.value = true;
-  }
-  try {
-    const status = selectedFilter.value === 'all' ? undefined : selectedFilter.value;
-    const { orders: fetchedOrders, meta } = await orderService.getOrders({
-      status,
-      per_page: ORDERS_PER_PAGE,
-      page,
-    });
-
-    orders.value = append ? [...orders.value, ...fetchedOrders] : fetchedOrders;
-    currentPage.value = meta?.current_page ?? page;
-    lastPage.value = meta?.last_page ?? 1;
-    if (meta?.counts) counts.value = meta.counts;
-  } catch (err) {
-    console.error('Error loading orders:', err);
-    if (!append) orders.value = [];
-  } finally {
-    loading.value = false;
-    loadingMore.value = false;
-  }
-};
-
-const loadMoreOrders = () => {
-  if (!hasMore.value || loadingMore.value) return;
-  loadOrders(currentPage.value + 1, true);
-};
-
-watch(selectedFilter, () => {
-  loadOrders(1);
-});
-
-onMounted(() => {
-  loadOrders();
-});
 </script>
 
 <template>
-  <div class="pb-12">
+  <div class="pb-24">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
-        <h1 class="mb-2 text-3xl font-medium text-gray-900 dark:text-white">Order History</h1>
+        <h1 class="mb-2 text-3xl font-medium text-gray-900 sm:text-4xl dark:text-white">Order <span class="text-brand-500 dark:text-brand-400">History</span></h1>
         <p class="text-gray-600 dark:text-gray-300">Track and manage your orders</p>
       </div>
 
-      <div class="mb-6">
-        <div class="flex gap-2 overflow-x-auto pb-2">
+      <div ref="tableTop" class="flex flex-col gap-3 mb-4 scroll-mt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="w-full lg:max-w-sm">
+          <TableSearch v-model="search" placeholder="Search order, pharmacy or medication…" label="Search orders" />
+        </div>
+        <div class="flex gap-2 px-1 py-2 -mx-1 overflow-x-auto" role="group" aria-label="Filter orders">
           <button
-            @click="selectedFilter = 'all'"
+            v-for="f in ([
+              { key: 'all', label: 'All Orders' },
+              { key: 'active', label: 'Active' },
+              { key: 'completed', label: 'Completed' },
+              { key: 'cancelled', label: 'Cancelled' },
+            ] as const)"
+            :key="f.key"
+            type="button"
+            :aria-pressed="selectedFilter === f.key"
+            @click="selectedFilter = f.key"
             :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'all'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              'px-4 py-2 text-sm rounded-full font-medium whitespace-nowrap transition duration-200 ease-out-quart active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30',
+              selectedFilter === f.key
+                ? 'bg-brand-500 text-white shadow-glow-brand'
+                : 'bg-white/80 text-gray-700 ring-1 ring-gray-200 backdrop-blur hover:ring-brand-500 hover:text-brand-600 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 dark:hover:text-brand-300'
             ]"
           >
-            All Orders ({{ counts.all }})
-          </button>
-          <button
-            @click="selectedFilter = 'active'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'active'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Active ({{ counts.active }})
-          </button>
-          <button
-            @click="selectedFilter = 'completed'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'completed'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Completed ({{ counts.completed }})
-          </button>
-          <button
-            @click="selectedFilter = 'cancelled'"
-            :class="[
-              'px-4 py-2 rounded-full font-medium transition-all whitespace-nowrap',
-              selectedFilter === 'cancelled'
-                ? 'bg-[#246BFD] text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            Cancelled ({{ counts.cancelled }})
+            {{ f.label }} ({{ counts[f.key] }})
           </button>
         </div>
       </div>
 
-      <div v-if="loading">
-        <ListSkeleton type="order" :count="4" :columns="1" />
-      </div>
+      <DataTable
+        :columns="columns"
+        :rows="orders"
+        :row-key="(o) => o.id"
+        caption="Your orders"
+        clickable
+        :loading="loading"
+        @row-click="(o) => viewOrder(o.id)"
+      >
+        <template #cell-order="{ row: order }">
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">{{ order.orderNumber }}</p>
+          <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ formatDate(order.createdAt) }}</p>
+          <span v-if="order.prescriptionUploaded" class="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Rx uploaded</span>
+        </template>
 
-      <div v-else-if="orders.length === 0" class="py-16 text-center">
-        <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No orders found</h3>
-        <p class="mb-6 text-gray-600 dark:text-gray-300">You haven't placed any {{ selectedFilter !== 'all' ? selectedFilter : '' }} orders yet.</p>
-        <router-link
-          to="/medications"
-          class="inline-block px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
-        >
-          Start Shopping
-        </router-link>
-      </div>
-
-      <div v-else class="space-y-4">
-        <div
-          v-for="order in orders"
-          :key="order.id"
-          @click="viewOrder(order.id)"
-          class="p-6 transition-all duration-300 bg-white cursor-pointer dark:bg-gray-800 rounded-2xl hover:shadow-xl hover:-translate-y-1"
-        >
-          <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div class="flex-1">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      {{ order.orderNumber }}
-                    </h3>
-                    <StatusBadge :status="order.status" size="sm" show-dot />
-                  </div>
-                  <div class="flex items-center gap-4">
-                    <!-- Pharmacy Logo -->
-                    <div 
-                      @click.stop="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
-                      class="w-9 h-9 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-[#246BFD]/30 transition-all"
-                    >
-                      <LazyImage
-                        :src="order.pharmacyImage || ''"
-                        :alt="order.pharmacyName"
-                        aspectRatio="square"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    <div class="min-w-0">
-                      <p 
-                        @click.stop="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
-                        class="text-base font-bold text-gray-900 dark:text-white cursor-pointer hover:text-[#246BFD] transition-colors truncate"
-                      >
-                        {{ order.pharmacyName }}
-                      </p>
-                      
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <div v-if="order.branchName" class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                          <svg class="w-3 h-3 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                          </svg>
-                          <span class="text-[10px] font-bold text-[#246BFD] uppercase tracking-wide">
-                            {{ order.branchName }}
-                          </span>
-                        </div>
-                        <span class="text-xs text-gray-500 dark:text-gray-500">{{ formatDate(order.createdAt) }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-4 mb-4">
-                <div
-                  v-for="item in order.items.slice(0, 3)"
-                  :key="item.id"
-                  @click.stop="router.push({ name: 'MedicationDetail', params: { id: item.medicationId } })"
-                  class="flex items-center gap-3 p-2 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all cursor-pointer group/item"
-                >
-                  <div class="w-14 h-14 overflow-hidden bg-gray-100 dark:bg-gray-700 rounded-xl flex-shrink-0 group-hover/item:scale-105 transition-transform">
-                    <LazyImage
-                      v-if="item.image"
-                      :src="item.image"
-                      :alt="item.medicationName"
-                      aspectRatio="square"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h4 class="text-xs font-bold text-gray-900 dark:text-white group-hover/item:text-[#246BFD] transition-colors">
-                      <ProductName :name="item.medicationName" compact />
-                    </h4>
-                    <div class="mt-0.5">
-                      <p class="text-[10px] text-gray-500 dark:text-gray-400">
-                        Qty: {{ item.quantity }} • {{ formatCurrency(item.discountPrice || item.price) }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <span v-if="order.items.length > 3" class="text-sm text-gray-500 dark:text-gray-400">
-                  +{{ order.items.length - 3 }} more
-                </span>
-              </div>
-
-              <div class="flex flex-wrap gap-2 text-sm mt-3">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                  :class="order.deliveryMethod === 'pickup' 
-                    ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' 
-                    : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800'">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  </svg>
-                  {{ order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}
-                </span>
-
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
-                  :class="[
-                    order.paymentMethod === 'platform'
-                      ? (order.paymentStatus === 'paid' 
-                          ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
-                          : (order.paymentStatus === 'failed'
-                              ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
-                              : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'))
-                      : 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800'
-                  ]">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                  </svg>
-                  {{ 
-                    order.paymentMethod === 'platform' 
-                      ? (order.paymentStatus === 'paid' ? 'Paid Online' : (order.paymentStatus === 'failed' ? 'Payment Failed' : 'Pay Online')) 
-                      : 'Pay at Pharmacy' 
-                  }}
-                </span>
-
-                <span v-if="order.prescriptionUploaded" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800">
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                  </svg>
-                  Rx Uploaded
-                </span>
-              </div>
+        <template #cell-pharmacy="{ row: order }">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 overflow-hidden bg-white rounded-full shrink-0 ring-1 ring-gray-200/70 dark:bg-gray-700 dark:ring-white/10">
+              <LazyImage :src="order.pharmacyImage || ''" :alt="order.pharmacyName" aspectRatio="square" className="w-full h-full object-cover" />
             </div>
-
-            <div class="flex flex-col items-end gap-2 md:text-right">
-              <div>
-                <p class="text-2xl font-bold text-[#246BFD]">{{ formatCurrency(order.total) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</p>
-              </div>
-              <div class="flex gap-2">
-                <button 
-                  v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
-                  @click.stop="payNow(order)"
-                  class="px-4 py-2 text-sm font-medium rounded-full text-white bg-green-600 hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
-                >
-                  Pay Now
-                </button>
-                <button class="px-4 py-2 text-sm font-medium rounded-full text-[#246BFD] bg-[#246BFD]/10 hover:bg-[#246BFD] hover:text-white transition-all" title="View Order Details">
-                  View Details →
-                </button>
-              </div>
+            <div class="min-w-0 text-left">
+              <button
+                type="button"
+                class="block max-w-full text-sm font-semibold text-gray-900 truncate transition-colors rounded md:max-w-[7.5rem] dark:text-white hover:text-brand-500 focus-visible:outline-none focus-visible:text-brand-500"
+                @click.stop="router.push({ name: 'pharmacy', params: { id: order.pharmacyId } })"
+              >{{ order.pharmacyName }}</button>
+              <p v-if="order.branchName" class="text-xs text-gray-500 truncate md:max-w-[7.5rem] dark:text-gray-400">{{ order.branchName }}</p>
             </div>
           </div>
-        </div>
+        </template>
 
-        <div v-if="hasMore" class="flex justify-center pt-2">
-          <button
-            @click="loadMoreOrders"
-            :disabled="loadingMore"
-            class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ loadingMore ? 'Loading…' : 'Load More Orders' }}
-          </button>
-        </div>
-      </div>
+        <template #cell-items="{ row: order }">
+          <div class="text-left md:max-w-[9rem]">
+            <p class="text-sm font-medium text-gray-900 capitalize truncate dark:text-white">
+              {{ shortName((order.items[0]?.medicationName || '').toLowerCase()) }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              {{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}<template v-if="order.items.length > 1"> · +{{ order.items.length - 1 }} more</template>
+            </p>
+          </div>
+        </template>
+
+        <template #cell-details="{ row: order }">
+          <div class="text-left md:text-left">
+            <p class="text-sm text-gray-800 dark:text-gray-100">{{ order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery' }}</p>
+            <p class="text-xs font-medium whitespace-nowrap" :class="paymentTextClass(order)">{{ paymentLabel(order) }}</p>
+          </div>
+        </template>
+
+        <template #cell-status="{ row: order }">
+          <StatusBadge :status="order.status" size="sm" show-dot />
+        </template>
+
+        <template #cell-total="{ row: order }">
+          <span class="text-base font-semibold text-brand-600 dark:text-brand-300">{{ formatCurrency(order.total) }}</span>
+        </template>
+
+        <template #cell-actions="{ row: order }">
+          <div class="flex items-center justify-end gap-2">
+            <button
+              v-if="order.paymentMethod === 'platform' && order.paymentStatus === 'pending'"
+              type="button"
+              class="px-4 py-1.5 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+              @click.stop="payNow(order)"
+            >Pay now</button>
+            <button
+              type="button"
+              class="flex items-center justify-center text-gray-500 transition duration-200 rounded-full w-9 h-9 ease-out-quart hover:bg-brand-500 hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 dark:text-gray-300"
+              :aria-label="`View order ${order.orderNumber}`"
+              @click.stop="viewOrder(order.id)"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </template>
+
+        <template #empty>
+          <div class="px-6 py-16 text-center">
+            <svg class="w-16 h-16 p-4 mx-auto mb-4 rounded-full text-brand-500 bg-brand-500/10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No orders found</h3>
+            <p class="mb-6 text-gray-600 dark:text-gray-300">
+              <template v-if="search">Nothing matches “{{ search }}”<template v-if="selectedFilter !== 'all'"> in {{ selectedFilter }} orders</template>.</template>
+              <template v-else>You haven't placed any {{ selectedFilter !== 'all' ? selectedFilter : '' }} orders yet.</template>
+            </p>
+            <button
+              v-if="search"
+              type="button"
+              class="px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+              @click="search = ''"
+            >Clear search</button>
+            <router-link
+              v-else
+              to="/medications"
+              class="inline-block px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+            >Start Shopping</router-link>
+          </div>
+        </template>
+
+        <template #footer>
+          <Pagination
+            embedded
+            :current-page="page"
+            :total-pages="lastPage"
+            :total-items="total"
+            :per-page="perPage"
+            :per-page-options="[10, 25, 50, 100]"
+            @update:page="setPage"
+            @update:per-page="setPerPage"
+          />
+        </template>
+      </DataTable>
     </div>
   </div>
 </template>

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useGoogleMaps } from '@/composables/useGoogleMaps';
+import { useDarkMode } from '@/composables/useDarkMode';
+import { brandMapStyles, pharmacyPinIcon, destinationPinIcon } from '@/utils/mapBrand';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: {
     lat: number;
     lng: number;
     address: string;
   };
-}>();
+  /** 'address' drops the orange destination pin (home/delivery address); 'pharmacy' the blue pharmacy pin. */
+  variant?: 'address' | 'pharmacy';
+}>(), { variant: 'address' });
 
 const emit = defineEmits(['update:modelValue', 'address-components']);
 
@@ -20,6 +24,7 @@ const autocomplete = ref<any>(null);
 const loading = ref(true);
 
 const { loadGoogleMapsScript, error } = useGoogleMaps();
+const { isDark } = useDarkMode();
 const gettingLocation = ref(false);
 
 onMounted(async () => {
@@ -54,6 +59,9 @@ const initializeMap = () => {
     mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: false,
+    clickableIcons: false,
+    backgroundColor: isDark.value ? '#0f1a2e' : '#eef3fb',
+    styles: brandMapStyles(isDark.value),
   });
 
   marker.value = new (google.maps as any).Marker({
@@ -61,15 +69,7 @@ const initializeMap = () => {
     map: map.value,
     draggable: true,
     animation: google.maps.Animation.DROP,
-    icon: {
-      path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-      fillColor: '#246BFD',
-      fillOpacity: 1,
-      strokeWeight: 2,
-      strokeColor: '#FFFFFF',
-      scale: 2,
-      anchor: new google.maps.Point(12, 22)
-    }
+    icon: props.variant === 'pharmacy' ? pharmacyPinIcon(true) : destinationPinIcon(),
   });
 
   // Listen for clicks on the map
@@ -186,6 +186,10 @@ async function useMyLocation() {
 }
 
 // Handle external value changes (e.g. when editing an address)
+watch(isDark, (dark) => {
+  map.value?.setOptions({ styles: brandMapStyles(dark), backgroundColor: dark ? '#0f1a2e' : '#eef3fb' });
+});
+
 watch(() => props.modelValue, (newVal) => {
   if (!map.value || !marker.value) return;
   const lat = Number(newVal.lat);
@@ -206,7 +210,7 @@ watch(() => props.modelValue, (newVal) => {
     <!-- Search Bar -->
     <div class="relative group">
       <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-        <svg class="w-5 h-5 text-gray-400 group-focus-within:text-[#246BFD] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
@@ -214,7 +218,7 @@ watch(() => props.modelValue, (newVal) => {
         ref="searchInput"
         type="text"
         placeholder="Search for a location or street..."
-        class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-[#246BFD]/10 focus:border-[#246BFD] outline-none transition-all shadow-sm font-medium"
+        class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all shadow-sm font-medium"
       />
     </div>
 
@@ -222,7 +226,7 @@ watch(() => props.modelValue, (newVal) => {
     <div class="relative">
       <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl">
         <div class="text-center">
-          <svg class="w-10 h-10 animate-spin text-[#246BFD] mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+          <svg class="w-10 h-10 animate-spin text-brand-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -241,7 +245,7 @@ watch(() => props.modelValue, (newVal) => {
         type="button"
         @click="useMyLocation"
         :disabled="gettingLocation"
-        class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        class="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:border-brand-500 hover:text-brand-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <svg v-if="!gettingLocation" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3" stroke-width="2" />
@@ -257,7 +261,7 @@ watch(() => props.modelValue, (newVal) => {
       <!-- Overlay Tip -->
       <div class="absolute bottom-4 left-4 right-4 pointer-events-none">
         <div class="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
-          <svg class="w-3 h-3 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3 h-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <span>Click on the map or drag the pin to adjust location</span>
