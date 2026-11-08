@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { medicationService } from '@/services/medicationService';
 import type { Medication } from '@/models/Medication';
@@ -25,6 +25,24 @@ const emit = defineEmits<{
 const router = useRouter();
 const medication = ref<Medication | null>(null);
 const loading = ref(false);
+const closeButton = ref<HTMLButtonElement | null>(null);
+
+// Categories arrive as objects ({ id, name, slug }), plain strings, or a legacy single string.
+const categoryNames = computed<string[]>(() => {
+  const raw = medication.value?.category;
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  return (list as Array<string | { name: string }>)
+    .map((c) => (typeof c === 'string' ? c : c?.name))
+    .filter((n): n is string => !!n);
+});
+
+const forms = computed(() => medication.value?.forms ?? []);
+const brands = computed(() => medication.value?.brands ?? []);
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') emit('close');
+};
 
 const loadMedication = async () => {
   if (!props.medicationId) {
@@ -54,10 +72,16 @@ const viewFullDetails = () => {
 };
 
 // Watch for show prop changes
-watch(() => props.show, (isShowing) => {
-  if (isShowing && props.medicationId) {
-    loadMedication();
-  } else if (!isShowing) {
+watch(() => props.show, async (isShowing) => {
+  if (isShowing) {
+    document.addEventListener('keydown', onKeydown);
+    document.body.style.overflow = 'hidden';
+    if (props.medicationId) loadMedication();
+    await nextTick();
+    closeButton.value?.focus();
+  } else {
+    document.removeEventListener('keydown', onKeydown);
+    document.body.style.overflow = '';
     medication.value = null;
   }
 });
@@ -72,9 +96,16 @@ watch(() => props.medicationId, (newId, oldId) => {
 });
 
 onMounted(() => {
-  if (props.show && props.medicationId) {
-    loadMedication();
+  if (props.show) {
+    document.addEventListener('keydown', onKeydown);
+    document.body.style.overflow = 'hidden';
+    if (props.medicationId) loadMedication();
   }
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown);
+  document.body.style.overflow = '';
 });
 </script>
 
@@ -83,26 +114,32 @@ onMounted(() => {
     <Transition name="modal">
       <div
         v-if="show"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
         @click.self="emit('close')"
       >
         <div
-          class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Medication quick view"
+          class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-float ring-1 ring-white/70 dark:bg-gray-900 dark:ring-white/10"
           @click.stop
         >
-          <div class="sticky top-0 z-10 h-0 flex justify-end pr-4 pointer-events-none">
+          <div class="sticky top-0 z-20 flex justify-end h-0 pr-4 pointer-events-none">
             <button
+              ref="closeButton"
+              type="button"
               @click="emit('close')"
-              class="pointer-events-auto mt-4 p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 shadow-md transition-colors"
+              aria-label="Close quick view"
+              class="flex justify-center items-center mt-4 w-10 h-10 text-gray-600 rounded-full ring-1 shadow-card backdrop-blur-md transition duration-200 pointer-events-auto bg-white/90 ring-gray-200 ease-out-quart dark:bg-gray-800/90 dark:text-gray-300 dark:ring-white/10 hover:bg-brand-500 hover:text-white hover:ring-transparent active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/40"
             >
-              <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
 
           <!-- Skeleton -->
-          <div v-if="loading" class="p-8 animate-pulse">
+          <div v-if="loading" class="p-6 sm:p-8 animate-pulse">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
               <!-- Image -->
               <div class="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
@@ -127,7 +164,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div v-else-if="medication" class="p-8">
+          <div v-else-if="medication" class="p-6 sm:p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <div class="relative mb-4">
@@ -135,9 +172,9 @@ onMounted(() => {
                     :src="medication.image"
                     :alt="medication.name"
                     aspectRatio="square"
-                    className="w-full h-80 object-cover rounded-xl"
+                    className="w-full h-72 sm:h-80 object-cover rounded-2xl"
                   />
-                  <div class="absolute top-4 right-4">
+                  <div class="absolute right-3 bottom-3">
                     <FavoriteButton
                       type="medication"
                       :item-id="medication.id"
@@ -148,30 +185,30 @@ onMounted(() => {
               </div>
 
               <div>
-                <div class="flex items-start gap-3 mb-4 flex-wrap">
+                <div class="flex flex-wrap gap-2 items-start mb-4 pr-12">
                   <span 
-                    v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
-                    :key="index"
-                    class="inline-block px-3 py-1 text-sm font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]"
+                    v-for="name in categoryNames"
+                    :key="name"
+                    class="inline-block px-3 py-1 text-sm font-medium rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300"
                   >
-                    {{ cat }}
+                    {{ name }}
                   </span>
                   <span 
                     v-if="medication.requiresPrescription" 
-                    class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                    class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-accent-500/15 text-accent-700 dark:text-accent-300"
                   >
                     Rx Required
                   </span>
                 </div>
 
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2 class="mb-3 text-2xl font-semibold text-gray-900 sm:text-3xl dark:text-white">
                   {{ medication.name }}
                 </h2>
 
                 <div class="flex items-center gap-3 mb-6 flex-wrap">
                   <div
                     v-if="medication.pharmacy_count !== undefined"
-                    class="inline-flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium rounded-full"
+                    class="inline-flex items-center px-3 py-1 bg-green-500/10 text-green-700 dark:text-green-400 text-sm font-medium rounded-full"
                   >
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -180,7 +217,7 @@ onMounted(() => {
                   </div>
 
                   <div v-if="medication.price" class="flex items-center gap-2">
-                    <span class="text-2xl font-bold text-[#246BFD]">
+                    <span class="text-2xl font-bold text-brand-500 dark:text-brand-300">
                       {{ formatCurrency(medication.discount_price || medication.price) }}
                     </span>
                     <span v-if="medication.discount_price" class="text-lg text-gray-400 line-through">
@@ -188,7 +225,7 @@ onMounted(() => {
                     </span>
                     <span
                       v-if="medication.discount_price"
-                      class="px-2 py-0.5 text-xs font-bold bg-green-100 text-green-700 rounded"
+                      class="px-2 py-0.5 text-xs font-bold rounded-full bg-green-500/10 text-green-700 dark:text-green-400"
                     >
                       -{{ medication.discount_percentage ? Math.round(medication.discount_percentage) : Math.round((1 - medication.discount_price / medication.price) * 100) }}%
                     </span>
@@ -199,35 +236,35 @@ onMounted(() => {
                   {{ medication.description }}
                 </p>
 
-                <div class="space-y-4 mb-6">
-                  <div>
+                <div v-if="forms.length > 0 || brands.length > 0" class="mb-6 space-y-4">
+                  <div v-if="forms.length > 0">
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Available Forms</h3>
                     <div class="flex flex-wrap gap-2">
                       <span
-                        v-for="form in medication.forms.slice(0, 4)"
+                        v-for="form in forms.slice(0, 4)"
                         :key="form.id"
-                        class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full"
+                        class="px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-full dark:bg-white/10 dark:text-gray-300"
                       >
                         {{ form.form_name }}
                       </span>
-                      <span v-if="medication.forms.length > 4" class="px-3 py-1 text-sm text-gray-500">
-                        +{{ medication.forms.length - 4 }} more
+                      <span v-if="forms.length > 4" class="px-3 py-1 text-sm text-gray-500 dark:text-gray-400">
+                        +{{ forms.length - 4 }} more
                       </span>
                     </div>
                   </div>
 
-                  <div v-if="medication.brands.length > 0">
+                  <div v-if="brands.length > 0">
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Available Brands</h3>
                     <div class="flex flex-wrap gap-2">
                       <span
-                        v-for="brand in medication.brands.slice(0, 3)"
+                        v-for="brand in brands.slice(0, 3)"
                         :key="brand.id"
-                        class="px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full"
+                        class="px-3 py-1 text-sm rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300"
                       >
                         {{ brand.name }}
                       </span>
-                      <span v-if="medication.brands.length > 3" class="px-3 py-1 text-sm text-gray-500">
-                        +{{ medication.brands.length - 3 }} more
+                      <span v-if="brands.length > 3" class="px-3 py-1 text-sm text-gray-500 dark:text-gray-400">
+                        +{{ brands.length - 3 }} more
                       </span>
                     </div>
                   </div>
@@ -236,7 +273,7 @@ onMounted(() => {
                 <div class="flex gap-3">
                   <button
                     @click="viewFullDetails"
-                    class="flex-1 px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-all duration-300 shadow-lg hover:shadow-xl"
+                    class="flex-1 px-6 py-3 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
                   >
                     View Full Details
                   </button>
@@ -270,12 +307,21 @@ onMounted(() => {
 
 .modal-enter-active > div,
 .modal-leave-active > div {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .modal-enter-from > div,
 .modal-leave-to > div {
-  transform: scale(0.9);
+  transform: scale(0.95) translateY(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-enter-active,
+  .modal-leave-active,
+  .modal-enter-active > div,
+  .modal-leave-active > div {
+    transition: none;
+  }
 }
 </style>
 
