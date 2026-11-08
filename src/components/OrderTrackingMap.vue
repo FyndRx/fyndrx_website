@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useGoogleMaps } from '@/composables/useGoogleMaps';
+import { useDarkMode } from '@/composables/useDarkMode';
+import { brandMapStyles, pharmacyPinIcon, destinationPinIcon, MARKER_LABEL_CLASS, MAP_FONT_FAMILY } from '@/utils/mapBrand';
 
 const props = defineProps<{
   pharmacyLocations?: Array<{ lat: number; lng: number; name?: string }>;
@@ -26,6 +28,7 @@ const directionsRenderers = ref<any[]>([]);
 const pharmacyMarkers = ref<any[]>([]);
 
 const { loadGoogleMapsScript, error } = useGoogleMaps();
+const { isDark } = useDarkMode();
 
 onMounted(async () => {
   try {
@@ -84,10 +87,10 @@ const initializeMap = () => {
       disableDefaultUI: false,
       mapTypeControl: false,
       streetViewControl: false,
-      styles: [
-        { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-        { featureType: 'administrative.land_parcel', elementType: 'labels', stylers: [{ visibility: 'off' }] }
-      ]
+      fullscreenControl: false,
+      clickableIcons: false,
+      backgroundColor: isDark.value ? '#0f1a2e' : '#eef3fb',
+      styles: brandMapStyles(isDark.value)
     });
   }
 
@@ -104,19 +107,14 @@ const initializeMap = () => {
       position: pos,
       map: map.value,
       title: loc.name || props.pharmacyName,
-      icon: {
-        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-        fillColor: '#246BFD',
-        fillOpacity: 1,
-        strokeWeight: 1.5,
-        strokeColor: '#FFFFFF',
-        scale: 1.5,
-        anchor: new (window as any).google.maps.Point(12, 22)
-      },
+      icon: pharmacyPinIcon(true),
       label: {
         text: loc.name || props.pharmacyName || 'Pharmacy',
-        color: '#246BFD',
-        className: 'relative bg-white px-3 py-1.5 rounded-lg shadow-[0_6px_16px_rgba(36,107,253,0.25)] font-bold text-[10px] text-[#246BFD] whitespace-nowrap -translate-y-[42px] after:content-[""] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[5px] after:border-transparent after:border-t-white'
+        color: '#1A56D6',
+        fontFamily: MAP_FONT_FAMILY,
+        fontSize: '11px',
+        fontWeight: '600',
+        className: MARKER_LABEL_CLASS
       },
       animation: (window as any).google.maps.Animation.DROP
     });
@@ -139,19 +137,14 @@ const initializeMap = () => {
       map: map.value,
       title: 'Delivery Location',
       draggable: !!props.enableLocationPicker,
-      icon: {
-        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-        fillColor: '#FF3B30',
-        fillOpacity: 1,
-        strokeWeight: 1.5,
-        strokeColor: '#FFFFFF',
-        scale: 1.5,
-        anchor: new (window as any).google.maps.Point(12, 22)
-      },
+      icon: destinationPinIcon(),
       label: {
         text: 'Your Destination',
-        color: '#FFFFFF',
-        className: 'relative bg-gray-900 px-3 py-1.5 rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.3)] font-bold text-[10px] text-white whitespace-nowrap -translate-y-[42px] after:content-[""] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[5px] after:border-transparent after:border-t-gray-900'
+        color: '#B95A0B',
+        fontFamily: MAP_FONT_FAMILY,
+        fontSize: '11px',
+        fontWeight: '600',
+        className: MARKER_LABEL_CLASS
       },
       animation: (window as any).google.maps.Animation.DROP
     });
@@ -269,6 +262,10 @@ const drawRoutes = () => {
   });
 };
 
+watch(isDark, (dark) => {
+  map.value?.setOptions({ styles: brandMapStyles(dark), backgroundColor: dark ? '#0f1a2e' : '#eef3fb' });
+});
+
 watch(() => props.pharmacyLocations, () => {
   initializeMap();
 }, { deep: true });
@@ -319,7 +316,7 @@ defineOptions({
   <div class="relative w-full h-full min-h-[250px] rounded-2xl overflow-hidden shadow-inner bg-gray-100 dark:bg-gray-800">
     <div v-show="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-gray-100 dark:bg-gray-800">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#246BFD] mx-auto mb-3"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500 mx-auto mb-3"></div>
         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Initializing Tracking Map...</p>
       </div>
     </div>
@@ -340,7 +337,7 @@ defineOptions({
           ref="searchInput" 
           type="text" 
           placeholder="Search delivery location or address..." 
-          class="w-full pl-10 pr-4 py-2.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-full shadow-xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#246BFD] transition-all duration-300"
+          class="w-full pl-10 pr-4 py-2.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-full shadow-xl text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all duration-300"
         />
         <svg class="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -356,7 +353,7 @@ defineOptions({
       <button 
         v-if="pharmacyLocations && pharmacyLocations.length > 0"
         @click="openInGoogleMaps"
-        class="w-9 h-9 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-xl shadow-lg text-[#246BFD] hover:bg-[#246BFD] hover:text-white transition-all duration-300 hover:scale-110 active:scale-95 group relative focus:outline-none"
+        class="w-9 h-9 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-xl shadow-lg text-brand-500 hover:bg-brand-500 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95 group relative focus:outline-none"
         title="Get Directions"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,7 +368,7 @@ defineOptions({
       <!-- Recenter Map -->
       <button 
         @click="recenterMap"
-        class="w-9 h-9 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-full shadow-lg text-gray-700 dark:text-gray-200 hover:bg-[#246BFD] hover:text-white transition-all duration-300 hover:scale-110 active:scale-95 group relative focus:outline-none"
+        class="w-9 h-9 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-800/30 rounded-full shadow-lg text-gray-700 dark:text-gray-200 hover:bg-brand-500 hover:text-white transition-all duration-300 hover:scale-110 active:scale-95 group relative focus:outline-none"
         title="Recenter Map"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

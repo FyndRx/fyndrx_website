@@ -1193,6 +1193,7 @@ onMounted(() => {
                 </div>
                 <div class="p-4">
                   <MapPicker
+                    variant="pharmacy"
                     :model-value="{ lat: Number(form.latitude) || 5.6037, lng: Number(form.longitude) || -0.1870, address: form.location_name }"
                     @update:model-value="(val: any) => { form.latitude = val.lat; form.longitude = val.lng; form.location_name = val.address; }"
                     @address-components="(c: any) => {
