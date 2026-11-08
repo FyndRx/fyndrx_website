@@ -182,14 +182,14 @@ const handleSubmit = async () => {
         <div class="flex items-center">
           <button
             @click="router.back()"
-            class="mr-4 w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-[#246BFD] transition-colors"
+            class="mr-4 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm ring-1 ring-gray-200/70 dark:ring-white/10 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-500 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
           </button>
           <div>
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Edit Profile</h1>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white ">Edit Profile</h1>
             <p class="text-sm text-gray-500 font-medium">Update your account information and settings</p>
           </div>
         </div>
@@ -198,9 +198,9 @@ const handleSubmit = async () => {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <!-- Left Column: Avatar -->
         <div class="lg:col-span-4">
-          <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 border border-white/50 dark:border-gray-700/50 text-center">
+          <div class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 p-8 text-center">
             <div class="relative inline-block group">
-              <div class="w-40 h-40 rounded-3xl overflow-hidden bg-blue-50 dark:bg-blue-900/10 p-1 shadow-inner ring-4 ring-gray-50 dark:ring-gray-900">
+              <div class="w-40 h-40 rounded-3xl overflow-hidden bg-brand-50 dark:bg-brand-900/10 p-1 shadow-inner ring-4 ring-gray-50 dark:ring-gray-900">
                 <LazyImage
                   v-if="currentImageSrc"
                   :src="currentImageSrc"
@@ -209,12 +209,12 @@ const handleSubmit = async () => {
                   class="w-full h-full object-cover rounded-2xl"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center">
-                  <span class="text-5xl font-bold text-[#246BFD] opacity-50">{{ authStore.userInitials }}</span>
+                  <span class="text-5xl font-bold text-brand-500 opacity-50">{{ authStore.userInitials }}</span>
                 </div>
               </div>
               <button
                 @click="imageInput?.click()"
-                class="absolute -bottom-2 -right-2 bg-[#246BFD] text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                class="absolute -bottom-2 -right-2 bg-brand-500 text-white w-10 h-10 rounded-full shadow-card flex items-center justify-center hover:scale-110 transition-transform"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -232,7 +232,7 @@ const handleSubmit = async () => {
             
             <div class="mt-6 space-y-2">
               <h3 class="font-bold text-gray-900 dark:text-white">{{ user?.fullname }}</h3>
-              <p class="text-xs text-gray-500 font-medium uppercase tracking-widest">Member ID: {{ user?.member_id }}</p>
+              <p class="text-xs text-gray-500 font-medium ">Member ID: {{ user?.member_id }}</p>
             </div>
 
             <div class="mt-8 pt-8 border-t border-gray-50 dark:border-gray-700">
@@ -241,11 +241,11 @@ const handleSubmit = async () => {
                 <router-link
                   v-if="!fullyVerified"
                   to="/profile/security"
-                  class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                  class="px-3 py-1 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 font-bold text-xs hover:bg-accent-200 dark:hover:bg-accent-900/50 transition-colors"
                 >
                   Action Needed
                 </router-link>
-                <span v-else class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs uppercase">Verified</span>
+                <span v-else class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs ">Verified</span>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-500 font-medium">Joined Date</span>
@@ -257,10 +257,10 @@ const handleSubmit = async () => {
 
         <!-- Right Column: Form -->
         <div class="lg:col-span-8">
-          <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-white/50 dark:border-gray-700/50">
+          <div class="rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10 overflow-hidden">
             <div class="p-8 border-b border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
               <h2 class="font-bold text-gray-900 dark:text-white flex items-center">
-                <svg class="w-5 h-5 mr-2 text-[#246BFD]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 mr-2 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 Personal Information
@@ -337,7 +337,7 @@ const handleSubmit = async () => {
                 <button
                   type="button"
                   @click="router.back()"
-                  class="px-8 py-3 rounded-full border-2 border-gray-100 dark:border-gray-700 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                  class="px-8 py-3 rounded-full border-2 border-gray-200/70 dark:border-white/10 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                 >
                   Cancel
                 </button>
@@ -346,7 +346,7 @@ const handleSubmit = async () => {
                   :disabled="loading"
                   :aria-busy="loading"
                   :aria-disabled="loading"
-                  class="px-10 py-3 rounded-full bg-[#246BFD] text-white font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2"
+                  class="px-10 py-3 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 shadow-card shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2"
                 >
                   <svg v-if="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -367,10 +367,10 @@ const handleSubmit = async () => {
     <!-- Image Cropper Modal -->
     <div
       v-if="showCropper"
-      class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden max-w-xl w-full shadow-2xl animate-in zoom-in duration-300">
-        <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+      <div class="w-full max-w-xl overflow-hidden bg-white shadow-float rounded-3xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10 animate-in zoom-in duration-300" role="dialog" aria-modal="true" aria-label="Crop profile photo">
+        <div class="p-6 border-b border-gray-200/70 dark:border-white/10 flex justify-between items-center">
           <h3 class="font-bold text-gray-900 dark:text-white">Adjust Profile Picture</h3>
           <button @click="cancelCrop" class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,7 +391,7 @@ const handleSubmit = async () => {
             :high="true"
           />
         </div>
-        <div class="p-6 bg-gray-50 dark:bg-gray-900/50 flex justify-end space-x-3">
+        <div class="p-6 bg-white/60 dark:bg-white/5 flex justify-end space-x-3">
           <button
             @click="cancelCrop"
             class="px-6 py-2.5 rounded-full border border-gray-200 dark:border-gray-600 font-bold text-gray-500 hover:bg-white transition-all"
@@ -400,7 +400,7 @@ const handleSubmit = async () => {
           </button>
           <button
             @click="cropImage"
-            class="px-8 py-2.5 bg-[#246BFD] text-white rounded-full font-bold hover:bg-[#5089FF] shadow-lg shadow-[#246BFD]/20 transition-all"
+            class="px-8 py-2.5 bg-brand-500 text-white rounded-full font-bold hover:bg-brand-600 shadow-card shadow-brand-500/20 transition-all"
           >
             Crop & Apply
           </button>
