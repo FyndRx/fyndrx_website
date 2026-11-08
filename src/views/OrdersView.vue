@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Order } from '@/models/Order';
 import { orderService } from '@/services/orderService';
@@ -8,6 +8,9 @@ import LazyImage from '@/components/LazyImage.vue';
 import { formatCurrency } from '@/utils/currency';
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import TableSearch from '@/components/TableSearch.vue';
+import Pagination from '@/components/Pagination.vue';
+import { useServerTable } from '@/composables/useServerTable';
 
 const router = useRouter();
 
@@ -37,15 +40,37 @@ const paymentTextClass = (o: Order) =>
           ? 'text-red-700 dark:text-red-400'
           : 'text-brand-700 dark:text-brand-300')
     : 'text-accent-700 dark:text-accent-300';
-const orders = ref<Order[]>([]);
-const loading = ref(true);
-const loadingMore = ref(false);
-const selectedFilter = ref<'all' | 'active' | 'completed' | 'cancelled'>('all');
+type OrderFilter = 'all' | 'active' | 'completed' | 'cancelled';
+
 const counts = ref({ all: 0, active: 0, completed: 0, cancelled: 0 });
-const currentPage = ref(1);
-const lastPage = ref(1);
-const hasMore = computed(() => currentPage.value < lastPage.value);
-const ORDERS_PER_PAGE = 15;
+const tableTop = ref<HTMLElement | null>(null);
+
+// Search, filter, page and per-page are all handled server-side
+const {
+  rows: orders,
+  loading,
+  q: search,
+  filter: selectedFilter,
+  page,
+  perPage,
+  total,
+  lastPage,
+  setPage,
+  setPerPage,
+} = useServerTable<Order, OrderFilter>({
+  initialFilter: 'all',
+  scrollTarget: tableTop,
+  fetcher: async ({ page, perPage, q, filter }) => {
+    const { orders: rows, meta } = await orderService.getOrders({
+      status: filter === 'all' ? undefined : filter,
+      q: q || undefined,
+      per_page: perPage,
+      page,
+    });
+    if (meta?.counts) counts.value = meta.counts;
+    return { rows, meta };
+  },
+});
 
 const payNow = async (order: Order) => {
   if (!order || order.paymentStatus !== 'pending') return;
@@ -79,57 +104,20 @@ const formatDate = (dateString: string) => {
     minute: '2-digit'
   });
 };
-
-const loadOrders = async (page = 1, append = false) => {
-  if (append) {
-    loadingMore.value = true;
-  } else {
-    loading.value = true;
-  }
-  try {
-    const status = selectedFilter.value === 'all' ? undefined : selectedFilter.value;
-    const { orders: fetchedOrders, meta } = await orderService.getOrders({
-      status,
-      per_page: ORDERS_PER_PAGE,
-      page,
-    });
-
-    orders.value = append ? [...orders.value, ...fetchedOrders] : fetchedOrders;
-    currentPage.value = meta?.current_page ?? page;
-    lastPage.value = meta?.last_page ?? 1;
-    if (meta?.counts) counts.value = meta.counts;
-  } catch (err) {
-    console.error('Error loading orders:', err);
-    if (!append) orders.value = [];
-  } finally {
-    loading.value = false;
-    loadingMore.value = false;
-  }
-};
-
-const loadMoreOrders = () => {
-  if (!hasMore.value || loadingMore.value) return;
-  loadOrders(currentPage.value + 1, true);
-};
-
-watch(selectedFilter, () => {
-  loadOrders(1);
-});
-
-onMounted(() => {
-  loadOrders();
-});
 </script>
 
 <template>
-  <div class="pb-12">
+  <div class="pb-24">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-medium text-gray-900 sm:text-4xl dark:text-white">Order <span class="text-brand-500 dark:text-brand-400">History</span></h1>
         <p class="text-gray-600 dark:text-gray-300">Track and manage your orders</p>
       </div>
 
-      <div class="mb-6">
+      <div ref="tableTop" class="flex flex-col gap-3 mb-4 scroll-mt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="w-full lg:max-w-sm">
+          <TableSearch v-model="search" placeholder="Search order, pharmacy or medication…" label="Search orders" />
+        </div>
         <div class="flex gap-2 px-1 py-2 -mx-1 overflow-x-auto" role="group" aria-label="Filter orders">
           <button
             v-for="f in ([
@@ -236,21 +224,35 @@ onMounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
             <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No orders found</h3>
-            <p class="mb-6 text-gray-600 dark:text-gray-300">You haven't placed any {{ selectedFilter !== 'all' ? selectedFilter : '' }} orders yet.</p>
+            <p class="mb-6 text-gray-600 dark:text-gray-300">
+              <template v-if="search">Nothing matches “{{ search }}”<template v-if="selectedFilter !== 'all'"> in {{ selectedFilter }} orders</template>.</template>
+              <template v-else>You haven't placed any {{ selectedFilter !== 'all' ? selectedFilter : '' }} orders yet.</template>
+            </p>
+            <button
+              v-if="search"
+              type="button"
+              class="px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+              @click="search = ''"
+            >Clear search</button>
             <router-link
+              v-else
               to="/medications"
               class="inline-block px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
             >Start Shopping</router-link>
           </div>
         </template>
 
-        <template v-if="hasMore" #footer>
-          <button
-            type="button"
-            @click="loadMoreOrders"
-            :disabled="loadingMore"
-            class="px-8 py-2.5 text-sm font-medium text-gray-700 transition duration-200 rounded-full bg-white/70 ring-1 ring-gray-200 ease-out-quart dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 hover:ring-brand-500 hover:text-brand-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
-          >{{ loadingMore ? 'Loading…' : 'Load more orders' }}</button>
+        <template #footer>
+          <Pagination
+            embedded
+            :current-page="page"
+            :total-pages="lastPage"
+            :total-items="total"
+            :per-page="perPage"
+            :per-page-options="[10, 25, 50, 100]"
+            @update:page="setPage"
+            @update:per-page="setPerPage"
+          />
         </template>
       </DataTable>
     </div>

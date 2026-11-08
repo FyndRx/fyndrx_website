@@ -54,6 +54,8 @@ export const getUserLocation = (): Promise<{ lat: number; lng: number }> => {
 
 export interface GetOrdersParams {
   status?: string;
+  /** Free-text search: order number, pharmacy/branch, or medication. */
+  q?: string;
   per_page?: number;
   page?: number;
 }
@@ -107,6 +109,7 @@ export const orderService = {
     if (params) {
       const queryParams = new URLSearchParams();
       if (params.status) queryParams.append('status', params.status);
+      if (params.q) queryParams.append('q', params.q);
       if (params.per_page) queryParams.append('per_page', params.per_page.toString());
       if (params.page) queryParams.append('page', params.page.toString());
       const queryString = queryParams.toString();

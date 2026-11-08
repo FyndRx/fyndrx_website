@@ -65,6 +65,8 @@ export interface TransactionCounts {
 
 export interface GetTransactionsParams {
   status?: 'success' | 'pending' | 'failed' | 'refunded';
+  /** Free-text search: reference, order number, or pharmacy. */
+  q?: string;
   order_id?: string;
   page?: number;
   per_page?: number;
@@ -100,6 +102,7 @@ export const paymentService = {
     const searchParams = new URLSearchParams();
     if (params?.status) searchParams.set('status', params.status);
     if (params?.order_id) searchParams.set('order_id', params.order_id);
+    if (params?.q) searchParams.set('q', params.q);
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.per_page) searchParams.set('per_page', String(params.per_page));
     const qs = searchParams.toString();

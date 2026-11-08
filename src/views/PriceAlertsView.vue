@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { priceAlertService, type PriceAlert } from '@/services/priceAlertService';
 import { useNotification } from '@/composables/useNotification';
 import { formatCurrency } from '@/utils/currency';
 import { formatDate } from '@/utils/date';
 import LazyImage from '@/components/LazyImage.vue';
-import EmptyState from '@/components/EmptyState.vue';
+import TableSearch from '@/components/TableSearch.vue';
+import Pagination from '@/components/Pagination.vue';
+import { useServerTable } from '@/composables/useServerTable';
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue';
 
 const router = useRouter();
@@ -21,22 +23,46 @@ const columns: DataTableColumn[] = [
 ];
 const toast = useNotification();
 
-const alerts = ref<PriceAlert[]>([]);
-const loading = ref(true);
-const removingId = ref<number | null>(null);
+type ScopeFilter = 'all' | 'any' | 'pharmacy';
 
-const loadAlerts = async () => {
-  loading.value = true;
-  try {
-    const { data } = await priceAlertService.list(1, 50);
-    alerts.value = data;
-  } catch (err) {
-    console.error('Failed to load price alerts:', err);
-    toast.error('Failed to load', 'Could not load your price alerts. Please try again.');
-  } finally {
-    loading.value = false;
-  }
-};
+const scopeFilters: { key: ScopeFilter; label: string }[] = [
+  { key: 'all', label: 'All alerts' },
+  { key: 'any', label: 'Any pharmacy' },
+  { key: 'pharmacy', label: 'Specific pharmacy' },
+];
+
+const removingId = ref<number | null>(null);
+const tableTop = ref<HTMLElement | null>(null);
+
+// Search, filter, page and per-page are all handled server-side
+const {
+  rows: alerts,
+  loading,
+  q: search,
+  filter: scope,
+  page,
+  perPage,
+  total,
+  lastPage,
+  load,
+  setPage,
+  setPerPage,
+} = useServerTable<PriceAlert, ScopeFilter>({
+  initialFilter: 'all',
+  scrollTarget: tableTop,
+  fetcher: async ({ page, perPage, q, filter }) => {
+    try {
+      const { data, meta } = await priceAlertService.list(page, perPage, {
+        q: q || undefined,
+        scope: filter === 'all' ? undefined : filter,
+      });
+      return { rows: data, meta };
+    } catch (err) {
+      toast.error('Failed to load', 'Could not load your price alerts. Please try again.');
+      throw err;
+    }
+  },
+});
 
 const hasDropped = (alert: PriceAlert) => alert.current_price !== null && alert.current_price < alert.baseline_price;
 
@@ -53,7 +79,7 @@ const stopWatching = async (alert: PriceAlert) => {
   removingId.value = alert.id;
   try {
     await priceAlertService.unwatchById(alert.id, alert.product.id, alert.pharmacy?.id ?? null);
-    alerts.value = alerts.value.filter((a) => a.id !== alert.id);
+    await load(); // refetch so totals and pages stay accurate (steps back if the page empties)
     toast.info('Alert Removed', `You'll no longer be notified about ${alert.product.name}'s price.`);
   } catch (err) {
     console.error('Failed to remove price alert:', err);
@@ -68,16 +94,36 @@ const viewProduct = (alert: PriceAlert) => {
   router.push({ name: 'MedicationDetail', params: { id: alert.product.id } });
 };
 
-onMounted(loadAlerts);
 </script>
 
 <template>
-  <div class="pb-12">
+  <div class="pb-24">
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-medium text-gray-900 sm:text-4xl dark:text-white">Price <span class="text-brand-500 dark:text-brand-400">Alerts</span></h1>
         <p class="text-gray-600 dark:text-gray-300">Medications you're watching for a price drop.</p>
+      </div>
+
+      <div ref="tableTop" class="flex flex-col gap-3 mb-4 scroll-mt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="w-full lg:max-w-sm">
+          <TableSearch v-model="search" placeholder="Search medication or pharmacy…" label="Search price alerts" />
+        </div>
+        <div class="flex gap-2 px-1 py-2 -mx-1 overflow-x-auto" role="group" aria-label="Filter price alerts">
+          <button
+            v-for="f in scopeFilters"
+            :key="f.key"
+            type="button"
+            :aria-pressed="scope === f.key"
+            @click="scope = f.key"
+            :class="[
+              'px-4 py-2 text-sm rounded-full font-medium whitespace-nowrap transition duration-200 ease-out-quart active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30',
+              scope === f.key
+                ? 'bg-brand-500 text-white shadow-glow-brand'
+                : 'bg-white/80 text-gray-700 ring-1 ring-gray-200 backdrop-blur hover:ring-brand-500 hover:text-brand-600 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 dark:hover:text-brand-300'
+            ]"
+          >{{ f.label }}</button>
+        </div>
       </div>
 
       <DataTable
@@ -156,11 +202,41 @@ onMounted(loadAlerts);
         </template>
 
         <template #empty>
-          <EmptyState
-            type="noitems"
-            message="Watch a medication's price from its product page, and we'll notify you the moment it drops."
-            action-text="Browse Medications"
-            @action="router.push({ name: 'medications' })"
+          <div class="px-6 py-16 text-center">
+            <svg class="w-16 h-16 p-4 mx-auto mb-4 rounded-full text-brand-500 bg-brand-500/10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8L11 5l-4 4-6-6" />
+            </svg>
+            <template v-if="search || scope !== 'all'">
+              <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No alerts match</h3>
+              <p class="mb-6 text-gray-600 dark:text-gray-300">Try a different search or filter.</p>
+              <button
+                type="button"
+                class="px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+                @click="search = ''; scope = 'all'"
+              >Clear search and filters</button>
+            </template>
+            <template v-else>
+              <h3 class="mb-2 text-xl font-medium text-gray-900 dark:text-white">No price alerts yet</h3>
+              <p class="max-w-md mx-auto mb-6 text-gray-600 dark:text-gray-300">Watch a medication's price from its product page, and we'll notify you the moment it drops.</p>
+              <button
+                type="button"
+                class="px-6 py-3 font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+                @click="router.push({ name: 'medications' })"
+              >Browse Medications</button>
+            </template>
+          </div>
+        </template>
+
+        <template #footer>
+          <Pagination
+            embedded
+            :current-page="page"
+            :total-pages="lastPage"
+            :total-items="total"
+            :per-page="perPage"
+            :per-page-options="[10, 25, 50, 100]"
+            @update:page="setPage"
+            @update:per-page="setPerPage"
           />
         </template>
       </DataTable>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { prescriptionService } from '@/services/prescription';
 import { consultationService } from '@/services/consultationService';
@@ -21,6 +21,9 @@ import {
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline';
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue';
+import TableSearch from '@/components/TableSearch.vue';
+import Pagination from '@/components/Pagination.vue';
+import { useServerTable } from '@/composables/useServerTable';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { getStatusColor } from '@/utils/statusColors';
 
@@ -28,18 +31,38 @@ type StatusKey = 'active' | 'dispensed' | 'pending' | 'expired' | 'cancelled' | 
 type FilterKey = 'all' | StatusKey;
 
 const router = useRouter();
-const prescriptions = ref<Prescription[]>([]);
-const selectedFilter = ref<FilterKey>('all');
 const selectedPrescription = ref<Prescription | null>(null);
-const loading = ref(true);
-const loadingMore = ref(false);
 const counts = ref<Record<FilterKey, number>>({
   all: 0, active: 0, dispensed: 0, pending: 0, expired: 0, cancelled: 0, completed: 0,
 });
-const currentPage = ref(1);
-const lastPage = ref(1);
-const hasMore = computed(() => currentPage.value < lastPage.value);
-const PRESCRIPTIONS_PER_PAGE = 15;
+const tableTop = ref<HTMLElement | null>(null);
+
+// Search, filter, page and per-page are all handled server-side
+const {
+  rows: prescriptions,
+  loading,
+  q: search,
+  filter: selectedFilter,
+  page,
+  perPage,
+  total,
+  lastPage,
+  setPage,
+  setPerPage,
+} = useServerTable<Prescription, FilterKey>({
+  initialFilter: 'all',
+  scrollTarget: tableTop,
+  fetcher: async ({ page, perPage, q, filter }) => {
+    const { prescriptions: rows, meta } = await prescriptionService.getPrescriptions({
+      status: filter,
+      q: q || undefined,
+      per_page: perPage,
+      page,
+    });
+    if (meta?.counts) counts.value = meta.counts;
+    return { rows, meta };
+  },
+});
 
 // ── Filters ───────────────────────────────────────────────────
 const filters: { key: FilterKey; label: string }[] = [
@@ -80,41 +103,6 @@ const columns: DataTableColumn[] = [
   { key: 'status', label: 'Status' },
   { key: 'actions', label: '', align: 'right', cellClass: 'whitespace-nowrap' },
 ];
-
-// ── Data ──────────────────────────────────────────────────────
-const loadPrescriptions = async (page = 1, append = false) => {
-  if (append) {
-    loadingMore.value = true;
-  } else {
-    loading.value = true;
-  }
-  try {
-    const { prescriptions: fetched, meta } = await prescriptionService.getPrescriptions({
-      status: selectedFilter.value,
-      per_page: PRESCRIPTIONS_PER_PAGE,
-      page,
-    });
-
-    prescriptions.value = append ? [...prescriptions.value, ...fetched] : fetched;
-    currentPage.value = meta?.current_page ?? page;
-    lastPage.value = meta?.last_page ?? 1;
-    if (meta?.counts) counts.value = meta.counts;
-  } catch {
-    if (!append) prescriptions.value = [];
-  } finally {
-    loading.value = false;
-    loadingMore.value = false;
-  }
-};
-
-const loadMorePrescriptions = () => {
-  if (!hasMore.value || loadingMore.value) return;
-  loadPrescriptions(currentPage.value + 1, true);
-};
-
-watch(selectedFilter, () => {
-  loadPrescriptions(1);
-});
 
 // ── Consultation link ─────────────────────────────────────────
 const consultationLoading = ref(false);
@@ -159,11 +147,10 @@ const goToMedication = (drug: PrescriptionDrug) => {
   router.push({ name: 'MedicationDetail', params: { id } });
 };
 
-onMounted(loadPrescriptions);
 </script>
 
 <template>
-  <div class="pb-16">
+  <div class="pb-24">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <!-- ── Header ──────────────────────────────────────────── -->
@@ -183,7 +170,11 @@ onMounted(loadPrescriptions);
       </div>
 
       <!-- ── Filters ─────────────────────────────────────────── -->
-      <div class="flex gap-2 px-1 py-2 mb-4 -mx-1 overflow-x-auto" role="group" aria-label="Filter prescriptions">
+      <div ref="tableTop" class="flex flex-col gap-3 mb-4 scroll-mt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="w-full lg:max-w-sm">
+          <TableSearch v-model="search" placeholder="Search title, Rx number or medication…" label="Search prescriptions" />
+        </div>
+      <div class="flex gap-2 px-1 py-2 -mx-1 overflow-x-auto" role="group" aria-label="Filter prescriptions">
         <button
           v-for="f in filters"
           :key="f.key"
@@ -201,6 +192,7 @@ onMounted(loadPrescriptions);
             :class="selectedFilter === f.key ? 'bg-white/25 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300'"
           >{{ filterCount(f.key) }}</span>
         </button>
+      </div>
       </div>
 
       <!-- ── Table ───────────────────────────────────────────── -->
@@ -283,10 +275,16 @@ onMounted(loadPrescriptions);
             </div>
             <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">No prescriptions found</h3>
             <p class="max-w-xs mb-6 text-sm text-gray-500 dark:text-gray-400">
-              {{ selectedFilter === 'all' ? 'Upload your first prescription to get started.' : `You have no ${selectedFilter} prescriptions.` }}
+              {{ search ? `Nothing matches “${search}”.` : selectedFilter === 'all' ? 'Upload your first prescription to get started.' : `You have no ${selectedFilter} prescriptions.` }}
             </p>
             <button
-              v-if="selectedFilter === 'all'"
+              v-if="search"
+              type="button"
+              @click="search = ''"
+              class="px-6 py-3 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+            >Clear search</button>
+            <button
+              v-else-if="selectedFilter === 'all'"
               type="button"
               @click="router.push({ name: 'upload-prescription' })"
               class="px-6 py-3 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
@@ -294,13 +292,17 @@ onMounted(loadPrescriptions);
           </div>
         </template>
 
-        <template v-if="hasMore" #footer>
-          <button
-            type="button"
-            @click="loadMorePrescriptions"
-            :disabled="loadingMore"
-            class="px-8 py-2.5 text-sm font-medium text-gray-700 transition duration-200 rounded-full bg-white/70 ring-1 ring-gray-200 ease-out-quart dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 hover:ring-brand-500 hover:text-brand-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
-          >{{ loadingMore ? 'Loading…' : 'Load more prescriptions' }}</button>
+        <template #footer>
+          <Pagination
+            embedded
+            :current-page="page"
+            :total-pages="lastPage"
+            :total-items="total"
+            :per-page="perPage"
+            :per-page-options="[10, 25, 50, 100]"
+            @update:page="setPage"
+            @update:per-page="setPerPage"
+          />
         </template>
       </DataTable>
     </div>

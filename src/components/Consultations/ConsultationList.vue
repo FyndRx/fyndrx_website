@@ -127,6 +127,12 @@ const handlePageChange = (page: number) => {
   fetchConsultations();
 };
 
+const handlePerPageChange = (perPage: number) => {
+  filters.value.per_page = perPage;
+  filters.value.page = 1;
+  fetchConsultations();
+};
+
 watch(() => props.refreshTrigger, () => {
   fetchConsultations();
 });
@@ -309,15 +315,16 @@ onMounted(() => {
         </div>
       </template>
 
-      <template v-if="meta.last_page > 1" #footer>
+      <template #footer>
         <Pagination
-          :current-page="meta.current_page"
-          :total-pages="meta.last_page"
-          :total-items="meta.total"
-          :per-page="meta.per_page"
-          @page-change="handlePageChange"
-          @update:per-page="(val) => { filters.per_page = val; fetchConsultations(); }"
-          class="w-full"
+          embedded
+          :current-page="meta.current_page ?? 1"
+          :total-pages="meta.last_page ?? 1"
+          :total-items="meta.total ?? consultations.length"
+          :per-page="meta.per_page ?? filters.per_page ?? 10"
+          :per-page-options="[10, 25, 50, 100]"
+          @update:page="handlePageChange"
+          @update:per-page="handlePerPageChange"
         />
       </template>
     </DataTable>

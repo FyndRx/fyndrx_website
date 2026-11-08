@@ -64,8 +64,15 @@ export const priceAlertService = {
   },
 
   /** Full paginated list with product/pharmacy details, for the Price Alerts page. */
-  async list(page = 1, perPage = 20): Promise<{ data: PriceAlert[]; meta: PaginationMeta | null }> {
-    const response = await apiService.getAuth<any>(`/price-alerts?page=${page}&per_page=${perPage}`);
+  async list(
+    page = 1,
+    perPage = 20,
+    filters: { q?: string; scope?: 'any' | 'pharmacy' } = {},
+  ): Promise<{ data: PriceAlert[]; meta: PaginationMeta | null }> {
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+    if (filters.q) params.set('q', filters.q);
+    if (filters.scope) params.set('scope', filters.scope);
+    const response = await apiService.getAuth<any>(`/price-alerts?${params.toString()}`);
     return {
       data: response?.data ?? [],
       meta: response?.meta ?? null,
