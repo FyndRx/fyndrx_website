@@ -160,12 +160,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div 
-    class="pt-20 pb-12 min-h-screen bg-gray-50 dark:bg-gray-900"
+  <div
+    class="relative pt-24 pb-16 min-h-screen isolate overflow-x-clip"
     @touchstart="handleTouchStart"
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
   >
+    <!-- Same pastel canvas as the home page: brand wash + soft orbs, no hard edges -->
+    <div class="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-accent-50/70 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"></div>
+      <div class="absolute top-[4%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/40 blur-[130px] dark:bg-brand-500/10"></div>
+      <div class="absolute top-[38%] -left-72 h-[40rem] w-[40rem] rounded-full bg-accent-200/40 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[72%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/8"></div>
+    </div>
+
     <!-- Pull to Refresh Indicator -->
     <div 
       v-if="pullDistance > 0"
@@ -174,7 +182,7 @@ onMounted(async () => {
     >
       <div class="p-3 bg-white rounded-full shadow-lg dark:bg-gray-800">
         <svg 
-          class="w-6 h-6 text-[#246BFD] transition-transform"
+          class="w-6 h-6 text-brand-500 transition-transform"
           :class="{ 'animate-spin': isRefreshing }"
           fill="none" 
           stroke="currentColor" 
@@ -186,38 +194,40 @@ onMounted(async () => {
     </div>
 
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="mb-8 text-center">
-        <h1 class="mb-4 text-4xl font-medium text-gray-900 dark:text-white">
-          Browse Medications
+      <div class="mb-8 text-center med-rise">
+        <h1 class="mb-3 text-4xl font-medium text-gray-900 sm:text-5xl dark:text-white">
+          Browse <span class="text-brand-500 dark:text-brand-400">Medications</span>
         </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300">
+        <p class="text-lg text-gray-600 sm:text-xl dark:text-gray-300">
           Find and compare prices for your medications across pharmacies
         </p>
       </div>
 
       <!-- Search Bar with Autocomplete -->
-      <div class="mb-6">
+      <div class="relative z-30 mx-auto mb-6 max-w-3xl med-rise" style="--d: 0.08s">
         <SearchAutocomplete
           v-model="searchBarQuery"
           placeholder="Search by name, category, generic name, or condition..."
           search-type="medications"
+          input-class="pr-12 bg-white/80 shadow-card backdrop-blur-md dark:bg-gray-800/70"
           @search="commitSearch"
         />
       </div>
 
       <!-- Filter & Sort Bar -->
-      <div class="p-4 mb-6 bg-white rounded-xl shadow-lg dark:bg-gray-800">
-        <div class="flex justify-between items-center mb-4">
+      <div class="relative z-20 p-4 mb-6 rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md med-rise dark:bg-gray-800/60 dark:ring-white/10" style="--d: 0.14s">
+        <div class="flex flex-wrap gap-3 justify-between items-center" :class="{ 'mb-4': showFilters }">
           <div class="flex gap-3 items-center">
             <button
               @click="medicationsStore.toggleShowFilters()"
-              class="flex gap-2 items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full transition-all dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              :aria-expanded="showFilters"
+              class="flex gap-2 items-center px-4 py-2 text-gray-700 bg-white rounded-full border border-gray-200 transition duration-200 ease-out-quart dark:bg-white/5 dark:border-white/10 dark:text-gray-300 hover:border-brand-500 hover:text-brand-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
               </svg>
               <span class="font-medium">Filters</span>
-              <span v-if="activeFiltersCount > 0" class="px-2 py-0.5 text-xs font-bold bg-[#246BFD] text-white rounded-full">
+              <span v-if="activeFiltersCount > 0" class="px-2 py-0.5 text-xs font-bold bg-brand-500 text-white rounded-full">
                 {{ activeFiltersCount }}
               </span>
             </button>
@@ -225,7 +235,7 @@ onMounted(async () => {
             <button
               v-if="activeFiltersCount > 0"
               @click="clearFilters"
-              class="flex gap-2 items-center px-4 py-2 text-red-600 rounded-lg transition-all dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              class="flex gap-2 items-center px-4 py-2 text-red-600 rounded-full transition duration-200 ease-out-quart dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-500/20"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -249,7 +259,7 @@ onMounted(async () => {
         </div>
 
         <!-- Expandable Filters -->
-        <div v-if="showFilters" class="pt-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
+        <div v-if="showFilters" class="pt-4 space-y-4 border-t border-gray-200/70 dark:border-white/10">
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <!-- Form Filter -->
             <Dropdown
@@ -294,23 +304,23 @@ onMounted(async () => {
       </div>
 
       <!-- Category Pills (Quick Filter) -->
-      <div class="mb-8 relative group">
-        <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar scroll-smooth">
+      <div class="relative mb-8 med-rise" style="--d: 0.2s">
+        <div class="flex overflow-x-auto gap-2.5 px-3 py-4 -my-2 no-scrollbar scroll-smooth category-scroller">
           <button
             v-for="category in categories"
             :key="`category-${category}`"
             @click="handleCategoryClick(category)"
+            :aria-pressed="isCategoryActive(category)"
             :class="[
-              'px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0 border',
+              'flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-medium border transition duration-200 ease-out-quart active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30',
               isCategoryActive(category)
-                ? 'bg-gradient-to-r from-[#246BFD] to-[#5089FF] text-white border-transparent shadow-xl shadow-[#246BFD]/20 scale-105'
-                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/50 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                ? 'bg-brand-500 text-white border-transparent shadow-glow-brand'
+                : 'bg-white/70 text-gray-600 border-gray-200 backdrop-blur hover:border-brand-500 hover:text-brand-600 dark:bg-white/5 dark:text-gray-300 dark:border-white/10 dark:hover:text-brand-300'
             ]"
           >
-            {{ category === 'all' ? '✨ All Essentials' : (storeCategories.find(c => c.slug === category)?.name || category) }}
+            {{ category === 'all' ? 'All medications' : (storeCategories.find(c => c.slug === category)?.name || category) }}
           </button>
         </div>
-        <div class="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-gray-50 dark:from-gray-900 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
 
       <!-- Recently Viewed - Temporarily hidden -->
@@ -354,10 +364,11 @@ onMounted(async () => {
           />
           <div
             @click="viewMedication(medication)"
-          class="relative p-6 bg-white rounded-2xl shadow-lg transition-all duration-300 cursor-pointer dark:bg-gray-800 hover:shadow-2xl hover:-translate-y-2 group"
-        >
+            class="med-card relative p-5 cursor-pointer rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md transition duration-300 ease-out-quart hover:-translate-y-1 hover:shadow-card-hover dark:bg-gray-800/60 dark:ring-white/10 group"
+            :style="{ '--i': index % 9 }"
+          >
           <!-- Action Buttons Overlay -->
-          <div class="flex absolute top-4 right-4 z-10 gap-2">
+          <div class="flex absolute top-7 right-7 z-10 gap-2">
             <FavoriteButton
               type="medication"
               :item-id="medication.id"
@@ -365,13 +376,15 @@ onMounted(async () => {
             />
             <button
               @click="toggleComparison(medication.id, $event)"
+              :aria-pressed="isInComparison(medication.id)"
               :class="[
-                'w-8 h-8 flex items-center justify-center rounded-full transition-all',
+                'w-8 h-8 flex items-center justify-center rounded-full shadow-sm transition duration-200 ease-out-quart active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30',
                 isInComparison(medication.id)
-                  ? 'bg-[#246BFD] text-white'
-                  : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-[#246BFD] hover:text-white'
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-white/90 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white'
               ]"
               title="Add to comparison"
+              aria-label="Add to comparison"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -379,24 +392,24 @@ onMounted(async () => {
             </button>
           </div>
 
-          <div class="overflow-hidden mb-4 rounded-xl aspect-w-16 aspect-h-9">
+          <div class="overflow-hidden mb-4 rounded-2xl aspect-w-16 aspect-h-9">
             <LazyImage
               :src="medication.image"
               :alt="medication.name"
               aspectRatio="landscape"
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover transition-transform duration-500 ease-out-quart group-hover:scale-105"
             />
           </div>
 
           <div class="flex flex-wrap gap-2 items-center mb-2">
-            <span 
-              v-for="(cat, index) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
-              :key="index"
-              class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-[#246BFD]/10 text-[#246BFD]"
+            <span
+              v-for="(cat, catIndex) in (Array.isArray(medication.category) ? medication.category : [medication.category])"
+              :key="catIndex"
+              class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300"
             >
               {{ typeof cat === 'string' ? cat : cat.name }}
             </span>
-            <span v-if="medication.requiresPrescription" class="inline-flex items-center px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-100 rounded-full dark:bg-orange-900 dark:text-orange-200">
+            <span v-if="medication.requiresPrescription" class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-accent-500/15 text-accent-700 dark:text-accent-300">
               <svg class="mr-1 w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
               </svg>
@@ -404,7 +417,7 @@ onMounted(async () => {
             </span>
           </div>
 
-          <h4 class="mb-2 text-xl font-bold text-gray-900 transition-colors duration-300 dark:text-white group-hover:text-[#246BFD] dark:group-hover:text-[#5089FF]">
+          <h4 class="mb-2 text-xl font-semibold text-gray-900 transition-colors duration-300 dark:text-white group-hover:text-brand-500 dark:group-hover:text-brand-300">
             {{ medication.name }}
           </h4>
 
@@ -412,11 +425,11 @@ onMounted(async () => {
             {{ medication.description }}
           </p>
 
-          <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            <!-- Modern Pharmacy Info Badge -->
-            <div class="flex flex-col gap-2 w-full">
-              <div v-if="medication.pharmacy_name" class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 transition-all hover:bg-white dark:hover:bg-gray-700 shadow-sm">
-                <div v-if="medication.pharmacy_logo" class="w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-50 dark:border-gray-600">
+          <div class="flex gap-3 justify-between items-center pt-4 border-t border-gray-200/70 dark:border-white/10">
+            <!-- Pharmacy info -->
+            <div class="flex flex-col flex-1 gap-2 min-w-0">
+              <div v-if="medication.pharmacy_name" class="flex items-center gap-3 p-2 rounded-2xl bg-white/60 ring-1 ring-gray-200/70 dark:bg-white/5 dark:ring-white/10">
+                <div v-if="medication.pharmacy_logo" class="w-10 h-10 p-1 overflow-hidden bg-white rounded-xl ring-1 ring-gray-100 dark:bg-gray-700 dark:ring-white/10">
                   <LazyImage
                     :src="medication.pharmacy_logo || ''"
                     :alt="medication.pharmacy_name"
@@ -425,35 +438,41 @@ onMounted(async () => {
                   />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">
+                  <p class="text-sm font-semibold text-gray-900 truncate dark:text-white">
                     {{ medication.pharmacy_name }}
                   </p>
-                  <p v-if="medication.branch_name" class="text-[10px] font-bold text-[#246BFD] dark:text-[#5089FF] uppercase tracking-widest">
+                  <p v-if="medication.branch_name" class="text-xs font-medium truncate text-brand-600 dark:text-brand-300">
                     {{ medication.branch_name }}
                   </p>
                 </div>
               </div>
 
               <div class="inline-flex items-center" v-if="medication.pharmacy_count !== undefined && !medication.pharmacy_name">
-                <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#246BFD]/10 to-[#246BFD]/5 border border-[#246BFD]/20 transition-transform hover:-translate-y-0.5 shadow-sm">
-                  <div class="flex items-center justify-center w-7 h-7 bg-[#246BFD] rounded-lg shadow-md shadow-[#246BFD]/30">
+                <div
+                  class="inline-flex gap-2 items-center py-1.5 pr-3 pl-1.5 rounded-full ring-1"
+                  :class="medication.pharmacy_count > 0 ? 'bg-brand-500/10 ring-brand-500/20' : 'bg-gray-100 ring-gray-200 dark:bg-white/5 dark:ring-white/10'"
+                >
+                  <div
+                    class="flex justify-center items-center w-7 h-7 rounded-full"
+                    :class="medication.pharmacy_count > 0 ? 'bg-brand-500 shadow-glow-brand' : 'bg-gray-400 dark:bg-gray-600'"
+                  >
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                   </div>
-                  <div class="flex flex-col pr-1">
-                    <span class="text-[9px] font-black tracking-widest text-[#246BFD]/70 dark:text-[#5089FF]/80 uppercase leading-none mb-0.5">Verified Stock</span>
-                    <span class="text-xs font-bold text-[#246BFD] dark:text-[#5089FF] leading-none">
-                      {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'Pharmacy' : 'Pharmacies' }}
-                    </span>
-                  </div>
+                  <span
+                    class="text-sm font-semibold"
+                    :class="medication.pharmacy_count > 0 ? 'text-brand-600 dark:text-brand-300' : 'text-gray-500 dark:text-gray-400'"
+                  >
+                    {{ medication.pharmacy_count > 0 ? `In stock at ${medication.pharmacy_count} ${medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies'}` : 'No pharmacies yet' }}
+                  </span>
                 </div>
               </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-shrink-0 gap-2">
               <button
                 @click="openQuickView(medication.id, $event)"
-                class="p-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-full transition-colors dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                class="p-3 text-gray-700 bg-white rounded-full ring-1 ring-gray-200 transition duration-200 ease-out-quart dark:bg-white/5 dark:text-gray-300 dark:ring-white/10 hover:bg-brand-500 hover:text-white hover:ring-transparent active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
                 title="Quick view"
               >
                 <span class="sr-only">Quick view</span>
@@ -514,6 +533,40 @@ onMounted(async () => {
   right: 0;
   bottom: 0;
   left: 0;
+}
+
+/* Page entrance + staggered card entrance (same easing as the home page).
+   Reduced motion shows everything at once. */
+.med-rise {
+  animation: med-rise 0.6s cubic-bezier(0.25, 1, 0.5, 1) var(--d, 0s) backwards;
+}
+
+.med-card {
+  animation: med-rise 0.5s cubic-bezier(0.25, 1, 0.5, 1) calc(var(--i, 0) * 60ms) backwards;
+}
+
+@keyframes med-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Soft edge fade so the category row reads as scrollable on phones */
+.category-scroller {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 28px), transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .med-rise,
+  .med-card {
+    animation: none;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

@@ -326,7 +326,14 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen pt-10 bg-gray-50 dark:bg-[#0d1117]">
+  <div class="relative min-h-screen pt-24 isolate overflow-x-clip">
+    <!-- Same pastel canvas as the home page -->
+    <div class="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-accent-50/70 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"></div>
+      <div class="absolute top-[4%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/40 blur-[130px] dark:bg-brand-500/10"></div>
+      <div class="absolute top-[40%] -left-72 h-[40rem] w-[40rem] rounded-full bg-accent-200/40 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[75%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/8"></div>
+    </div>
     <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
 
       <!-- Loading State -->
@@ -349,36 +356,36 @@ watch(
         <p class="mb-4 text-xl font-medium text-gray-900 dark:text-white">{{ error }}</p>
         <button 
           @click="loadMedicationData(route.params.id as string)"
-          class="px-6 py-3 rounded-full bg-[#246BFD] text-white font-medium hover:bg-[#5089FF] transition-colors"
+          class="px-6 py-3 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
         >
           Try Again
         </button>
       </div>
 
       <!-- Medication Details -->
-      <div v-else-if="medication" class="py-12 space-y-8">
+      <div v-else-if="medication" class="pb-16 space-y-8">
         <!-- Header Section with Exact Match Data -->
-        <div class="overflow-visible bg-white shadow-xl dark:bg-[#161c2c] rounded-2xl border border-gray-100 dark:border-gray-700/60">
-          <div class="p-8">
-            <div class="flex flex-col gap-10 md:flex-row">
+        <div class="overflow-visible detail-rise rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
+          <div class="p-5 sm:p-8">
+            <div class="flex flex-col gap-8 md:gap-10 md:flex-row">
               <!-- Image Section -->
               <div class="w-full md:w-1/3">
-                <div class="relative overflow-hidden aspect-square rounded-2xl shadow-inner group">
+                <div class="relative overflow-hidden aspect-square rounded-2xl ring-1 ring-gray-200/70 group dark:ring-white/10">
                   <LazyImage
                     :src="exactMatch?.image || medication.image || '/images/medications/default.jpg'"
                     :alt="medication.name"
                     aspectRatio="square"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div class="absolute top-4 right-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-1 shadow-lg">
+                  <div class="absolute top-3 right-3 p-1 rounded-full shadow-card backdrop-blur-md bg-white/80 dark:bg-gray-800/80">
                     <FavoriteButton
                       type="medication"
                       :item-id="medication.id"
                       size="large"
                     />
                   </div>
-                  <div v-if="exactMatch?.requires_prescription ?? medication.requiresPrescription" class="absolute bottom-4 left-4">
-                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-orange-500 text-white shadow-lg">
+                  <div v-if="exactMatch?.requires_prescription ?? medication.requiresPrescription" class="absolute bottom-3 left-3">
+                    <span class="inline-flex items-center px-3 py-1 text-sm font-semibold text-white rounded-full shadow-card bg-accent-500">
                        Rx Required
                     </span>
                   </div>
@@ -389,7 +396,7 @@ watch(
               <div class="flex flex-col flex-1">
                 <div class="mb-6">
                   <div class="flex flex-wrap items-baseline gap-3 mb-2">
-                    <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white uppercase">
+                    <h1 class="text-3xl font-semibold text-gray-900 sm:text-4xl dark:text-white">
                       {{ exactMatch?.name || medication.name }}
                     </h1>
                   </div>
@@ -397,23 +404,23 @@ watch(
                   <!-- Categories -->
                   <div v-if="(exactMatch?.categories && exactMatch.categories.length) || (medication.category && (Array.isArray(medication.category) ? medication.category.length : true))" class="flex flex-wrap gap-2 mb-4">
                     <template v-if="exactMatch?.categories">
-                      <span v-for="cat in exactMatch.categories" :key="cat.id" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                      <span v-for="cat in exactMatch.categories" :key="cat.id" class="px-3 py-1 text-sm font-medium rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300">
                         {{ cat.name }}
                       </span>
                     </template>
                     <template v-else-if="Array.isArray(medication.category)">
-                      <span v-for="cat in medication.category" :key="typeof cat === 'string' ? cat : (cat as any).id" class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                      <span v-for="cat in medication.category" :key="typeof cat === 'string' ? cat : (cat as any).id" class="px-3 py-1 text-sm font-medium rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300">
                         {{ typeof cat === 'string' ? cat : (cat as any).name }}
                       </span>
                     </template>
                     <template v-else-if="medication.category">
-                      <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg bg-[#246BFD]/10 text-[#246BFD]">
+                      <span class="px-3 py-1 text-sm font-medium rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300">
                         {{ typeof medication.category === 'string' ? medication.category : (medication.category as any).name }}
                       </span>
                     </template>
                   </div>
 
-                  <div class="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40 p-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700" v-html="sanitizeHtml(exactMatch?.description || medication.description || '')"></div>
+                  <div class="p-5 sm:p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 bg-white/60 ring-1 ring-gray-200/70 dark:bg-white/5 dark:ring-white/10" v-html="sanitizeHtml(exactMatch?.description || medication.description || '')"></div>
                 </div>
               </div>
             </div>
@@ -421,15 +428,14 @@ watch(
         </div>
 
         <!-- Available Pharmacies -->
-        <div id="pharmacy-list" class="bg-white shadow-xl dark:bg-[#161c2c] rounded-2xl border border-gray-100 dark:border-gray-700/60 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-[#0d1420] px-8 py-8 border-b border-gray-100 dark:border-gray-700/60">
+        <div id="pharmacy-list" class="overflow-hidden detail-rise rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10" style="--d: 0.08s">
+          <div class="px-5 py-6 border-b sm:px-8 sm:py-8 border-gray-200/70 bg-white/40 dark:border-white/10 dark:bg-white/5">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Available Pharmacies</h2>
-                  <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-black rounded uppercase">Verified</span>
+                  <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Available Pharmacies</h2>
                 </div>
-                <p class="text-sm text-gray-500 font-medium tracking-tight">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                   Comparing {{ pharmacyMeta?.total || paginatedPharmacies.length }} live price listings from vetted pharmacies
                 </p>
                 <PriceAlertButton
@@ -453,12 +459,12 @@ watch(
             </div>
           </div>
 
-          <div class="p-8">
-            <div v-if="loadingPharmacies" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 py-4">
+          <div class="p-5 sm:p-8">
+            <div v-if="loadingPharmacies" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 py-4">
               <div
                 v-for="i in 6"
                 :key="i"
-                class="flex flex-col h-full bg-white shadow-sm dark:bg-[#1a2235] rounded-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden animate-pulse"
+                class="flex overflow-hidden flex-col h-full rounded-3xl bg-white/60 ring-1 ring-gray-200/70 animate-pulse dark:bg-white/5 dark:ring-white/10"
               >
                 <!-- Image Placeholder -->
                 <div class="p-4 pb-0">
@@ -475,7 +481,7 @@ watch(
                     </div>
                   </div>
                   <!-- Pricing -->
-                  <div class="pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                  <div class="pt-4 flex flex-col border-t border-gray-200/70 dark:border-white/10">
                     <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
                     <div class="flex justify-between items-center mb-4">
                       <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
@@ -492,8 +498,8 @@ watch(
             </div>
 
             <div v-else-if="paginatedPharmacies.length === 0" class="py-20 text-center">
-              <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full bg-brand-500/10">
+                <svg class="w-10 h-10 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                 </svg>
               </div>
@@ -501,15 +507,15 @@ watch(
               <p class="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">We couldn't find pharmacies matching your current search criteria.</p>
             </div>
 
-            <div v-else class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <div
                 v-for="(pharmacyItem, index) in paginatedPharmacies"
                 :key="index"
-                class="group flex flex-col h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-[#1a2235] rounded-2xl hover:shadow-2xl hover:-translate-y-2"
+                class="group flex flex-col h-full overflow-hidden transition duration-300 ease-out-quart rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md hover:-translate-y-1 hover:shadow-card-hover dark:bg-gray-800/60 dark:ring-white/10"
               >
                 <!-- Image & Overlay Section -->
                 <div class="p-4 pb-0">
-                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
+                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900/60">
                     <LazyImage
                       :src="pharmacyItem.pharmacy?.pharmacy_image || pharmacyItem.logo || ''"
                       :alt="pharmacyItem.name"
@@ -517,11 +523,11 @@ watch(
                       className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                     <!-- Hover Overlay -->
-                    <div class="absolute inset-0 rounded-2xl bg-[#246BFD]/0 group-hover:bg-[#246BFD]/10 transition-all duration-500 ease-out"></div>
+                    <div class="absolute inset-0 rounded-2xl bg-brand-500/0 group-hover:bg-brand-500/10 transition-all duration-500 ease-out"></div>
                     <!-- Badges Layer -->
                     <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
                       <span 
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-lg backdrop-blur-md transition-all"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-card backdrop-blur-md"
                         :class="pharmacyItem.pharmacy?.is_open ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-red-500 text-white shadow-red-500/20'"
                       >
                         <span class="w-1.5 h-1.5 mr-2 rounded-full animate-pulse bg-white"></span>
@@ -547,15 +553,15 @@ watch(
                     </div>
                     <!-- Name + Branch -->
                     <div class="min-w-0 flex-1">
-                      <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-[#246BFD] transition-colors leading-tight">
+                      <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-brand-500 transition-colors leading-tight">
                         <router-link :to="`/pharmacy/${pharmacyItem.id}`">{{ pharmacyItem.name }}</router-link>
                       </h3>
                       <div class="flex items-center gap-2 mt-1">
-                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                           {{ pharmacyItem.branch_name || 'Main Branch' }}
                         </p>
                       </div>
@@ -563,11 +569,11 @@ watch(
                   </div>
 
                   <!-- Pricing & Add to Cart Block -->
-                  <div class="pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                  <div class="pt-4 flex flex-col border-t border-gray-200/70 dark:border-white/10">
                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price per unit</span>
                     <div class="flex items-center justify-between mb-4">
                       <div class="flex items-baseline gap-2">
-                        <span class="text-xl font-bold text-[#246BFD]">
+                        <span class="text-xl font-bold text-brand-500">
                           {{ formatCurrency(pharmacyItem.discountPrice || pharmacyItem.price) }}
                         </span>
                         <span v-if="pharmacyItem.discountPrice" class="text-xs text-gray-400 line-through">
@@ -576,10 +582,10 @@ watch(
                       </div>
                       <div class="flex items-center gap-2">
                         <span
-                          class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
-                          :class="pharmacyItem.inStock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+                          class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full"
+                          :class="pharmacyItem.inStock ? 'bg-brand-500/10 text-brand-500' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'"
                         >
-                          <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
+                          <span v-if="pharmacyItem.inStock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-brand-500"></span>
                           {{ pharmacyItem.inStock ? (pharmacyItem.stockQuantity !== undefined ? `In Stock: ${pharmacyItem.stockQuantity}` : 'In Stock') : 'Out of Stock' }}
                         </span>
                         <PriceAlertButton
@@ -595,8 +601,8 @@ watch(
                     <!-- Actions -->
                     <div class="flex flex-col gap-1 mt-auto">
                       <div class="flex gap-2">
-                        <div class="bg-gray-50 dark:bg-gray-900 rounded-full flex items-center px-1 h-12 w-28 border border-gray-100 dark:border-gray-700">
-                           <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
+                        <div class="flex items-center px-1 w-28 h-12 rounded-full bg-white ring-1 ring-gray-200 dark:bg-white/5 dark:ring-white/10">
+                           <button @click="setCustomQuantity(pharmacyItem.id, Math.max(1, getCustomQuantity(pharmacyItem.id) - 1))" class="text-gray-500 hover:text-brand-500 active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform">-</button>
                            <input 
                              type="number" 
                              :value="getCustomQuantity(pharmacyItem.id)"
@@ -607,13 +613,13 @@ watch(
                            />
                            <button 
                              @click="setCustomQuantity(pharmacyItem.id, getCustomQuantity(pharmacyItem.id) + 1)" 
-                             class="text-gray-500 hover:text-[#246BFD] active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform"
+                             class="text-gray-500 hover:text-brand-500 active:scale-95 p-2 w-8 flex items-center justify-center font-bold text-lg transition-transform"
                            >+</button>
                         </div>
                         <button 
                           @click="addToCart(pharmacyItem, getCustomQuantity(pharmacyItem.id))"
                           :disabled="!pharmacyItem.inStock || (pharmacyItem.stockQuantity !== undefined && getCustomQuantity(pharmacyItem.id) > pharmacyItem.stockQuantity)"
-                          class="flex-1 h-12 bg-[#246BFD] hover:bg-[#1a56d6] text-white font-medium rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#246BFD] active:scale-95 disabled:active:scale-100"
+                          class="flex flex-1 gap-2 justify-center items-center h-12 font-medium text-white rounded-full shadow-glow-brand transition duration-200 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:bg-brand-500 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
                         >
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -653,7 +659,7 @@ watch(
         </div>
 
         <!-- Z5: Sidebar ad — desktop inline, mobile full-width banner -->
-        <div v-if="detailSidebarAd" class="py-8 border-t border-gray-200 dark:border-gray-700">
+        <div v-if="detailSidebarAd" class="py-4">
           <div class="hidden lg:block max-w-sm">
             <SidebarAd :ad="detailSidebarAd" zone="Z5-med-detail-sidebar" />
           </div>
@@ -663,27 +669,26 @@ watch(
         </div>
 
         <!-- Related Drugs Section -->
-        <div v-if="relatedDrugs.length > 0 || relatedSearch" class="py-12 border-t border-gray-200 dark:border-gray-700">
+        <div v-if="relatedDrugs.length > 0 || relatedSearch" class="py-4">
           <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Related Drugs</h3>
-                <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-black rounded uppercase">Verified</span>
+                <h3 class="text-2xl font-semibold text-gray-900 dark:text-white">Related Drugs</h3>
               </div>
-              <p class="text-sm text-gray-500 font-medium tracking-tight">Discover variations, strengths, and smart alternatives</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Discover variations, strengths, and smart alternatives</p>
               
               <div class="flex flex-wrap gap-2 mt-3 pt-4 border-t border-gray-100 dark:border-gray-800 transition-all">
                 <button 
                   @click="relatedSort = ''; relatedSearch = ''"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
-                  :class="relatedSort === '' && !relatedSearch ? 'bg-[#246BFD] border-[#246BFD] text-white shadow-lg shadow-[#246BFD]/20' : 'bg-[#246BFD]/5 border-[#246BFD]/10 text-[#246BFD] hover:bg-[#246BFD]/10'"
+                  class="px-3.5 py-1.5 text-xs font-medium rounded-full transition active:scale-95 border flex items-center gap-1.5"
+                  :class="relatedSort === '' && !relatedSearch ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-brand-500/5 border-brand-500/10 text-brand-500 hover:bg-brand-500/10'"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                   Best Match
                 </button>
                 <button 
                   @click="relatedSort = 'price_asc'"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
+                  class="px-3.5 py-1.5 text-xs font-medium rounded-full transition active:scale-95 border flex items-center gap-1.5"
                   :class="relatedSort === 'price_asc' ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-green-500/5 border-green-500/10 text-green-600 hover:bg-green-500/10'"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1H12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
@@ -691,7 +696,7 @@ watch(
                 </button>
                 <button 
                   @click="relatedSort = 'distance_asc'"
-                  class="px-3 py-1 text-[11px] font-black rounded-full transition-all active:scale-95 border flex items-center gap-1.5"
+                  class="px-3.5 py-1.5 text-xs font-medium rounded-full transition active:scale-95 border flex items-center gap-1.5"
                   :class="relatedSort === 'distance_asc' ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-amber-500/5 border-amber-500/10 text-amber-600 hover:bg-amber-500/10'"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
@@ -718,12 +723,12 @@ watch(
               :to="{
                 path: `/medication/${drug.product_id}`
               }"
-              class="group block h-full overflow-hidden transition-all duration-300 bg-white shadow-lg dark:bg-[#1a2235] rounded-2xl hover:shadow-2xl hover:-translate-y-2"
+              class="group block h-full overflow-hidden transition duration-300 ease-out-quart rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md hover:-translate-y-1 hover:shadow-card-hover dark:bg-gray-800/60 dark:ring-white/10"
             >
               <div class="flex flex-col h-full">
                 <!-- Image & Overlay Section -->
                 <div class="p-4 pb-0">
-                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-50 dark:bg-[#0d1117] shadow-sm border border-gray-100 dark:border-gray-700/50">
+                  <div class="relative h-48 overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900/60">
                     <LazyImage
                       :src="drug.image || '/images/medications/default.jpg'"
                       :alt="drug.name"
@@ -731,11 +736,11 @@ watch(
                       className="w-full h-full rounded-2xl overflow-hidden transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                     <!-- Hover Overlay -->
-                    <div class="absolute inset-0 rounded-2xl bg-[#246BFD]/0 group-hover:bg-[#246BFD]/10 transition-all duration-500 ease-out"></div>
+                    <div class="absolute inset-0 rounded-2xl bg-brand-500/0 group-hover:bg-brand-500/10 transition-all duration-500 ease-out"></div>
                     <!-- Badges Layer -->
                     <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
                       <span 
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-lg backdrop-blur-md transition-all"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full shadow-card backdrop-blur-md"
                         :class="drug.is_open ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-red-500 text-white shadow-red-500/20'"
                       >
                         <span class="w-1.5 h-1.5 mr-2 rounded-full animate-pulse bg-white"></span>
@@ -749,14 +754,14 @@ watch(
                 <div class="p-6 flex-1 flex flex-col pt-4">
                   <!-- Title -->
                   <h3 
-                    class="mb-4 text-base font-bold text-gray-900 dark:text-white line-clamp-3 leading-snug group-hover:text-[#246BFD] transition-colors"
+                    class="mb-4 text-base font-bold text-gray-900 dark:text-white line-clamp-3 leading-snug group-hover:text-brand-500 transition-colors"
                     :title="drug.name"
                   >
                     {{ drug.name }}
                   </h3>
 
                   <!-- Pharmacy Info Section -->
-                  <div v-if="drug.pharmacy_name" class="flex items-center gap-3 mb-4 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div v-if="drug.pharmacy_name" class="flex items-center gap-3 mb-4 mt-auto pt-4 border-t border-gray-200/70 dark:border-white/10">
                     <div class="flex-shrink-0 w-10 h-10 p-1 overflow-hidden bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
                       <!-- Logo -->
                       <LazyImage
@@ -771,11 +776,11 @@ watch(
                         {{ drug.pharmacy_name }}
                       </h3>
                       <div class="flex items-center gap-2 mt-1">
-                        <svg class="w-3.5 h-3.5 text-[#246BFD] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 truncate uppercase tracking-tight">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                           {{ drug.branch_name || 'Main Branch' }}
                         </p>
                       </div>
@@ -783,11 +788,11 @@ watch(
                   </div>
 
                   <!-- Pricing Block -->
-                  <div class="mt-auto pt-4 flex flex-col border-t border-gray-100 dark:border-gray-700">
+                  <div class="mt-auto pt-4 flex flex-col border-t border-gray-200/70 dark:border-white/10">
                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price per unit</span>
                     <div class="flex items-center justify-between">
                       <div class="flex items-baseline gap-2">
-                        <span class="text-2xl font-bold text-[#246BFD]">
+                        <span class="text-2xl font-bold text-brand-500">
                           {{ formatCurrency(drug.discount_price || drug.price) }}
                         </span>
                         <span v-if="drug.discount_price" class="text-sm text-gray-400 line-through">
@@ -795,10 +800,10 @@ watch(
                         </span>
                       </div>
                       <span 
-                        class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
-                        :class="drug.in_stock ? 'bg-[#246BFD]/10 text-[#246BFD]' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full"
+                        :class="drug.in_stock ? 'bg-brand-500/10 text-brand-500' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'"
                       >
-                        <span v-if="drug.in_stock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-[#246BFD]"></span>
+                        <span v-if="drug.in_stock" class="w-1.5 h-1.5 mr-1.5 rounded-full animate-pulse bg-brand-500"></span>
                         {{ drug.in_stock ? 'In Stock' : 'Out of Stock' }}
                       </span>
                     </div>
@@ -825,6 +830,28 @@ watch(
 </template>
 
 <style scoped>
+/* Entrance (same easing as the home page); `backwards` so hover transforms still apply afterwards */
+.detail-rise {
+  animation: detail-rise 0.6s cubic-bezier(0.25, 1, 0.5, 1) var(--d, 0s) backwards;
+}
+
+@keyframes detail-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-rise {
+    animation: none;
+  }
+}
+
 .aspect-w-4 {
   position: relative;
   padding-bottom: 75%;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { usePlaceholder } from '@/composables/usePlaceholder';
+import squarePlaceholder from '@/assets/placeholder/square.png';
+import landscapePlaceholder from '@/assets/placeholder/landscape.png';
 
 interface Props {
   src: string;
@@ -20,12 +21,17 @@ const imageLoaded = ref(false);
 const imageError = ref(false);
 const imageRef = ref<HTMLImageElement | null>(null);
 
-const { getPlaceholder } = usePlaceholder();
-
+// One light placeholder for both themes. In dark mode CSS inverts it and blends it into the
+// container (see `placeholderClass`), so it takes the surface colour behind it instead of
+// showing a flat grey tile. A custom `placeholder` prop is shown untouched.
 const placeholderSrc = computed(() => {
   if (props.placeholder) return props.placeholder;
-  return getPlaceholder(props.aspectRatio);
+  return props.aspectRatio === 'square' ? squarePlaceholder : landscapePlaceholder;
 });
+
+const placeholderClass = computed(() =>
+  props.placeholder ? '' : 'mix-blend-multiply dark:invert dark:mix-blend-screen dark:opacity-70',
+);
 
 const handleImageLoad = () => {
   imageLoaded.value = true;
@@ -77,6 +83,7 @@ export default {
       :src="placeholderSrc"
       :alt="alt"
       class="object-cover w-full h-full"
+      :class="placeholderClass"
     />
     
     <!-- Actual Image -->
@@ -85,7 +92,10 @@ export default {
       :src="imageError ? placeholderSrc : src"
       :alt="alt"
       class="object-cover w-full h-full transition-opacity duration-300"
-      :class="{ 'opacity-0': !imageLoaded, 'opacity-100': imageLoaded }"
+      :class="[
+        imageLoaded ? 'opacity-100' : 'opacity-0',
+        imageError ? placeholderClass : '',
+      ]"
       @load="handleImageLoad"
       @error="handleImageError"
     />
