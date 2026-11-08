@@ -12,7 +12,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
     <!-- Reviews loading skeleton -->
     <div v-if="pharmacyState.reviewsLoading.value" class="space-y-6 animate-pulse">
       <!-- Rating summary skeleton -->
-      <div class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+      <div class="p-6 sm:p-8 bg-white/60 dark:bg-white/5 rounded-3xl ring-1 ring-gray-200/70 dark:ring-white/10">
         <div class="flex flex-col gap-6 lg:flex-row lg:items-center">
           <div class="space-y-3 text-center lg:text-left">
             <div class="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded mx-auto lg:mx-0"></div>
@@ -29,7 +29,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
         </div>
       </div>
       <!-- Review cards -->
-      <div v-for="i in 3" :key="i" class="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700/50 space-y-3">
+      <div v-for="i in 3" :key="i" class="p-6 bg-white/60 dark:bg-white/5 rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10 space-y-3">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"></div>
           <div class="space-y-2 flex-1">
@@ -48,10 +48,10 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 
     <div v-else class="space-y-10">
        <!-- Statistics Summary -->
-       <div v-if="pharmacyState.reviewStats.value" class="p-6 sm:p-8 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+       <div v-if="pharmacyState.reviewStats.value" class="p-6 sm:p-8 bg-white/60 dark:bg-white/5 rounded-3xl ring-1 ring-gray-200/70 dark:ring-white/10">
         <div class="flex flex-col gap-8 lg:flex-row lg:items-center">
           <div class="text-center lg:text-left">
-            <p class="text-xs font-semibold text-[#246BFD] mb-1">Aggregate Rating</p>
+            <p class="text-xs font-semibold text-brand-500 mb-1">Aggregate Rating</p>
             <div class="flex items-center justify-center lg:justify-start gap-4">
               <span class="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {{ (pharmacyState.reviewStats.value.averageRating || 0).toFixed(1) }}
@@ -79,10 +79,10 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="flex items-center gap-2.5">
-          <div class="w-1 h-6 bg-[#246BFD] rounded-full"></div>
+          <div class="w-1 h-6 bg-brand-500 rounded-full"></div>
           <h3 class="text-lg font-bold text-gray-900 dark:text-white">Verified Testimonials</h3>
         </div>
-        <button @click="pharmacyState.showAddReviewModal.value = true" class="px-5 py-2.5 bg-[#246BFD] hover:bg-[#1a56d6] text-white text-sm font-bold rounded-full shadow-md transition-all active:scale-95">Submit Review</button>
+        <button @click="pharmacyState.showAddReviewModal.value = true" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-full shadow-card transition-all active:scale-95">Submit Review</button>
       </div>
 
       <div v-if="pharmacyState.reviews.value.length > 0" class="grid grid-cols-1 gap-6">
@@ -90,7 +90,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           v-for="review in pharmacyState.reviews.value"
           :key="review.id"
           :review="review"
-          class="!rounded-2xl !bg-white dark:!bg-gray-800 !p-6 sm:!p-8 !shadow-md !border !border-gray-50 dark:!border-gray-700/50"
+          class="!rounded-2xl !bg-white/80 dark:!bg-gray-800/70 !p-6 sm:!p-8 !shadow-card !border !border-gray-200/70 dark:!border-white/10"
           @helpful="pharmacyState.handleReviewHelpful"
           @not-helpful="pharmacyState.handleReviewNotHelpful"
         />

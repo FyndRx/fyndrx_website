@@ -10,23 +10,25 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
 </script>
 
 <template>
-  <div class="bg-white shadow-xl dark:bg-gray-800 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700/50">
-    <div class="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50 px-6 sm:px-8">
-      <nav class="flex overflow-x-auto no-scrollbar gap-8">
+  <div class="overflow-hidden rounded-3xl bg-white/70 shadow-card ring-1 ring-white/70 backdrop-blur-md dark:bg-gray-800/60 dark:ring-white/10">
+    <div class="border-b border-gray-200/70 dark:border-white/10 bg-white/40 dark:bg-white/5 px-6 sm:px-8">
+      <nav class="flex overflow-x-auto no-scrollbar gap-8" role="tablist">
         <button
           v-for="tab in ['overview', 'services', 'branches', 'reviews']"
           :key="tab"
           v-show="tab !== 'branches' || (pharmacyState.pharmacy.value?.branchesCount || 0) > 0"
+          type="button"
+          role="tab"
+          :aria-selected="pharmacyState.activeTab.value === tab"
           @click="pharmacyState.switchTab(tab)"
-          class="px-1 py-4 text-sm font-semibold capitalize transition-all border-b-2 whitespace-nowrap relative group"
+          class="relative px-1 py-4 -mb-px text-sm font-semibold capitalize transition duration-200 border-b-2 ease-out-quart whitespace-nowrap focus-visible:outline-none focus-visible:text-brand-600"
           :class="[
             pharmacyState.activeTab.value === tab
-              ? 'border-[#246BFD] text-[#246BFD]'
-              : 'border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              ? 'border-brand-500 text-brand-600 dark:text-brand-300'
+              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
           ]"
         >
-          <span class="relative z-10">{{ tab }}</span>
-          <div v-if="pharmacyState.activeTab.value === tab" class="absolute inset-0 bg-[#246BFD]/5 blur-xl -z-0"></div>
+          {{ tab }}
         </button>
       </nav>
     </div>

@@ -48,8 +48,8 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
           class="group relative flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-default"
           :class="[
             service.category && pharmacyState.SERVICE_CATEGORY_STYLES[service.category]
-              ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600'
-              : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50'
+              ? 'bg-white/80 dark:bg-gray-800/70 border-gray-200/70 dark:border-white/10 hover:border-gray-200 dark:hover:border-gray-600'
+              : 'bg-white/80 dark:bg-gray-800/70 border-gray-200/70 dark:border-white/10'
           ]"
         >
           <!-- Colored left accent -->
@@ -77,7 +77,7 @@ const pharmacyState = inject<ReturnType<typeof usePharmacy>>('pharmacyState')!;
               <h4 class="text-sm font-bold text-gray-900 dark:text-white leading-tight">{{ service.name }}</h4>
               <span
                 v-if="service.category"
-                class="flex-shrink-0 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700"
+                class="flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700"
                 :class="pharmacyState.SERVICE_CATEGORY_STYLES[service.category ?? '']?.text ?? 'text-gray-500'"
               >{{ service.category }}</span>
             </div>
