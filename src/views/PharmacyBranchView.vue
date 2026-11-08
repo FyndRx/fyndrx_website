@@ -28,12 +28,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16 pb-20">
+  <div class="relative min-h-screen pt-24 pb-20 isolate overflow-x-clip">
+    <!-- Same pastel canvas as the rest of the site -->
+    <div class="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-accent-50/70 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"></div>
+      <div class="absolute top-[4%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/40 blur-[130px] dark:bg-brand-500/10"></div>
+      <div class="absolute top-[40%] -left-72 h-[40rem] w-[40rem] rounded-full bg-accent-200/40 blur-[130px] dark:bg-transparent"></div>
+      <div class="absolute top-[78%] -right-72 h-[40rem] w-[40rem] rounded-full bg-brand-200/35 blur-[130px] dark:bg-brand-500/10"></div>
+    </div>
 
     <!-- Loading -->
     <div v-if="branchState.loading.value" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <div class="w-12 h-12 border-t-2 border-b-2 border-[#246BFD] rounded-full animate-spin"></div>
-      <p class="text-sm font-semibold text-gray-500">Loading branch details…</p>
+      <div class="w-10 h-10 border-2 rounded-full border-brand-500 border-t-transparent animate-spin"></div>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Loading branch details…</p>
     </div>
 
     <!-- Error -->
@@ -45,8 +52,8 @@ onMounted(() => {
       :actionRoute="{ name: 'pharmacies' }"
     />
     <div v-else-if="branchState.error.value" class="max-w-2xl mx-auto px-4 py-24 text-center">
-      <p class="text-red-500 font-semibold mb-4">{{ branchState.error.value }}</p>
-      <button @click="router.back()" class="px-6 py-2.5 rounded-full bg-[#246BFD] text-white text-sm font-bold">Go back</button>
+      <p class="mb-4 font-medium text-red-600 dark:text-red-400">{{ branchState.error.value }}</p>
+      <button type="button" @click="router.back()" class="px-6 py-3 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30">Go back</button>
     </div>
 
     <template v-else-if="branchState.branch.value">
@@ -54,7 +61,7 @@ onMounted(() => {
       <BranchHero />
       <BranchStatusStrip />
 
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-14 mt-10">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-6 mt-6">
         <BranchAbout />
         <BranchContactInfo />
         <BranchPaymentMethods />
