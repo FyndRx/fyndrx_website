@@ -20,7 +20,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline';
-import ListSkeleton from '@/components/skeletons/ListSkeleton.vue';
+import DataTable, { type DataTableColumn } from '@/components/DataTable.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { getStatusColor } from '@/utils/statusColors';
 
@@ -67,9 +67,19 @@ const getDrugLabel = (drug: PrescriptionDrug & { display_name?: string; drug_nam
 };
 
 const originConfig = (origin?: string) => {
-  if (origin === 'consultation') return { label: 'Consultation', icon: SparklesIcon, bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400' };
-  return                                { label: 'Uploaded',     icon: ArrowUpTrayIcon, bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' };
+  if (origin === 'consultation') return { label: 'Consultation', icon: SparklesIcon, bg: 'bg-brand-500/10', text: 'text-brand-700 dark:text-brand-300' };
+  return                                { label: 'Uploaded',     icon: ArrowUpTrayIcon, bg: 'bg-accent-500/15', text: 'text-accent-700 dark:text-accent-300' };
 };
+
+const columns: DataTableColumn[] = [
+  { key: 'prescription', label: 'Prescription', primary: true },
+  { key: 'origin', label: 'Source', hideBelow: 1400, cellClass: 'whitespace-nowrap' },
+  { key: 'doctor', label: 'Prescriber', hideBelow: 1400 },
+  { key: 'date', label: 'Issued', cellClass: 'whitespace-nowrap' },
+  { key: 'drugs', label: 'Medications' },
+  { key: 'status', label: 'Status' },
+  { key: 'actions', label: '', align: 'right', cellClass: 'whitespace-nowrap' },
+];
 
 // ── Data ──────────────────────────────────────────────────────
 const loadPrescriptions = async (page = 1, append = false) => {
@@ -157,167 +167,142 @@ onMounted(loadPrescriptions);
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <!-- ── Header ──────────────────────────────────────────── -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Prescriptions</h1>
-          <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">Track, manage and order from your medical prescriptions.</p>
+          <h1 class="text-3xl font-medium text-gray-900 sm:text-4xl dark:text-white">My <span class="text-brand-500 dark:text-brand-400">Prescriptions</span></h1>
+          <p class="mt-1 text-gray-600 dark:text-gray-300">Track, manage and order from your medical prescriptions.</p>
         </div>
         <button
+          type="button"
           @click="router.push({ name: 'upload-prescription' })"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white font-medium text-sm transition-all shadow-sm shadow-blue-200 dark:shadow-none shrink-0"
+          class="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand shrink-0 bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
         >
           <PlusIcon class="w-4 h-4" />
           Upload Prescription
         </button>
       </div>
 
-      <!-- ── Filter tabs ─────────────────────────────────────── -->
-      <div class="flex gap-2 overflow-x-auto pb-1 mb-8 scrollbar-none">
+      <!-- ── Filters ─────────────────────────────────────────── -->
+      <div class="flex gap-2 px-1 py-2 mb-4 -mx-1 overflow-x-auto" role="group" aria-label="Filter prescriptions">
         <button
           v-for="f in filters"
           :key="f.key"
+          type="button"
+          :aria-pressed="selectedFilter === f.key"
           @click="selectedFilter = f.key"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium whitespace-nowrap rounded-full transition duration-200 ease-out-quart active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
           :class="selectedFilter === f.key
-            ? 'bg-[#246BFD] text-white border-[#246BFD] shadow-sm'
-            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-[#246BFD]/40'"
+            ? 'bg-brand-500 text-white shadow-glow-brand'
+            : 'bg-white/80 text-gray-700 ring-1 ring-gray-200 backdrop-blur hover:ring-brand-500 hover:text-brand-600 dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 dark:hover:text-brand-300'"
         >
           {{ f.label }}
           <span
-            class="text-xs px-1.5 py-0.5 rounded-full font-bold"
-            :class="selectedFilter === f.key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'"
+            class="text-xs px-1.5 py-0.5 rounded-full font-semibold"
+            :class="selectedFilter === f.key ? 'bg-white/25 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300'"
           >{{ filterCount(f.key) }}</span>
         </button>
       </div>
 
-      <!-- ── Loading ─────────────────────────────────────────── -->
-      <div v-if="loading">
-        <ListSkeleton type="prescription" :count="4" :columns="2" />
-      </div>
+      <!-- ── Table ───────────────────────────────────────────── -->
+      <DataTable
+        :columns="columns"
+        :rows="prescriptions"
+        :row-key="(rx) => rx.id"
+        caption="Your prescriptions"
+        clickable
+        :loading="loading"
+        @row-click="(rx) => (selectedPrescription = rx)"
+      >
+        <template #cell-prescription="{ row: rx }">
+          <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ rx.title || 'Prescription' }}</p>
+          <p class="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400">{{ rx.prescription_number }}</p>
+        </template>
 
-      <!-- ── Empty state ─────────────────────────────────────── -->
-      <div v-else-if="prescriptions.length === 0" class="flex flex-col items-center justify-center py-24 text-center">
-        <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
-          <DocumentTextIcon class="w-10 h-10 text-gray-400" />
-        </div>
-        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">No prescriptions found</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-6">
-          {{ selectedFilter === 'all' ? 'Upload your first prescription to get started.' : `You have no ${selectedFilter} prescriptions.` }}
-        </p>
-        <button
-          v-if="selectedFilter === 'all'"
-          @click="router.push({ name: 'upload-prescription' })"
-          class="px-5 py-2.5 rounded-full bg-[#246BFD] text-white text-sm font-medium hover:bg-[#5089FF] transition-colors"
-        >
-          Upload Prescription
-        </button>
-      </div>
+        <template #cell-origin="{ row: rx }">
+          <span
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+            :class="[originConfig((rx as any).origin).bg, originConfig((rx as any).origin).text]"
+          >
+            <component :is="originConfig((rx as any).origin).icon" class="w-3.5 h-3.5" />
+            {{ originConfig((rx as any).origin).label }}
+          </span>
+        </template>
 
-      <!-- ── Cards grid ──────────────────────────────────────── -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div
-          v-for="rx in prescriptions"
-          :key="rx.id"
-          class="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/30 hover:shadow-lg dark:hover:shadow-none transition-all duration-200 overflow-hidden cursor-pointer"
-          @click="selectedPrescription = rx"
-        >
-          <!-- Top accent strip by origin -->
-          <div
-            class="h-1 w-full"
-            :class="(rx as any).origin === 'consultation' ? 'bg-gradient-to-r from-violet-400 to-purple-500' : 'bg-gradient-to-r from-[#246BFD] to-sky-400'"
-          />
+        <template #cell-doctor="{ row: rx }">
+          <span class="text-sm text-gray-700 dark:text-gray-200">{{ rx.doctor_name || '—' }}</span>
+        </template>
 
-          <div class="p-5">
-            <!-- Row 1: origin + status -->
-            <div class="flex items-center justify-between mb-3">
-              <div
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                :class="[originConfig((rx as any).origin).bg, originConfig((rx as any).origin).text]"
-              >
-                <component :is="originConfig((rx as any).origin).icon" class="w-3.5 h-3.5" />
-                {{ originConfig((rx as any).origin).label }}
-              </div>
-              <StatusBadge :status="rx.status" size="sm" show-dot />
-            </div>
+        <template #cell-date="{ row: rx }">
+          <span class="text-sm text-gray-600 dark:text-gray-300">{{ formatDate(rx.prescription_date) }}</span>
+        </template>
 
-            <!-- Row 2: title + Rx number -->
-            <div class="mb-3">
-              <h3 class="font-bold text-gray-900 dark:text-white text-base leading-snug">
-                {{ rx.title || 'Prescription' }}
-              </h3>
-              <p class="text-xs font-mono text-gray-400 dark:text-gray-500 mt-0.5">{{ rx.prescription_number }}</p>
-            </div>
-
-            <!-- Row 3: doctor + date -->
-            <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
-              <div class="flex items-center gap-1.5">
-                <div class="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                  <UserIcon class="w-3 h-3" />
-                </div>
-                <span class="truncate max-w-[140px]">{{ rx.doctor_name }}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <CalendarIcon class="w-3.5 h-3.5" />
-                {{ formatDate(rx.prescription_date) }}
-              </div>
-            </div>
-
-            <!-- Row 4: drugs or empty state -->
-            <div class="mb-4">
-              <template v-if="rx.drugs && rx.drugs.length">
-                <div class="flex flex-wrap gap-2">
-                  <span
-                    v-for="(drug, i) in rx.drugs.slice(0, 3)"
-                    :key="i"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium border border-blue-100 dark:border-blue-800/30"
-                  >
-                    <BeakerIcon class="w-3 h-3" />
-                    {{ getDrugLabel(drug as any) }}
-                  </span>
-                  <span
-                    v-if="rx.drugs.length > 3"
-                    class="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs font-medium"
-                  >
-                    +{{ rx.drugs.length - 3 }} more
-                  </span>
-                </div>
-              </template>
-              <div v-else class="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 italic">
-                <InformationCircleIcon class="w-3.5 h-3.5 shrink-0" />
-                No medications listed
-              </div>
-            </div>
-
-            <!-- Row 5: actions -->
-            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
-              <button
-                class="text-xs text-[#246BFD] font-medium flex items-center gap-1 hover:gap-2 transition-all"
-                @click.stop="selectedPrescription = rx"
-              >
-                View details <ChevronRightIcon class="w-3.5 h-3.5" />
-              </button>
-              <button
-                v-if="rx.status === 'active' && rx.drugs?.length"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-xs font-semibold transition-all shadow-sm"
-                @click.stop="openOrderModal(rx)"
-              >
-                <ShoppingCartIcon class="w-3.5 h-3.5" />
-                Order
-              </button>
-            </div>
+        <template #cell-drugs="{ row: rx }">
+          <div class="text-left md:max-w-[16rem]">
+            <template v-if="rx.drugs && rx.drugs.length">
+              <p class="text-sm text-gray-800 truncate dark:text-gray-100">
+                {{ rx.drugs.slice(0, 2).map((d) => getDrugLabel(d as any)).join(', ') }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ rx.drugs.length }} {{ rx.drugs.length === 1 ? 'medication' : 'medications' }}<template v-if="rx.drugs.length > 2"> · +{{ rx.drugs.length - 2 }} more</template>
+              </p>
+            </template>
+            <p v-else class="text-sm italic text-gray-400 dark:text-gray-500">No medications listed</p>
           </div>
-        </div>
-      </div>
+        </template>
 
-      <div v-if="hasMore" class="flex justify-center pt-6">
-        <button
-          @click="loadMorePrescriptions"
-          :disabled="loadingMore"
-          class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-[#246BFD] hover:text-[#246BFD] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {{ loadingMore ? 'Loading…' : 'Load More Prescriptions' }}
-        </button>
-      </div>
+        <template #cell-status="{ row: rx }">
+          <StatusBadge :status="rx.status" size="sm" show-dot />
+        </template>
+
+        <template #cell-actions="{ row: rx }">
+          <div class="flex items-center justify-end gap-2">
+            <button
+              v-if="rx.status === 'active' && rx.drugs?.length"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+              @click.stop="openOrderModal(rx)"
+            >
+              <ShoppingCartIcon class="w-4 h-4" />
+              Order
+            </button>
+            <button
+              type="button"
+              class="flex items-center justify-center text-gray-500 transition duration-200 rounded-full w-9 h-9 ease-out-quart hover:bg-brand-500 hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 dark:text-gray-300"
+              :aria-label="`View details of ${rx.title || 'prescription'}`"
+              @click.stop="selectedPrescription = rx"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        </template>
+
+        <template #empty>
+          <div class="flex flex-col items-center justify-center px-6 py-20 text-center">
+            <div class="flex items-center justify-center w-20 h-20 mb-5 rounded-full bg-brand-500/10">
+              <DocumentTextIcon class="w-10 h-10 text-brand-500" />
+            </div>
+            <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">No prescriptions found</h3>
+            <p class="max-w-xs mb-6 text-sm text-gray-500 dark:text-gray-400">
+              {{ selectedFilter === 'all' ? 'Upload your first prescription to get started.' : `You have no ${selectedFilter} prescriptions.` }}
+            </p>
+            <button
+              v-if="selectedFilter === 'all'"
+              type="button"
+              @click="router.push({ name: 'upload-prescription' })"
+              class="px-6 py-3 text-sm font-medium text-white transition duration-200 rounded-full shadow-glow-brand bg-brand-500 ease-out-quart hover:bg-brand-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+            >Upload Prescription</button>
+          </div>
+        </template>
+
+        <template v-if="hasMore" #footer>
+          <button
+            type="button"
+            @click="loadMorePrescriptions"
+            :disabled="loadingMore"
+            class="px-8 py-2.5 text-sm font-medium text-gray-700 transition duration-200 rounded-full bg-white/70 ring-1 ring-gray-200 ease-out-quart dark:bg-white/5 dark:text-gray-200 dark:ring-white/10 hover:ring-brand-500 hover:text-brand-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30"
+          >{{ loadingMore ? 'Loading…' : 'Load more prescriptions' }}</button>
+        </template>
+      </DataTable>
     </div>
 
     <!-- ── Detail drawer ───────────────────────────────────────── -->
@@ -331,10 +316,10 @@ onMounted(loadPrescriptions);
           <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="selectedPrescription = null" />
 
           <!-- Panel -->
-          <div class="relative w-full max-w-xl h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col overflow-hidden">
+          <div class="relative w-full max-w-xl h-full bg-white dark:bg-gray-900 shadow-card flex flex-col overflow-hidden">
 
             <!-- Sticky header -->
-            <div class="shrink-0 bg-gradient-to-r from-[#1A2233] to-[#246BFD] px-6 pt-6 pb-5">
+            <div class="shrink-0 bg-gradient-to-r from-[#1A2233] to-brand-500 px-6 pt-6 pb-5">
               <div class="flex items-start justify-between mb-3">
                 <div
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white"
@@ -365,17 +350,17 @@ onMounted(loadPrescriptions);
               <!-- Meta grid -->
               <div class="grid grid-cols-2 gap-3 p-5 border-b border-gray-100 dark:border-gray-800">
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Prescriber</p>
+                  <p class="text-xs font-bold text-gray-400 mb-1">Prescriber</p>
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-full bg-[#246BFD]/10 flex items-center justify-center shrink-0">
-                      <UserIcon class="w-4 h-4 text-[#246BFD]" />
+                    <div class="w-7 h-7 rounded-full bg-brand-500/10 flex items-center justify-center shrink-0">
+                      <UserIcon class="w-4 h-4 text-brand-500" />
                     </div>
                     <p class="text-sm font-semibold text-gray-800 dark:text-white leading-tight">{{ selectedPrescription.doctor_name }}</p>
                   </div>
                 </div>
 
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Issued</p>
+                  <p class="text-xs font-bold text-gray-400 mb-1">Issued</p>
                   <div class="flex items-center gap-2">
                     <CalendarIcon class="w-4 h-4 text-gray-400 shrink-0" />
                     <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.prescription_date) }}</p>
@@ -383,7 +368,7 @@ onMounted(loadPrescriptions);
                 </div>
 
                 <div v-if="selectedPrescription.expiry_date" class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Expires</p>
+                  <p class="text-xs font-bold text-gray-400 mb-1">Expires</p>
                   <div class="flex items-center gap-2">
                     <ClockIcon class="w-4 h-4 text-gray-400 shrink-0" />
                     <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.expiry_date) }}</p>
@@ -391,7 +376,7 @@ onMounted(loadPrescriptions);
                 </div>
 
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Issued</p>
+                  <p class="text-xs font-bold text-gray-400 mb-1">Issued</p>
                   <div class="flex items-center gap-2">
                     <CalendarIcon class="w-4 h-4 text-gray-400 shrink-0" />
                     <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ formatDate(selectedPrescription.created_at) }}</p>
@@ -401,7 +386,7 @@ onMounted(loadPrescriptions);
 
               <!-- Medications -->
               <div class="p-5">
-                <h3 class="text-xs uppercase font-bold text-gray-400 tracking-wider mb-4 flex items-center gap-2">
+                <h3 class="text-xs font-bold text-gray-400 mb-4 flex items-center gap-2">
                   <BeakerIcon class="w-4 h-4" />
                   Medications
                   <span class="ml-auto bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-0.5 rounded-full">
@@ -413,10 +398,10 @@ onMounted(loadPrescriptions);
                   <div
                     v-for="(drug, i) in selectedPrescription.drugs"
                     :key="i"
-                    class="rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+                    class="rounded-2xl ring-1 ring-gray-200/70 dark:ring-white/10 overflow-hidden"
                   >
                     <!-- Drug header -->
-                    <div class="bg-blue-50 dark:bg-blue-900/10 px-4 py-3 flex items-start justify-between gap-3">
+                    <div class="bg-brand-50 dark:bg-brand-900/10 px-4 py-3 flex items-start justify-between gap-3">
                       <div class="min-w-0">
                         <p class="font-bold text-gray-900 dark:text-white text-sm leading-snug">
                           {{ getDrugLabel(drug as any) }}
@@ -425,29 +410,29 @@ onMounted(loadPrescriptions);
                           {{ (drug as any).display_name || (drug as any).drug_name || drug.name }}
                         </p>
                       </div>
-                      <span class="shrink-0 px-2.5 py-1 rounded-lg bg-white dark:bg-gray-800 text-xs font-bold text-[#246BFD] border border-blue-100 dark:border-blue-800/30 shadow-sm">
+                      <span class="shrink-0 px-2.5 py-1 rounded-lg bg-white/80 dark:bg-gray-800/70 text-xs font-bold text-brand-500 border border-brand-100 dark:border-brand-800/30 shadow-sm">
                         {{ drug.dose }}
                       </span>
                     </div>
 
                     <!-- Drug details grid -->
-                    <div class="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                    <div class="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 bg-white/80 dark:bg-gray-800/70">
                       <div class="px-3 py-2.5 text-center">
-                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Frequency</p>
+                        <p class="text-xs font-bold text-gray-400 ">Frequency</p>
                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.frequency }}</p>
                       </div>
                       <div class="px-3 py-2.5 text-center">
-                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Duration</p>
+                        <p class="text-xs font-bold text-gray-400 ">Duration</p>
                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.duration }}</p>
                       </div>
                       <div class="px-3 py-2.5 text-center">
-                        <p class="text-[9px] uppercase font-bold text-gray-400 tracking-wide">Qty</p>
+                        <p class="text-xs font-bold text-gray-400 ">Qty</p>
                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mt-0.5">{{ drug.quantity }}</p>
                       </div>
                     </div>
 
                     <!-- Instruction -->
-                    <div v-if="drug.instruction" class="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-700">
+                    <div v-if="drug.instruction" class="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-200/70 dark:border-white/10">
                       <p class="text-xs text-gray-500 dark:text-gray-400 italic">"{{ drug.instruction }}"</p>
                     </div>
                   </div>
@@ -461,12 +446,12 @@ onMounted(loadPrescriptions);
 
               <!-- Notes -->
               <div v-if="selectedPrescription.notes" class="px-5 pb-5">
-                <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 p-4">
+                <div class="rounded-2xl bg-accent-50 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-800/30 p-4">
                   <div class="flex items-center gap-2 mb-2">
-                    <InformationCircleIcon class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                    <p class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Clinical Notes</p>
+                    <InformationCircleIcon class="w-4 h-4 text-accent-600 dark:text-accent-400 shrink-0" />
+                    <p class="text-xs font-bold text-accent-700 dark:text-accent-400 ">Clinical Notes</p>
                   </div>
-                  <p class="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">{{ selectedPrescription.notes }}</p>
+                  <p class="text-sm text-accent-800 dark:text-accent-200 leading-relaxed">{{ selectedPrescription.notes }}</p>
                 </div>
               </div>
 
@@ -477,11 +462,11 @@ onMounted(loadPrescriptions);
               <!-- Consultation link (only for consultation-origin prescriptions) -->
               <button
                 v-if="selectedPrescription.origin === 'consultation' && extractConsultationNumber(selectedPrescription.notes)"
-                class="w-full py-2.5 rounded-full border border-violet-200 dark:border-violet-700/40 bg-violet-50 dark:bg-violet-900/10 text-violet-700 dark:text-violet-300 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/20 disabled:opacity-60"
+                class="w-full py-2.5 rounded-full border border-brand-200 dark:border-brand-700/40 bg-brand-50 dark:bg-brand-900/10 text-brand-700 dark:text-brand-300 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-brand-100 dark:hover:bg-brand-900/20 disabled:opacity-60"
                 :disabled="consultationLoading"
                 @click="openConsultation(selectedPrescription)"
               >
-                <span v-if="consultationLoading" class="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                <span v-if="consultationLoading" class="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
                 <ChatBubbleLeftRightIcon v-else class="w-4 h-4" />
                 {{ consultationLoading ? 'Opening…' : `View Consultation · ${extractConsultationNumber(selectedPrescription.notes)}` }}
                 <ArrowTopRightOnSquareIcon v-if="!consultationLoading" class="w-3.5 h-3.5 opacity-60" />
@@ -490,13 +475,13 @@ onMounted(loadPrescriptions);
               <div class="flex gap-3">
                 <button
                   @click="selectedPrescription = null"
-                  class="flex-1 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  class="flex-1 py-2.5 rounded-full ring-1 ring-gray-200/70 dark:ring-white/10 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   Close
                 </button>
                 <button
                   v-if="selectedPrescription.status === 'active' && selectedPrescription.drugs?.length"
-                  class="flex-1 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  class="flex-1 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
                   @click="openOrderModal(selectedPrescription)"
                 >
                   <ShoppingCartIcon class="w-4 h-4" />
@@ -504,7 +489,7 @@ onMounted(loadPrescriptions);
                 </button>
                 <button
                   v-if="selectedPrescription.status === 'active' && !selectedPrescription.drugs?.length"
-                  class="flex-1 py-2.5 rounded-full bg-[#246BFD] hover:bg-[#5089FF] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  class="flex-1 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
                   @click="router.push({ name: 'upload-prescription' })"
                 >
                   <ArrowUpTrayIcon class="w-4 h-4" />
@@ -526,9 +511,9 @@ onMounted(loadPrescriptions);
           class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           @click.self="showOrderModal = false"
         >
-          <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+          <div class="w-full max-w-md bg-white/80 dark:bg-gray-800/70 rounded-3xl shadow-card overflow-hidden">
             <!-- Header -->
-            <div class="px-6 pt-5 pb-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div class="px-6 pt-5 pb-4 border-b border-gray-200/70 dark:border-white/10 flex items-center justify-between">
               <div>
                 <h3 class="font-bold text-gray-900 dark:text-white">Order Medications</h3>
                 <p class="text-xs text-gray-500 mt-0.5">Select a medication to find pharmacies &amp; prices</p>
@@ -543,17 +528,17 @@ onMounted(loadPrescriptions);
               <button
                 v-for="(drug, i) in orderPrescription.drugs"
                 :key="i"
-                class="w-full flex items-center gap-3 p-4 rounded-full border border-gray-100 dark:border-gray-700 hover:border-[#246BFD]/40 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all text-left group"
+                class="w-full flex items-center gap-3 p-4 rounded-full ring-1 ring-gray-200/70 dark:ring-white/10 hover:border-brand-500/40 hover:bg-brand-50/40 dark:hover:bg-brand-900/10 transition-all text-left group"
                 @click="goToMedication(drug)"
               >
-                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                  <BeakerIcon class="w-5 h-5 text-[#246BFD]" />
+                <div class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center shrink-0">
+                  <BeakerIcon class="w-5 h-5 text-brand-500" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="font-semibold text-sm text-gray-900 dark:text-white leading-snug">{{ drug.display_name || drug.name }}</p>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ drug.dose }} · {{ drug.frequency }} · {{ drug.duration }}</p>
                 </div>
-                <ChevronRightIcon class="w-4 h-4 text-gray-400 group-hover:text-[#246BFD] transition-colors shrink-0" />
+                <ChevronRightIcon class="w-4 h-4 text-gray-400 group-hover:text-brand-500 transition-colors shrink-0" />
               </button>
             </div>
 
