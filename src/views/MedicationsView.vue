@@ -448,14 +448,23 @@ onMounted(async () => {
               </div>
 
               <div class="inline-flex items-center" v-if="medication.pharmacy_count !== undefined && !medication.pharmacy_name">
-                <div class="inline-flex gap-2 items-center py-1.5 pr-3 pl-1.5 rounded-full bg-brand-500/10 ring-1 ring-brand-500/20">
-                  <div class="flex justify-center items-center w-7 h-7 rounded-full bg-brand-500 shadow-glow-brand">
+                <div
+                  class="inline-flex gap-2 items-center py-1.5 pr-3 pl-1.5 rounded-full ring-1"
+                  :class="medication.pharmacy_count > 0 ? 'bg-brand-500/10 ring-brand-500/20' : 'bg-gray-100 ring-gray-200 dark:bg-white/5 dark:ring-white/10'"
+                >
+                  <div
+                    class="flex justify-center items-center w-7 h-7 rounded-full"
+                    :class="medication.pharmacy_count > 0 ? 'bg-brand-500 shadow-glow-brand' : 'bg-gray-400 dark:bg-gray-600'"
+                  >
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                   </div>
-                  <span class="text-sm font-semibold text-brand-600 dark:text-brand-300">
-                    In stock at {{ medication.pharmacy_count }} {{ medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies' }}
+                  <span
+                    class="text-sm font-semibold"
+                    :class="medication.pharmacy_count > 0 ? 'text-brand-600 dark:text-brand-300' : 'text-gray-500 dark:text-gray-400'"
+                  >
+                    {{ medication.pharmacy_count > 0 ? `In stock at ${medication.pharmacy_count} ${medication.pharmacy_count === 1 ? 'pharmacy' : 'pharmacies'}` : 'No pharmacies yet' }}
                   </span>
                 </div>
               </div>
