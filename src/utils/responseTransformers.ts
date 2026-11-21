@@ -93,6 +93,7 @@ export function transformUser(apiUser: UserApiResponse): User {
     facebook_linked: apiUser.facebook_linked,
     email_verified: apiUser.email_verified,
     phone_verified: apiUser.phone_verified,
+    needs_phone: apiUser.needs_phone,
   };
 }
 

@@ -257,6 +257,38 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const sendAddPhoneOtp = async (phoneNumber: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      return await authService.sendAddPhoneOtp(phoneNumber);
+    } catch (err) {
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : handleApiError(err).message || 'Failed to send verification code.';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const confirmAddPhone = async (phoneNumber: string, otp: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const response = await authService.confirmAddPhone(phoneNumber, otp);
+      await fetchUserDetails(); // pulls the saved phone + needs_phone=false
+      return response;
+    } catch (err) {
+      error.value = isNetworkError(err)
+        ? 'Network error. Please check your internet connection.'
+        : handleApiError(err).message || 'Failed to verify phone number.';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const sendPhoneVerificationOtp = async () => {
     try {
       loading.value = true;
@@ -551,6 +583,8 @@ export const useAuthStore = defineStore('auth', () => {
     verifyOTP,
     sendEmailVerificationOtp,
     confirmEmailVerification,
+    sendAddPhoneOtp,
+    confirmAddPhone,
     sendPhoneVerificationOtp,
     confirmPhoneVerification,
     logout,

@@ -80,18 +80,19 @@ const validateProfileForm = () => {
     isValid = false;
   }
 
-  if (!form.value.email.trim()) {
-    validationErrors.value.email = 'Email is required';
-    isValid = false;
-  } else if (form.value.email.trim().length > 254) {
+  // Email is optional — only validate it when one is entered.
+  if (form.value.email.trim().length > 254) {
     validationErrors.value.email = 'Email is too long';
     isValid = false;
-  } else if (!emailFormatValid.value) {
+  } else if (form.value.email.trim() && !emailFormatValid.value) {
     validationErrors.value.email = 'Please enter a valid email address';
     isValid = false;
   }
 
-  if (form.value.phone_number.trim() && !phoneFormatValid.value) {
+  if (!form.value.phone_number.trim()) {
+    validationErrors.value.phone_number = 'Phone number is required';
+    isValid = false;
+  } else if (!phoneFormatValid.value) {
     validationErrors.value.phone_number = 'Please enter a valid phone number';
     isValid = false;
   }
@@ -150,7 +151,7 @@ const handleSubmit = async () => {
     const updateData = {
       firstname: form.value.firstname.trim(),
       lastname: form.value.lastname.trim(),
-      email: form.value.email.trim(),
+      email: form.value.email.trim() || null,
       phone_number: form.value.phone_number.trim(),
       dob: form.value.dob,
       gender: form.value.gender
@@ -285,10 +286,9 @@ const handleSubmit = async () => {
                 />
                 <TextInput
                   v-model="form.email"
-                  label="Email Address"
+                  label="Email Address (optional)"
                   type="email"
                   placeholder="your@email.com"
-                  required
                   :error="validationErrors.email"
                   @validation="handleEmailValidation"
                 />
@@ -297,6 +297,7 @@ const handleSubmit = async () => {
                   label="Phone Number"
                   type="tel"
                   placeholder="+233..."
+                  required
                   :error="validationErrors.phone_number"
                   @validation="handlePhoneValidation"
                 />
