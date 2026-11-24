@@ -17,6 +17,18 @@ const onLogoError = (id: string | number) => {
 const appSettings = ref<AppSettings | null>(null);
 const partners = ref<Partner[]>([]);
 
+// Repeat the list until one copy is wide enough to fill the row, then double it
+// so translating by -50% loops seamlessly.
+// Logo-only: a partner whose logo fails to load is dropped rather than shown as text.
+const usablePartners = computed(() => partners.value.filter((p) => p.logo && !brokenLogos.value.has(p.id)));
+const marqueePartners = computed(() => {
+  const list = usablePartners.value;
+  if (list.length === 0) return [];
+  const reps = Math.max(1, Math.ceil(8 / list.length));
+  const one = Array.from({ length: reps }, () => list).flat();
+  return [...one, ...one];
+});
+
 // The about description can be rich text (HTML) — strip it to plain text so a
 // "Read more" toggle can safely clamp/expand it without leaking markup.
 const aboutText = computed(
@@ -298,28 +310,30 @@ export default {
         </div>
 
         <!-- Partners: on light chips so any logo, dark or light, stays legible -->
-        <div v-if="partners.length > 0" class="pt-8 mt-8 border-t border-white/10">
+        <div v-if="usablePartners.length > 0" class="pt-8 mt-8 border-t border-white/10">
           <h3 class="mb-6 text-xs font-bold tracking-[0.2em] text-center text-gray-400 uppercase">Trusted Partners</h3>
-          <ul class="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <li v-for="partner in partners" :key="partner.id">
-              <a
-                :href="partner.website"
-                target="_blank"
-                rel="noopener noreferrer"
-                :title="partner.name"
-                class="flex items-center justify-center h-14 px-5 transition duration-200 bg-white rounded-2xl opacity-90 ease-out-quart hover:-translate-y-0.5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-              >
-                <span v-if="brokenLogos.has(partner.id)" class="text-sm font-medium text-gray-700">{{ partner.name }}</span>
-                <img
-                  v-else
-                  :src="partner.logo"
-                  :alt="partner.name"
-                  class="object-contain w-auto max-w-full max-h-8 md:max-h-9"
-                  @error="onLogoError(partner.id)"
-                />
-              </a>
-            </li>
-          </ul>
+          <!-- Single-row marquee at every width; the set is repeated so the loop is seamless -->
+          <div class="partner-marquee" role="group" aria-label="Trusted partners">
+            <ul class="partner-track">
+              <li v-for="(partner, i) in marqueePartners" :key="`${partner.id}-${i}`" :aria-hidden="i >= usablePartners.length ? 'true' : undefined">
+                <a
+                  :href="partner.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  :title="partner.name"
+                  :tabindex="i >= usablePartners.length ? -1 : undefined"
+                  class="flex items-center justify-center h-10 px-2 transition duration-200 rounded-lg opacity-80 md:h-12 ease-out-quart hover:opacity-100 hover:scale-105 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                >
+                  <img
+                    :src="partner.logo"
+                    :alt="i >= usablePartners.length ? '' : partner.name"
+                    class="object-contain w-auto max-h-8 md:max-h-10"
+                    @error="onLogoError(partner.id)"
+                  />
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- Copyright (back-to-top sits on the left so it never collides with the floating chat button) -->
@@ -342,6 +356,46 @@ export default {
 </template>
 
 <style scoped>
+.partner-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.partner-track {
+  display: flex;
+  width: max-content;
+  gap: 0.75rem;
+  padding-right: 0.75rem;
+  animation: partner-scroll 40s linear infinite;
+}
+.partner-track > li {
+  flex-shrink: 0;
+}
+.partner-marquee:hover .partner-track,
+.partner-marquee:focus-within .partner-track {
+  animation-play-state: paused;
+}
+@keyframes partner-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (min-width: 768px) {
+  .partner-track {
+    gap: 1rem;
+    padding-right: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee {
+    overflow-x: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+  .partner-track {
+    animation: none;
+  }
+}
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
