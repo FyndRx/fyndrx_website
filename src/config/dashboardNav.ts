@@ -81,6 +81,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
     items: [
       { label: 'Profile', to: '/profile', matchNames: ['profile', 'edit-profile', 'delete-account'], icon: ICONS.profile },
       { label: 'Notifications Settings', to: '/profile/notification-settings', matchNames: ['notification-settings'], icon: ICONS.settings },
+      { label: 'Preferences', to: '/profile/preferences', matchNames: ['preferences'], icon: ICONS.settings },
       { label: 'Security', to: '/profile/security', matchNames: ['security-settings'], icon: ICONS.security },
     ],
   },

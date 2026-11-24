@@ -43,10 +43,31 @@ export interface NotificationStats {
 // Must mirror User::NOTIFICATION_CATEGORIES / NOTIFICATION_CHANNELS on the backend
 // (app/Domains/Core/Models/User.php). The API always returns every category x
 // channel combo — unset ones default to `true` server-side (opt-out model).
-export type NotificationCategory = 'order_updates' | 'clinical' | 'promotions' | 'news' | 'reminders' | 'price_alerts';
+export type NotificationCategory =
+  | 'order_updates' | 'clinical' | 'promotions' | 'news' | 'reminders' | 'price_alerts' | 'account_security';
 export type NotificationChannel = 'email' | 'sms' | 'push';
 
-export type NotificationPreferences = Record<NotificationCategory, Record<NotificationChannel, boolean>>;
+export type NotificationPreferences = Partial<Record<NotificationCategory, Record<NotificationChannel, boolean>>>;
+
+/** One channel's state for one category, as described by GET /notifications/preferences. */
+export interface ChannelState {
+  /** the category is ever sent on this channel (e.g. News is never sent by SMS) */
+  supported: boolean;
+  enabled: boolean;
+  /** mandatory category (account & security) — can't be turned off */
+  locked: boolean;
+  /** false when the account has nothing to deliver to, e.g. no phone number or no registered device */
+  reachable: boolean;
+  unreachable_reason: 'no_email' | 'no_phone' | 'no_device' | null;
+}
+
+export interface CategoryPreference {
+  key: NotificationCategory;
+  label: string;
+  description: string;
+  mandatory: boolean;
+  channels: Record<NotificationChannel, ChannelState>;
+}
 
 // A partial update — only the category/channel(s) being changed need to be present,
 // the backend merges it into what's already stored.
@@ -140,6 +161,18 @@ export const notificationService = {
   async getPreferences(): Promise<NotificationPreferences> {
     const response = await apiService.getAuth<any>('/notifications/preferences');
     return unwrapApiResponse<NotificationPreferences>(response);
+  },
+
+  /** The server-described matrix: labels, supported channels, locks and reachability. This is
+   * what the settings screen renders, so new backend categories appear without a client release. */
+  async getPreferenceCategories(): Promise<CategoryPreference[]> {
+    const response = await apiService.getAuth<{ categories: CategoryPreference[] }>('/notifications/preferences');
+    return response.categories ?? [];
+  },
+
+  async updatePreferenceCategories(preferences: NotificationPreferencesUpdate): Promise<CategoryPreference[]> {
+    const response = await apiService.putAuth<{ categories: CategoryPreference[] }>('/notifications/preferences', { preferences });
+    return response.categories ?? [];
   },
 
   /** Partial update — only include the category/channel(s) actually changing. */

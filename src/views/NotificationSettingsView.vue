@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useNotificationsStore } from '@/store/notifications';
 import {
   notificationService,
-  type NotificationPreferences,
+  type CategoryPreference,
   type NotificationCategory,
   type NotificationChannel,
 } from '@/services/notificationService';
@@ -14,17 +14,8 @@ const store = useNotificationsStore();
 const toast = useNotification();
 
 const loading = ref(true);
-const preferences = ref<NotificationPreferences | null>(null);
+const categories = ref<CategoryPreference[]>([]);
 const savingKey = ref<string | null>(null);
-
-const CATEGORIES: { key: NotificationCategory; label: string; description: string }[] = [
-  { key: 'order_updates', label: 'Order Updates', description: "Status changes on orders you've placed." },
-  { key: 'clinical', label: 'Clinical', description: 'Prescription and consultation updates from your care team.' },
-  { key: 'promotions', label: 'Promotions', description: 'Discounts, deals, and limited-time offers.' },
-  { key: 'news', label: 'News', description: 'Product updates and announcements from FyndRx.' },
-  { key: 'reminders', label: 'Reminders', description: 'Medication refill and appointment reminders.' },
-  { key: 'price_alerts', label: 'Price Alerts', description: 'When a medication you\'re watching drops in price.' },
-];
 
 const CHANNELS: { key: NotificationChannel; label: string }[] = [
   { key: 'push', label: 'Push' },
@@ -32,10 +23,28 @@ const CHANNELS: { key: NotificationChannel; label: string }[] = [
   { key: 'sms', label: 'SMS' },
 ];
 
+const HINTS: Record<string, string> = {
+  no_email: 'Add an email address to your profile to get emails.',
+  no_phone: 'Add a phone number to your profile to get SMS.',
+  no_device: 'Enable push below to get push notifications on this device.',
+};
+
+// Reasons worth surfacing once, above the grid, rather than on every row.
+const unreachable = computed(() => {
+  const reasons = new Set<string>();
+  for (const cat of categories.value) {
+    for (const ch of CHANNELS) {
+      const state = cat.channels[ch.key];
+      if (state.supported && !state.reachable && state.unreachable_reason) reasons.add(state.unreachable_reason);
+    }
+  }
+  return [...reasons].filter((r) => r !== 'no_device');
+});
+
 const loadPreferences = async () => {
   loading.value = true;
   try {
-    preferences.value = await notificationService.getPreferences();
+    categories.value = await notificationService.getPreferenceCategories();
   } catch (error) {
     console.error('Failed to load notification preferences:', error);
     toast.error('Failed to load', 'Could not load your notification preferences. Please try again.');
@@ -44,19 +53,21 @@ const loadPreferences = async () => {
   }
 };
 
-const toggle = async (category: NotificationCategory, channel: NotificationChannel) => {
-  if (!preferences.value) return;
-  const key = `${category}.${channel}`;
-  const previous = preferences.value[category][channel];
-  const next = !previous;
+const toggle = async (category: CategoryPreference, channel: NotificationChannel) => {
+  const state = category.channels[channel];
+  if (!state.supported || state.locked) return;
 
-  preferences.value[category][channel] = next;
+  const key = `${category.key}.${channel}`;
+  const previous = state.enabled;
+  state.enabled = !previous;
   savingKey.value = key;
   try {
-    await notificationService.updatePreferences({ [category]: { [channel]: next } });
+    categories.value = await notificationService.updatePreferenceCategories({
+      [category.key as NotificationCategory]: { [channel]: !previous },
+    });
   } catch (error) {
     console.error('Failed to update notification preference:', error);
-    preferences.value[category][channel] = previous;
+    state.enabled = previous;
     toast.error('Failed to save', 'Could not update this preference. Please try again.');
   } finally {
     savingKey.value = null;
@@ -129,7 +140,7 @@ onMounted(loadPreferences);
 
         <div v-if="loading" class="py-12 text-center text-gray-400 text-sm font-medium">Loading your preferences…</div>
 
-        <div v-else-if="preferences">
+        <div v-else>
           <!-- Column headers -->
           <div class="hidden sm:flex items-center gap-2 pb-3 border-b border-gray-200/70 dark:border-white/10">
             <span class="flex-1"></span>
@@ -143,7 +154,15 @@ onMounted(loadPreferences);
           </div>
 
           <div
-            v-for="cat in CATEGORIES"
+            v-if="unreachable.length"
+            class="mb-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
+          >
+            <p v-for="reason in unreachable" :key="reason">{{ HINTS[reason] }}</p>
+            <router-link to="/profile/edit" class="font-bold underline">Update your profile</router-link>
+          </div>
+
+          <div
+            v-for="cat in categories"
             :key="cat.key"
             class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2 py-4 border-b border-gray-200/70 dark:border-white/10 last:border-0"
           >
@@ -155,10 +174,12 @@ onMounted(loadPreferences);
               <div v-for="ch in CHANNELS" :key="ch.key" class="flex sm:w-16 sm:shrink-0 sm:justify-center items-center gap-2">
                 <span class="sm:hidden text-xs font-bold text-gray-400 dark:text-gray-500 w-10">{{ ch.label }}</span>
                 <Switch
-                  :model-value="preferences[cat.key][ch.key]"
-                  :disabled="savingKey === `${cat.key}.${ch.key}`"
-                  @update:model-value="toggle(cat.key, ch.key)"
+                  v-if="cat.channels[ch.key].supported"
+                  :model-value="cat.channels[ch.key].enabled"
+                  :disabled="cat.channels[ch.key].locked || savingKey === `${cat.key}.${ch.key}`"
+                  @update:model-value="toggle(cat, ch.key)"
                 />
+                <span v-else class="text-gray-300 dark:text-gray-600 text-sm w-11 text-center" title="Not sent on this channel">—</span>
               </div>
             </div>
           </div>

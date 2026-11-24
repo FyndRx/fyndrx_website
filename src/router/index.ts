@@ -192,6 +192,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/profile/preferences',
+      name: 'preferences',
+      component: () => import('../views/PreferencesView.vue'),
+      meta: {
+        title: 'Preferences | FyndRx',
+        description: 'Language, quiet hours, privacy and shopping preferences.',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/profile/security',
       name: 'security-settings',
       component: () => import('../views/SecuritySettingsView.vue'),
