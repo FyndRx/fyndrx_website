@@ -6,6 +6,7 @@ import TextInput from '@/components/TextInput.vue';
 import DateTimePicker from '@/components/DateTimePicker.vue';
 import Dropdown from '@/components/Dropdown.vue';
 import LazyImage from '@/components/LazyImage.vue';
+import { handleApiError, isNetworkError } from '@/utils/errorHandler';
 import { VueCropper } from 'vue-cropper';
 import 'vue-cropper/dist/index.css';
 
@@ -80,18 +81,19 @@ const validateProfileForm = () => {
     isValid = false;
   }
 
-  if (!form.value.email.trim()) {
-    validationErrors.value.email = 'Email is required';
-    isValid = false;
-  } else if (form.value.email.trim().length > 254) {
+  // Email is optional — only validate it when one is entered.
+  if (form.value.email.trim().length > 254) {
     validationErrors.value.email = 'Email is too long';
     isValid = false;
-  } else if (!emailFormatValid.value) {
+  } else if (form.value.email.trim() && !emailFormatValid.value) {
     validationErrors.value.email = 'Please enter a valid email address';
     isValid = false;
   }
 
-  if (form.value.phone_number.trim() && !phoneFormatValid.value) {
+  if (!form.value.phone_number.trim()) {
+    validationErrors.value.phone_number = 'Phone number is required';
+    isValid = false;
+  } else if (!phoneFormatValid.value) {
     validationErrors.value.phone_number = 'Please enter a valid phone number';
     isValid = false;
   }
@@ -150,7 +152,7 @@ const handleSubmit = async () => {
     const updateData = {
       firstname: form.value.firstname.trim(),
       lastname: form.value.lastname.trim(),
-      email: form.value.email.trim(),
+      email: form.value.email.trim() || null,
       phone_number: form.value.phone_number.trim(),
       dob: form.value.dob,
       gender: form.value.gender
@@ -167,7 +169,25 @@ const handleSubmit = async () => {
       router.push('/profile');
     }, 1500);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to update profile';
+    // Surface exactly what the backend said: per-field messages go under their inputs,
+    // anything else (or the summary message) goes in the banner.
+    if (isNetworkError(err)) {
+      error.value = 'Network error. Please check your internet connection.';
+    } else {
+      const apiError = handleApiError(err);
+      const fieldErrors = apiError.errors || {};
+      const mapped: Array<keyof typeof validationErrors.value> = ['firstname', 'lastname', 'email', 'phone_number'];
+      const unmapped: string[] = [];
+      for (const [field, messages] of Object.entries(fieldErrors)) {
+        const msg = Array.isArray(messages) ? messages[0] : String(messages);
+        if ((mapped as string[]).includes(field)) {
+          validationErrors.value[field as keyof typeof validationErrors.value] = msg;
+        } else {
+          unmapped.push(msg); // dob, gender, username, ...
+        }
+      }
+      error.value = unmapped.length ? unmapped.join(' ') : (apiError.message || 'Failed to update profile');
+    }
   } finally {
     loading.value = false;
   }
@@ -285,10 +305,9 @@ const handleSubmit = async () => {
                 />
                 <TextInput
                   v-model="form.email"
-                  label="Email Address"
+                  label="Email Address (optional)"
                   type="email"
                   placeholder="your@email.com"
-                  required
                   :error="validationErrors.email"
                   @validation="handleEmailValidation"
                 />
@@ -297,6 +316,7 @@ const handleSubmit = async () => {
                   label="Phone Number"
                   type="tel"
                   placeholder="+233..."
+                  required
                   :error="validationErrors.phone_number"
                   @validation="handlePhoneValidation"
                 />

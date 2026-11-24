@@ -100,7 +100,7 @@ watch(activeTab, (newTab) => {
             <div class="flex flex-wrap items-center text-sm text-gray-600 gap-x-5 gap-y-1 dark:text-gray-300">
               <span class="flex items-center min-w-0">
                 <svg class="w-4 h-4 mr-2 shrink-0 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                <span class="truncate">{{ user?.email }}</span>
+                <span class="truncate">{{ user?.email || user?.phone_number }}</span>
               </span>
               <span class="flex items-center">
                 <svg class="w-4 h-4 mr-2 shrink-0 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 014 0m-5 8a2 2 0 100-4 2 2 0 000 4zm5 3h1.414a1 1 0 01.707.293l.586.586a1 1 0 001.414 0l.586-.586a1 1 0 01.707-.293H19"></path></svg>
@@ -161,7 +161,7 @@ watch(activeTab, (newTab) => {
                   </div>
                   <div class="group">
                     <p class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Email address</p>
-                    <p class="pb-2 text-lg font-medium text-gray-900 transition-colors border-b dark:text-white border-gray-200/70 dark:border-white/10 group-hover:border-brand-500/40">{{ user?.email }}</p>
+                    <p class="pb-2 text-lg font-medium text-gray-900 transition-colors border-b dark:text-white border-gray-200/70 dark:border-white/10 group-hover:border-brand-500/40">{{ user?.email || 'Not provided' }}</p>
                   </div>
                   <div class="group">
                     <p class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Phone number</p>

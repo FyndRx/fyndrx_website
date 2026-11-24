@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { handleApiError } from '@/utils/errorHandler';
 import { ref, computed, reactive, onMounted, nextTick } from 'vue';
 import { useNotification } from '@/composables/useNotification';
 import { useRouter } from 'vue-router';
@@ -318,8 +319,13 @@ const submitConsultation = async () => {
     );
     setTimeout(() => router.push('/consultations'), 800);
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } };
-    error.value = e.response?.data?.message || 'Failed to book consultation. Please try again.';
+    // The api layer rejects with a normalised ApiError (not an AxiosError), so read it via
+    // handleApiError. Prefer the first field message (e.g. a scheduling conflict) over the
+    // generic "Validation failed" summary, and hop back to the step that owns the field.
+    const apiError = handleApiError(err);
+    const firstField = apiError.errors ? Object.values(apiError.errors)[0]?.[0] : undefined;
+    error.value = firstField || apiError.message || 'Failed to book consultation. Please try again.';
+    if (apiError.errors?.scheduled_at) currentStep.value = 1;
   } finally {
     submitting.value = false;
   }
@@ -583,11 +589,11 @@ onMounted(async () => {
             </div>
 
             <DateTimePicker
-              label="Preferred date & time (optional)"
+              label="Preferred date & time (optional, at least 30 min ahead)"
               format="datetime"
               :model-value="form.scheduled_at || ''"
               @update:model-value="(val: string) => (form.scheduled_at = val)"
-              :min-date="new Date().toISOString()"
+              :min-date="new Date(Date.now() + 30 * 60 * 1000).toISOString()"
             />
           </div>
 

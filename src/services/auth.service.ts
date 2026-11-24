@@ -69,7 +69,7 @@ export interface LoginResponse {
 export interface UpdateUserDetailsRequest {
   firstname?: string;
   lastname?: string;
-  email?: string;
+  email?: string | null;
   dob?: string;
   gender?: string;
   phone_number?: string;
@@ -221,6 +221,21 @@ class AuthService {
    */
   async confirmPhoneVerification(otp: string): Promise<{ message: string }> {
     return await apiService.postAuth<{ message: string }>('/auth/verify-phone/confirm', { otp });
+  }
+
+  /**
+   * Send a code to a phone number the authenticated user wants to add to their
+   * account (social sign-ups have none). Only works while the account has no phone.
+   */
+  async sendAddPhoneOtp(phone_number: string): Promise<{ message: string }> {
+    return await apiService.postAuth<{ message: string }>('/auth/add-phone/send', { phone_number });
+  }
+
+  /**
+   * Confirm the code from sendAddPhoneOtp; the phone is saved as verified.
+   */
+  async confirmAddPhone(phone_number: string, otp: string): Promise<{ message: string; user: User }> {
+    return await apiService.postAuth<{ message: string; user: User }>('/auth/add-phone/confirm', { phone_number, otp });
   }
 
   /**

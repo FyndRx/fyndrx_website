@@ -113,6 +113,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/add-phone',
+      name: 'add-phone',
+      component: () => import('../views/Auth/AddPhoneView.vue'),
+      meta: {
+        title: 'Add Phone Number | FyndRx',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('../views/Auth/ForgotPasswordView.vue'),
@@ -617,6 +626,12 @@ router.beforeEach(async (to) => {
       // Token may have expired; the 401 interceptor dispatches auth:unauthorized which
       // triggers logout + redirect — no manual handling needed here.
     }
+  }
+
+  // Accounts without a phone number (Google/Facebook sign-ups) must add one before
+  // using the app. The add-phone page itself stays reachable.
+  if (isAuthenticated && authStore.user?.needs_phone && to.name !== 'add-phone') {
+    return { name: 'add-phone', query: { redirect: to.fullPath } };
   }
 
   // Returning undefined (implicit) = proceed normally

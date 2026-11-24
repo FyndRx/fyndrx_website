@@ -25,10 +25,10 @@ export interface UserApiResponse {
   username: string | null;
   dob: string | null;
   gender: string | null;
-  email: string;
+  email: string | null;
   pharmacy_id: string | null;
   pharmacy_branch_id: string | null;
-  phone_number: string;
+  phone_number: string | null;
   status: string | null;
   member_id: string;
   address: string | null;
@@ -45,6 +45,8 @@ export interface UserApiResponse {
   facebook_linked?: boolean;
   email_verified?: boolean;
   phone_verified?: boolean;
+  /** True for accounts with no phone number yet (e.g. social sign-ups) — must add one. */
+  needs_phone?: boolean;
 }
 
 export interface OtpResponse {
