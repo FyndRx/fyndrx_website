@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import TextInput from '@/components/TextInput.vue';
@@ -26,13 +26,37 @@ const redirectTo = computed(() => {
   return target && target.startsWith('/') && !target.startsWith('//') ? target : '/dashboard';
 });
 
+// Resend cooldown (server enforces it too; this just keeps the UI honest).
+const cooldown = ref(0);
+let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+const startCooldown = (seconds: number) => {
+  cooldown.value = Math.max(0, Math.ceil(seconds));
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  if (cooldown.value === 0) return;
+  cooldownTimer = setInterval(() => {
+    cooldown.value -= 1;
+    if (cooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+};
+onBeforeUnmount(() => { if (cooldownTimer) clearInterval(cooldownTimer); });
+
+const retryAfterOf = (apiError: { data?: unknown }): number | null => {
+  const v = (apiError.data as { retry_after?: number } | undefined)?.retry_after;
+  return typeof v === 'number' ? v : null;
+};
+
 const handlePhoneValidation = (isValid: boolean) => {
   phoneFormatValid.value = isValid;
 };
 
 const sendCode = async () => {
+  if (loading.value || cooldown.value > 0) return;
   error.value = '';
   phoneError.value = '';
+  otpError.value = '';
 
   if (!phoneNumber.value.trim()) {
     phoneError.value = 'Phone number is required';
@@ -45,11 +69,15 @@ const sendCode = async () => {
 
   loading.value = true;
   try {
-    await authStore.sendAddPhoneOtp(phoneNumber.value.trim());
+    const res = await authStore.sendAddPhoneOtp(phoneNumber.value.trim()) as { retry_after?: number };
+    otp.value = '';
     step.value = 2;
+    startCooldown(res?.retry_after ?? 60);
   } catch (err) {
     const apiError = handleApiError(err);
-    if (apiError.errors?.phone_number) phoneError.value = apiError.errors.phone_number[0];
+    const wait = retryAfterOf(apiError);
+    if (wait) startCooldown(wait);
+    if (apiError.errors?.phone_number && step.value === 1) phoneError.value = apiError.errors.phone_number[0];
     else error.value = apiError.message || 'Failed to send the code. Please try again.';
   } finally {
     loading.value = false;
@@ -60,6 +88,7 @@ const confirmCode = async () => {
   error.value = '';
   otpError.value = '';
 
+  if (loading.value) return;
   if (!/^\d{4,6}$/.test(otp.value.trim())) {
     otpError.value = 'Please enter the numeric code sent to you';
     return;
@@ -71,8 +100,16 @@ const confirmCode = async () => {
     router.replace(redirectTo.value);
   } catch (err) {
     const apiError = handleApiError(err);
-    if (apiError.errors?.phone_number) phoneError.value = apiError.errors.phone_number[0];
-    else error.value = apiError.message || 'Invalid or expired code.';
+    if (apiError.errors?.otp) {
+      otpError.value = apiError.errors.otp[0];
+      if (apiError.status === 429) otp.value = '';
+    } else if (apiError.errors?.phone_number) {
+      // Number was taken (or changed) in the meantime — send the user back to fix it.
+      phoneError.value = apiError.errors.phone_number[0];
+      step.value = 1;
+    } else {
+      error.value = apiError.message || 'Invalid or expired code.';
+    }
   } finally {
     loading.value = false;
   }
@@ -146,8 +183,8 @@ const handleLogout = async () => {
           >
             {{ loading ? 'Verifying...' : 'Verify and continue' }}
           </button>
-          <button type="button" :disabled="loading" class="w-full text-sm text-[#246BFD] hover:underline" @click="sendCode">
-            Resend code
+          <button type="button" :disabled="loading || cooldown > 0" class="w-full text-sm text-[#246BFD] hover:underline disabled:opacity-50 disabled:no-underline" @click="sendCode">
+            {{ cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code' }}
           </button>
         </form>
       </div>

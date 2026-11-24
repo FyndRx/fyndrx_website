@@ -6,6 +6,7 @@ import TextInput from '@/components/TextInput.vue';
 import DateTimePicker from '@/components/DateTimePicker.vue';
 import Dropdown from '@/components/Dropdown.vue';
 import LazyImage from '@/components/LazyImage.vue';
+import { handleApiError, isNetworkError } from '@/utils/errorHandler';
 import { VueCropper } from 'vue-cropper';
 import 'vue-cropper/dist/index.css';
 
@@ -168,7 +169,25 @@ const handleSubmit = async () => {
       router.push('/profile');
     }, 1500);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to update profile';
+    // Surface exactly what the backend said: per-field messages go under their inputs,
+    // anything else (or the summary message) goes in the banner.
+    if (isNetworkError(err)) {
+      error.value = 'Network error. Please check your internet connection.';
+    } else {
+      const apiError = handleApiError(err);
+      const fieldErrors = apiError.errors || {};
+      const mapped: Array<keyof typeof validationErrors.value> = ['firstname', 'lastname', 'email', 'phone_number'];
+      const unmapped: string[] = [];
+      for (const [field, messages] of Object.entries(fieldErrors)) {
+        const msg = Array.isArray(messages) ? messages[0] : String(messages);
+        if ((mapped as string[]).includes(field)) {
+          validationErrors.value[field as keyof typeof validationErrors.value] = msg;
+        } else {
+          unmapped.push(msg); // dob, gender, username, ...
+        }
+      }
+      error.value = unmapped.length ? unmapped.join(' ') : (apiError.message || 'Failed to update profile');
+    }
   } finally {
     loading.value = false;
   }
